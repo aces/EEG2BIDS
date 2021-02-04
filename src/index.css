@@ -1,0 +1,15 @@
+html {
+    height: 100%;
+    -webkit-app-region: drag;
+    color: rgb(255, 255, 255);
+    background-color: rgb(10, 130, 110);
+}
+
+body {
+    margin: 0;
+    -webkit-app-region: drag;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
