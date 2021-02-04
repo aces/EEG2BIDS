@@ -1,0 +1,11 @@
+.DS_Store
+.eslintcache
+.idea/
+.spec
+node_modules/
+package-lock.json
+logs/*.log
+VERSION
+venv/
+build/
+dist/

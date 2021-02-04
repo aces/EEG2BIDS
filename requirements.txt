@@ -1,0 +1,7 @@
+eventlet~=0.30.0
+mne~=0.22.0
+mne-bids~=0.6
+mne-features~=0.1
+numpy~=1.19.5
+python-socketio~=5.0.4
+python-engineio~=4.0.0
