@@ -9,3 +9,8 @@ VERSION
 venv/
 build/
 dist/
+lib/
+bin/
+include/
+pycat.spec
+pyvenv.cfg
