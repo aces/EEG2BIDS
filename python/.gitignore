@@ -6,3 +6,4 @@ VERSION
 venv/
 __pycache__/
 libs/__pycache__/
+pycat.spec
