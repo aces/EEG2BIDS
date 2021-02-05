@@ -24,6 +24,7 @@ Inside project root using your terminal type:
 npm install
 npm run start
 # In another terminal inside project root type:
+pip install -r requirements.txt
 python -m python.pycat
 ```
 
