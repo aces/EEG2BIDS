@@ -30,7 +30,7 @@ let mainWindow;
 /**
  * Create Window.
  */
-function createWindow() {
+const createWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000' :
     url.format({
@@ -42,8 +42,10 @@ function createWindow() {
     show: false,
     icon,
     webPreferences: {
+      webSecurity: true,
       nodeIntegration: true,
       enableRemoteModule: true,
+      nativeWindowOpen: true,
     },
     width: 900,
     height: 600,
@@ -59,9 +61,11 @@ function createWindow() {
   mainWindow.on('closed', function() {
     mainWindow = null;
   });
-}
+};
 
-app.on('ready', createWindow);
+app.on('ready', async () => {
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
