@@ -12,5 +12,5 @@ dist/
 lib/
 bin/
 include/
-pycat.spec
+*.spec
 pyvenv.cfg
