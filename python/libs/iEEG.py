@@ -35,10 +35,14 @@ class Converter:
             print(c_info)
             if read_only:
                 return True
-            raw = mne.io.read_raw_edf(file)
+            raw = mne.io.read_raw_edf(input_fname=file)
+            print('VIEW 1:')
+            print(raw)
             if read_only:
                 return True
             raw.set_channel_types({ch: ch_type for ch in raw.ch_names})
+            print('VIEW 2:')
+            print(raw)
             bids_root = bids_directory
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
             print('LOOK:')
@@ -55,7 +59,16 @@ class Converter:
                 'SiteID': 'test'
             }
             raw.info['alizee'] = 'alizee was here'
-            write_raw_bids(raw, bids_basename, overwrite=False)
+            raw._init_kwargs = {
+                'input_fname': file,
+                'eog': None,
+                'misc': None,
+                'stim_channel': 'auto',
+                'exclude': (),
+                'preload': False,
+                'verbose': None
+            }
+            write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
         else:
             print('File not found or is not file: %s', file)
 

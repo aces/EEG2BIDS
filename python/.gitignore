@@ -1,6 +1,6 @@
 .DS_Store
 .idea/
-.spec
+*.spec
 logs/*.log
 VERSION
 venv/
