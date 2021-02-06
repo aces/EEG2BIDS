@@ -1,5 +1,6 @@
 source bin/activate
 pyinstaller --paths=python python/pycat.py -F \
+--name pycat-service \
 --hidden-import=eventlet.hubs.epolls \
 --hidden-import=eventlet.hubs.kqueue \
 --hidden-import=eventlet.hubs.selects \

@@ -1,6 +1,6 @@
 .\Scripts\activate
 pyinstaller --paths=python python/pycat.py -F `
---name pyinstaller-windows `
+--name pycat-service-windows `
 --hidden-import=eventlet.hubs.epolls `
 --hidden-import=eventlet.hubs.kqueue `
 --hidden-import=eventlet.hubs.selects `
