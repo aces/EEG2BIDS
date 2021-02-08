@@ -13,6 +13,7 @@
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "concurrently": "^5.3.0",
+    "cross-env": "^7.0.3",
     "electron": "^11.2.2",
     "electron-builder": "^22.9.1",
     "electron-devtools-installer": "^3.1.1",
@@ -29,8 +30,8 @@
   },
   "scripts": {
     "rebuild": "rebuild zeromq --runtime=electron --target=11.2.1",
-    "react-start": "BROWSER=NONE react-scripts start",
-    "electron-start": "DEV=1 electron .",
+    "react-start": "cross-env BROWSER=NONE react-scripts start",
+    "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently 'npm run react-start' 'wait-on http://localhost:3000/ && npm run electron-start'",
     "react-build": "react-scripts build",
     "pack": "electron-builder --dir -c.extraMetadata.main=build/electron.js",

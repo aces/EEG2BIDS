@@ -1,5 +1,5 @@
 import React from 'react';
-import './App.css';
+import './css/App.css';
 
 // Socket.io
 import {Socket} from './jsx/socket.io';

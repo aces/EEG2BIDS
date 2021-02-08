@@ -26,6 +26,7 @@
         "tabWidth": 2,
         "ignoreComments": true
     }],
+    "linebreak-style": "off",
     "spaced-comment": "off",
     "no-useless-escape": "off",
     "no-dupe-keys": "off",

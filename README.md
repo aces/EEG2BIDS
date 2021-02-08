@@ -49,10 +49,9 @@ pip install pyinstaller
 # building on macOS or linux
 chmod +x build.sh
 ./build.sh
-# building on windows
-./build.ps1
 # Visit the /dist for the "python-service" build.
 ```
+[Windows: python-service build instructions](./wiki/windows/README.md)
 
 ## Dependencies
 
