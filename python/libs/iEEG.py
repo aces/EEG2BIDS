@@ -69,6 +69,7 @@ class Converter:
                 'verbose': None
             }
             write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
+            print('finished')
         else:
             print('File not found or is not file: %s', file)
 
