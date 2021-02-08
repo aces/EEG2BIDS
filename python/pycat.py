@@ -1,8 +1,6 @@
 import eventlet
 import socketio
 from python.libs import iEEG
-# from engineio.async_drivers import eventlet
-# from engineio.async_drivers.eventlet import
 
 
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])

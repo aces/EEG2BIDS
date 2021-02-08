@@ -46,12 +46,11 @@ python-service build:
 # first follow the Development Build guide
 # then paste the following commands:
 pip install pyinstaller
-# building on macOS or linux
 chmod +x build.sh
 ./build.sh
 # Visit the /dist for the "python-service" build.
 ```
-[Windows: python-service build instructions](./wiki/windows/README.md)
+[Windows 10: build instructions](./wiki/windows/README.md)
 
 ## Dependencies
 
