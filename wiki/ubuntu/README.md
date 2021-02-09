@@ -1,13 +1,4 @@
-# pyCat - iEEG to BIDS Converter Wizard
-
-pyCat is a GUI interface for iEEG to BIDS conversion for LORIS (Longitudinal Online Research and Imaging System).
-
-## Installation
-
-#### System Requirements
-
- * Linux, macOS, Windows
- * 200 MB of disk space
+# Ubuntu Instructions
 
 ## Development
 
@@ -24,10 +15,11 @@ Inside project root using your terminal type:
 npm install
 npm run start
 # In another terminal inside project root type:
-python3.8 -m venv .
+sudo apt-get install python3-venv
+python3 -m venv .
 source bin/activate
 pip install -r requirements.txt
-python -m python.pycat
+python3 -m python.pycat
 ```
 
 #### Building production app guide
@@ -46,22 +38,9 @@ python-service build:
 # first follow the Development Build guide
 # then paste the following commands:
 pip install pyinstaller
+sudo apt-get install python3-dev
+sudo apt-get install binutils
 chmod +x build.sh
 ./build.sh
 # Visit the /dist for the "python-service" build.
 ```
-[Windows 10: build instructions](./wiki/windows/README.md)
-[Ubuntu 20.04.2: build instructions](./wiki/ubuntu/README.md)
-
-## Dependencies
-
-#### Dependencies Requirements
-
- * PyInstaller >= 4.2
- * eventlet >= 0.30.0
- * mne >= 0.22.0
- * mne-bids >= 0.6
- * mne-features >= 0.1
- * numpy >= 1.19.5
- * python-socketio >= 5.0.4
- * python-engineio >= 4.0.0

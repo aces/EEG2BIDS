@@ -10,6 +10,7 @@ venv/
 build/
 dist/
 lib/
+lib64/
 bin/
 include/
 *.spec
@@ -17,3 +18,4 @@ pyvenv.cfg
 Scripts/
 Lib/
 Include/
+/share
