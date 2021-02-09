@@ -33,7 +33,6 @@ FileInput.propTypes = {
 
 export const TextInput = (props) => {
   const handleChange = (event) => {
-    // Send current file to parent component
     const value = event.target.value;
     props.onUserInput(props.id, value);
   };
@@ -44,7 +43,6 @@ export const TextInput = (props) => {
         type='text'
         id={props.id}
         name={props.name}
-        accept={props.accept}
         value={props.value}
         onChange={handleChange}
         placeholder={props.placeholder}
@@ -63,7 +61,6 @@ TextInput.propTypes = {
 
 export const DirectoryInput = (props) => {
   const {dialog} = electron.remote;
-
   const handleClick = async () => {
     // Send directory to parent component
     const path = await dialog.showOpenDialog({
