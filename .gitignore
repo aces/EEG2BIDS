@@ -18,4 +18,4 @@ pyvenv.cfg
 Scripts/
 Lib/
 Include/
-/share
+share/
