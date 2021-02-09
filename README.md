@@ -17,42 +17,13 @@ pyCat is a GUI interface for iEEG to BIDS conversion for LORIS (Longitudinal Onl
  * NPM >= 7.5.2
  * Python == 3.8
 
-#### Development Build guide
+#### Development Build guides
 
-Inside project root using your terminal type:
-```
-npm install
-npm run start
-# In another terminal inside project root type:
-python3.8 -m venv .
-source bin/activate
-pip install -r requirements.txt
-python -m python.pycat
-```
-
-#### Building production app guide
-
-Inside project root using your terminal type the following,
-
-electron-app build:
-```
-npm install
-npm run build
-# Visit the /dist for the "electron-app" platform builds.
-```
-
-python-service build:
-```
-# first follow the Development Build guide
-# then paste the following commands:
-pip install pyinstaller
-chmod +x build.sh
-./build.sh
-# Visit the /dist for the "python-service" build.
-```
-[Windows 10: build instructions](./wiki/windows/README.md)
+[macOS: build instructions](./wiki/macOS/README.md)
 
 [Ubuntu 20.04.2: build instructions](./wiki/ubuntu/README.md)
+
+[Windows 10: build instructions](./wiki/windows/README.md)
 
 ## Dependencies
 
