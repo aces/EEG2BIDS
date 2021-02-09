@@ -19,11 +19,11 @@ pyCat is a GUI interface for iEEG to BIDS conversion for LORIS (Longitudinal Onl
 
 #### Development Build guides
 
-[macOS: build instructions](./wiki/macOS/README.md)
+ * [macOS: build instructions](./wiki/macOS/README.md)
 
-[Ubuntu 20.04.2: build instructions](./wiki/ubuntu/README.md)
+ * [Ubuntu 20.04.2: build instructions](./wiki/ubuntu/README.md)
 
-[Windows 10: build instructions](./wiki/windows/README.md)
+ * [Windows 10: build instructions](./wiki/windows/README.md)
 
 ## Dependencies
 
