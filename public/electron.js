@@ -6,6 +6,12 @@ const {app} = electron;
 const {BrowserWindow} = electron;
 const nativeImage = electron.nativeImage;
 
+const PycatService = require('./pycat-service');
+
+// Launch python service.
+const pycatService = new PycatService('production'); // production or development
+pycatService.startup();
+
 if (process.env.DEV) {
   const {
     default: installExtension,
@@ -59,6 +65,7 @@ const createWindow = () => {
   // process.env.DEV && mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', function() {
+    pycatService.shutdown();
     mainWindow = null;
   });
 };
@@ -68,6 +75,7 @@ app.on('ready', async () => {
 });
 
 app.on('window-all-closed', () => {
+  pycatService.shutdown();
   if (process.platform !== 'darwin') {
     app.quit();
   }
