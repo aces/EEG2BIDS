@@ -27,24 +27,6 @@ module.exports = class PycatService {
           'dist/pycat-service'
     );
     this.process = fork(pathToService, {silent: true});
-    // this.process.on('message', function(m) {
-    //   // Receive results from child process
-    //   console.log('received: ' + m);
-    // });
-    // Send child process some work
-    // this.process.send('Please up-case this string');
-    // this.process.stdout.on('data', (data) => {
-    //   console.log('stdout: ' + data);
-    // });
-    // this.process.stderr.on('data', (data) => {
-    //   console.log('stdout: ' + data);
-    // });
-    // this.process.on('close', (data) => {
-    //   console.log('closing data: ' + data);
-    // });
-    // this.process.on('exit', (data) => {
-    //   console.log('exit data: ' + data);
-    // });
   }
   /**
    * shutdown the service process
