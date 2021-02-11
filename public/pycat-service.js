@@ -26,11 +26,7 @@ module.exports = class PycatService {
           'dist/pycat-service-windows.exe' :
           'dist/pycat-service'
     );
-    if (this.platform === 'darwin') {
-      this.process = fork(pathToService, {silent: true});
-    } else if (this.platform === 'win32') {
-      this.process = fork(pathToService, {silent: true});
-    }
+    this.process = fork(pathToService, {silent: true});
     // this.process.on('message', function(m) {
     //   // Receive results from child process
     //   console.log('received: ' + m);
