@@ -7,7 +7,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 class Converter:
     # data: {
-    #  file_path: '', // whee file located.
+    #  file_path: '', // where file located.
     #  bids_directory: '', // where to output.
     #  read_only: true/false // read without write or write.
     def __init__(self, data):

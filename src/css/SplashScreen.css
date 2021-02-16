@@ -1,0 +1,27 @@
+.loader {
+    border: 8px solid #ffffff;
+    border-top: 8px solid #073e34;
+    border-left: 8px solid #073e34;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.centered {
+    top: 50%;
+    left: 50%;
+    position: fixed;
+    margin-top: -30px;
+    margin-left: -45px;
+}
+.loader-font {
+    top: 50%;
+    left: 50%;
+    color: #ffffff;
+    font-size: 24px;
+    position: fixed;
+    margin: -120px 0 0 -110px;
+    font-family: "Bangla MN", serif;
+}
