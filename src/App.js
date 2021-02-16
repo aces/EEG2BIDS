@@ -53,7 +53,7 @@ const App = () => {
                 },
               },
               {
-                title: 'Anonymize data',
+                title: 'de-identifier',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);
