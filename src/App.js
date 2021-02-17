@@ -10,10 +10,11 @@ const options = {
 };
 
 // Components
-import Welcome from './jsx/Welcome';
-import SplashScreen from './jsx/SplashScreen';
-import Converter from './jsx/Converter';
 import Menu from './jsx/elements/menu';
+import SplashScreen from './jsx/SplashScreen';
+import Welcome from './jsx/Welcome';
+import Converter from './jsx/Converter';
+import Validator from './jsx/Validator';
 // import {Authentication} from './jsx/elements/authentication';
 
 /**
@@ -73,21 +74,16 @@ const App = () => {
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(3);
-                  setAppMode('Converter');
+                  setAppMode('Validator');
                 },
               },
             ]}
             activeTab={activeMenuTab}
           />
-          <div className={appMode !== 'SplashScreen' ? 'hidden' : ''}>
-            <SplashScreen/>
-          </div>
-          <div className={appMode !== 'Welcome' ? 'hidden' : ''}>
-            <Welcome/>
-          </div>
-          <div className={appMode !== 'Converter' ? 'hidden' : ''}>
-            <Converter/>
-          </div>
+          <SplashScreen visible={appMode === 'SplashScreen'}/>
+          <Welcome visible={appMode === 'Welcome'}/>
+          <Converter visible={appMode === 'Converter'}/>
+          <Validator visible={appMode === 'Validator'}/>
         </>
       </AppContext.Provider>
     </Socket>

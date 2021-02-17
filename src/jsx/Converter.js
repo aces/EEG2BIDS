@@ -5,6 +5,7 @@ import {Event, SocketContext} from './socket.io';
 
 // Components
 import {DirectoryInput, FileInput, TextInput} from './elements/inputs';
+import PropTypes from 'prop-types';
 
 /**
  * Converter - the iEEG to BIDS Converter component.
@@ -51,7 +52,7 @@ const Converter = (props) => {
     }
   };
 
-  return (
+  return props.visible ? (
     <>
       <div style={{
         fontSize: '20px',
@@ -130,7 +131,10 @@ const Converter = (props) => {
       </div>
       <Event event='response' handler={onMessage} />
     </>
-  );
+  ) : null;
+};
+Converter.propTypes = {
+  visible: PropTypes.bool,
 };
 
 export default Converter;

@@ -8,7 +8,7 @@ import '../css/SplashScreen.css';
  * @return {JSX.Element} - Loader React component
  */
 const SplashScreen = (props) => {
-  return (
+  return props.visible ? (
     <>
       <p className={'loader-font'}>
         PyCat is loading ...
@@ -18,10 +18,11 @@ const SplashScreen = (props) => {
         style={{width: parseInt(props.size), height: parseInt(props.size)}}
       />
     </>
-  );
+  ) : null;
 };
 SplashScreen.propTypes = {
   size: PropTypes.string,
+  visible: PropTypes.bool,
 };
 SplashScreen.defaultProps = {
   size: '60',

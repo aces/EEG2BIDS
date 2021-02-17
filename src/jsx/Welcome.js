@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * Welcome - the welcome component.
@@ -6,7 +7,7 @@ import React from 'react';
  * @return {JSX.Element}
  */
 const Welcome = (props) => {
-  return (
+  return props.visible ? (
     <>
       <div style={{
         fontSize: '20px',
@@ -36,7 +37,10 @@ const Welcome = (props) => {
         </p>
       </div>
     </>
-  );
+  ) : null;
+};
+Welcome.propTypes = {
+  visible: PropTypes.bool,
 };
 
 export default Welcome;
