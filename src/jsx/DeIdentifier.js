@@ -16,7 +16,7 @@ const DeIdentifier = (props) => {
         cursor: 'default',
         padding: '20px',
       }}>
-        de-identifier
+        Data anonymization
       </div>
       <div style={{backgroundColor: '#039b83', padding: '14px'}}>
         ...
