@@ -57,6 +57,7 @@ const createWindow = () => {
     height: 600,
     minWidth: 900,
     minHeight: 600,
+    backgroundColor: '#0A826E',
   });
   // mainWindow.maximize();
   mainWindow.show();
