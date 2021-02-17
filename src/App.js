@@ -47,7 +47,7 @@ const App = () => {
           <Menu visible={appMode !== 'SplashScreen'}
             tabs={[
               {
-                title: 'Getting started',
+                title: '1) Getting started',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(0);
@@ -55,7 +55,7 @@ const App = () => {
                 },
               },
               {
-                title: 'de-identifier',
+                title: '2) de-identifier',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);
@@ -63,7 +63,7 @@ const App = () => {
                 },
               },
               {
-                title: 'iEEG Converter',
+                title: '3) iEEG Converter',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(2);
@@ -71,7 +71,7 @@ const App = () => {
                 },
               },
               {
-                title: 'Validator',
+                title: '4) Validator',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(3);

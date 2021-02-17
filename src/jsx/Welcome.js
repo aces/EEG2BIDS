@@ -10,22 +10,22 @@ const Welcome = (props) => {
   return props.visible ? (
     <>
       <div style={{
-        fontSize: '20px',
+        fontSize: '20pt',
         textAlign: 'center',
         verticalAlign: 'middle',
         cursor: 'default',
-        padding: '20px',
+        padding: '20px 20px 0 20px',
+        backgroundColor: '#039b83',
       }}>
         Welcome to pyCat!
       </div>
-      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        <p>Hello user, <br/><br/>
-          <b>pyCat</b> is a simple tool for de-identification of iEEG datasets.
+      <div style={{backgroundColor: '#039b83', padding: '10px'}}>
+        <p style={{fontSize: '16pt'}}>Hello user,</p>
+        <p><b>pyCat</b> is a simple tool for de-identification of iEEG datasets.
           In addition to de-identifying iEEG files, this tool contains a feature
           that allows mapping the candidate's information to its
           study identifier.
         </p>
-        <br/>
         <p>
           <b>The de-identifier tab allows to:</b>
         </p>
