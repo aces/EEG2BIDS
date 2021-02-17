@@ -9,7 +9,7 @@ const options = {
   transports: ['websocket'],
 };
 
-// Components
+// Main components
 import Menu from './jsx/elements/menu';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
