@@ -13,6 +13,7 @@ const options = {
 import Menu from './jsx/elements/menu';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
+import DeIdentifier from './jsx/DeIdentifier';
 import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
 // import {Authentication} from './jsx/elements/authentication';
@@ -58,7 +59,7 @@ const App = () => {
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);
-                  setAppMode('Converter');
+                  setAppMode('DeIdentifier');
                 },
               },
               {
@@ -82,6 +83,7 @@ const App = () => {
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>
+          <DeIdentifier visible={appMode === 'DeIdentifier'}/>
           <Converter visible={appMode === 'Converter'}/>
           <Validator visible={appMode === 'Validator'}/>
         </>
