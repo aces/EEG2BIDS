@@ -1,5 +1,12 @@
-import React from 'react';
+import React, {useState, useContext} from 'react';
+import {AppContext} from './../context';
 import PropTypes from 'prop-types';
+
+// Socket.io
+import {Event, SocketContext} from './socket.io';
+
+// Components
+import {DirectoryInput, FileInput} from './elements/inputs';
 
 /**
  * DeIdentifier - the de-identifier component.
@@ -7,8 +14,74 @@ import PropTypes from 'prop-types';
  * @return {JSX.Element}
  */
 const DeIdentifier = (props) => {
+  // React Context
+  const appContext = useContext(AppContext);
+  const socketContext = useContext(SocketContext);
+
+  // React State
+  const [edfFile, setEdfFile] = useState('');
+  const [bidsDirectory, setBidsDirectory] = useState(null);
+  const [eventsTSV, setEventsTSV] = useState({});
+  const [siteID, setSiteID] = useState('');
+
+  const onUserInput = async (name, value) => {
+    if (name === 'edfFile') {
+      await setEdfFile(value);
+      await appContext.setTask('edfFile', value);
+    } else if (name === 'bidsDirectory') {
+      await setBidsDirectory(value);
+      await appContext.setTask('bidsDirectory', value);
+    } else if (name === 'siteID') {
+      await setEventsTSV(value);
+      await appContext.setTask('siteID', value);
+    } else if (name === 'eventsTSV') {
+      await setSiteID(value);
+      await appContext.setTask('eventsTSV', value);
+    }
+  };
+
+  const onMessage = (message) => {
+    console.log(message);
+  };
+
   return props.visible ? (
     <>
+      <div style={{
+        fontSize: '20px',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        cursor: 'default',
+        padding: '20px',
+      }}>
+        Data Configuration
+      </div>
+      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
+        <div style={{padding: '10px'}}>
+          <FileInput id='edfFile'
+            name='edfFile'
+            accept='.edf'
+            placeholder='test'
+            label='1. The file.edf to convert: '
+            onUserInput={onUserInput}
+          />
+        </div>
+        <div style={{padding: '10px'}}>
+          <FileInput id='eventsTSV'
+            name='eventsTSV'
+            accept='.tsv'
+            label='2. The events.tsv to include: '
+            onUserInput={onUserInput}
+          />
+        </div>
+        <div style={{padding: '10px'}}>
+          <DirectoryInput id='bidsDirectory'
+            name='bidsDirectory'
+            value='Choose directory'
+            label='3. The BIDS output directory: '
+            onUserInput={onUserInput}
+          />
+        </div>
+      </div>
       <div style={{
         fontSize: '20px',
         textAlign: 'center',
@@ -19,8 +92,9 @@ const DeIdentifier = (props) => {
         Data anonymization
       </div>
       <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        ...
+        ... todo input fields here once given the details ...
       </div>
+      <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };

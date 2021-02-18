@@ -23,8 +23,10 @@ import Validator from './jsx/Validator';
  * @return {JSX.Element}
  */
 const App = () => {
+  // React State
   const [appMode, setAppMode] = useState('SplashScreen');
   const [activeMenuTab, setActiveMenuTab] = useState(0);
+  const [task, setTask] = useState({});
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -41,6 +43,11 @@ const App = () => {
       <AppContext.Provider value={{
         setAppMode: (appMode) => {
           setAppMode(appMode);
+        },
+        setTask: (key, value) => {
+          task[key] = value;
+          console.log(task);
+          setTask(task);
         },
       }}>
         <>

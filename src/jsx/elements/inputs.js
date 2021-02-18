@@ -1,25 +1,34 @@
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 
 // Electron imports
 const electron = window.require('electron');
 
 export const FileInput = (props) => {
+  const [filePath, setFilePath] = useState(null);
   const handleChange = (event) => {
     // Send current file to parent component
     const file = event.target.files[0] ? event.target.files[0] : '';
+    setFilePath(file.name);
     props.onUserInput(props.id, file);
   };
   return (
     <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
+      <label><b>{props.label}</b></label>
+      <button>
+        <label htmlFor={props.id}>Choose file</label>
+      </button>
       <input
         type='file'
         id={props.id}
         name={props.name}
         accept={props.accept}
+        style={{display: 'none'}}
         onChange={handleChange}
       />
+      <a style={{fontSize: '14px', cursor: 'default'}}>
+        &nbsp;{filePath ?? 'No file chosen'}
+      </a>
     </>
   );
 };
@@ -60,12 +69,14 @@ TextInput.propTypes = {
 };
 
 export const DirectoryInput = (props) => {
+  const [directory, setDirectory] = useState(null);
   const {dialog} = electron.remote;
   const handleClick = async () => {
     // Send directory to parent component
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
+    setDirectory(path.filePaths[0]);
     props.onUserInput(props.id, path.filePaths[0]);
   };
   return (
@@ -78,6 +89,9 @@ export const DirectoryInput = (props) => {
         value={props.value}
         onClick={handleClick}
       />
+      <a style={{fontSize: '14px', cursor: 'default'}}>
+        &nbsp;{directory ?? 'No directory chosen'}
+      </a>
     </>
   );
 };

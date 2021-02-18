@@ -30,6 +30,7 @@
     "react/prop-types": "off",
     "linebreak-style": "off",
     "spaced-comment": "off",
+    "no-unused-vars": "off",
     "require-jsdoc": "error",
     "no-console": ["warn", {
       "allow": ["info", "warn", "error"]
