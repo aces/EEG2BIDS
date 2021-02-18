@@ -1,15 +1,13 @@
-import React, {useState} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 // Electron imports
 const electron = window.require('electron');
 
 export const FileInput = (props) => {
-  const [filePath, setFilePath] = useState(null);
   const handleChange = (event) => {
     // Send current file to parent component
     const file = event.target.files[0] ? event.target.files[0] : '';
-    setFilePath(file.name);
     props.onUserInput(props.id, file);
   };
   return (
@@ -27,7 +25,7 @@ export const FileInput = (props) => {
         onChange={handleChange}
       />
       <a style={{fontSize: '14px', cursor: 'default'}}>
-        &nbsp;{filePath ?? 'No file chosen'}
+        &nbsp;{props.placeholder ?? 'No file chosen'}
       </a>
     </>
   );
@@ -38,6 +36,7 @@ FileInput.propTypes = {
   label: PropTypes.string,
   accept: PropTypes.string,
   onUserInput: PropTypes.func,
+  placeholder: PropTypes.string,
 };
 
 export const TextInput = (props) => {
@@ -69,14 +68,12 @@ TextInput.propTypes = {
 };
 
 export const DirectoryInput = (props) => {
-  const [directory, setDirectory] = useState(null);
   const {dialog} = electron.remote;
   const handleClick = async () => {
     // Send directory to parent component
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
-    setDirectory(path.filePaths[0]);
     props.onUserInput(props.id, path.filePaths[0]);
   };
   return (
@@ -86,11 +83,11 @@ export const DirectoryInput = (props) => {
         type='button'
         id={props.id}
         name={props.name}
-        value={props.value}
+        value='Choose directory'
         onClick={handleClick}
       />
       <a style={{fontSize: '14px', cursor: 'default'}}>
-        &nbsp;{directory ?? 'No directory chosen'}
+        &nbsp;{props.placeholder ?? 'No directory chosen'}
       </a>
     </>
   );
@@ -99,7 +96,7 @@ DirectoryInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
-  value: PropTypes.string,
+  placeholder: PropTypes.string,
   onUserInput: PropTypes.func,
 };
 

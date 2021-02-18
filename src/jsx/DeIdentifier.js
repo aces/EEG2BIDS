@@ -1,5 +1,5 @@
 import React, {useState, useContext} from 'react';
-import {AppContext} from './../context';
+import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 
 // Socket.io
@@ -32,10 +32,10 @@ const DeIdentifier = (props) => {
       await setBidsDirectory(value);
       await appContext.setTask('bidsDirectory', value);
     } else if (name === 'siteID') {
-      await setEventsTSV(value);
+      await setSiteID(value);
       await appContext.setTask('siteID', value);
     } else if (name === 'eventsTSV') {
-      await setSiteID(value);
+      await setEventsTSV(value);
       await appContext.setTask('eventsTSV', value);
     }
   };
@@ -60,7 +60,7 @@ const DeIdentifier = (props) => {
           <FileInput id='edfFile'
             name='edfFile'
             accept='.edf'
-            placeholder='test'
+            placeholder={edfFile['name']}
             label='1. The file.edf to convert: '
             onUserInput={onUserInput}
           />
@@ -69,6 +69,7 @@ const DeIdentifier = (props) => {
           <FileInput id='eventsTSV'
             name='eventsTSV'
             accept='.tsv'
+            placeholder={eventsTSV['name']}
             label='2. The events.tsv to include: '
             onUserInput={onUserInput}
           />
@@ -76,8 +77,8 @@ const DeIdentifier = (props) => {
         <div style={{padding: '10px'}}>
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
-            value='Choose directory'
             label='3. The BIDS output directory: '
+            placeholder={bidsDirectory}
             onUserInput={onUserInput}
           />
         </div>
