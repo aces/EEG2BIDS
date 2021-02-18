@@ -16,8 +16,6 @@ const Converter = (props) => {
   // React Context
   const socketContext = useContext(SocketContext);
 
-  console.log('Converter rnedered');
-
   // React State
   const [edfFile, setEdfFile] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
@@ -91,10 +89,26 @@ const Converter = (props) => {
           padding: '20px',
         }}>
           <b style={{cursor: 'default'}}>
-            3. Convert file.edf to BIDS format:
+            3. Convert file.edf to BIDS format:&nbsp;
           </b>
           <button onClick={fireBidsConverter}>
             Start Task
+          </button>
+        </div>
+        <div style={{
+          padding: '20px',
+        }}>
+          <FileInput id='events_tsv'
+            name='events_tsv'
+            accept='.tsv'
+            label='4. The events.tsv to include: '
+            onUserInput={onUserInput}
+          />
+          <b style={{cursor: 'default'}}>
+            Package events.tsv in BIDS:&nbsp;
+          </b>
+          <button onClick={fireModifyBidsTsv}>
+          Start Task
           </button>
         </div>
       </div>
@@ -113,7 +127,7 @@ const Converter = (props) => {
       }}>
         <TextInput id='siteID'
           name='siteID'
-          label='4. The SiteID from LORIS: '
+          label='5. The SiteID from LORIS: '
           value={siteID}
           onUserInput={onUserInput}
         />
@@ -123,7 +137,7 @@ const Converter = (props) => {
         backgroundColor: '#039b83',
       }}>
         <b style={{cursor: 'default'}}>
-          5. Modify participants.tsv data:
+          6. Modify participants.tsv data:&nbsp;
         </b>
         <button onClick={fireModifyBidsTsv}>
           Start Task

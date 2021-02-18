@@ -31,7 +31,9 @@ class Converter:
         if self.validate(file):
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
+            print('m_info is ')
             print(m_info)
+            print('c_info is ')
             print(c_info)
             if read_only:
                 return True
