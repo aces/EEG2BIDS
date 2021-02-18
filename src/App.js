@@ -13,7 +13,7 @@ const options = {
 import Menu from './jsx/elements/menu';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
-import DeIdentifier from './jsx/DeIdentifier';
+import Configuration from './jsx/Configuration';
 import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
 // import {Authentication} from './jsx/elements/authentication';
@@ -62,11 +62,11 @@ const App = () => {
                 },
               },
               {
-                title: '2) de-identifier',
+                title: '2) Configuration', // de-identifier
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);
-                  setAppMode('DeIdentifier');
+                  setAppMode('Configuration');
                 },
               },
               {
@@ -90,7 +90,7 @@ const App = () => {
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>
-          <DeIdentifier visible={appMode === 'DeIdentifier'}/>
+          <Configuration visible={appMode === 'Configuration'}/>
           <Converter visible={appMode === 'Converter'}/>
           <Validator visible={appMode === 'Validator'}/>
         </>

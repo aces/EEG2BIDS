@@ -6,14 +6,19 @@ import PropTypes from 'prop-types';
 import {Event, SocketContext} from './socket.io';
 
 // Components
-import {DirectoryInput, FileInput} from './elements/inputs';
+import {
+  DirectoryInput,
+  FileInput,
+  NumberInput,
+  TextInput,
+} from './elements/inputs';
 
 /**
  * DeIdentifier - the de-identifier component.
  * @param {object} props
  * @return {JSX.Element}
  */
-const DeIdentifier = (props) => {
+const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
@@ -23,20 +28,24 @@ const DeIdentifier = (props) => {
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [eventsTSV, setEventsTSV] = useState({});
   const [siteID, setSiteID] = useState('');
+  const [lineFreq, setLineFreq] = useState(''); // line_freq
 
   const onUserInput = async (name, value) => {
     if (name === 'edfFile') {
       await setEdfFile(value);
-      await appContext.setTask('edfFile', value);
-    } else if (name === 'bidsDirectory') {
-      await setBidsDirectory(value);
-      await appContext.setTask('bidsDirectory', value);
-    } else if (name === 'siteID') {
-      await setSiteID(value);
-      await appContext.setTask('siteID', value);
+      await appContext.setTask(name, value);
     } else if (name === 'eventsTSV') {
       await setEventsTSV(value);
-      await appContext.setTask('eventsTSV', value);
+      await appContext.setTask(name, value);
+    } else if (name === 'bidsDirectory') {
+      await setBidsDirectory(value);
+      await appContext.setTask(name, value);
+    } else if (name === 'lineFreq') {
+      await setLineFreq(value);
+      await appContext.setTask(name, value);
+    } else if (name === 'siteID') {
+      await setSiteID(value);
+      await appContext.setTask(name, value);
     }
   };
 
@@ -82,6 +91,15 @@ const DeIdentifier = (props) => {
             onUserInput={onUserInput}
           />
         </div>
+        <div style={{padding: '10px'}}>
+          <NumberInput id='lineFreq'
+            name='lineFreq'
+            label='4. The line_freq used: '
+            value={lineFreq}
+            placeholder='60'
+            onUserInput={onUserInput}
+          />
+        </div>
       </div>
       <div style={{
         fontSize: '20px',
@@ -90,17 +108,24 @@ const DeIdentifier = (props) => {
         cursor: 'default',
         padding: '20px',
       }}>
-        Data anonymization
+        LORIS meta data
       </div>
       <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        ... todo input fields here once given the details ...
+        <div style={{padding: '10px'}}>
+          <TextInput id='siteID'
+            name='siteID'
+            label='5. The SiteID from LORIS: '
+            value={siteID}
+            onUserInput={onUserInput}
+          />
+        </div>
       </div>
       <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };
-DeIdentifier.propTypes = {
+Configuration.propTypes = {
   visible: PropTypes.bool,
 };
 
-export default DeIdentifier;
+export default Configuration;

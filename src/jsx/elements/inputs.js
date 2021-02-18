@@ -39,34 +39,6 @@ FileInput.propTypes = {
   placeholder: PropTypes.string,
 };
 
-export const TextInput = (props) => {
-  const handleChange = (event) => {
-    const value = event.target.value;
-    props.onUserInput(props.id, value);
-  };
-  return (
-    <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
-      <input
-        type='text'
-        id={props.id}
-        name={props.name}
-        value={props.value}
-        onChange={handleChange}
-        placeholder={props.placeholder}
-      />
-    </>
-  );
-};
-TextInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  label: PropTypes.string,
-  value: PropTypes.string,
-  onUserInput: PropTypes.func,
-  placeholder: PropTypes.string,
-};
-
 export const DirectoryInput = (props) => {
   const {dialog} = electron.remote;
   const handleClick = async () => {
@@ -96,12 +68,69 @@ DirectoryInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
-  placeholder: PropTypes.string,
   onUserInput: PropTypes.func,
+  placeholder: PropTypes.string,
+};
+
+export const TextInput = (props) => {
+  const handleChange = (event) => {
+    const value = event.target.value;
+    props.onUserInput(props.id, value);
+  };
+  return (
+    <>
+      <label htmlFor={props.id}><b>{props.label}</b></label>
+      <input
+        type='text'
+        id={props.id}
+        name={props.name}
+        value={props.value}
+        onChange={handleChange}
+        placeholder={props.placeholder}
+      />
+    </>
+  );
+};
+TextInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.string,
+  onUserInput: PropTypes.func,
+  placeholder: PropTypes.string,
+};
+
+export const NumberInput = (props) => {
+  const handleChange = (event) => {
+    const value = event.target.value;
+    props.onUserInput(props.id, value);
+  };
+  return (
+    <>
+      <label htmlFor={props.id}><b>{props.label}</b></label>
+      <input
+        type='number'
+        id={props.id}
+        name={props.name}
+        value={props.value}
+        onChange={handleChange}
+        placeholder={props.placeholder}
+      />
+    </>
+  );
+};
+NumberInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.string,
+  onUserInput: PropTypes.func,
+  placeholder: PropTypes.string,
 };
 
 export default {
   FileInput,
   TextInput,
+  NumberInput,
   DirectoryInput,
 };
