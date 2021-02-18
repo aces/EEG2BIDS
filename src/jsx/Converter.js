@@ -1,11 +1,9 @@
 import React, {useContext, useState} from 'react';
+import {AppContext} from '../context';
+import PropTypes from 'prop-types';
 
 // Socket.io
 import {Event, SocketContext} from './socket.io';
-
-// Components
-import {DirectoryInput, FileInput, TextInput} from './elements/inputs';
-import PropTypes from 'prop-types';
 
 /**
  * Converter - the iEEG to BIDS Converter component.
@@ -14,40 +12,27 @@ import PropTypes from 'prop-types';
  */
 const Converter = (props) => {
   // React Context
+  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
-  // React State
-  const [edfFile, setEdfFile] = useState({});
-  const [bidsDirectory, setBidsDirectory] = useState(null);
-  const [siteID, setSiteID] = useState('');
-
   const fireBidsConverter = () => {
-    socketContext.emit('ieeg_to_bids', {
-      file_path: edfFile.path,
-      bids_directory: bidsDirectory,
-      read_only: false,
-    });
+    console.log(appContext.getFromTask('edfFile').name);
+    // socketContext.emit('ieeg_to_bids', {
+    //   file_path: appContext.task['edfFile'].path,
+    //   bids_directory: appContext.task['bidsDirectory'],
+    //   read_only: false,
+    // });
   };
 
   const fireModifyBidsTsv = () => {
     socketContext.emit('modify_bids_tsv', {
-      bids_directory: bidsDirectory,
-      site_id: siteID,
+      bids_directory: appContext.task['bidsDirectory'],
+      site_id: appContext.task['siteID'],
     });
   };
 
   const onMessage = (message) => {
     console.log(message);
-  };
-
-  const onUserInput = async (name, value) => {
-    if (name === 'edfFile') {
-      await setEdfFile(value);
-    } else if (name === 'bidsDirectory') {
-      await setBidsDirectory(value);
-    } else if (name === 'siteID') {
-      await setSiteID(value);
-    }
   };
 
   return props.visible ? (
@@ -61,54 +46,38 @@ const Converter = (props) => {
       }}>
         iEEG to BIDS Converter
       </div>
-      <div style={{backgroundColor: '#039b83'}}>
-        <div style={{
-          padding: '20px',
-        }}>
-          <FileInput id='edfFile'
-            name='edfFile'
-            accept='.edf'
-            label='1. The file.edf to convert: '
-            onUserInput={onUserInput}
-          />
+      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
+        <div style={{padding: '10px'}}>
+          <b>6. Please review your configurations:</b>&nbsp;
+          <ul>
+            <li>
+              {appContext.getFromTask('edfFile') ?
+            'file.edf: ' + appContext.getFromTask('edfFile').name :
+            'The file.edf hasn\'t been set in configuration.'}
+            </li>
+            <li>
+              {appContext.getFromTask('eventsTSV') ?
+            'Including: ' + appContext.getFromTask('eventsTSV').name :
+            'The events.tsv hasn\'t been set in configuration.'}
+            </li>
+            <li>
+              {appContext.getFromTask('bidsDirectory') ?
+            'BIDS output directory: ' +appContext.getFromTask('bidsDirectory') :
+            'The BIDS output directory hasn\'t been set in configuration.'}
+            </li>
+            <li>
+              {appContext.getFromTask('lineFreq') ?
+            'line_freq: ' + appContext.getFromTask('lineFreq') :
+            'The line_freq hasn\'t been set in configuration.'}
+            </li>
+          </ul>
         </div>
-        <div style={{
-          padding: '20px',
-        }}>
-          <DirectoryInput id='bidsDirectory'
-            name='bidsDirectory'
-            value='Choose directory'
-            label='2. The BIDS output directory: '
-            onUserInput={onUserInput}
-          />
-          <a style={{fontSize: '14px', cursor: 'default'}}>
-            {bidsDirectory ?? 'No directory chosen'}
-          </a>
-        </div>
-        <div style={{
-          padding: '20px',
-        }}>
+        <div style={{padding: '10px'}}>
           <b style={{cursor: 'default'}}>
-            3. Convert file.edf to BIDS format:&nbsp;
+            7. Convert your configurations to BIDS format:&nbsp;
           </b>
           <button onClick={fireBidsConverter}>
             Start Task
-          </button>
-        </div>
-        <div style={{
-          padding: '20px',
-        }}>
-          <FileInput id='events_tsv'
-            name='events_tsv'
-            accept='.tsv'
-            label='4. The events.tsv to include: '
-            onUserInput={onUserInput}
-          />
-          <b style={{cursor: 'default'}}>
-            Package events.tsv in BIDS:&nbsp;
-          </b>
-          <button onClick={fireModifyBidsTsv}>
-          Start Task
           </button>
         </div>
       </div>
@@ -125,12 +94,6 @@ const Converter = (props) => {
         padding: '20px',
         cursor: 'default',
       }}>
-        <TextInput id='siteID'
-          name='siteID'
-          label='5. The SiteID from LORIS: '
-          value={siteID}
-          onUserInput={onUserInput}
-        />
       </div>
       <div style={{
         padding: '20px',

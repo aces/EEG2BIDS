@@ -14,7 +14,7 @@ import {
 } from './elements/inputs';
 
 /**
- * DeIdentifier - the de-identifier component.
+ * Configuration - the configuration component.
  * @param {object} props
  * @return {JSX.Element}
  */
