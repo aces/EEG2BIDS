@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import '../css/SplashScreen.css';
 
 /**
- * Display the splash screen animation.
+ * SplashScreen - the splash screen animation.
  * @param {object} props
  * @return {JSX.Element} - Loader React component
  */

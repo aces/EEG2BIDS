@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import '../css/Welcome.css';
 
 /**
- * Welcome - the welcome component.
+ * Welcome - the Getting started component.
  * @param {object} props
  * @return {JSX.Element}
  */

@@ -14,7 +14,7 @@ import {
 } from './elements/inputs';
 
 /**
- * Configuration - the configuration component.
+ * Configuration - the Data Configuration component.
  * @param {object} props
  * @return {JSX.Element}
  */
