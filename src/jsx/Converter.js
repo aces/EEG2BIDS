@@ -16,11 +16,14 @@ const Converter = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
-  const fireBidsConverter = () => {
+  const beginBidsCreation = () => {
     socketContext.emit('ieeg_to_bids', {
       file_path: appContext.getFromTask('edfFile').path,
       bids_directory: appContext.getFromTask('bidsDirectory'),
       read_only: false,
+      events_tsv: appContext.getFromTask('eventsTSV').path,
+      line_freq: appContext.getFromTask('lineFreq'),
+      site_id: appContext.getFromTask('siteID'),
     });
   };
 
@@ -120,7 +123,7 @@ const Converter = (props) => {
           <b style={{cursor: 'default'}}>
             8. Convert your specifications to BIDS format:&nbsp;
           </b>
-          <button onClick={fireBidsConverter}>
+          <button onClick={beginBidsCreation}>
             Start Task
           </button>
         </div>

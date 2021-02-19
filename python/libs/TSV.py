@@ -1,4 +1,6 @@
+import os
 import csv
+import shutil
 
 
 class Writer:
@@ -31,3 +33,15 @@ class Writer:
             writer = csv.writer(f, delimiter='\t')
             writer.writerow(headers)
             writer.writerows(output)
+
+
+class Copy:
+    def __init__(self, data):
+        print(data)
+        directory_path = 'sub-' + data['subject_id']\
+            .replace('_', '').replace('-', '').replace(' ', '')
+        print(directory_path)
+        new_events_tsv = os.path.join(data['bids_directory'], directory_path, 'ieeg', 'events.tsv')
+        print('new_events_tsv is ')
+        print(new_events_tsv)
+        shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given
