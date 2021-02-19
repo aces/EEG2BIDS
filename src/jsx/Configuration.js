@@ -44,7 +44,7 @@ const Configuration = (props) => {
     } else if (name === 'siteID') {
       await setSiteID(value);
     }
-    // Update the 'task' context.
+    // Update the app context for task.
     await appContext.setTask(name, value);
   };
 
