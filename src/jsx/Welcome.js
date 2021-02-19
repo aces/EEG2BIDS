@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import '../css/Welcome.css';
 
 /**
  * Welcome - the welcome component.
@@ -9,19 +10,12 @@ import PropTypes from 'prop-types';
 const Welcome = (props) => {
   return props.visible ? (
     <>
-      <div style={{
-        fontSize: '20pt',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-        padding: '20px 20px 0 20px',
-        backgroundColor: '#039b83',
-      }}>
-        Welcome to <a style={{fontWeight: 'bold'}}>pyCat!</a>
+      <div className={'title'}>
+        Welcome to <b>pyCat!</b>
       </div>
-      <div style={{backgroundColor: '#039b83', padding: '10px'}}>
-        <p style={{fontSize: '16pt'}}>Hello user,</p>
-        <p style={{fontSize: '14pt'}}><b>pyCat</b>&nbsp;
+      <div className={'info'}>
+        <p className={'font-large'}>Hello user,</p>
+        <p className={'font-medium'}><b>pyCat</b>&nbsp;
           is a simple tool for de-identification of iEEG datasets.
           In addition to de-identifying iEEG files, this tool contains a feature
           that allows mapping the LORIS candidate's information to its
@@ -48,7 +42,7 @@ const Welcome = (props) => {
         <ul>
           <li>todo ...</li>
         </ul>
-        <p style={{fontSize: '14pt'}}>
+        <p className={'font-medium'}>
           You may begin your task by following the menu above.
           Please remember to always backup your data!
         </p>
