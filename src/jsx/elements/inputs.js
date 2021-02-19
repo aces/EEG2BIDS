@@ -4,12 +4,25 @@ import PropTypes from 'prop-types';
 // Electron imports
 const electron = window.require('electron');
 
+/**
+ * FileInput - the input type='file' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
 export const FileInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
   const handleChange = (event) => {
     // Send current file to parent component
     const file = event.target.files[0] ? event.target.files[0] : '';
     props.onUserInput(props.id, file);
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <>
       <label><b>{props.label}</b></label>
@@ -39,8 +52,16 @@ FileInput.propTypes = {
   placeholder: PropTypes.string,
 };
 
+/**
+ * DirectoryInput - the directory select component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
 export const DirectoryInput = (props) => {
   const {dialog} = electron.remote;
+  /**
+   * handleClick - button by user.
+   */
   const handleClick = async () => {
     // Send directory to parent component
     const path = await dialog.showOpenDialog({
@@ -48,6 +69,10 @@ export const DirectoryInput = (props) => {
     });
     props.onUserInput(props.id, path.filePaths[0]);
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <>
       <label htmlFor={props.id}><b>{props.label}</b></label>
@@ -72,11 +97,24 @@ DirectoryInput.propTypes = {
   placeholder: PropTypes.string,
 };
 
+/**
+ * TextInput - the input type='text' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
 export const TextInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
   const handleChange = (event) => {
     const value = event.target.value;
     props.onUserInput(props.id, value);
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <>
       <label htmlFor={props.id}><b>{props.label}</b></label>
@@ -100,11 +138,24 @@ TextInput.propTypes = {
   placeholder: PropTypes.string,
 };
 
+/**
+ * NumberInput - the input type='number' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
 export const NumberInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
   const handleChange = (event) => {
     const value = event.target.value;
     props.onUserInput(props.id, value);
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <>
       <label htmlFor={props.id}><b>{props.label}</b></label>

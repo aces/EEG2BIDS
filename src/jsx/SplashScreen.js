@@ -8,6 +8,10 @@ import '../css/SplashScreen.css';
  * @return {JSX.Element} - Loader React component
  */
 const SplashScreen = (props) => {
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <>
       <p className={'loader-font'}>

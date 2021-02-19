@@ -38,6 +38,10 @@ const App = () => {
         }, 1500);
   }, []);
 
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <Socket uri={uri} options={options}>
       <AppContext.Provider value={{
