@@ -22,6 +22,12 @@ def my_message(sid, data):
 def ieeg_to_bids(sid, data):
     print('ieeg_to_bids: ', data)
     iEEG.Converter(data)
+    directory_name = 'sub-' + iEEG.Converter.m_info['subject_id']\
+        .replace('_', '').replace('-', '').replace(' ', '')
+    print(directory_name)
+    # os.path.join(mydir, myfile)
+    # pathlib.Path(mydir, myfile)
+    # os.path.join( "C:", "meshes", "as" )
     sio.emit('response', 'success')
 
 

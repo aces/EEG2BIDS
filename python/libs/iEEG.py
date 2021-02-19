@@ -6,6 +6,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 
 class Converter:
+    m_info = ''
     # data: {
     #  file_path: '', // where file located.
     #  bids_directory: '', // where to output.
@@ -27,10 +28,15 @@ class Converter:
             print('File not found or is not file: %s', path)
             return False
 
+    @classmethod
+    def set_m_info(cls, value):
+        cls.m_info = value
+
     def to_bids(self, file, bids_directory, task='test', ch_type='seeg', read_only=False):
         if self.validate(file):
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
+            self.set_m_info(m_info)
             print('m_info is ')
             print(m_info)
             print('c_info is ')

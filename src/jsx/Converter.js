@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Converter.css';
@@ -37,17 +37,11 @@ const Converter = (props) => {
 
   return props.visible ? (
     <>
-      <div style={{
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-        padding: '20px',
-      }}>
+      <div className={'header'}>
         iEEG to BIDS format
       </div>
-      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        <div style={{padding: '10px'}}>
+      <div className={'info'}>
+        <div className={'small-pad'}>
           <b>6. Please review your configurations:</b>
           <ul>
             <li>
@@ -104,7 +98,7 @@ const Converter = (props) => {
             </li>
           </ul>
         </div>
-        <div style={{padding: '10px'}}>
+        <div className={'small-pad'}>
           <b>7. Please review your LORIS meta data:</b>
           <ul>
             <li>
@@ -122,19 +116,16 @@ const Converter = (props) => {
             </li>
           </ul>
         </div>
-        <div style={{padding: '10px'}}>
+        <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            8. Convert your configurations to BIDS format:&nbsp;
+            8. Convert your specifications to BIDS format:&nbsp;
           </b>
           <button onClick={fireBidsConverter}>
             Start Task
           </button>
         </div>
       </div>
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#039b83',
-      }}>
+      <div className={'info'}>
         <b style={{cursor: 'default'}}>
           9. Modify participants.tsv data:&nbsp;
         </b>

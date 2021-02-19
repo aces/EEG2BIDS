@@ -3,7 +3,7 @@ import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 
 // Socket.io
-import {Event, SocketContext} from './socket.io';
+// import {Event, SocketContext} from './socket.io';
 
 // Components
 import {
@@ -21,7 +21,7 @@ import {
 const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
-  const socketContext = useContext(SocketContext);
+  // const socketContext = useContext(SocketContext);
 
   // React State
   const [edfFile, setEdfFile] = useState('');
@@ -49,23 +49,17 @@ const Configuration = (props) => {
     }
   };
 
-  const onMessage = (message) => {
-    console.log(message);
-  };
+  // const onMessage = (message) => {
+  //   console.log(message);
+  // };
 
   return props.visible ? (
     <>
-      <div style={{
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-        padding: '20px',
-      }}>
+      <div className={'header'}>
         Data Configuration
       </div>
-      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        <div style={{padding: '10px'}}>
+      <div className={'info'}>
+        <div className={'small-pad'}>
           <FileInput id='edfFile'
             name='edfFile'
             accept='.edf'
@@ -74,7 +68,7 @@ const Configuration = (props) => {
             onUserInput={onUserInput}
           />
         </div>
-        <div style={{padding: '10px'}}>
+        <div className={'small-pad'}>
           <FileInput id='eventsTSV'
             name='eventsTSV'
             accept='.tsv'
@@ -83,7 +77,7 @@ const Configuration = (props) => {
             onUserInput={onUserInput}
           />
         </div>
-        <div style={{padding: '10px'}}>
+        <div className={'small-pad'}>
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
             label='3. The BIDS output directory: '
@@ -91,7 +85,7 @@ const Configuration = (props) => {
             onUserInput={onUserInput}
           />
         </div>
-        <div style={{padding: '10px'}}>
+        <div className={'small-pad'}>
           <NumberInput id='lineFreq'
             name='lineFreq'
             label='4. The line_freq used: '
@@ -101,17 +95,11 @@ const Configuration = (props) => {
           />
         </div>
       </div>
-      <div style={{
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-        padding: '20px',
-      }}>
+      <div className={'header'}>
         LORIS meta data
       </div>
-      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
-        <div style={{padding: '10px'}}>
+      <div className={'info'}>
+        <div className={'small-pad'}>
           <TextInput id='siteID'
             name='siteID'
             label='5. The SiteID from LORIS: '
@@ -120,7 +108,7 @@ const Configuration = (props) => {
           />
         </div>
       </div>
-      <Event event='response' handler={onMessage} />
+      {/*<Event event='response' handler={onMessage} />*/}
     </>
   ) : null;
 };
