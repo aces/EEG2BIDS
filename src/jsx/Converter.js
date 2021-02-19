@@ -44,7 +44,7 @@ const Converter = (props) => {
         cursor: 'default',
         padding: '20px',
       }}>
-        iEEG to BIDS Converter
+        iEEG to BIDS format
       </div>
       <div style={{backgroundColor: '#039b83', padding: '14px'}}>
         <div style={{padding: '10px'}}>
