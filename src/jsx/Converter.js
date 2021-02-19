@@ -1,6 +1,7 @@
 import React, {useContext, useState} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
+import '../css/Converter.css';
 
 // Socket.io
 import {Event, SocketContext} from './socket.io';
@@ -16,18 +17,17 @@ const Converter = (props) => {
   const socketContext = useContext(SocketContext);
 
   const fireBidsConverter = () => {
-    console.log(appContext.getFromTask('edfFile').name);
-    // socketContext.emit('ieeg_to_bids', {
-    //   file_path: appContext.task['edfFile'].path,
-    //   bids_directory: appContext.task['bidsDirectory'],
-    //   read_only: false,
-    // });
+    socketContext.emit('ieeg_to_bids', {
+      file_path: appContext.getFromTask('edfFile').path,
+      bids_directory: appContext.getFromTask('bidsDirectory'),
+      read_only: false,
+    });
   };
 
   const fireModifyBidsTsv = () => {
     socketContext.emit('modify_bids_tsv', {
-      bids_directory: appContext.task['bidsDirectory'],
-      site_id: appContext.task['siteID'],
+      bids_directory: appContext.getFromTask('bidsDirectory'),
+      site_id: appContext.getFromTask('siteID'),
     });
   };
 
@@ -52,23 +52,55 @@ const Converter = (props) => {
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
-            'file.edf: ' + appContext.getFromTask('edfFile').name :
-            'The file.edf hasn\'t been set in configuration.'}
+                (<>
+                  The file.edf:&nbsp;
+                  {appContext.getFromTask('edfFile').name}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The file.edf hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
             </li>
             <li>
               {appContext.getFromTask('eventsTSV') ?
-            'Including: ' + appContext.getFromTask('eventsTSV').name :
-            'The events.tsv hasn\'t been set in configuration.'}
+                (<>
+                  Including:&nbsp;
+                  {appContext.getFromTask('eventsTSV').name}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The events.tsv hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
             </li>
             <li>
               {appContext.getFromTask('bidsDirectory') ?
-            'BIDS output directory: ' +appContext.getFromTask('bidsDirectory') :
-            'The BIDS output directory hasn\'t been set in configuration.'}
+                (<>
+                  BIDS output directory:&nbsp;
+                  {appContext.getFromTask('bidsDirectory')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The BIDS output directory hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
             </li>
             <li>
               {appContext.getFromTask('lineFreq') ?
-            'line_freq: ' + appContext.getFromTask('lineFreq') :
-            'The line_freq hasn\'t been set in configuration.'}
+                (<>
+                  line_freq:&nbsp;
+                  {appContext.getFromTask('lineFreq')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The line_freq hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
             </li>
           </ul>
         </div>
