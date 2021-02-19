@@ -9,9 +9,9 @@ import '../../css/Menu.css';
  */
 const MenuTab = (props) => {
   const styles = {
-    step: {
+    menuTab: {
       width: props.width,
-      padding: '0 0 2px 0',
+      padding: '0 0 10px 0',
       position: 'relative',
       display: 'table-cell',
       WebkitUserSelect: 'none',
@@ -19,7 +19,7 @@ const MenuTab = (props) => {
     },
     title: {
       default: {
-        fontSize: 16,
+        fontSize: 18,
         color: 'black',
         display: 'block',
         fontWeight: '300',
@@ -28,7 +28,8 @@ const MenuTab = (props) => {
         textAlign: 'center',
       },
       active: {
-        color: 'white',
+        color: '#0d957e',
+        fontWeight: 'bold',
       },
     },
   };
@@ -39,7 +40,7 @@ const MenuTab = (props) => {
       {}),
   };
   return (
-    <div style={styles.step}>
+    <div style={styles.menuTab}>
       <div style={styleTitleText}
         onClick={props.onClick}>
         {props.title}
@@ -65,6 +66,8 @@ const Menu = (props) => {
       padding: 0,
       minHeight: 0,
       width: '100%',
+      backgroundColor: '#fff',
+      borderBottom: '5px solid #107d6a',
     },
     menu: {
       width: '100%',

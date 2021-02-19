@@ -6,6 +6,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 
 class Converter:
+    m_info = ''
     # data: {
     #  file_path: '', // where file located.
     #  bids_directory: '', // where to output.
@@ -16,7 +17,8 @@ class Converter:
         self.to_bids(
             file=data['file_path'],
             bids_directory=data['bids_directory'],
-            read_only=data['read_only']
+            read_only=data['read_only'],
+            line_freq=data['line_freq']
         )
 
     @staticmethod
@@ -27,11 +29,24 @@ class Converter:
             print('File not found or is not file: %s', path)
             return False
 
-    def to_bids(self, file, bids_directory, task='test', ch_type='seeg', read_only=False):
+    @classmethod
+    def set_m_info(cls, value):
+        cls.m_info = value
+
+    def to_bids(self,
+                file,
+                bids_directory,
+                task='test',
+                ch_type='seeg',
+                read_only=False,
+                line_freq=60):
         if self.validate(file):
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
+            self.set_m_info(m_info)
+            print('m_info is ')
             print(m_info)
+            print('c_info is ')
             print(c_info)
             if read_only:
                 return True
@@ -47,18 +62,16 @@ class Converter:
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
             print('LOOK:')
             print(subject)
-            # subject = 'alizee'  # can be modified will output sub-alizee
+            # subject = 'alizee'  # modified will output sub-alizee
             print('END~~~~~~~~~~~')
             bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition="seeg")
-            raw.info['line_freq'] = 60  # change when known.
+            raw.info['line_freq'] = line_freq
             raw.info['subject_info'] = {
-                'his_id': "test",
-                'birthday': (1993, 1, 26),
+                # 'his_id': "test",
+                # 'birthday': (1993, 1, 26),
                 # 'sex': 1,
                 # 'hand': 2,
-                'SiteID': 'test'
             }
-            raw.info['alizee'] = 'alizee was here'
             raw._init_kwargs = {
                 'input_fname': file,
                 'eog': None,
@@ -78,4 +91,5 @@ class Modifier:
     def __init__(self, data):
         print('- Modifier: init started.')
         # print(data)
-        TSV.Writer(data)
+        TSV.Writer(data)  # includes SiteID to participants.tsv
+        TSV.Copy(data)  # copies events.tsv to ieeg directory.

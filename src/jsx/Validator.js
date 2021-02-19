@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 /**
- * Validator - the validator component.
+ * Validator - the Validation confirmation component.
  * @param {object} props
  * @return {JSX.Element}
  */

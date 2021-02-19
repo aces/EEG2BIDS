@@ -13,7 +13,7 @@ const options = {
 import Menu from './jsx/elements/menu';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
-import DeIdentifier from './jsx/DeIdentifier';
+import Configuration from './jsx/Configuration';
 import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
 // import {Authentication} from './jsx/elements/authentication';
@@ -23,8 +23,10 @@ import Validator from './jsx/Validator';
  * @return {JSX.Element}
  */
 const App = () => {
+  // React State
   const [appMode, setAppMode] = useState('SplashScreen');
   const [activeMenuTab, setActiveMenuTab] = useState(0);
+  const [task, setTask] = useState({});
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -42,12 +44,22 @@ const App = () => {
         setAppMode: (appMode) => {
           setAppMode(appMode);
         },
+        setTask: (key, value) => {
+          task[key] = value;
+          console.log(task);
+          setTask(task);
+        },
+        getFromTask: (key) => {
+          console.log('getFromTask:');
+          console.log(task[key]);
+          return task[key];
+        },
       }}>
         <>
           <Menu visible={appMode !== 'SplashScreen'}
             tabs={[
               {
-                title: 'Getting started',
+                title: '1) Getting started',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(0);
@@ -55,15 +67,15 @@ const App = () => {
                 },
               },
               {
-                title: 'de-identifier',
+                title: '2) Configuration', // de-identifier
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);
-                  setAppMode('DeIdentifier');
+                  setAppMode('Configuration');
                 },
               },
               {
-                title: 'iEEG Converter',
+                title: '3) iEEG to BIDS',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(2);
@@ -71,7 +83,7 @@ const App = () => {
                 },
               },
               {
-                title: 'Validator',
+                title: '4) Validator',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(3);
@@ -83,7 +95,7 @@ const App = () => {
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>
-          <DeIdentifier visible={appMode === 'DeIdentifier'}/>
+          <Configuration visible={appMode === 'Configuration'}/>
           <Converter visible={appMode === 'Converter'}/>
           <Validator visible={appMode === 'Validator'}/>
         </>

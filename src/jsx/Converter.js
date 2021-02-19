@@ -1,40 +1,29 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext} from 'react';
+import {AppContext} from '../context';
+import PropTypes from 'prop-types';
+import '../css/Converter.css';
 
 // Socket.io
 import {Event, SocketContext} from './socket.io';
 
-// Components
-import {DirectoryInput, FileInput, TextInput} from './elements/inputs';
-import PropTypes from 'prop-types';
-
 /**
- * Converter - the iEEG to BIDS Converter component.
+ * Converter - the iEEG to BIDS component.
  * @param {object} props
  * @return {JSX.Element}
  */
 const Converter = (props) => {
   // React Context
+  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
-  console.log('Converter rnedered');
-
-  // React State
-  const [edfFile, setEdfFile] = useState({});
-  const [bidsDirectory, setBidsDirectory] = useState(null);
-  const [siteID, setSiteID] = useState('');
-
-  const fireBidsConverter = () => {
+  const beginBidsCreation = () => {
     socketContext.emit('ieeg_to_bids', {
-      file_path: edfFile.path,
-      bids_directory: bidsDirectory,
+      file_path: appContext.getFromTask('edfFile').path,
+      bids_directory: appContext.getFromTask('bidsDirectory'),
       read_only: false,
-    });
-  };
-
-  const fireModifyBidsTsv = () => {
-    socketContext.emit('modify_bids_tsv', {
-      bids_directory: bidsDirectory,
-      site_id: siteID,
+      events_tsv: appContext.getFromTask('eventsTSV').path,
+      line_freq: appContext.getFromTask('lineFreq'),
+      site_id: appContext.getFromTask('siteID'),
     });
   };
 
@@ -42,92 +31,95 @@ const Converter = (props) => {
     console.log(message);
   };
 
-  const onUserInput = async (name, value) => {
-    if (name === 'edfFile') {
-      await setEdfFile(value);
-    } else if (name === 'bidsDirectory') {
-      await setBidsDirectory(value);
-    } else if (name === 'siteID') {
-      await setSiteID(value);
-    }
-  };
-
   return props.visible ? (
     <>
-      <div style={{
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-        padding: '20px',
-      }}>
-        iEEG to BIDS Converter
+      <div className={'header'}>
+        iEEG to BIDS format
       </div>
-      <div style={{backgroundColor: '#039b83'}}>
-        <div style={{
-          padding: '20px',
-        }}>
-          <FileInput id='edfFile'
-            name='edfFile'
-            accept='.edf'
-            label='1. The file.edf to convert: '
-            onUserInput={onUserInput}
-          />
+      <div className={'info'}>
+        <div className={'small-pad'}>
+          <b>6. Please review your configurations:</b>
+          <ul>
+            <li>
+              {appContext.getFromTask('edfFile') ?
+                (<>
+                  The file.edf:&nbsp;
+                  {appContext.getFromTask('edfFile').name}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The file.edf hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('eventsTSV') ?
+                (<>
+                  Including:&nbsp;
+                  {appContext.getFromTask('eventsTSV').name}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The events.tsv hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('bidsDirectory') ?
+                (<>
+                  BIDS output directory:&nbsp;
+                  {appContext.getFromTask('bidsDirectory')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The BIDS output directory hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('lineFreq') ?
+                (<>
+                  line_freq:&nbsp;
+                  {appContext.getFromTask('lineFreq')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The line_freq hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+          </ul>
         </div>
-        <div style={{
-          padding: '20px',
-        }}>
-          <DirectoryInput id='bidsDirectory'
-            name='bidsDirectory'
-            value='Choose directory'
-            label='2. The BIDS output directory: '
-            onUserInput={onUserInput}
-          />
-          <a style={{fontSize: '14px', cursor: 'default'}}>
-            {bidsDirectory ?? 'No directory chosen'}
-          </a>
+        <div className={'small-pad'}>
+          <b>7. Please review your LORIS meta data:</b>
+          <ul>
+            <li>
+              {appContext.getFromTask('siteID') ?
+                (<>
+                  The SiteID:&nbsp;
+                  {appContext.getFromTask('siteID')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The SiteID hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+          </ul>
         </div>
-        <div style={{
-          padding: '20px',
-        }}>
+        <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            3. Convert file.edf to BIDS format:
+            8. Convert your specifications to BIDS format:&nbsp;
           </b>
-          <button onClick={fireBidsConverter}>
+          <button onClick={beginBidsCreation}>
             Start Task
           </button>
         </div>
-      </div>
-      <div style={{marginTop: '20px',
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-      }}>
-        Finalize participants.tsv for LORIS
-      </div>
-      <div style={{marginTop: '20px',
-        backgroundColor: '#039b83',
-        padding: '20px',
-        cursor: 'default',
-      }}>
-        <TextInput id='siteID'
-          name='siteID'
-          label='4. The SiteID from LORIS: '
-          value={siteID}
-          onUserInput={onUserInput}
-        />
-      </div>
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#039b83',
-      }}>
-        <b style={{cursor: 'default'}}>
-          5. Modify participants.tsv data:
-        </b>
-        <button onClick={fireModifyBidsTsv}>
-          Start Task
-        </button>
       </div>
       <Event event='response' handler={onMessage} />
     </>

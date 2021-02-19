@@ -13,8 +13,8 @@ pyCat is a GUI interface for iEEG to BIDS conversion for LORIS (Longitudinal Onl
 
 #### Development Requirements
 
- * Node.js >= 14.5.4
- * NPM >= 7.5.2
+ * Node.js >= 15.9.0
+ * NPM >= 7.5.3
  * Python == 3.8.x
 
 #### Development Build guides
