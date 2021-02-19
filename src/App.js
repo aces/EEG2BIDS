@@ -75,7 +75,7 @@ const App = () => {
                 },
               },
               {
-                title: '3) iEEG Converter',
+                title: '3) iEEG to BIDS',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(2);

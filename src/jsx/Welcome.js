@@ -28,7 +28,7 @@ const Welcome = (props) => {
           study identifier.
         </p>
         <p>
-          <b>The de-identifier tab allows to:</b>
+          <b>The Configuration tab allows to:</b>
         </p>
         <ul>
           <li>todo ...</li>
@@ -36,7 +36,7 @@ const Welcome = (props) => {
           <li>todo ...</li>
         </ul>
         <p>
-          <b>The iEEG Converter tab allows to:</b>
+          <b>The iEEG to BIDS tab allows to:</b>
         </p>
         <ul>
           <li>todo ...</li>
