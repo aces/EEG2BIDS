@@ -25,10 +25,10 @@ const Configuration = (props) => {
 
   // React State
   const [edfFile, setEdfFile] = useState('');
-  const [bidsDirectory, setBidsDirectory] = useState(null);
   const [eventsTSV, setEventsTSV] = useState({});
-  const [siteID, setSiteID] = useState('');
+  const [bidsDirectory, setBidsDirectory] = useState(null);
   const [lineFreq, setLineFreq] = useState(''); // line_freq
+  const [siteID, setSiteID] = useState('');
 
   const onUserInput = async (name, value) => {
     if (name === 'edfFile') {

@@ -17,7 +17,7 @@ const Welcome = (props) => {
         padding: '20px 20px 0 20px',
         backgroundColor: '#039b83',
       }}>
-        Welcome to pyCat!
+        Welcome to <a style={{fontWeight: 'bold'}}>pyCat!</a>
       </div>
       <div style={{backgroundColor: '#039b83', padding: '10px'}}>
         <p style={{fontSize: '16pt'}}>Hello user,</p>

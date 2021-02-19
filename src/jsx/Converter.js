@@ -48,7 +48,7 @@ const Converter = (props) => {
       </div>
       <div style={{backgroundColor: '#039b83', padding: '14px'}}>
         <div style={{padding: '10px'}}>
-          <b>6. Please review your configurations:</b>&nbsp;
+          <b>6. Please review your configurations:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
@@ -105,34 +105,38 @@ const Converter = (props) => {
           </ul>
         </div>
         <div style={{padding: '10px'}}>
+          <b>7. Please review your LORIS meta data:</b>
+          <ul>
+            <li>
+              {appContext.getFromTask('siteID') ?
+                (<>
+                  The SiteID:&nbsp;
+                  {appContext.getFromTask('siteID')}
+                  <a className={'checkmark'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The SiteID hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+          </ul>
+        </div>
+        <div style={{padding: '10px'}}>
           <b style={{cursor: 'default'}}>
-            7. Convert your configurations to BIDS format:&nbsp;
+            8. Convert your configurations to BIDS format:&nbsp;
           </b>
           <button onClick={fireBidsConverter}>
             Start Task
           </button>
         </div>
       </div>
-      <div style={{marginTop: '20px',
-        fontSize: '20px',
-        textAlign: 'center',
-        verticalAlign: 'middle',
-        cursor: 'default',
-      }}>
-        Finalize participants.tsv for LORIS
-      </div>
-      <div style={{marginTop: '20px',
-        backgroundColor: '#039b83',
-        padding: '20px',
-        cursor: 'default',
-      }}>
-      </div>
       <div style={{
         padding: '20px',
         backgroundColor: '#039b83',
       }}>
         <b style={{cursor: 'default'}}>
-          6. Modify participants.tsv data:&nbsp;
+          9. Modify participants.tsv data:&nbsp;
         </b>
         <button onClick={fireModifyBidsTsv}>
           Start Task
