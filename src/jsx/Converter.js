@@ -27,13 +27,6 @@ const Converter = (props) => {
     });
   };
 
-  const fireModifyBidsTsv = () => {
-    socketContext.emit('modify_bids_tsv', {
-      bids_directory: appContext.getFromTask('bidsDirectory'),
-      site_id: appContext.getFromTask('siteID'),
-    });
-  };
-
   const onMessage = (message) => {
     console.log(message);
   };
@@ -127,14 +120,6 @@ const Converter = (props) => {
             Start Task
           </button>
         </div>
-      </div>
-      <div className={'info'}>
-        <b style={{cursor: 'default'}}>
-          9. Modify participants.tsv data:&nbsp;
-        </b>
-        <button onClick={fireModifyBidsTsv}>
-          Start Task
-        </button>
       </div>
       <Event event='response' handler={onMessage} />
     </>

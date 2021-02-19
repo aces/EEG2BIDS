@@ -28,13 +28,6 @@ def ieeg_to_bids(sid, data):
 
 
 @sio.event
-def modify_bids_tsv(sid, data):
-    print('modify_bids_tsv: ', data)
-    iEEG.Modifier(data)
-    sio.emit('response', 'success')
-
-
-@sio.event
 def disconnect(sid):
     print('disconnect: ', sid)
 
