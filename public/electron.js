@@ -6,7 +6,7 @@ const {app} = electron;
 const {BrowserWindow} = electron;
 const nativeImage = electron.nativeImage;
 
-const PycatService = require('./pycat-service');
+const PycatService = require('../public/pycatService');
 
 // Launch python service.
 const pycatService = new PycatService('production'); // production or development
@@ -50,6 +50,7 @@ const createWindow = () => {
     webPreferences: {
       webSecurity: true,
       nodeIntegration: true,
+      contextIsolation: false,
       enableRemoteModule: true,
       nativeWindowOpen: true,
     },
