@@ -7,6 +7,10 @@ import PropTypes from 'prop-types';
  * @return {JSX.Element}
  */
 const Validator = (props) => {
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <>
       <div style={{

@@ -4,9 +4,9 @@
 
 #### Development Requirements
 
- * Node.js >= 14.5.4
+ * Node.js >= 15.9.0
  * NPM >= 7.5.2
- * Python == 3.8
+ * Python == 3.8.5
 
 #### Development Build guide
 
@@ -15,7 +15,7 @@ Inside project root using your terminal type:
 npm install
 npm run start
 # In another terminal inside project root type:
-python3.8 -m venv .
+python -m venv .
 source bin/activate
 pip install -r requirements.txt
 python -m python.pycat

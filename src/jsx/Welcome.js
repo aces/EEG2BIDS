@@ -8,6 +8,10 @@ import '../css/Welcome.css';
  * @return {JSX.Element}
  */
 const Welcome = (props) => {
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <>
       <div className={'title'}>

@@ -39,6 +39,10 @@ const MenuTab = (props) => {
       styles.title.active :
       {}),
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <div style={styles.menuTab}>
       <div style={styleTitleText}
@@ -75,6 +79,10 @@ const Menu = (props) => {
       display: 'table',
     },
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <div style={styles.root}>
       <div style={styles.menu}>

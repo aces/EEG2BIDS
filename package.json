@@ -1,9 +1,9 @@
 {
   "name": "pycat",
-  "description": "pycat is a desktop interface for conversion to BIDS",
+  "description": "pycat - iEEG to BIDS format Wizard",
   "version": "1.0.0",
   "dependencies": {
-    "electron-log": "^4.3.1",
+    "electron-log": "^4.3.2",
     "electron-store": "^7.0.2",
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
@@ -14,10 +14,10 @@
   "devDependencies": {
     "@babel/core": "^7.12.17",
     "@babel/eslint-parser": "^7.12.17",
-    "concurrently": "^5.3.0",
+    "concurrently": "^6.0.0",
     "cross-env": "^7.0.3",
     "electron": "^11.2.3",
-    "electron-builder": "^22.9.1",
+    "electron-builder": "^22.9.0",
     "electron-devtools-installer": "^3.1.1",
     "electron-rebuild": "^2.3.5",
     "eslint": "^7.20.0",

@@ -4,9 +4,9 @@
 
 #### Development Requirements
 
- * Node.js >= 14.5.4
+ * Node.js >= 15.9.0
  * NPM >= 7.5.2
- * Python == 3.8
+ * Python == 3.8.5
 
 #### Development Build guide
 

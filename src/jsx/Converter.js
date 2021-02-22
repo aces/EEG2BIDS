@@ -16,6 +16,9 @@ const Converter = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
+  /**
+   * beginBidsCreation - create BIDS format.
+   */
   const beginBidsCreation = () => {
     socketContext.emit('ieeg_to_bids', {
       file_path: appContext.getFromTask('edfFile').path,
@@ -27,10 +30,18 @@ const Converter = (props) => {
     });
   };
 
+  /**
+   * onMessage - received message from python.
+   * @param {object} message - response
+   */
   const onMessage = (message) => {
     console.log(message);
   };
 
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <>
       <div className={'header'}>

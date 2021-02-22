@@ -2,9 +2,6 @@ import React, {useState, useContext} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 
-// Socket.io
-// import {Event, SocketContext} from './socket.io';
-
 // Components
 import {
   DirectoryInput,
@@ -21,38 +18,40 @@ import {
 const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
-  // const socketContext = useContext(SocketContext);
 
   // React State
-  const [edfFile, setEdfFile] = useState('');
+  const [edfFile, setEdfFile] = useState({});
   const [eventsTSV, setEventsTSV] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
-  const [lineFreq, setLineFreq] = useState(''); // line_freq
+  const [lineFreq, setLineFreq] = useState('');
   const [siteID, setSiteID] = useState('');
 
+  /**
+   * onUserInput - input change by user.
+   * @param {string} name - element name
+   * @param {object|string} value - element value
+   */
   const onUserInput = async (name, value) => {
+    // Update the state of Configurations.
     if (name === 'edfFile') {
       await setEdfFile(value);
-      await appContext.setTask(name, value);
     } else if (name === 'eventsTSV') {
       await setEventsTSV(value);
-      await appContext.setTask(name, value);
     } else if (name === 'bidsDirectory') {
       await setBidsDirectory(value);
-      await appContext.setTask(name, value);
     } else if (name === 'lineFreq') {
       await setLineFreq(value);
-      await appContext.setTask(name, value);
     } else if (name === 'siteID') {
       await setSiteID(value);
-      await appContext.setTask(name, value);
     }
+    // Update the app context for task.
+    await appContext.setTask(name, value);
   };
 
-  // const onMessage = (message) => {
-  //   console.log(message);
-  // };
-
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return props.visible ? (
     <>
       <div className={'header'}>
@@ -108,7 +107,6 @@ const Configuration = (props) => {
           />
         </div>
       </div>
-      {/*<Event event='response' handler={onMessage} />*/}
     </>
   ) : null;
 };
