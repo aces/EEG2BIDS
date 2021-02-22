@@ -1,6 +1,5 @@
 const {spawn} = require('child_process'); // {fork}
 
-
 /**
  * PycatService
  */
@@ -28,10 +27,8 @@ module.exports = class PycatService {
           'dist/pycat-service'
     );
     console.log(pathToService);
-    this.process = spawn(pathToService, [], {
-      // stdio: ['pipe', 'pipe', 'pipe'],
+    this.process = spawn(pathToService, {
       silent: true,
-      // encoding: 'utf8',
     });
     this.process.stdout.on('data', (data) => {
       console.log('stdout data:');

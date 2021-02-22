@@ -60,11 +60,12 @@ const createWindow = () => {
     minHeight: 600,
     backgroundColor: '#0A826E',
   });
+  mainWindow.removeMenu(); // Hides menu on Linux & Windows
   // mainWindow.maximize();
   mainWindow.show();
 
   mainWindow.loadURL(startUrl);
-  // process.env.DEV && mainWindow.webContents.openDevTools();
+  process.env.DEV && mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', function() {
     pycatService.shutdown();
