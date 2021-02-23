@@ -50,12 +50,9 @@ const App = () => {
         },
         setTask: (key, value) => {
           task[key] = value;
-          console.log(task);
           setTask(task);
         },
         getFromTask: (key) => {
-          console.log('getFromTask:');
-          console.log(task[key]);
           return task[key];
         },
       }}>

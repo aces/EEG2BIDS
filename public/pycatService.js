@@ -34,7 +34,7 @@ module.exports = class PycatService {
   shutdown() {
     if (this.mode === 'development') return;
     if (this.process) {
-      console.log('SHUTDOWN of pycatService');
+      console.info('[SHUTDOWN of pycatService]');
       this.process.kill();
       this.process = null;
     }

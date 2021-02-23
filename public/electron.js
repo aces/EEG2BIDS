@@ -6,7 +6,9 @@ const {app} = electron;
 const {BrowserWindow} = electron;
 const nativeImage = electron.nativeImage;
 
-const PycatService = require('../public/pycatService');
+const PycatService = process.env.DEV ?
+  require('../public/pycatService') :
+  require(path.join(__dirname, '../build/pycatService'));
 
 // Launch python service.
 const pycatService = new PycatService('production'); // production or development
@@ -21,10 +23,10 @@ if (process.env.DEV) {
 
   app.whenReady().then(() => {
     installExtension(REDUX_DEVTOOLS).then((name) =>
-      console.log(`Added Extension:  ${name}`),
+      console.info(`Added Extension:  ${name}`),
     );
     installExtension(REACT_DEVELOPER_TOOLS).then((name) =>
-      console.log(`Added Extension:  ${name}`),
+      console.info(`Added Extension:  ${name}`),
     );
   });
 }
@@ -39,11 +41,7 @@ let mainWindow;
 const createWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000' :
-    url.format({
-      pathname: path.join(__dirname, '/../build/index.html'),
-      protocol: 'file:',
-      slashes: true,
-    });
+    url.pathToFileURL(path.join(__dirname, '/../build/index.html')).href;
   mainWindow = new BrowserWindow({
     show: false,
     icon,
@@ -64,7 +62,14 @@ const createWindow = () => {
   // mainWindow.maximize();
   mainWindow.show();
 
-  mainWindow.loadURL(startUrl);
+  mainWindow.loadURL(startUrl).then(() => {
+    console.info('pyCat ');
+  });
+  console.log('LOOK here:');
+  console.log(startUrl);
+  console.log(String(Object.assign(new URL('http://localhost:3000'),
+      {pathname: ''}
+  )));
   process.env.DEV && mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', function() {

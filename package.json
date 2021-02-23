@@ -12,12 +12,12 @@
     "socket.io-client": "^3.1.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.17",
-    "@babel/eslint-parser": "^7.12.17",
+    "@babel/core": "^7.13.1",
+    "@babel/eslint-parser": "^7.13.4",
     "concurrently": "^6.0.0",
     "cross-env": "^7.0.3",
     "electron": "^11.3.0",
-    "electron-builder": "^22.9.1",
+    "electron-builder": "^22.8.1",
     "electron-devtools-installer": "^3.1.1",
     "electron-rebuild": "^2.3.5",
     "eslint": "^7.20.0",
@@ -31,7 +31,7 @@
     "wait-on": "^5.2.1"
   },
   "scripts": {
-    "rebuild": "rebuild zeromq --runtime=electron --target=11.2.1",
+    "rebuild": "rebuild --runtime=electron --target=11.2.1",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently 'npm run react-start' 'wait-on http://localhost:3000/ && npm run electron-start'",
@@ -113,7 +113,6 @@
     ],
     "directories": {
       "buildResources": "assets"
-    },
-    "extends": "zeromq"
+    }
   }
 }
