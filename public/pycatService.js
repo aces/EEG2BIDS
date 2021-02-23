@@ -26,19 +26,7 @@ module.exports = class PycatService {
           'dist/pycat-service-windows.exe' :
           'dist/pycat-service'
     );
-    console.log(pathToService);
     this.process = spawn(pathToService);
-    this.process.stdout.on('data', (data) => {
-      console.log('stdout data:');
-      console.log(`stdout: ${data}`);
-    });
-    this.process.stderr.on('data', (data) => {
-      console.log('stderr data:');
-    });
-    this.process.on('close', (code) => {
-      console.log('close:');
-      console.log(`child process exited with code ${code}`);
-    });
   }
   /**
    * shutdown the service process
