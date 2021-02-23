@@ -49,7 +49,7 @@ const createWindow = () => {
       webSecurity: true,
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
+      enableRemoteModule: true,
       preload: path.join(__dirname, 'preload.js'),
       nativeWindowOpen: true,
     },

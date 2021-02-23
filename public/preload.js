@@ -1,3 +1,9 @@
-const electron = require('electron');
+const {contextBridge} = require('electron');
 
-window.dialog = electron.remote;
+contextBridge.exposeInMainWorld('myAPI', {
+  dialog: () => {
+    const electron = require('electron');
+    const {dialog} = electron.remote;
+    return dialog;
+  },
+});
