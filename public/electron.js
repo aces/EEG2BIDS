@@ -31,6 +31,9 @@ if (process.env.DEV) {
   });
 }
 
+console.log('LOOK here:');
+console.log(path.resolve(__dirname, 'preload.js'));
+
 const icon = nativeImage.createFromPath(
     path.join(__dirname, 'app_icon.png')
 );
@@ -47,9 +50,10 @@ const createWindow = () => {
     icon,
     webPreferences: {
       webSecurity: true,
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js'),
       nativeWindowOpen: true,
     },
     width: 900,

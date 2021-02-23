@@ -111,6 +111,9 @@
       "dist/*",
       "package.json"
     ],
+    "extraResources": [
+      "public/preload.js"
+    ],
     "directories": {
       "buildResources": "assets"
     }

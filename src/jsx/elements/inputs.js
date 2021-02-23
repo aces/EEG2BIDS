@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // Electron imports
-const electron = window.require('electron');
+// const electron = window.require('electron');
 
 /**
  * FileInput - the input type='file' component.
@@ -58,7 +58,7 @@ FileInput.propTypes = {
  * @return {JSX.Element}
  */
 export const DirectoryInput = (props) => {
-  const {dialog} = electron.remote;
+  const dialog = window.dialog;
   /**
    * handleClick - button by user.
    */
