@@ -1,4 +1,4 @@
-const {spawn} = require('child_process'); // {fork}
+const {spawn} = require('child_process');
 
 /**
  * PycatService
