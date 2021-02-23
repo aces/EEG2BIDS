@@ -11,7 +11,7 @@ const PycatService = process.env.DEV ?
   require(path.join(__dirname, '../build/pycatService'));
 
 // Launch python service.
-const pycatService = new PycatService('production'); // production or development
+const pycatService = new PycatService();
 pycatService.startup();
 
 if (process.env.DEV) {
@@ -30,9 +30,6 @@ if (process.env.DEV) {
     );
   });
 }
-
-console.log('LOOK here:');
-console.log(path.resolve(__dirname, 'preload.js'));
 
 const icon = nativeImage.createFromPath(
     path.join(__dirname, 'app_icon.png')
