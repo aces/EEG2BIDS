@@ -37,7 +37,7 @@ const Converter = (props) => {
    * @param {object} message - response
    */
   const onMessage = (message) => {
-    console.log(message);
+    console.info(message);
   };
 
   /**

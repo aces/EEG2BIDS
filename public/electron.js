@@ -63,14 +63,8 @@ const createWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    console.info('pyCat ');
+    process.env.DEV && mainWindow.webContents.openDevTools();
   });
-  console.log('LOOK here:');
-  console.log(startUrl);
-  console.log(String(Object.assign(new URL('http://localhost:3000'),
-      {pathname: ''}
-  )));
-  process.env.DEV && mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', function() {
     pycatService.shutdown();
