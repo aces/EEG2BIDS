@@ -1,6 +1,5 @@
 const {spawn} = require('child_process'); // {fork}
 
-
 /**
  * PycatService
  */
@@ -27,23 +26,7 @@ module.exports = class PycatService {
           'dist/pycat-service-windows.exe' :
           'dist/pycat-service'
     );
-    console.log(pathToService);
-    this.process = spawn(pathToService, [], {
-      // stdio: ['pipe', 'pipe', 'pipe'],
-      silent: true,
-      // encoding: 'utf8',
-    });
-    this.process.stdout.on('data', (data) => {
-      console.log('stdout data:');
-      console.log(`stdout: ${data}`);
-    });
-    this.process.stderr.on('data', (data) => {
-      console.log('stderr data:');
-    });
-    this.process.on('close', (code) => {
-      console.log('close:');
-      console.log(`child process exited with code ${code}`);
-    });
+    this.process = spawn(pathToService);
   }
   /**
    * shutdown the service process
@@ -51,7 +34,7 @@ module.exports = class PycatService {
   shutdown() {
     if (this.mode === 'development') return;
     if (this.process) {
-      console.log('SHUTDOWN of pycatService');
+      console.info('[SHUTDOWN of pycatService]');
       this.process.kill();
       this.process = null;
     }
