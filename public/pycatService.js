@@ -27,9 +27,7 @@ module.exports = class PycatService {
           'dist/pycat-service'
     );
     console.log(pathToService);
-    this.process = spawn(pathToService, {
-      silent: true,
-    });
+    this.process = spawn(pathToService);
     this.process.stdout.on('data', (data) => {
       console.log('stdout data:');
       console.log(`stdout: ${data}`);
