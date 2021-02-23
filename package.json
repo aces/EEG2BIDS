@@ -70,7 +70,7 @@
     "url": "https://github.com/aces/pycat"
   },
   "build": {
-    "appId": "pycat",
+    "appId": "mni.aces.pycat",
     "productName": "pycat",
     "copyright": "Open Source",
     "asar": false,
