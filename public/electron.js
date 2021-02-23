@@ -11,7 +11,7 @@ const PycatService = process.env.DEV ?
   require(path.join(__dirname, '../build/pycatService'));
 
 // Launch python service.
-const pycatService = new PycatService('production'); // production or development
+const pycatService = new PycatService();
 pycatService.startup();
 
 if (process.env.DEV) {
@@ -47,9 +47,10 @@ const createWindow = () => {
     icon,
     webPreferences: {
       webSecurity: true,
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js'),
       nativeWindowOpen: true,
     },
     width: 900,
@@ -63,14 +64,8 @@ const createWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    console.info('pyCat ');
+    process.env.DEV && mainWindow.webContents.openDevTools();
   });
-  console.log('LOOK here:');
-  console.log(startUrl);
-  console.log(String(Object.assign(new URL('http://localhost:3000'),
-      {pathname: ''}
-  )));
-  process.env.DEV && mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', function() {
     pycatService.shutdown();

@@ -1,4 +1,4 @@
-const {spawn} = require('child_process'); // {fork}
+const {spawn} = require('child_process');
 
 /**
  * PycatService
@@ -6,19 +6,16 @@ const {spawn} = require('child_process'); // {fork}
 module.exports = class PycatService {
   /**
    * constructor
-   * @param {string} mode - production or development.
    */
-  constructor(mode) {
+  constructor() {
     const os = require('os');
     this.platform = os.platform(); // darwin or win32.
     this.process = null; // the service process.
-    this.mode = mode;
   }
   /**
    * startup the service process
    */
   startup() {
-    if (this.mode === 'development') return;
     const pathToService = require('path').join(
         __dirname,
         '..',
@@ -32,7 +29,6 @@ module.exports = class PycatService {
    * shutdown the service process
    */
   shutdown() {
-    if (this.mode === 'development') return;
     if (this.process) {
       console.info('[SHUTDOWN of pycatService]');
       this.process.kill();

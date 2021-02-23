@@ -18,13 +18,13 @@ class Socket extends React.Component {
     this.socket.status = 'initialized';
 
     this.socket.on('connect', () => {
-      console.log('socket.io connect');
+      console.info('[Socket] connect');
       this.socket.status = 'connected';
       debug('connected');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('socket.io disconnect');
+      console.info('[Socket] disconnect');
       this.socket.status = 'disconnected';
       debug('disconnect');
     });
