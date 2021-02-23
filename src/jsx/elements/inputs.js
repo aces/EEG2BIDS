@@ -55,12 +55,13 @@ FileInput.propTypes = {
  * @return {JSX.Element}
  */
 export const DirectoryInput = (props) => {
-  const dialog = window.dialog; // from public/preload.js
+  const myAPI = window['myAPI']; // from public/preload.js
   /**
    * handleClick - button by user.
    */
   const handleClick = async () => {
     // Send directory to parent component
+    const dialog = await myAPI.dialog();
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
