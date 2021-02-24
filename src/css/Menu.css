@@ -1,0 +1,34 @@
+.root {
+    padding: 0;
+    width: 100%;
+    min-height: 0;
+    background-color: #fff;
+    border-bottom: 5px solid #107d6a;
+}
+.menu {
+    width: 100%;
+    margin: 0 auto;
+    display: table;
+}
+
+.menuTab {
+    user-select: none;
+    position: relative;
+    padding: 0 0 10px 0;
+    display: table-cell;
+    -webkit-user-select: none;
+}
+
+.menu-title {
+    color: black;
+    display: block;
+    cursor: pointer;
+    font-size: 18;
+    font-weight: 300;
+    margin: 8px 0 0 0;
+    text-align: center;
+}
+.menu-active {
+    color: #0d957e;
+    font-weight: bold;
+}

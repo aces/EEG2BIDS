@@ -8,44 +8,17 @@ import '../../css/Menu.css';
  * @return {JSX.Element}
  */
 const MenuTab = (props) => {
-  const styles = {
-    menuTab: {
-      width: props.width,
-      padding: '0 0 10px 0',
-      position: 'relative',
-      display: 'table-cell',
-      WebkitUserSelect: 'none',
-      userSelect: 'none',
-    },
-    title: {
-      default: {
-        fontSize: 18,
-        color: 'black',
-        display: 'block',
-        fontWeight: '300',
-        cursor: 'pointer',
-        margin: '8px 0 0 0',
-        textAlign: 'center',
-      },
-      active: {
-        color: '#0d957e',
-        fontWeight: 'bold',
-      },
-    },
-  };
-  const styleTitleText = {
-    ...styles.title.default,
-    ...(props.active ?
-      styles.title.active :
-      {}),
-  };
+  // css styling.
+  const menuTabWidth = {width: props.width};
+  const classesTitleText = props.active ?
+    'menu-title menu-active' : 'menu-title';
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <div style={styles.menuTab}>
-      <div style={styleTitleText}
+    <div className={'menuTab'} style={menuTabWidth}>
+      <div className={classesTitleText}
         onClick={props.onClick}>
         {props.title}
       </div>
@@ -65,27 +38,13 @@ MenuTab.propTypes = {
  * @return {JSX.Element}
  */
 const Menu = (props) => {
-  const styles = {
-    root: {
-      padding: 0,
-      minHeight: 0,
-      width: '100%',
-      backgroundColor: '#fff',
-      borderBottom: '5px solid #107d6a',
-    },
-    menu: {
-      width: '100%',
-      margin: '0 auto',
-      display: 'table',
-    },
-  };
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return props.visible ? (
-    <div style={styles.root}>
-      <div style={styles.menu}>
+    <div className={'root'}>
+      <div className={'menu'}>
         { props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
