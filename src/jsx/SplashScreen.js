@@ -8,6 +8,10 @@ import '../css/SplashScreen.css';
  * @return {JSX.Element} - Loader React component
  */
 const SplashScreen = (props) => {
+  const loaderDimensions = {
+    width: parseInt(props.size),
+    height: parseInt(props.size),
+  };
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
@@ -19,7 +23,7 @@ const SplashScreen = (props) => {
       </p>
       <div
         className={'loader centered'}
-        style={{width: parseInt(props.size), height: parseInt(props.size)}}
+        style={loaderDimensions}
       />
     </>
   ) : null;
