@@ -32,7 +32,7 @@ const Configuration = (props) => {
    * @param {object|string} value - element value
    */
   const onUserInput = async (name, value) => {
-    // Update the state of Configurations.
+    // Update the state of Configuration.
     switch (name) {
       case 'edfFile': {
         await setEdfFile(value);
