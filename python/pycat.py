@@ -13,15 +13,10 @@ def connect(sid, environ):
 
 
 @sio.event
-def my_message(sid, data):
-    print('message: ', data)
-    sio.emit('response', 'hello you!')
-
-
-@sio.event
 def ieeg_to_bids(sid, data):
     print('ieeg_to_bids: ', data)
-    iEEG.Converter(data)  # iEEG to BIDS
+    iEEG.Converter(data)  # iEEG to BIDS format.
+    # store subject_id for iEEG.Modifier
     data['subject_id'] = iEEG.Converter.m_info['subject_id']
     iEEG.Modifier(data)  # Modifies data of BIDS format
     sio.emit('response', 'success')

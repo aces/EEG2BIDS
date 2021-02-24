@@ -33,18 +33,32 @@ const Configuration = (props) => {
    */
   const onUserInput = async (name, value) => {
     // Update the state of Configurations.
-    if (name === 'edfFile') {
-      await setEdfFile(value);
-    } else if (name === 'eventsTSV') {
-      await setEventsTSV(value);
-    } else if (name === 'bidsDirectory') {
-      await setBidsDirectory(value);
-    } else if (name === 'lineFreq') {
-      await setLineFreq(value);
-    } else if (name === 'siteID') {
-      await setSiteID(value);
+    switch (name) {
+      case 'edfFile': {
+        await setEdfFile(value);
+        break;
+      }
+      case 'eventsTSV': {
+        await setEventsTSV(value);
+        break;
+      }
+      case 'bidsDirectory': {
+        await setBidsDirectory(value);
+        break;
+      }
+      case 'lineFreq': {
+        await setLineFreq(value);
+        break;
+      }
+      case 'siteID': {
+        await setSiteID(value);
+        break;
+      }
+      default: {
+        return;
+      }
     }
-    // Update the app context for task.
+    // Update the 'task' of app context.
     await appContext.setTask(name, value);
   };
 
