@@ -18,6 +18,7 @@ const Converter = (props) => {
 
   /**
    * beginBidsCreation - create BIDS format.
+   *   Sent by socket to python: ieeg_to_bids.
    */
   const beginBidsCreation = () => {
     socketContext.emit('ieeg_to_bids', {
