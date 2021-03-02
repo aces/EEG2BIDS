@@ -60,7 +60,9 @@ class Converter:
             print('VIEW 2:')
             print(raw)
             bids_root = bids_directory
-            subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            # subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            subject = 'alizee'
+            m_info['subject_id'] = 'alizee'
             print('LOOK:')
             print(subject)
             # subject = 'alizee'  # modified will output sub-alizee
@@ -82,7 +84,7 @@ class Converter:
                 'preload': False,
                 'verbose': None
             }
-            write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
+            write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33000), overwrite=False, verbose=False)
             print('finished')
         else:
             print('File not found or is not file: %s', file)

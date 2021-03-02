@@ -2,10 +2,39 @@ import eventlet
 import socketio
 from python.libs import iEEG
 from python.libs import BIDS
+from python.libs.edfrw import open_edf
+from python.libs.edfrw.headers import EdfHeaderException
+import pyedflib
+import numpy as np
+
 
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
+
+try:
+    # Open file in reading (default) mode
+    # f = open_edf('/Users/alizee/Desktop/data/Example_from_the_MNI.edf')
+    f = open_edf('/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
+    print('version:')
+    print(f.header.version)
+    print('subject_id:')
+    print(f.header.subject_id)
+    print('recording_id:')
+    print(f.header.recording_id)
+    print('startdate:')
+    print(f.header.startdate)
+    print('starttime:')
+    print(f.header.starttime)
+except EdfHeaderException:
+    print('An exception occurred')
+
+f = pyedflib.EdfReader('/Users/alizee/Desktop/data/Example_from_the_MNI.edf')
+n = f.signals_in_file
+signal_labels = f.getSignalLabels()
+sigbufs = np.zeros((n, f.getNSamples()[0]))
+for i in np.arange(n):
+        sigbufs[i, :] = f.readSignal(i)
 
 
 @sio.event

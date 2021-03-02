@@ -108,9 +108,9 @@ const Configuration = (props) => {
           />
         </div>
       </div>
-      <div className={'header'}>
+      <span className={'header'}>
         LORIS meta data
-      </div>
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <TextInput id='siteID'
@@ -121,6 +121,9 @@ const Configuration = (props) => {
           />
         </div>
       </div>
+      <span className={'header'}>
+        LORIS meta data
+      </span>
     </>
   ) : null;
 };

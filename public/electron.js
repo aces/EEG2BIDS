@@ -12,7 +12,7 @@ const PycatService = process.env.DEV ?
 
 // Launch python service.
 const pycatService = new PycatService();
-// pycatService.startup();
+pycatService.startup();
 
 if (process.env.DEV) {
   const {
@@ -54,9 +54,9 @@ const createWindow = () => {
       nativeWindowOpen: true,
     },
     width: 900,
-    height: 600,
+    height: 700,
     minWidth: 900,
-    minHeight: 600,
+    minHeight: 700,
     backgroundColor: '#0A826E',
   });
   mainWindow.removeMenu(); // Hides menu on Linux & Windows
