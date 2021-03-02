@@ -16,6 +16,7 @@ body {
 
 .header {
     padding: 20px;
+    display: block;
     cursor: default;
     font-size: 20px;
     text-align: center;

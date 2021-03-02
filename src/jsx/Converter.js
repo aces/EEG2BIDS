@@ -47,9 +47,9 @@ const Converter = (props) => {
    */
   return props.visible ? (
     <>
-      <div className={'header'}>
+      <span className={'header'}>
         iEEG to BIDS format
-      </div>
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <b>6. Please review your configurations:</b>

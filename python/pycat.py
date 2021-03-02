@@ -1,8 +1,9 @@
 import eventlet
 import socketio
 from python.libs import iEEG
+from python.libs import BIDS
 
-
+# Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
@@ -19,7 +20,21 @@ def ieeg_to_bids(sid, data):
     # store subject_id for iEEG.Modifier
     data['subject_id'] = iEEG.Converter.m_info['subject_id']
     iEEG.Modifier(data)  # Modifies data of BIDS format
-    sio.emit('response', 'success')
+    response = {
+        'directory_name': data['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+    }
+    sio.emit('response', response)
+
+
+@sio.event
+def validate_bids(sid, data):
+    print('validate_bids: ', data)
+    BIDS.Validate(data)
+    response = {
+        'file_paths': BIDS.Validate.file_paths,
+        'result': BIDS.Validate.result
+    }
+    sio.emit('response', response)
 
 
 @sio.event

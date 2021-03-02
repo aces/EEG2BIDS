@@ -7,6 +7,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 class Converter:
     m_info = ''
+
     # data: {
     #  file_path: '', // where file located.
     #  bids_directory: '', // where to output.

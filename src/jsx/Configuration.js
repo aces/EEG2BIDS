@@ -68,9 +68,9 @@ const Configuration = (props) => {
    */
   return props.visible ? (
     <>
-      <div className={'header'}>
+      <span className={'header'}>
         Data Configuration
-      </div>
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <FileInput id='edfFile'

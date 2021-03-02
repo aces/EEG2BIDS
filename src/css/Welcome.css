@@ -1,4 +1,5 @@
 .title {
+    display: block;
     cursor: default;
     font-size: 20pt;
     text-align: center;

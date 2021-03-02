@@ -14,9 +14,9 @@ const Welcome = (props) => {
    */
   return props.visible ? (
     <>
-      <div className={'title'}>
+      <span className={'title'}>
         Welcome to <b>pyCat!</b>
-      </div>
+      </span>
       <div className={'info'}>
         <p className={'font-large'}>Hello user,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;

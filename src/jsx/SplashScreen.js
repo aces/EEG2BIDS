@@ -21,7 +21,7 @@ const SplashScreen = (props) => {
       <p className={'loader-font'}>
         PyCat is loading ...
       </p>
-      <div
+      <span
         className={'loader centered'}
         style={loaderDimensions}
       />
