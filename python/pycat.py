@@ -2,55 +2,11 @@ import eventlet
 import socketio
 from python.libs import iEEG
 from python.libs import BIDS
-from python.libs.edfrw import open_edf
-from python.libs.edfrw.headers import EdfHeaderException
-
-from python.libs.EDF import EDFReader
-from python.libs.EDF import EDFWriter
 
 
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
-
-# with open('/Users/alizee/Desktop/data/test.edf', encoding='latin-1') as f:
-#     first_line = f.readline()
-
-# file_in = EDFReader(fname='/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
-# header = file_in.readHeader()
-# print('header is ')
-# print(header)
-# print('subject_id:')
-# print(header[0]['subject_id'])
-# print('recording_id:')
-# print(header[0]['recording_id'])
-# print('day:')
-# print(header[0]['day'])
-# print('month:')
-# print(header[0]['month'])
-# print('year:')
-# print(header[0]['year'])
-# print('hour:')
-# print(header[0]['hour'])
-# print('minute:')
-# print(header[0]['minute'])
-# print('second:')
-# print(header[0]['second'])
-# m_info, c_info = file_in.open(fname='/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
-# print('meas_info is ')
-# print(m_info)
-# print('chan_info is ')
-# print(c_info)
-#
-# file_out = EDFWriter()
-# file_out.open('/Users/alizee/Desktop/data/Example_from_Lyon_Micromed_Copy.edf')
-# file_out.writeHeader(header)
-# meas_info = header[0]
-# for i in range(meas_info['n_records']):
-#     data = file_in.readBlock(i)
-#     file_out.writeBlock(data)
-# file_in.close()
-# file_out.close()
 
 
 @sio.event
