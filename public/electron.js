@@ -12,7 +12,7 @@ const PycatService = process.env.DEV ?
 
 // Launch python service.
 const pycatService = new PycatService();
-pycatService.startup();
+// pycatService.startup();
 
 if (process.env.DEV) {
   const {

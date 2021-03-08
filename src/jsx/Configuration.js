@@ -10,6 +10,9 @@ import {
   TextInput,
 } from './elements/inputs';
 
+// Socket.io
+import {Event, SocketContext} from './socket.io';
+
 /**
  * Configuration - the Data Configuration component.
  * @param {object} props
@@ -18,6 +21,7 @@ import {
 const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
+  const socketContext = useContext(SocketContext);
 
   // React State
   const [edfFile, setEdfFile] = useState({});
@@ -25,6 +29,7 @@ const Configuration = (props) => {
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [lineFreq, setLineFreq] = useState('');
   const [siteID, setSiteID] = useState('');
+  const [headerFields, setHeaderFields] = useState(null);
 
   /**
    * onUserInput - input change by user.
@@ -36,6 +41,7 @@ const Configuration = (props) => {
     switch (name) {
       case 'edfFile': {
         await setEdfFile(value);
+        createHeaderFields(value['path']);
         break;
       }
       case 'eventsTSV': {
@@ -60,6 +66,30 @@ const Configuration = (props) => {
     }
     // Update the 'task' of app context.
     await appContext.setTask(name, value);
+  };
+
+  /**
+   * createHeaderFields - EDF file given from user.
+   * @param {string} path - edf file path
+   * Creates Header fields for EDF file.
+   */
+  const createHeaderFields = (path) => {
+    console.log('createHeaderFields');
+    socketContext.emit('ieeg_get_header', {
+      file_path: path,
+    });
+  };
+
+  /**
+   * onMessage - received message from python.
+   * @param {object} message - response
+   */
+  const onMessage = (message) => {
+    console.log('onMessage:');
+    console.info(message);
+    if (message['header']) {
+      // j
+    }
   };
 
   /**
@@ -109,7 +139,7 @@ const Configuration = (props) => {
         </div>
       </div>
       <span className={'header'}>
-        LORIS meta data
+        LORIS metadata
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
@@ -122,8 +152,14 @@ const Configuration = (props) => {
         </div>
       </div>
       <span className={'header'}>
-        LORIS meta data
+        iEEG header data
       </span>
+      <div className={'info'}>
+        <div className={'small-pad'}>
+          {headerFields}
+        </div>
+      </div>
+      <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };

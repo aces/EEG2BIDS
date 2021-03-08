@@ -5,6 +5,59 @@ from python.libs import TSV
 from mne_bids import write_raw_bids, BIDSPath
 
 
+class Anonymize:
+    file_path = ''
+    header = []
+
+    def __init__(self, data):
+        self.file_path = data['file_path']
+
+        # read EDF file from file_path,
+        file_in = EDF.EDFReader(fname=self.file_path)
+
+        # read header of EDF file.
+        self.header = file_in.readHeader()
+        file_in.close()
+
+        # print('header is ')
+        # print(self.header)
+        # print('subject_id:')
+        # print(self.header[0]['subject_id'])
+        # print('recording_id:')
+        # print(self.header[0]['recording_id'])
+        # print('day:')
+        # print(self.header[0]['day'])
+        # print('month:')
+        # print(self.header[0]['month'])
+        # print('year:')
+        # print(self.header[0]['year'])
+        # print('hour:')
+        # print(self.header[0]['hour'])
+        # print('minute:')
+        # print(self.header[0]['minute'])
+        # print('second:')
+        # print(self.header[0]['second'])
+
+    def get_header(self):
+        return self.header
+
+    def set_header(self, key, value):
+        self.header[0][key] = value
+
+    def make_copy(self, new_file):
+        header = self.get_header()
+        file_in = EDF.EDFReader(fname=self.file_path)
+        file_out = EDF.EDFWriter()
+        file_out.open(new_file)
+        file_out.writeHeader(header)
+        meas_info = header[0]
+        for i in range(meas_info['n_records']):
+            data = file_in.readBlock(i)
+            file_out.writeBlock(data)
+        file_in.close()
+        file_out.close()
+
+
 class Converter:
     m_info = ''
 

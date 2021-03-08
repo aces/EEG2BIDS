@@ -4,42 +4,79 @@ from python.libs import iEEG
 from python.libs import BIDS
 from python.libs.edfrw import open_edf
 from python.libs.edfrw.headers import EdfHeaderException
-import pyedflib
-import numpy as np
+
+from python.libs.EDF import EDFReader
+from python.libs.EDF import EDFWriter
 
 
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
-try:
-    # Open file in reading (default) mode
-    # f = open_edf('/Users/alizee/Desktop/data/Example_from_the_MNI.edf')
-    f = open_edf('/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
-    print('version:')
-    print(f.header.version)
-    print('subject_id:')
-    print(f.header.subject_id)
-    print('recording_id:')
-    print(f.header.recording_id)
-    print('startdate:')
-    print(f.header.startdate)
-    print('starttime:')
-    print(f.header.starttime)
-except EdfHeaderException:
-    print('An exception occurred')
+# with open('/Users/alizee/Desktop/data/test.edf', encoding='latin-1') as f:
+#     first_line = f.readline()
 
-f = pyedflib.EdfReader('/Users/alizee/Desktop/data/Example_from_the_MNI.edf')
-n = f.signals_in_file
-signal_labels = f.getSignalLabels()
-sigbufs = np.zeros((n, f.getNSamples()[0]))
-for i in np.arange(n):
-        sigbufs[i, :] = f.readSignal(i)
+# file_in = EDFReader(fname='/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
+# header = file_in.readHeader()
+# print('header is ')
+# print(header)
+# print('subject_id:')
+# print(header[0]['subject_id'])
+# print('recording_id:')
+# print(header[0]['recording_id'])
+# print('day:')
+# print(header[0]['day'])
+# print('month:')
+# print(header[0]['month'])
+# print('year:')
+# print(header[0]['year'])
+# print('hour:')
+# print(header[0]['hour'])
+# print('minute:')
+# print(header[0]['minute'])
+# print('second:')
+# print(header[0]['second'])
+# m_info, c_info = file_in.open(fname='/Users/alizee/Desktop/data/Example_from_Lyon_Micromed.edf')
+# print('meas_info is ')
+# print(m_info)
+# print('chan_info is ')
+# print(c_info)
+#
+# file_out = EDFWriter()
+# file_out.open('/Users/alizee/Desktop/data/Example_from_Lyon_Micromed_Copy.edf')
+# file_out.writeHeader(header)
+# meas_info = header[0]
+# for i in range(meas_info['n_records']):
+#     data = file_in.readBlock(i)
+#     file_out.writeBlock(data)
+# file_in.close()
+# file_out.close()
 
 
 @sio.event
 def connect(sid, environ):
     print('connect: ', sid)
+
+
+@sio.event
+def ieeg_get_header(sid, data):
+    print('ieeg_get_header:')
+    print(data)
+    print(data)
+    anonymize = iEEG.Anonymize(data)
+    header = anonymize.get_header()
+    response = {
+        'header': header[0]
+    }
+    sio.emit('response', response)
+
+
+@sio.event
+def ieeg_anonymize_header(sid, data):
+    print('ieeg_anonymize_header: ', sid)
+    print('data is ')
+    print(data)
+    anonymize = iEEG.Anonymize(data)
 
 
 @sio.event
