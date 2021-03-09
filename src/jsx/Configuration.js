@@ -31,14 +31,9 @@ const Configuration = (props) => {
   const [siteID, setSiteID] = useState('');
   const [headerFields, setHeaderFields] = useState(null);
   const [edfHeader, setHeader] = useState({
-    subject_id: '',
-    recording_id: '',
-    day: '',
-    month: '',
-    year: '',
-    hour: '',
-    minute: '',
-    second: '',
+    subject_id: '', recording_id: '',
+    day: '', month: '', year: '',
+    hour: '', minute: '', second: '',
   });
 
   /**
