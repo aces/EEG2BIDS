@@ -29,3 +29,14 @@ body {
 .small-pad {
     padding: 10px;
 }
+.info-flex-container {
+    display: flex;
+    padding: 14px;
+    flex-wrap: wrap;
+    background-color: #039b83;
+}
+.small-pad-flex {
+    flex: 1;
+    padding: 10px;
+    max-width: 175px;
+}

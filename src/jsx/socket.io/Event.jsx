@@ -1,45 +1,37 @@
-import React from 'react';
+import React, {useEffect, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {SocketContext} from './SocketContext';
 import {warning} from './utils';
 
 // eslint-disable-next-line require-jsdoc
-class Event extends React.Component {
-  static contextType = SocketContext;
+const Event = (props) => {
+  const socket = useContext(SocketContext);
 
-  // eslint-disable-next-line require-jsdoc
-  componentDidMount() {
-    const {event, handler} = this.props;
-    const socket = this.context;
-
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
     if (!socket) {
       warning('Socket IO connection has not been established.');
       return;
     }
+    socket.on(props.event, props.handler);
 
-    socket.on(event, handler);
-  }
-
-  // eslint-disable-next-line require-jsdoc
-  componentWillUnmount() {
-    const {event, handler} = this.props;
-    const socket = this.context;
-
-    if (!socket) {
-      warning('Socket IO connection has not been established.');
-      return;
-    }
-
-    socket.off(event, handler);
-  }
+    // returned function will be called on component unmount
+    return () => {
+      if (!socket) {
+        warning('Socket IO connection has not been established.');
+        return;
+      }
+      socket.off(props.event, props.handler);
+    };
+  }, []);
 
   // eslint-disable-next-line require-jsdoc
-  render() {
-    return false;
-  }
-}
+  return false;
+};
 
-Event.contextType = SocketContext;
+Event.context = SocketContext;
 
 Event.propTypes = {
   event: PropTypes.string.isRequired,

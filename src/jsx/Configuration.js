@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 
@@ -30,6 +30,46 @@ const Configuration = (props) => {
   const [lineFreq, setLineFreq] = useState('');
   const [siteID, setSiteID] = useState('');
   const [headerFields, setHeaderFields] = useState(null);
+  const [edfHeader, setHeader] = useState({
+    subject_id: '',
+    recording_id: '',
+    day: '',
+    month: '',
+    year: '',
+    hour: '',
+    minute: '',
+    second: '',
+  });
+
+  useEffect(() => {
+    console.log('useEffect called');
+    const keys = [
+      'subject_id',
+      'recording_id',
+      'day',
+      'month',
+      'year',
+      'hour',
+      'minute',
+      'second',
+    ];
+    const renderFields = [];
+    for (const key of keys) {
+      // setHeaderValueByKey(key, edfHeader[key]);
+      renderFields.push(
+          <div key={key} className={'small-pad-flex'}>
+            <TextInput id={key}
+              name={key}
+              label={`The ${key}: `}
+              value={edfHeader[key]}
+              onUserInput={onUserHeaderFieldInput}
+              placeholder={edfHeader[key]}
+            />
+          </div>,
+      );
+    }
+    setHeaderFields(renderFields);
+  }, [edfHeader]);
 
   /**
    * onUserInput - input change by user.
@@ -38,6 +78,7 @@ const Configuration = (props) => {
    */
   const onUserInput = async (name, value) => {
     // Update the state of Configuration.
+    console.info(edfHeader);
     switch (name) {
       case 'edfFile': {
         await setEdfFile(value);
@@ -69,6 +110,47 @@ const Configuration = (props) => {
   };
 
   /**
+   * onUserHeaderFieldInput - input change by user.
+   * @param {string} name - element name
+   * @param {object|string} value - element value
+   */
+  const onUserHeaderFieldInput = (name, value) => {
+    console.info(name);
+    console.info(value);
+    console.info(edfHeader);
+    // Update the state of Configuration.
+    switch (name) {
+      case 'subject_id': {
+        break;
+      }
+      case 'recording_id': {
+        break;
+      }
+      case 'day': {
+        break;
+      }
+      case 'month': {
+        break;
+      }
+      case 'year': {
+        break;
+      }
+      case 'hour': {
+        break;
+      }
+      case 'minute': {
+        break;
+      }
+      case 'second': {
+        break;
+      }
+      default: {
+        return;
+      }
+    }
+  };
+
+  /**
    * createHeaderFields - EDF file given from user.
    * @param {string} path - edf file path
    * Creates Header fields for EDF file.
@@ -81,14 +163,29 @@ const Configuration = (props) => {
   };
 
   /**
+   * setHeaderValueByKey - EDF file given from user.
+   * @param {string} key - key of header object.
+   * @param {string} value - value for header object.
+   * Creates Header fields for EDF file.
+   */
+  const setHeaderValueByKey = (key, value) => {
+    setHeader((prevState) => {
+      console.info('previous', prevState);
+      return {...prevState, [key]: value};
+    });
+    console.log('edfHeader is ');
+    console.log(edfHeader);
+  };
+
+  /**
    * onMessage - received message from python.
    * @param {object} message - response
    */
   const onMessage = (message) => {
-    console.log('onMessage:');
-    console.info(message);
     if (message['header']) {
-      // j
+      setHeader(message['header']);
+      // console.info('header is ');
+      // console.info(header);
     }
   };
 
@@ -154,10 +251,8 @@ const Configuration = (props) => {
       <span className={'header'}>
         iEEG header data
       </span>
-      <div className={'info'}>
-        <div className={'small-pad'}>
-          {headerFields}
-        </div>
+      <div className={'info-flex-container'}>
+        {headerFields}
       </div>
       <Event event='response' handler={onMessage} />
     </>

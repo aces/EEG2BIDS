@@ -17,8 +17,6 @@ def connect(sid, environ):
 @sio.event
 def ieeg_get_header(sid, data):
     print('ieeg_get_header:')
-    print(data)
-    print(data)
     anonymize = iEEG.Anonymize(data)
     header = anonymize.get_header()
     response = {
