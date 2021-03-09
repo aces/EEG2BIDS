@@ -1,10 +1,15 @@
 import React, {useEffect, useContext} from 'react';
-import PropTypes from 'prop-types';
 import {SocketContext} from './SocketContext';
+import PropTypes from 'prop-types';
 import {warning} from './utils';
 
-// eslint-disable-next-line require-jsdoc
+/**
+ * Event - the socket.io Event component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
 const Event = (props) => {
+  // React Context
   const socket = useContext(SocketContext);
 
   /**
@@ -27,8 +32,11 @@ const Event = (props) => {
     };
   }, []);
 
-  // eslint-disable-next-line require-jsdoc
-  return false;
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return null;
 };
 
 Event.context = SocketContext;

@@ -70,7 +70,6 @@ const Configuration = (props) => {
    */
   const onUserInput = async (name, value) => {
     // Update the state of Configuration.
-    console.info(edfHeader);
     switch (name) {
       case 'edfFile': {
         await setEdfFile(value);
