@@ -41,17 +41,14 @@ const Configuration = (props) => {
     second: '',
   });
 
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
   useEffect(() => {
-    console.log('useEffect called');
     const keys = [
-      'subject_id',
-      'recording_id',
-      'day',
-      'month',
-      'year',
-      'hour',
-      'minute',
-      'second',
+      'subject_id', 'recording_id',
+      'day', 'month', 'year',
+      'hour', 'minute', 'second',
     ];
     const renderFields = [];
     for (const key of keys) {
@@ -115,39 +112,10 @@ const Configuration = (props) => {
    * @param {object|string} value - element value
    */
   const onUserHeaderFieldInput = (name, value) => {
-    console.info(name);
-    console.info(value);
-    console.info(edfHeader);
-    // Update the state of Configuration.
-    switch (name) {
-      case 'subject_id': {
-        break;
-      }
-      case 'recording_id': {
-        break;
-      }
-      case 'day': {
-        break;
-      }
-      case 'month': {
-        break;
-      }
-      case 'year': {
-        break;
-      }
-      case 'hour': {
-        break;
-      }
-      case 'minute': {
-        break;
-      }
-      case 'second': {
-        break;
-      }
-      default: {
-        return;
-      }
-    }
+    setHeader((prevState) => {
+      console.info('previous', prevState);
+      return {...prevState, [name]: value};
+    });
   };
 
   /**
@@ -156,25 +124,9 @@ const Configuration = (props) => {
    * Creates Header fields for EDF file.
    */
   const createHeaderFields = (path) => {
-    console.log('createHeaderFields');
     socketContext.emit('ieeg_get_header', {
       file_path: path,
     });
-  };
-
-  /**
-   * setHeaderValueByKey - EDF file given from user.
-   * @param {string} key - key of header object.
-   * @param {string} value - value for header object.
-   * Creates Header fields for EDF file.
-   */
-  const setHeaderValueByKey = (key, value) => {
-    setHeader((prevState) => {
-      console.info('previous', prevState);
-      return {...prevState, [key]: value};
-    });
-    console.log('edfHeader is ');
-    console.log(edfHeader);
   };
 
   /**
@@ -184,8 +136,6 @@ const Configuration = (props) => {
   const onMessage = (message) => {
     if (message['header']) {
       setHeader(message['header']);
-      // console.info('header is ');
-      // console.info(header);
     }
   };
 
