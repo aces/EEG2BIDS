@@ -47,7 +47,6 @@ const Configuration = (props) => {
     ];
     const renderFields = [];
     for (const key of keys) {
-      // setHeaderValueByKey(key, edfHeader[key]);
       renderFields.push(
           <div key={key} className={'small-pad-flex'}>
             <TextInput id={key}
@@ -59,6 +58,7 @@ const Configuration = (props) => {
             />
           </div>,
       );
+      appContext.setTask(key, edfHeader[key]);
     }
     setHeaderFields(renderFields);
   }, [edfHeader]);
@@ -68,28 +68,28 @@ const Configuration = (props) => {
    * @param {string} name - element name
    * @param {object|string} value - element value
    */
-  const onUserInput = async (name, value) => {
+  const onUserInput = (name, value) => {
     // Update the state of Configuration.
     switch (name) {
       case 'edfFile': {
-        await setEdfFile(value);
+        setEdfFile(value);
         createHeaderFields(value['path']);
         break;
       }
       case 'eventsTSV': {
-        await setEventsTSV(value);
+        setEventsTSV(value);
         break;
       }
       case 'bidsDirectory': {
-        await setBidsDirectory(value);
+        setBidsDirectory(value);
         break;
       }
       case 'lineFreq': {
-        await setLineFreq(value);
+        setLineFreq(value);
         break;
       }
       case 'siteID': {
-        await setSiteID(value);
+        setSiteID(value);
         break;
       }
       default: {
@@ -97,7 +97,7 @@ const Configuration = (props) => {
       }
     }
     // Update the 'task' of app context.
-    await appContext.setTask(name, value);
+    appContext.setTask(name, value);
   };
 
   /**
@@ -110,6 +110,8 @@ const Configuration = (props) => {
       console.info('previous', prevState);
       return {...prevState, [name]: value};
     });
+    // Update the 'task' of app context.
+    appContext.setTask(name, value);
   };
 
   /**

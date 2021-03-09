@@ -109,7 +109,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>7. Please review your LORIS meta data:</b>
+          <b>7. Please review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
@@ -127,8 +127,89 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
+          <b>8. Please review your iEEG header data:</b>
+          <ul>
+            <li>
+              {appContext.getFromTask('subject_id') ?
+                (<>
+                  The subject_id:&nbsp;
+                  {appContext.getFromTask('subject_id')}
+                  <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                </>) :
+                (<>
+                  The file.edf hasn't been set in configuration.
+                  <a> &#x274C;</a>
+                </>)
+              }
+            </li>
+            {appContext.getFromTask('recording_id') ?
+              (<li>
+                The recording_id:&nbsp;
+                {appContext.getFromTask('recording_id')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('day') ?
+              (<li>
+                The day:&nbsp;
+                {appContext.getFromTask('day')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('month') ?
+              (<li>
+                The month:&nbsp;
+                {appContext.getFromTask('month')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('year') ?
+              (<li>
+                The year:&nbsp;
+                {appContext.getFromTask('year')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('hour') ?
+              (<li>
+                The hour:&nbsp;
+                {appContext.getFromTask('hour')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('minute') ?
+              (<li>
+                The minute:&nbsp;
+                {appContext.getFromTask('minute')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('second') ?
+              (<li>
+                The second:&nbsp;
+                {appContext.getFromTask('second')}
+                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+              </li>) :
+              (<>
+              </>)
+            }
+          </ul>
+        </div>
+        <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            8. Convert your specifications to BIDS format:&nbsp;
+            9. Convert your specifications to BIDS format:&nbsp;
           </b>
           <button onClick={beginBidsCreation}>
             Start Task

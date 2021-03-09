@@ -4,3 +4,9 @@
     text-shadow: 0 0 0 #84fa84;
     font-family: Segoe UI Symbol, serif;
 }
+.warning {
+    font-size: 24px;
+    /*color: transparent;*/
+    /*text-shadow: 0 0 0 #fcc054;*/
+    font-family: Segoe UI Symbol, serif;
+}
