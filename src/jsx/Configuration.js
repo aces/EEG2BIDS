@@ -1,6 +1,7 @@
 import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
+import '../css/Configuration.css';
 
 // Components
 import {
@@ -136,6 +137,20 @@ const Configuration = (props) => {
   };
 
   /**
+   * anonymizeHeader - anonymize iEEG header values.
+   */
+  const anonymizeHeader = () => {
+    const keys = [
+      'subject_id', 'recording_id',
+      'day', 'month', 'year',
+      'hour', 'minute', 'second',
+    ];
+    for (const key of keys) {
+      appContext.setTask(key, '');
+    }
+  };
+
+  /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
@@ -199,6 +214,11 @@ const Configuration = (props) => {
       </span>
       <div className={'info-flex-container'}>
         {headerFields}
+        <input type={'button'}
+          className={'anonymize'}
+          value={'Anonymize'}
+          onClick={anonymizeHeader}
+        />
       </div>
       <Event event='response' handler={onMessage} />
     </>

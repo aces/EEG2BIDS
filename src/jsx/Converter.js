@@ -134,7 +134,11 @@ const Converter = (props) => {
                 (<>
                   The subject_id:&nbsp;
                   {appContext.getFromTask('subject_id')}
-                  <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                  <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                    <span className={'tooltiptext'}>
+                      Verify the anonymization.
+                    </span>
+                  </a>
                 </>) :
                 (<>
                   The file.edf hasn't been set in configuration.
@@ -146,7 +150,11 @@ const Converter = (props) => {
               (<li>
                 The recording_id:&nbsp;
                 {appContext.getFromTask('recording_id')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -155,7 +163,11 @@ const Converter = (props) => {
               (<li>
                 The day:&nbsp;
                 {appContext.getFromTask('day')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -164,7 +176,11 @@ const Converter = (props) => {
               (<li>
                 The month:&nbsp;
                 {appContext.getFromTask('month')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -173,7 +189,11 @@ const Converter = (props) => {
               (<li>
                 The year:&nbsp;
                 {appContext.getFromTask('year')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -182,7 +202,11 @@ const Converter = (props) => {
               (<li>
                 The hour:&nbsp;
                 {appContext.getFromTask('hour')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -191,7 +215,11 @@ const Converter = (props) => {
               (<li>
                 The minute:&nbsp;
                 {appContext.getFromTask('minute')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
@@ -200,7 +228,11 @@ const Converter = (props) => {
               (<li>
                 The second:&nbsp;
                 {appContext.getFromTask('second')}
-                <a className={'warning'}> &#x26A0;&#xFE0F;</a>
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
               </li>) :
               (<>
               </>)
