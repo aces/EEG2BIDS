@@ -1,0 +1,29 @@
+.green-font-bold {
+    color: green;
+    font-weight: bold;
+}
+.red-font-bold {
+    color: #ff0000;
+    font-weight: bold;
+}
+.green-font {
+    color: #84fa84;
+}
+.red-font {
+    color: #ff0000;
+}
+
+.key-terminal {
+    margin: 20px;
+    padding: 10px;
+    color: #252326;
+    text-align: center;
+    background-color: #f4f4f4;
+}
+
+.terminal {
+    margin: 20px;
+    overflow: auto;
+    max-height: 600px;
+    background-color: #252326;
+}

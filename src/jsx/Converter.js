@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Converter.css';
@@ -15,6 +15,9 @@ const Converter = (props) => {
   // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
+
+  // React State
+  const [outputTime, setOutputTime] = useState('');
 
   /**
    * beginBidsCreation - create BIDS format.
@@ -34,12 +37,23 @@ const Converter = (props) => {
     });
   };
 
+  // /**
+  //  * Similar to componentDidMount and componentDidUpdate.
+  //  */
+  // useEffect(() => {
+  //   appContext.setTask('output_time', outputTime);
+  // }, [outputTime]);
+
   /**
    * onMessage - received message from python.
    * @param {object} message - response
    */
   const onMessage = (message) => {
     console.info(message);
+    if (message['output_time']) {
+      setOutputTime(message['output_time']);
+      appContext.setTask('output_time', message['output_time']);
+    }
   };
 
   /**

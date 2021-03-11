@@ -9,7 +9,11 @@ class Validate:
     def __init__(self, data):
         print('- Validate: init started.')
         subject = data['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
-        start_path = '/Users/alizee/Desktop/test'  # current directory
+        sep = os.path.sep
+        start_path = data['bids_directory'] + sep + data['output_time']  # current directory
+        print('start_path is ')
+        print(start_path)
+        # start_path = '/Users/alizee/Desktop/test'  # current directory
         file_paths = []
         result = []
         validator = BIDSValidator()
