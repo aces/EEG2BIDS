@@ -108,7 +108,6 @@ const Configuration = (props) => {
    */
   const onUserHeaderFieldInput = (name, value) => {
     setHeader((prevState) => {
-      console.info('previous', prevState);
       return {...prevState, [name]: value};
     });
     // Update the 'task' of app context.
@@ -137,16 +136,27 @@ const Configuration = (props) => {
   };
 
   /**
-   * anonymizeHeader - anonymize iEEG header values.
+   * anonymizeHeaderValues - anonymize iEEG header values.
    */
-  const anonymizeHeader = () => {
+  const anonymizeHeaderValues = () => {
     const keys = [
       'subject_id', 'recording_id',
       'day', 'month', 'year',
       'hour', 'minute', 'second',
     ];
+    const anonymize = {
+      subject_id: '0 X 18-SEP-1990 JaneDoe',
+      recording_id: 'Startdate 18-SEP-2100',
+      day: 11,
+      month: 12,
+      year: 60,
+      hour: 20,
+      minute: 20,
+      second: 20,
+    };
     for (const key of keys) {
-      appContext.setTask(key, '');
+      onUserHeaderFieldInput(key, anonymize[key]);
+      appContext.setTask(key, anonymize[key]);
     }
   };
 
@@ -217,7 +227,7 @@ const Configuration = (props) => {
         <input type={'button'}
           className={'anonymize'}
           value={'Anonymize'}
-          onClick={anonymizeHeader}
+          onClick={anonymizeHeaderValues}
         />
       </div>
       <Event event='response' handler={onMessage} />

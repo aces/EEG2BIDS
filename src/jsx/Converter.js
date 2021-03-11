@@ -63,7 +63,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The file.edf hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -76,7 +80,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The events.tsv hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -89,7 +97,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The BIDS output directory hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -102,7 +114,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The line_freq hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -116,11 +132,15 @@ const Converter = (props) => {
                 (<>
                   The SiteID:&nbsp;
                   {appContext.getFromTask('siteID')}
-                  <a className={'checkmark'}> &#x2714;</a>
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
                   The SiteID hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -142,7 +162,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The file.edf hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
