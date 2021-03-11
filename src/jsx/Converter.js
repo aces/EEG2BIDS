@@ -30,6 +30,7 @@ const Converter = (props) => {
         appContext.getFromTask('eventsTSV').path : '',
       line_freq: appContext.getFromTask('lineFreq') ?? '',
       site_id: appContext.getFromTask('siteID') ?? '',
+      subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
 

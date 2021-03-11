@@ -22,7 +22,7 @@ const Validator = (props) => {
   const validateBIDS = () => {
     console.log('validateBIDS();');
     socketContext.emit('validate_bids', {
-      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
+      bids_directory: '', // appContext.getFromTask('bidsDirectory') ?? '',
     });
   };
 
@@ -43,7 +43,7 @@ const Validator = (props) => {
       <span className={'header'}>
         Validation confirmation
       </span>
-      <div style={{backgroundColor: '#039b83', padding: '14px'}}>
+      <div className={'info'}>
         <input onClick={validateBIDS}
           type={'button'}
           value={'Validate BIDS'}/>

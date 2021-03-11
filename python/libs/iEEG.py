@@ -71,6 +71,7 @@ class Converter:
         self.to_bids(
             file=data['file_path'],
             bids_directory=data['bids_directory'],
+            subject_id=data['subject_id'],
             read_only=data['read_only'],
             line_freq=data['line_freq']
         )
@@ -90,6 +91,7 @@ class Converter:
     def to_bids(self,
                 file,
                 bids_directory,
+                subject_id,
                 task='test',
                 ch_type='seeg',
                 read_only=False,
@@ -113,9 +115,9 @@ class Converter:
             print('VIEW 2:')
             print(raw)
             bids_root = bids_directory
-            # subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
-            subject = 'alizee'
-            m_info['subject_id'] = 'alizee'
+            m_info['subject_id'] = subject_id  # 'alizee'
+            subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            # subject = subject_id  # 'alizee
             print('LOOK:')
             print(subject)
             # subject = 'alizee'  # modified will output sub-alizee
