@@ -1,6 +1,7 @@
-import React, {useState, useContext} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
+import '../css/Configuration.css';
 
 // Components
 import {
@@ -10,6 +11,9 @@ import {
   TextInput,
 } from './elements/inputs';
 
+// Socket.io
+import {Event, SocketContext} from './socket.io';
+
 /**
  * Configuration - the Data Configuration component.
  * @param {object} props
@@ -18,6 +22,7 @@ import {
 const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
+  const socketContext = useContext(SocketContext);
 
   // React State
   const [edfFile, setEdfFile] = useState({});
@@ -25,27 +30,130 @@ const Configuration = (props) => {
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [lineFreq, setLineFreq] = useState('');
   const [siteID, setSiteID] = useState('');
+  const [headerFields, setHeaderFields] = useState(null);
+  const [edfHeader, setHeader] = useState({
+    subject_id: '', recording_id: '',
+    day: '', month: '', year: '',
+    hour: '', minute: '', second: '',
+  });
+
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+    const keys = [
+      'subject_id', 'recording_id',
+      'day', 'month', 'year',
+      'hour', 'minute', 'second',
+    ];
+    const renderFields = [];
+    for (const key of keys) {
+      renderFields.push(
+          <div key={key} className={'small-pad-flex'}>
+            <TextInput id={key}
+              name={key}
+              label={`The ${key}: `}
+              value={edfHeader[key]}
+              onUserInput={onUserHeaderFieldInput}
+              placeholder={edfHeader[key]}
+            />
+          </div>,
+      );
+      appContext.setTask(key, edfHeader[key]);
+    }
+    setHeaderFields(renderFields);
+  }, [edfHeader]);
 
   /**
    * onUserInput - input change by user.
    * @param {string} name - element name
    * @param {object|string} value - element value
    */
-  const onUserInput = async (name, value) => {
-    // Update the state of Configurations.
-    if (name === 'edfFile') {
-      await setEdfFile(value);
-    } else if (name === 'eventsTSV') {
-      await setEventsTSV(value);
-    } else if (name === 'bidsDirectory') {
-      await setBidsDirectory(value);
-    } else if (name === 'lineFreq') {
-      await setLineFreq(value);
-    } else if (name === 'siteID') {
-      await setSiteID(value);
+  const onUserInput = (name, value) => {
+    // Update the state of Configuration.
+    switch (name) {
+      case 'edfFile': {
+        setEdfFile(value);
+        createHeaderFields(value['path']);
+        break;
+      }
+      case 'eventsTSV': {
+        setEventsTSV(value);
+        break;
+      }
+      case 'bidsDirectory': {
+        setBidsDirectory(value);
+        break;
+      }
+      case 'lineFreq': {
+        setLineFreq(value);
+        break;
+      }
+      case 'siteID': {
+        setSiteID(value);
+        break;
+      }
+      default: {
+        return;
+      }
     }
-    // Update the app context for task.
-    await appContext.setTask(name, value);
+    // Update the 'task' of app context.
+    appContext.setTask(name, value);
+  };
+
+  /**
+   * onUserHeaderFieldInput - input change by user.
+   * @param {string} name - element name
+   * @param {object|string} value - element value
+   */
+  const onUserHeaderFieldInput = (name, value) => {
+    setHeader((prevState) => {
+      return {...prevState, [name]: value};
+    });
+    // Update the 'task' of app context.
+    appContext.setTask(name, value);
+  };
+
+  /**
+   * createHeaderFields - EDF file given from user.
+   * @param {string} path - edf file path
+   * Creates Header fields for EDF file.
+   */
+  const createHeaderFields = (path) => {
+    socketContext.emit('ieeg_get_header', {
+      file_path: path,
+    });
+  };
+
+  /**
+   * onMessage - received message from python.
+   * @param {object} message - response
+   */
+  const onMessage = (message) => {
+    if (message['header']) {
+      setHeader(message['header']);
+    }
+  };
+
+  /**
+   * anonymizeHeaderValues - anonymize iEEG header values.
+   */
+  const anonymizeHeaderValues = () => {
+    const keys = [
+      'subject_id', 'recording_id',
+      'day', 'month', 'year',
+    ];
+    const anonymize = {
+      subject_id: '0 X X X',
+      recording_id: 'Startdate 31-DEC-1924 X mne-bids_anonymize X',
+      day: 31,
+      month: 12,
+      year: 85,
+    };
+    for (const key of keys) {
+      onUserHeaderFieldInput(key, anonymize[key]);
+      appContext.setTask(key, anonymize[key]);
+    }
   };
 
   /**
@@ -54,9 +162,9 @@ const Configuration = (props) => {
    */
   return props.visible ? (
     <>
-      <div className={'header'}>
+      <span className={'header'}>
         Data Configuration
-      </div>
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <FileInput id='edfFile'
@@ -94,9 +202,9 @@ const Configuration = (props) => {
           />
         </div>
       </div>
-      <div className={'header'}>
-        LORIS meta data
-      </div>
+      <span className={'header'}>
+        LORIS metadata
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <TextInput id='siteID'
@@ -107,6 +215,18 @@ const Configuration = (props) => {
           />
         </div>
       </div>
+      <span className={'header'}>
+        iEEG header data
+      </span>
+      <div className={'info-flex-container'}>
+        {headerFields}
+        <input type={'button'}
+          className={'anonymize'}
+          value={'Anonymize'}
+          onClick={anonymizeHeaderValues}
+        />
+      </div>
+      <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };

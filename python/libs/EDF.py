@@ -55,7 +55,7 @@ class EDFWriter():
                 assert (fid2.tell() == 0)
                 fid2.write(fid1.read(236))
                 fid1.read(8)  # skip this part
-                fid2.write(padtrim(str(self.n_records), 8))  # but write this instead
+                fid2.write(padtrim(str(self.n_records), 8).encode('utf-8'))  # but write this instead
                 fid2.write(fid1.read(meas_info['data_offset'] - 236 - 8))
                 blocksize = np.sum(chan_info['n_samps']) * meas_info['data_size']
                 for block in range(self.n_records):
@@ -97,19 +97,20 @@ class EDFWriter():
             else:
                 meas_info['data_size'] = 2  # 16-bit (2 byte) integers
 
-            fid.write(padtrim('0', 8))
-            fid.write(padtrim(meas_info['subject_id'], 80))
-            fid.write(padtrim(meas_info['recording_id'], 80))
+            fid.write(padtrim('0', 8).encode('utf-8'))
+            fid.write(padtrim(meas_info['subject_id'], 80).encode('utf-8'))
+            fid.write(padtrim(meas_info['recording_id'], 80).encode('utf-8'))
             fid.write(
-                padtrim('{:0>2d}.{:0>2d}.{:0>2d}'.format(meas_info['day'], meas_info['month'], meas_info['year']), 8))
+                padtrim('{:0>2d}.{:0>2d}.{:0>2d}'.format(meas_info['day'], meas_info['month'], meas_info['year']), 8)
+                .encode('utf-8'))
             fid.write(
                 padtrim('{:0>2d}.{:0>2d}.{:0>2d}'.format(meas_info['hour'], meas_info['minute'], meas_info['second']),
-                        8))
-            fid.write(padtrim(str(meas_size + chan_size), 8))
-            fid.write(' ' * 44)
-            fid.write(padtrim(str(-1), 8))  # the final n_records should be inserted on byte 236
-            fid.write(padtrim(str(meas_info['record_length']), 8))
-            fid.write(padtrim(str(meas_info['nchan']), 4))
+                        8).encode('utf-8'))
+            fid.write(padtrim(str(meas_size + chan_size), 8).encode('utf-8'))
+            fid.write((' ' * 44).encode('utf-8'))
+            fid.write(padtrim(str(-1), 8).encode('utf-8'))  # the final n_records should be inserted on byte 236
+            fid.write(padtrim(str(meas_info['record_length']), 8).encode('utf-8'))
+            fid.write(padtrim(str(meas_info['nchan']), 4).encode('utf-8'))
 
             # ensure that these are all np arrays rather than lists
             for key in ['physical_min', 'transducers', 'physical_max', 'digital_max', 'ch_names', 'n_samps', 'units',
@@ -117,25 +118,25 @@ class EDFWriter():
                 chan_info[key] = np.asarray(chan_info[key])
 
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(chan_info['ch_names'][i], 16))
+                fid.write(padtrim(chan_info['ch_names'][i], 16).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(chan_info['transducers'][i], 80))
+                fid.write(padtrim(chan_info['transducers'][i], 80).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(chan_info['units'][i], 8))
+                fid.write(padtrim(chan_info['units'][i], 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(str(chan_info['physical_min'][i]), 8))
+                fid.write(padtrim(str(chan_info['physical_min'][i]), 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(str(chan_info['physical_max'][i]), 8))
+                fid.write(padtrim(str(chan_info['physical_max'][i]), 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(str(chan_info['digital_min'][i]), 8))
+                fid.write(padtrim(str(chan_info['digital_min'][i]), 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(str(chan_info['digital_max'][i]), 8))
+                fid.write(padtrim(str(chan_info['digital_max'][i]), 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(' ' * 80)  # prefiltering
+                fid.write((' ' * 80).encode('utf-8'))  # prefiltering
             for i in range(meas_info['nchan']):
-                fid.write(padtrim(str(chan_info['n_samps'][i]), 8))
+                fid.write(padtrim(str(chan_info['n_samps'][i]), 8).encode('utf-8'))
             for i in range(meas_info['nchan']):
-                fid.write(' ' * 32)  # reserved
+                fid.write((' ' * 32).encode('utf-8'))  # reserved
             meas_info['data_offset'] = fid.tell()
 
         self.meas_info = meas_info

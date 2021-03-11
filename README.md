@@ -37,3 +37,6 @@ pyCat is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudin
  * numpy >= 1.19.5
  * python-socketio >= 5.0.4
  * python-engineio >= 4.0.0
+
+## App icon attribute
+[Graphics creator: Dmitriy Shirinkin](https://www.iconfinder.com/icons/7066786/night_pumpkin_witch_kitty_horror_halloween_bat_icon)

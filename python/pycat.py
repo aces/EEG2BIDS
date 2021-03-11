@@ -1,8 +1,10 @@
 import eventlet
 import socketio
 from python.libs import iEEG
+from python.libs import BIDS
 
 
+# Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
@@ -13,18 +15,49 @@ def connect(sid, environ):
 
 
 @sio.event
-def my_message(sid, data):
-    print('message: ', data)
-    sio.emit('response', 'hello you!')
+def ieeg_get_header(sid, data):
+    print('ieeg_get_header:')
+    anonymize = iEEG.Anonymize(data)
+    header = anonymize.get_header()
+    response = {
+        'header': header[0]
+    }
+    sio.emit('response', response)
+
+
+@sio.event
+def ieeg_anonymize_header(sid, data):
+    print('ieeg_anonymize_header: ', sid)
+    print('data is ')
+    print(data)
+    anonymize = iEEG.Anonymize(data)
 
 
 @sio.event
 def ieeg_to_bids(sid, data):
     print('ieeg_to_bids: ', data)
-    iEEG.Converter(data)  # iEEG to BIDS
+    time = iEEG.Time()
+    data['output_time'] = 'output-' + time.latest_output
+    iEEG.Converter(data)  # iEEG to BIDS format.
+    # store subject_id for iEEG.Modifier
     data['subject_id'] = iEEG.Converter.m_info['subject_id']
     iEEG.Modifier(data)  # Modifies data of BIDS format
-    sio.emit('response', 'success')
+    response = {
+        'directory_name': data['subject_id'].replace('_', '').replace('-', '').replace(' ', ''),
+        'output_time': data['output_time']
+    }
+    sio.emit('response', response)
+
+
+@sio.event
+def validate_bids(sid, data):
+    print('validate_bids: ', data)
+    BIDS.Validate(data)
+    response = {
+        'file_paths': BIDS.Validate.file_paths,
+        'result': BIDS.Validate.result
+    }
+    sio.emit('response', response)
 
 
 @sio.event

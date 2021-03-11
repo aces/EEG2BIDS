@@ -11,7 +11,8 @@ class Writer:
         hand = ''
         print('- Writer: init started.')
         # print(data)
-        file_path = data['bids_directory'] + '/participants.tsv'
+        sep = os.path.sep
+        file_path = data['bids_directory'] + sep + data['output_time'] + sep + 'participants.tsv'
         with open(file_path, newline='') as f:
             f.readline()
             reader = csv.reader(f, delimiter='\t')
@@ -41,7 +42,7 @@ class Copy:
         directory_path = 'sub-' + data['subject_id']\
             .replace('_', '').replace('-', '').replace(' ', '')
         print(directory_path)
-        new_events_tsv = os.path.join(data['bids_directory'], directory_path, 'ieeg', 'events.tsv')
+        new_events_tsv = os.path.join(data['bids_directory'], data['output_time'], directory_path, 'ieeg', 'events.tsv')
         print('new_events_tsv is ')
         print(new_events_tsv)
         shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given

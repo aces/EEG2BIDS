@@ -9,18 +9,17 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "^4.0.2",
-    "socket.io-client": "^3.1.1"
+    "socket.io-client": "^4.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.13.1",
-    "@babel/eslint-parser": "^7.13.4",
+    "@babel/core": "^7.13.10",
+    "@babel/eslint-parser": "^7.13.10",
     "concurrently": "^6.0.0",
     "cross-env": "^7.0.3",
-    "electron": "^11.3.0",
-    "electron-builder": "^22.8.1",
+    "electron": "^12.0.0",
+    "electron-builder": "^22.10.5",
     "electron-devtools-installer": "^3.1.1",
-    "electron-rebuild": "^2.3.5",
-    "eslint": "^7.20.0",
+    "eslint": "^7.21.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-import": "^2.22.1",
@@ -70,7 +69,7 @@
     "url": "https://github.com/aces/pycat"
   },
   "build": {
-    "appId": "pycat",
+    "appId": "mni.aces.pycat",
     "productName": "pycat",
     "copyright": "Open Source",
     "asar": false,
@@ -85,6 +84,7 @@
       "confinement": "classic"
     },
     "win": {
+      "icon": "./public/logo512.png",
       "target": [
         "nsis"
       ],
@@ -95,6 +95,7 @@
       ]
     },
     "mac": {
+      "icon": "./public/logo512.icns",
       "category": "public.app-category.medical",
       "target": [
         "default"
@@ -109,13 +110,14 @@
       "utils/**/*",
       "python/**/*",
       "dist/*",
+      "public/*",
       "package.json"
     ],
     "extraResources": [
       "public/preload.js"
     ],
     "directories": {
-      "buildResources": "assets"
+      "buildResources": "public"
     }
   }
 }

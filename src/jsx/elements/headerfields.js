@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import '../../css/Menu.css';
 
 /**
- * MenuTab - the menu tab component.
+ * Field - the field component.
  * @param {object} props
  * @return {JSX.Element}
  */
-const MenuTab = (props) => {
+const Field = (props) => {
   // css styling.
   const menuTabWidth = {width: props.width};
   const classesTitleText = props.active ?
@@ -25,7 +25,7 @@ const MenuTab = (props) => {
     </div>
   );
 };
-MenuTab.propTypes = {
+Field.propTypes = {
   id: PropTypes.string,
   title: PropTypes.string,
   onClick: PropTypes.func,
@@ -33,11 +33,11 @@ MenuTab.propTypes = {
 };
 
 /**
- * Menu - the menu component.
+ * HeaderFields - the header fields component.
  * @param {object} props
  * @return {JSX.Element}
  */
-const Menu = (props) => {
+const HeaderFields = (props) => {
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
@@ -46,7 +46,7 @@ const Menu = (props) => {
     <div className={'root'}>
       <div className={'menu'}>
         { props.tabs.map((tab, index) => (
-          <MenuTab
+          <Field
             key={index}
             index={index}
             length={props.tabs.length}
@@ -61,13 +61,13 @@ const Menu = (props) => {
     </div>
   ) : null;
 };
-Menu.defaultProps = {
+HeaderFields.defaultProps = {
   activeTab: 0,
 };
-Menu.propTypes = {
+HeaderFields.propTypes = {
   visible: PropTypes.bool,
   tabs: PropTypes.array,
   activeTab: PropTypes.number,
 };
 
-export default Menu;
+export default HeaderFields;

@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Converter.css';
@@ -16,8 +16,13 @@ const Converter = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
+  // React State
+  const [outputTime, setOutputTime] = useState('');
+  const [successMessage, setSuccessMessage] = useState(null);
+
   /**
    * beginBidsCreation - create BIDS format.
+   *   Sent by socket to python: ieeg_to_bids.
    */
   const beginBidsCreation = () => {
     socketContext.emit('ieeg_to_bids', {
@@ -29,8 +34,20 @@ const Converter = (props) => {
         appContext.getFromTask('eventsTSV').path : '',
       line_freq: appContext.getFromTask('lineFreq') ?? '',
       site_id: appContext.getFromTask('siteID') ?? '',
+      subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
+
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+    if (outputTime) {
+      setSuccessMessage(<>
+        <a className={'task-finished'}>Task finished! 🙂</a>
+      </>);
+    }
+  }, [outputTime]);
 
   /**
    * onMessage - received message from python.
@@ -38,6 +55,10 @@ const Converter = (props) => {
    */
   const onMessage = (message) => {
     console.info(message);
+    if (message['output_time']) {
+      setOutputTime(message['output_time']);
+      appContext.setTask('output_time', message['output_time']);
+    }
   };
 
   /**
@@ -46,9 +67,9 @@ const Converter = (props) => {
    */
   return props.visible ? (
     <>
-      <div className={'header'}>
+      <span className={'header'}>
         iEEG to BIDS format
-      </div>
+      </span>
       <div className={'info'}>
         <div className={'small-pad'}>
           <b>6. Please review your configurations:</b>
@@ -62,7 +83,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The file.edf hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -75,7 +100,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The events.tsv hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -88,7 +117,11 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The BIDS output directory hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
@@ -101,37 +134,165 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The line_freq hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>7. Please review your LORIS meta data:</b>
+          <b>7. Please review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
                 (<>
                   The SiteID:&nbsp;
                   {appContext.getFromTask('siteID')}
-                  <a className={'checkmark'}> &#x2714;</a>
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
                   The SiteID hasn't been set in configuration.
-                  <a> &#x274C;</a>
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
                 </>)
               }
             </li>
           </ul>
         </div>
         <div className={'small-pad'}>
+          <b>8. Please review your iEEG header data:</b>
+          <ul>
+            <li>
+              {appContext.getFromTask('subject_id') ?
+                (<>
+                  The subject_id:&nbsp;
+                  {appContext.getFromTask('subject_id')}
+                  <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                    <span className={'tooltiptext'}>
+                      Verify the anonymization.
+                    </span>
+                  </a>
+                </>) :
+                (<>
+                  The file.edf hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            {appContext.getFromTask('recording_id') ?
+              (<li>
+                The recording_id:&nbsp;
+                {appContext.getFromTask('recording_id')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('day') ?
+              (<li>
+                The day:&nbsp;
+                {appContext.getFromTask('day')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('month') ?
+              (<li>
+                The month:&nbsp;
+                {appContext.getFromTask('month')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('year') ?
+              (<li>
+                The year:&nbsp;
+                {appContext.getFromTask('year')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('hour') ?
+              (<li>
+                The hour:&nbsp;
+                {appContext.getFromTask('hour')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('minute') ?
+              (<li>
+                The minute:&nbsp;
+                {appContext.getFromTask('minute')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+            {appContext.getFromTask('second') ?
+              (<li>
+                The second:&nbsp;
+                {appContext.getFromTask('second')}
+                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                  <span className={'tooltiptext'}>
+                    Verify the anonymization.
+                  </span>
+                </a>
+              </li>) :
+              (<>
+              </>)
+            }
+          </ul>
+        </div>
+        <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            8. Convert your specifications to BIDS format:&nbsp;
+            9. Convert your specifications to BIDS format:&nbsp;
           </b>
-          <button onClick={beginBidsCreation}>
-            Start Task
-          </button>
+          <input type={'button'}
+            className={'start_task'}
+            onClick={beginBidsCreation}
+            value={'Start Task'}
+          />
+          {successMessage}
         </div>
       </div>
       <Event event='response' handler={onMessage} />

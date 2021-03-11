@@ -1,6 +1,46 @@
 .checkmark {
+    cursor: default;
     font-size: 24px;
     color: transparent;
     text-shadow: 0 0 0 #84fa84;
     font-family: Segoe UI Symbol, serif;
+}
+.warning {
+    font-size: 24px;
+    font-family: Segoe UI Symbol, serif;
+}
+
+.tooltip {
+    cursor: default;
+    position: relative;
+}
+.tooltip .tooltiptext {
+    color: #fff;
+    width: 120px;
+    text-align: center;
+    visibility: hidden;
+    border-radius: 6px;
+    background-color: black;
+}
+.tooltip:hover .tooltiptext {
+    padding: 5px 0;
+    visibility: visible;
+    font-size: 10pt;
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 105%;
+}
+
+.start_task {
+    margin-top: -10px;
+    min-height: 30px;
+}
+.task-finished {
+    padding-left: 40px;
+    font-size: 17pt;
+}
+.convert-bids-row {
+    padding-top: 0;
+    margin-top: -5px;
 }
