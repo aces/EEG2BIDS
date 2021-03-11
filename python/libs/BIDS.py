@@ -8,6 +8,7 @@ class Validate:
 
     def __init__(self, data):
         print('- Validate: init started.')
+        subject = data['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
         start_path = '/Users/alizee/Desktop/test'  # current directory
         file_paths = []
         result = []

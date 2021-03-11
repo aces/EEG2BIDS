@@ -72,6 +72,7 @@ class Converter:
             file=data['file_path'],
             bids_directory=data['bids_directory'],
             subject_id=data['subject_id'],
+            output_time=data['output_time'],
             read_only=data['read_only'],
             line_freq=data['line_freq']
         )
@@ -92,6 +93,7 @@ class Converter:
                 file,
                 bids_directory,
                 subject_id,
+                output_time,
                 task='test',
                 ch_type='seeg',
                 read_only=False,
@@ -114,6 +116,8 @@ class Converter:
             raw.set_channel_types({ch: ch_type for ch in raw.ch_names})
             print('VIEW 2:')
             print(raw)
+            os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
+            bids_directory = bids_directory + os.path.sep + output_time
             bids_root = bids_directory
             m_info['subject_id'] = subject_id  # 'alizee'
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
@@ -139,10 +143,19 @@ class Converter:
                 'preload': False,
                 'verbose': None
             }
-            write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33000), overwrite=False, verbose=False)
+            write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
             print('finished')
         else:
             print('File not found or is not file: %s', file)
+
+
+class Time:
+    def __init__(self):
+        print('- Time: init started.')
+        # print(data)
+        from datetime import datetime
+        now = datetime.now()
+        self.latest_output = now.strftime("%Y-%m-%d-%Hh%Mm%Ss")
 
 
 class Modifier:

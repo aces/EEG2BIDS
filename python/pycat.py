@@ -36,12 +36,15 @@ def ieeg_anonymize_header(sid, data):
 @sio.event
 def ieeg_to_bids(sid, data):
     print('ieeg_to_bids: ', data)
+    time = iEEG.Time()
+    data['output_time'] = 'output-' + time.latest_output
     iEEG.Converter(data)  # iEEG to BIDS format.
     # store subject_id for iEEG.Modifier
     data['subject_id'] = iEEG.Converter.m_info['subject_id']
     iEEG.Modifier(data)  # Modifies data of BIDS format
     response = {
-        'directory_name': data['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+        'directory_name': data['subject_id'].replace('_', '').replace('-', '').replace(' ', ''),
+        'output_time': data['output_time']
     }
     sio.emit('response', response)
 

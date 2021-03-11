@@ -23,6 +23,7 @@ const Validator = (props) => {
     console.log('validateBIDS();');
     socketContext.emit('validate_bids', {
       bids_directory: '', // appContext.getFromTask('bidsDirectory') ?? '',
+      subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
 
