@@ -30,3 +30,8 @@
     top: -5px;
     left: 105%;
 }
+
+.start_task {
+    margin-top: -10px;
+    min-height: 30px;
+}

@@ -267,9 +267,11 @@ const Converter = (props) => {
           <b style={{cursor: 'default'}}>
             9. Convert your specifications to BIDS format:&nbsp;
           </b>
-          <button onClick={beginBidsCreation}>
-            Start Task
-          </button>
+          <input type={'button'}
+            className={'start_task'}
+            onClick={beginBidsCreation}
+            value={'Start Task'}
+          />
         </div>
       </div>
       <Event event='response' handler={onMessage} />
