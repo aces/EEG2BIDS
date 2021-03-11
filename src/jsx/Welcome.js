@@ -31,7 +31,7 @@ const Welcome = (props) => {
         </p>
         <ul>
           <li>Select the file.edf, events.tsv and BIDS output directory.</li>
-          <li>Set the line_freq used and LORIS metadata.</li>
+          <li>Set the line_freq and LORIS metadata.</li>
           <li>Anonymize the iEEG header data.</li>
         </ul>
         <p>
