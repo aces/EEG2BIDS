@@ -9,6 +9,14 @@ import '../css/Welcome.css';
  */
 const Welcome = (props) => {
   /**
+   * openGitHub - Navigate browser to pycat.
+   */
+  const openGitHub = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitGitHub();
+  };
+
+  /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
@@ -52,6 +60,11 @@ const Welcome = (props) => {
           You may begin your task by following the menu above.
           Please remember to always backup your data!
         </p>
+      </div>
+      <div className={'footer'}>
+        Powered by <a className={'open-source'} onClick={openGitHub}>
+        open source software</a>.<br/>
+        Copyright © 2021 MCIN.
       </div>
     </>
   ) : null;
