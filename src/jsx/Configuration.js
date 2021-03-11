@@ -142,17 +142,13 @@ const Configuration = (props) => {
     const keys = [
       'subject_id', 'recording_id',
       'day', 'month', 'year',
-      'hour', 'minute', 'second',
     ];
     const anonymize = {
-      subject_id: '0 X 18-SEP-1990 JaneDoe',
-      recording_id: 'Startdate 18-SEP-2100',
-      day: 11,
+      subject_id: '0 X X X',
+      recording_id: 'Startdate 31-DEC-1924 X mne-bids_anonymize X',
+      day: 31,
       month: 12,
-      year: 60,
-      hour: 20,
-      minute: 20,
-      second: 20,
+      year: 85,
     };
     for (const key of keys) {
       onUserHeaderFieldInput(key, anonymize[key]);

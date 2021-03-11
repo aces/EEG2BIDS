@@ -57,8 +57,8 @@ const Validator = (props) => {
     }
     setValidPaths(<>
       <div className={'key-terminal'}>
-        Valid is <span className={'green-font-bold'}>green</span>.
-        Invalid is <span className={'red-font-bold'}>red</span>.
+        Valid is <a className={'green-font-bold'}>green</a>.
+        Invalid is <a className={'red-font-bold'}>red</a>.
       </div>
       <div className={'terminal'}>
         {renderFields}

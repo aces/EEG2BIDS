@@ -18,6 +18,7 @@ const Converter = (props) => {
 
   // React State
   const [outputTime, setOutputTime] = useState('');
+  const [successMessage, setSuccessMessage] = useState(null);
 
   /**
    * beginBidsCreation - create BIDS format.
@@ -37,12 +38,16 @@ const Converter = (props) => {
     });
   };
 
-  // /**
-  //  * Similar to componentDidMount and componentDidUpdate.
-  //  */
-  // useEffect(() => {
-  //   appContext.setTask('output_time', outputTime);
-  // }, [outputTime]);
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+    if (outputTime) {
+      setSuccessMessage(<>
+        <a className={'task-finished'}>Task finished! 🙂</a>
+      </>);
+    }
+  }, [outputTime]);
 
   /**
    * onMessage - received message from python.
@@ -278,7 +283,7 @@ const Converter = (props) => {
             }
           </ul>
         </div>
-        <div className={'small-pad'}>
+        <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
             9. Convert your specifications to BIDS format:&nbsp;
           </b>
@@ -287,6 +292,7 @@ const Converter = (props) => {
             onClick={beginBidsCreation}
             value={'Start Task'}
           />
+          {successMessage}
         </div>
       </div>
       <Event event='response' handler={onMessage} />
