@@ -4,6 +4,7 @@ const url = require('url');
 
 const {app} = electron;
 const {BrowserWindow} = electron;
+const {ipcMain} = require('electron');
 const nativeImage = electron.nativeImage;
 
 const PycatService = process.env.DEV ?
@@ -36,12 +37,13 @@ const icon = nativeImage.createFromPath(
 );
 let mainWindow;
 /**
- * Create Window.
+ * Create Main Window.
  */
-const createWindow = () => {
+const createMainWindow = () => {
   const startUrl = process.env.DEV ?
-    'http://localhost:3000' :
-    url.pathToFileURL(path.join(__dirname, '/../build/index.html')).href;
+    'http://localhost:3000?app' :
+    url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html?app')).href;
   mainWindow = new BrowserWindow({
     show: false,
     icon,
@@ -72,9 +74,57 @@ const createWindow = () => {
     mainWindow = null;
   });
 };
+let settingsWindow;
+/**
+ * Create Settings Window.
+ */
+const createSettingsWindow = () => {
+  const startUrl = process.env.DEV ?
+    'http://localhost:3000?settings' :
+    url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html?settings')).href;
+  settingsWindow = new BrowserWindow({
+    icon,
+    show: true,
+    webPreferences: {
+      webSecurity: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: true,
+      preload: path.join(__dirname, 'preload.js'),
+      nativeWindowOpen: true,
+    },
+    width: 600,
+    height: 500,
+    minWidth: 600,
+    minHeight: 500,
+    backgroundColor: '#0A826E',
+  });
+  // settingsWindow.removeMenu(); // Hides menu on Linux & Windows
+  settingsWindow.show();
+
+  settingsWindow.loadURL(startUrl).then(() => {
+    process.env.DEV && settingsWindow.webContents.openDevTools();
+  });
+
+  settingsWindow.on('closed', function() {
+    // pycatService.shutdown();
+    settingsWindow = null;
+  });
+};
 
 app.on('ready', async () => {
-  createWindow();
+  createMainWindow();
+  ipcMain.on('openSettingsWindow', (event, arg) => {
+    console.info('openSettingsWindow has ran!');
+    console.log(settingsWindow);
+    if (settingsWindow === undefined || settingsWindow === null) {
+      console.info('opening!');
+      createSettingsWindow();
+    }
+    // event.sender.send('nameReply', {not_right: false}); // sends back/replies to window 1 - "event" is a reference to this chanel.
+    // window2.webContents.send( 'forWin2', arg ); // sends the stuff from Window1 to Window2.
+  });
 });
 
 app.on('window-all-closed', () => {
@@ -85,7 +135,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow();
+  if (mainWindow === undefined || mainWindow === null) {
+    createMainWindow();
   }
 });

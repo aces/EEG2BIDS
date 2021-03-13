@@ -15,6 +15,13 @@ const Welcome = (props) => {
     const myAPI = window['myAPI'];
     myAPI.visitGitHub();
   };
+  /**
+   * openSettings - Open pycat settings.
+   */
+  const openSettings = () => {
+    const myAPI = window['myAPI'];
+    myAPI.openSettings();
+  };
 
   /**
    * Renders the React component.
@@ -60,6 +67,9 @@ const Welcome = (props) => {
           You may begin your task by following the menu above.
           Please remember to always backup your data!
         </p>
+      </div>
+      <div>
+        <input value={'Settings'} type={'button'} onClick={openSettings}/>
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>

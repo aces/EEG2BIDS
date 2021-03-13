@@ -19,7 +19,7 @@ import Validator from './jsx/Validator';
 // import {Authentication} from './jsx/elements/authentication';
 
 /**
- * App - the starting point.
+ * App - the main window.
  * @return {JSX.Element}
  */
 const App = () => {
