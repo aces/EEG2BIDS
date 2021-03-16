@@ -29,6 +29,7 @@
     text-align: center;
 }
 .menu-active {
-    color: #0d957e;
+    color: #074785;
+    /*color: #0d957e;*/
     font-weight: bold;
 }
