@@ -3,6 +3,7 @@ import csv
 import shutil
 
 
+# Writer - writes to tsv file
 class Writer:
     def __init__(self, data):
         participant_id = ''
@@ -45,4 +46,36 @@ class Copy:
         new_events_tsv = os.path.join(data['bids_directory'], data['output_time'], directory_path, 'ieeg', 'events.tsv')
         print('new_events_tsv is ')
         print(new_events_tsv)
-        shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given
+        # shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given
+        # new
+        start_path = os.path.join(data['bids_directory'], data['output_time'], directory_path, 'ieeg')
+        print('START: ')
+        path_events_tsv = ''
+        # We search for the events.tsv file.
+        for path, dirs, files in os.walk(start_path):
+            for filename in files:
+                temp = os.path.join(path, filename)
+                print(temp)
+                if temp.endswith('events.tsv'):
+                    path_events_tsv = temp
+        print('Found: ')
+        print(path_events_tsv)
+        # we now open tsv file.
+        with open(path_events_tsv, newline='') as f:
+            f.readline()
+            reader = csv.reader(f, delimiter='\t')
+            rows = list(reader)
+        output = []
+        onset = ''
+        duration = ''
+        trial_type = ''
+        value = ''
+        sample = ''
+        for line in rows:
+            print(line)
+            try:
+                onset, duration, trial_type, value, sample = line
+            except ValueError:
+                print('error: ValueError')
+            output.append([onset, duration, trial_type, value, sample])
+

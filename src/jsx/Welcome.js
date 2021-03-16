@@ -33,7 +33,6 @@ const Welcome = (props) => {
         Welcome to <b>pyCat!</b>
       </span>
       <div className={'info'}>
-        <br/><br/><br/>
         <p className={'font-large'}>Hello user,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;
           is a simple tool for de-identification of iEEG datasets.

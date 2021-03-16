@@ -1,8 +1,10 @@
 html {
     height: 100%;
     -webkit-app-region: drag;
-    color: rgb(255, 255, 255);
-    background-color: rgb(10, 130, 110);
+    color: rgb(37, 35, 38);
+    /*color: rgb(255, 255, 255);*/
+    background-color: rgb(9, 69, 128);
+    /*background-color: rgb(10, 130, 110);*/
 }
 
 body {
@@ -15,6 +17,7 @@ body {
 }
 
 .header {
+    color: #f6ffff;
     padding: 20px;
     display: block;
     cursor: default;
@@ -24,7 +27,8 @@ body {
 }
 .info {
     padding: 14px;
-    background-color: #039b83;
+    background-color: #ffffff;
+    /*background-color: #039b83;*/
 }
 .small-pad {
     padding: 10px;
@@ -33,7 +37,8 @@ body {
     display: flex;
     padding: 14px;
     flex-wrap: wrap;
-    background-color: #039b83;
+    background-color: #dae1e8;
+    /*background-color: #039b83;*/
 }
 .small-pad-flex {
     flex: 1;

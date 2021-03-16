@@ -5,6 +5,7 @@ from python.libs import TSV
 from mne_bids import write_raw_bids, BIDSPath
 
 
+# Anonymize - scrubs edf header data.
 class Anonymize:
     file_path = ''
     header = []
@@ -58,6 +59,7 @@ class Anonymize:
         file_out.close()
 
 
+# Converter - Creates the BIDS output by edf file.
 class Converter:
     m_info = ''
 
@@ -149,6 +151,7 @@ class Converter:
             print('File not found or is not file: %s', file)
 
 
+# Time - used for generating BIDS 'output' directory
 class Time:
     def __init__(self):
         print('- Time: init started.')
@@ -158,6 +161,8 @@ class Time:
         self.latest_output = now.strftime("%Y-%m-%d-%Hh%Mm%Ss")
 
 
+# Modifier - 1) used for SiteID to participants.tsv
+#            2) used for user's events.tsv to BIDS output events.tsv
 class Modifier:
     def __init__(self, data):
         print('- Modifier: init started.')

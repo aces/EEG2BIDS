@@ -4,8 +4,10 @@
     font-size: 22pt;
     text-align: center;
     vertical-align: middle;
-    padding: 40px 20px 0 20px;
-    background-color: #039b83;
+    padding: 40px 20px 40px 20px;
+    color: #f6ffff;
+    background-color: #094580;
+    /*background-color: #039b83;*/
     text-decoration: underline;
     font-family: Verdana, sans-serif;
 }
