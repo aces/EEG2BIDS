@@ -30,6 +30,9 @@ const Configuration = (props) => {
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [lineFreq, setLineFreq] = useState('');
   const [siteID, setSiteID] = useState('');
+  const [projectID, setProjectID] = useState('');
+  const [subProjectID, setSubProjectID] = useState('');
+  const [visitLabel, setVisitLabel] = useState('');
   const [headerFields, setHeaderFields] = useState(null);
   const [edfHeader, setHeader] = useState({
     subject_id: '', recording_id: '',
@@ -92,6 +95,18 @@ const Configuration = (props) => {
       }
       case 'siteID': {
         setSiteID(value);
+        break;
+      }
+      case 'projectID': {
+        setProjectID(value);
+        break;
+      }
+      case 'subProjectID': {
+        setSubProjectID(value);
+        break;
+      }
+      case 'visitLabel': {
+        setVisitLabel(value);
         break;
       }
       default: {
@@ -219,15 +234,15 @@ const Configuration = (props) => {
           <TextInput id='projectID'
             name='projectID'
             label='6. The ProjectID from LORIS: '
-            value={siteID}
+            value={projectID}
             onUserInput={onUserInput}
           />
         </div>
         <div className={'small-pad'}>
-          <TextInput id='subprojectID'
-            name='subprojectID'
+          <TextInput id='subProjectID'
+            name='subProjectID'
             label='7. The SubProjectID from LORIS: '
-            value={siteID}
+            value={subProjectID}
             onUserInput={onUserInput}
           />
         </div>
@@ -235,7 +250,7 @@ const Configuration = (props) => {
           <TextInput id='visitLabel'
             name='visitLabel'
             label='8. The Visit Label from LORIS: '
-            value={siteID}
+            value={visitLabel}
             onUserInput={onUserInput}
           />
         </div>
