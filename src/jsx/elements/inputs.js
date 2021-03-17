@@ -107,6 +107,13 @@ export const TextInput = (props) => {
    */
   const handleChange = (event) => {
     const value = event.target.value;
+    if (props.bannedCharacters) {
+      for (const character of props.bannedCharacters) {
+        if (value.includes(character)) {
+          return;
+        }
+      }
+    }
     props.onUserInput(props.id, value);
   };
   /**
@@ -144,6 +151,7 @@ TextInput.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]),
+  bannedCharacters: PropTypes.array,
   readonly: PropTypes.bool,
 };
 

@@ -254,6 +254,7 @@ const Configuration = (props) => {
             name='visitLabel'
             label='8. The Visit Label from LORIS: '
             value={visitLabel}
+            bannedCharacters={['-', '_', ' ']}
             onUserInput={onUserInput}
           />
         </div>
