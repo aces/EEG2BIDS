@@ -38,6 +38,7 @@ const Configuration = (props) => {
     subject_id: '', recording_id: '',
     day: '', month: '', year: '',
     hour: '', minute: '', second: '',
+    subtype: '',
   });
 
   /**
@@ -48,6 +49,7 @@ const Configuration = (props) => {
       'subject_id', 'recording_id',
       'day', 'month', 'year',
       'hour', 'minute', 'second',
+      'subtype',
     ];
     const renderFields = [];
     for (const key of keys) {
@@ -147,6 +149,7 @@ const Configuration = (props) => {
    */
   const onMessage = (message) => {
     if (message['header']) {
+      console.log(message);
       setHeader(message['header']);
     }
   };
