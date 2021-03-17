@@ -123,9 +123,13 @@ export const TextInput = (props) => {
         value={props.value}
         onChange={handleChange}
         placeholder={props.placeholder}
+        readOnly={props.readonly}
       />
     </>
   );
+};
+TextInput.defaultProps = {
+  readonly: false,
 };
 TextInput.propTypes = {
   id: PropTypes.string,
@@ -140,6 +144,7 @@ TextInput.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]),
+  readonly: PropTypes.bool,
 };
 
 /**

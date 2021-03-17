@@ -59,7 +59,7 @@ const createMainWindow = () => {
     height: 800,
     minWidth: 900,
     minHeight: 800,
-    backgroundColor: '#0A826E',
+    backgroundColor: '#094580',
   });
   mainWindow.removeMenu(); // Hides menu on Linux & Windows
   // mainWindow.maximize();

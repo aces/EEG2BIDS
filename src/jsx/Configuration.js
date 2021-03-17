@@ -56,6 +56,7 @@ const Configuration = (props) => {
               value={edfHeader[key]}
               onUserInput={onUserHeaderFieldInput}
               placeholder={edfHeader[key]}
+              readonly={true}
             />
           </div>,
       );
@@ -210,6 +211,30 @@ const Configuration = (props) => {
           <TextInput id='siteID'
             name='siteID'
             label='5. The SiteID from LORIS: '
+            value={siteID}
+            onUserInput={onUserInput}
+          />
+        </div>
+        <div className={'small-pad'}>
+          <TextInput id='projectID'
+            name='projectID'
+            label='6. The ProjectID from LORIS: '
+            value={siteID}
+            onUserInput={onUserInput}
+          />
+        </div>
+        <div className={'small-pad'}>
+          <TextInput id='subprojectID'
+            name='subprojectID'
+            label='7. The SubProjectID from LORIS: '
+            value={siteID}
+            onUserInput={onUserInput}
+          />
+        </div>
+        <div className={'small-pad'}>
+          <TextInput id='visitLabel'
+            name='visitLabel'
+            label='8. The Visit Label from LORIS: '
             value={siteID}
             onUserInput={onUserInput}
           />

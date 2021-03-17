@@ -72,7 +72,7 @@ const Converter = (props) => {
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
-          <b>6. Please review your configurations:</b>
+          <b>9. Please review your configurations:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
@@ -145,7 +145,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>7. Please review your LORIS metadata:</b>
+          <b>10. Please review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
@@ -167,7 +167,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>8. Please review your iEEG header data:</b>
+          <b>11. Please review your iEEG header data:</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
@@ -285,7 +285,7 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            9. Convert your specifications to BIDS format:&nbsp;
+            12. Convert your specifications to BIDS format:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}

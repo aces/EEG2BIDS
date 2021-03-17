@@ -2,6 +2,23 @@ import eventlet
 import socketio
 from python.libs import iEEG
 from python.libs import BIDS
+from bids_validator import BIDSValidator
+
+
+file_paths = [
+            '/README',
+            '/dataset_description.json',
+            '/participants.json',
+            '/participants.tsv',
+            '/sub-0XXX/ses-test123/sub-0XXX_ses-test123_scans.tsv',
+            '/sub-0XXX/ses-test123/ieeg/sub-0XXX_ses-test123_task-test_acq-seeg_channels.tsv',
+            '/sub-0XXX/ses-test123/ieeg/sub-0XXX_ses-test123_task-test_acq-seeg_ieeg.json',
+            '/sub-0XXX/ses-test123/ieeg/sub-0XXX_ses-test123_task-test_acq-seeg_events.tsv',
+            '/sub-0XXX/ses-test123/ieeg/sub-0XXX_ses-test123_task-test_acq-seeg_ieeg.edf',
+            ]
+validator = BIDSValidator()
+for filepath in file_paths:
+    print(validator.is_bids(filepath))
 
 
 # Create socket listener.
