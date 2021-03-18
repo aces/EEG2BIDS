@@ -7,7 +7,7 @@ import '../css/Converter.css';
 import {Event, SocketContext} from './socket.io';
 
 /**
- * Converter - the iEEG to BIDS component.
+ * Converter - the EDF to BIDS component.
  * @param {object} props
  * @return {JSX.Element}
  */
