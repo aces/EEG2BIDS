@@ -34,6 +34,9 @@ const Converter = (props) => {
         appContext.getFromTask('eventsTSV').path : '',
       line_freq: appContext.getFromTask('lineFreq') ?? '',
       site_id: appContext.getFromTask('siteID') ?? '',
+      project_id: appContext.getFromTask('projectID') ?? '',
+      sub_project_id: appContext.getFromTask('subProjectID') ?? '',
+      visit_label: appContext.getFromTask('visit_label') ?? '',
       subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
@@ -156,6 +159,57 @@ const Converter = (props) => {
                 </>) :
                 (<>
                   The SiteID hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('projectID') ?
+                (<>
+                  The ProjectID:&nbsp;
+                  {appContext.getFromTask('projectID')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The ProjectID hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('subProjectID') ?
+                (<>
+                  The SubProjectID:&nbsp;
+                  {appContext.getFromTask('subProjectID')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The SubProjectID hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('visitLabel') ?
+                (<>
+                  The Visit Label:&nbsp;
+                  {appContext.getFromTask('visitLabel')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The Visit Label hasn't been set in configuration.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.

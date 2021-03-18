@@ -156,6 +156,101 @@ TextInput.propTypes = {
 };
 
 /**
+ * RadioInput - the input type='radio' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const RadioInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    const value = event.target.value;
+    props.onUserInput(props.id, value);
+  };
+  /**
+   * generateRadioLayout - creates the radio input layout.
+   * @return {JSX.Element}
+   */
+  const generateRadioLayout = () => {
+    console.log('inside generateRadioLayout');
+    const styleRow = {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      width: '100%',
+    };
+    const styleColumn = {
+      display: 'flex',
+      flexDirection: 'column',
+      alignSelf: 'flex-start',
+      marginRight: '10px',
+    };
+    const styleContainer = {
+      paddingTop: '7px',
+      cursor: 'pointer',
+    };
+    const styleLabel = {
+      margin: 0,
+      color: '#064785',
+      cursor: 'pointer',
+    };
+    const styleInput = {
+      display: 'inline-block',
+      margin: '0 5px 0 5px',
+      cursor: 'pointer',
+    };
+    const content = [];
+    for (const [key] of Object.entries(props.options)) {
+      console.info(key);
+      content.push(
+          <div key={key}
+            style={styleColumn}>
+            <div style={styleContainer}>
+              <input
+                type='radio'
+                id={`${props.id}_${key}`}
+                name={`${props.name}_${key}`}
+                value={key}
+                checked={props.checked === key}
+                onChange={handleChange}
+              />
+              <label htmlFor={`${props.id}_${key}`}
+                style={styleLabel}
+              >
+                {props.options[key]}
+              </label>
+            </div>
+          </div>,
+      );
+    }
+    return <div key={props.name + '_key'}
+      style={styleRow}>
+      {content}
+    </div>;
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <>
+      <label htmlFor={props.id}><b>{props.label}</b></label>
+      {generateRadioLayout()}
+    </>
+  );
+};
+RadioInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  options: PropTypes.object,
+  checked: PropTypes.string,
+  onUserInput: PropTypes.func,
+};
+
+/**
  * NumberInput - the input type='number' component.
  * @param {object} props
  * @return {JSX.Element}
@@ -199,6 +294,7 @@ NumberInput.propTypes = {
 export default {
   FileInput,
   TextInput,
+  RadioInput,
   NumberInput,
   DirectoryInput,
 };

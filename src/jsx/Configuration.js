@@ -7,7 +7,7 @@ import '../css/Configuration.css';
 import {
   DirectoryInput,
   FileInput,
-  NumberInput,
+  NumberInput, RadioInput,
   TextInput,
 } from './elements/inputs';
 
@@ -26,6 +26,7 @@ const Configuration = (props) => {
 
   // React State
   const [edfFile, setEdfFile] = useState({});
+  const [edfType, setEdfType] = useState('iEEG');
   const [eventsTSV, setEventsTSV] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [lineFreq, setLineFreq] = useState('');
@@ -81,6 +82,10 @@ const Configuration = (props) => {
       case 'edfFile': {
         setEdfFile(value);
         createHeaderFields(value['path']);
+        break;
+      }
+      case 'edfType': {
+        setEdfType(value);
         break;
       }
       case 'eventsTSV': {
@@ -192,6 +197,16 @@ const Configuration = (props) => {
             placeholder={edfFile['name']}
             label='1. The file.edf to convert: '
             onUserInput={onUserInput}
+          />
+          <RadioInput id='edfType'
+            name='edfType'
+            label='The edf type: '
+            onUserInput={onUserInput}
+            options={{
+              iEEG: 'iEEG',
+              EEG: 'EEG',
+            }}
+            checked={edfType}
           />
         </div>
         <div className={'small-pad'}>
