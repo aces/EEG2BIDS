@@ -198,9 +198,11 @@ const Configuration = (props) => {
             label='1. The file.edf to convert: '
             onUserInput={onUserInput}
           />
+        </div>
+        <div className={'small-pad'}>
           <RadioInput id='edfType'
             name='edfType'
-            label='The edf type: '
+            label='2. The edf type: '
             onUserInput={onUserInput}
             options={{
               iEEG: 'iEEG',

@@ -174,7 +174,6 @@ export const RadioInput = (props) => {
    * @return {JSX.Element}
    */
   const generateRadioLayout = () => {
-    console.log('inside generateRadioLayout');
     const styleRow = {
       display: 'flex',
       flexDirection: 'row',
@@ -186,10 +185,6 @@ export const RadioInput = (props) => {
       flexDirection: 'column',
       alignSelf: 'flex-start',
       marginRight: '10px',
-    };
-    const styleContainer = {
-      paddingTop: '7px',
-      cursor: 'pointer',
     };
     const styleLabel = {
       margin: 0,
@@ -203,11 +198,10 @@ export const RadioInput = (props) => {
     };
     const content = [];
     for (const [key] of Object.entries(props.options)) {
-      console.info(key);
       content.push(
           <div key={key}
             style={styleColumn}>
-            <div style={styleContainer}>
+            <span style={{cursor: 'pointer'}}>
               <input
                 type='radio'
                 id={`${props.id}_${key}`}
@@ -215,18 +209,20 @@ export const RadioInput = (props) => {
                 value={key}
                 checked={props.checked === key}
                 onChange={handleChange}
+                style={styleInput}
               />
               <label htmlFor={`${props.id}_${key}`}
                 style={styleLabel}
               >
                 {props.options[key]}
               </label>
-            </div>
+            </span>
           </div>,
       );
     }
     return <div key={props.name + '_key'}
       style={styleRow}>
+      <label htmlFor={props.id}><b>{props.label}</b></label>
       {content}
     </div>;
   };
@@ -236,7 +232,6 @@ export const RadioInput = (props) => {
    */
   return (
     <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
       {generateRadioLayout()}
     </>
   );
