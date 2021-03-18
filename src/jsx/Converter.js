@@ -57,7 +57,6 @@ const Converter = (props) => {
    * @param {object} message - response
    */
   const onMessage = (message) => {
-    console.info(message);
     if (message['output_time']) {
       setOutputTime(message['output_time']);
       appContext.setTask('output_time', message['output_time']);

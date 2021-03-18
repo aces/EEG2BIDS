@@ -154,7 +154,6 @@ const Configuration = (props) => {
    */
   const onMessage = (message) => {
     if (message['header']) {
-      console.log(message);
       setHeader(message['header']);
     }
   };

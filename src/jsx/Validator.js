@@ -25,7 +25,7 @@ const Validator = (props) => {
    *   Sent by socket to python: validate_bids.
    */
   const validateBIDS = () => {
-    console.log('validateBIDS();');
+    console.info('validateBIDS();');
     socketContext.emit('validate_bids', {
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       subject_id: appContext.getFromTask('subject_id') ?? '',
