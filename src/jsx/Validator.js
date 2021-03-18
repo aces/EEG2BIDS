@@ -89,7 +89,7 @@ const Validator = (props) => {
       <div className={'info'}>
         <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            13. Confirm BIDS data structure:&nbsp;
+            14. Confirm BIDS data structure:&nbsp;
           </b>
           <input onClick={validateBIDS}
             type={'button'}

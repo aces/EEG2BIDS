@@ -56,9 +56,9 @@ const createMainWindow = () => {
       nativeWindowOpen: true,
     },
     width: 900,
-    height: 800,
+    height: 860,
     minWidth: 900,
-    minHeight: 800,
+    minHeight: 860,
     backgroundColor: '#094580',
   });
   mainWindow.removeMenu(); // Hides menu on Linux & Windows

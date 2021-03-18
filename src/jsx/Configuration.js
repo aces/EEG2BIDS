@@ -216,14 +216,14 @@ const Configuration = (props) => {
             name='eventsTSV'
             accept='.tsv'
             placeholder={eventsTSV['name']}
-            label='2. The events.tsv to include: '
+            label='3. The events.tsv to include: '
             onUserInput={onUserInput}
           />
         </div>
         <div className={'small-pad'}>
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
-            label='3. The BIDS output directory: '
+            label='4. The BIDS output directory: '
             placeholder={bidsDirectory}
             onUserInput={onUserInput}
           />
@@ -231,7 +231,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <NumberInput id='lineFreq'
             name='lineFreq'
-            label='4. The line_freq used: '
+            label='5. The line_freq used: '
             value={lineFreq}
             placeholder='60'
             onUserInput={onUserInput}
@@ -245,7 +245,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='siteID'
             name='siteID'
-            label='5. The SiteID from LORIS: '
+            label='6. The SiteID from LORIS: '
             value={siteID}
             onUserInput={onUserInput}
           />
@@ -253,7 +253,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='projectID'
             name='projectID'
-            label='6. The ProjectID from LORIS: '
+            label='7. The ProjectID from LORIS: '
             value={projectID}
             onUserInput={onUserInput}
           />
@@ -261,7 +261,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='subProjectID'
             name='subProjectID'
-            label='7. The SubProjectID from LORIS: '
+            label='8. The SubProjectID from LORIS: '
             value={subProjectID}
             onUserInput={onUserInput}
           />
@@ -269,7 +269,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='visitLabel'
             name='visitLabel'
-            label='8. The Visit Label from LORIS: '
+            label='9. The Visit Label from LORIS: '
             value={visitLabel}
             bannedCharacters={['-', '_', ' ']}
             onUserInput={onUserInput}
