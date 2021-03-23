@@ -68,7 +68,7 @@ const Welcome = (props) => {
         </p>
       </div>
       <div>
-        <input value={'Settings'} type={'button'} onClick={openSettings}/>
+        {/*<input value={'Settings'} type={'button'} onClick={openSettings}/>*/}
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
