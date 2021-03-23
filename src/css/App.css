@@ -1,8 +1,10 @@
 html {
     height: 100%;
     -webkit-app-region: drag;
-    color: rgb(255, 255, 255);
-    background-color: rgb(10, 130, 110);
+    color: rgb(37, 35, 38);
+    /*color: rgb(255, 255, 255);*/
+    background-color: #064785;
+    /*background-color: rgb(10, 130, 110);*/
 }
 
 body {

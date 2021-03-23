@@ -107,6 +107,13 @@ export const TextInput = (props) => {
    */
   const handleChange = (event) => {
     const value = event.target.value;
+    if (props.bannedCharacters) {
+      for (const character of props.bannedCharacters) {
+        if (value.includes(character)) {
+          return;
+        }
+      }
+    }
     props.onUserInput(props.id, value);
   };
   /**
@@ -123,9 +130,13 @@ export const TextInput = (props) => {
         value={props.value}
         onChange={handleChange}
         placeholder={props.placeholder}
+        readOnly={props.readonly}
       />
     </>
   );
+};
+TextInput.defaultProps = {
+  readonly: false,
 };
 TextInput.propTypes = {
   id: PropTypes.string,
@@ -140,6 +151,98 @@ TextInput.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]),
+  bannedCharacters: PropTypes.array,
+  readonly: PropTypes.bool,
+};
+
+/**
+ * RadioInput - the input type='radio' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const RadioInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    const value = event.target.value;
+    props.onUserInput(props.id, value);
+  };
+  /**
+   * generateRadioLayout - creates the radio input layout.
+   * @return {JSX.Element}
+   */
+  const generateRadioLayout = () => {
+    const styleRow = {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      width: '100%',
+    };
+    const styleColumn = {
+      display: 'flex',
+      flexDirection: 'column',
+      alignSelf: 'flex-start',
+      marginRight: '10px',
+    };
+    const styleLabel = {
+      margin: 0,
+      color: '#064785',
+      cursor: 'pointer',
+    };
+    const styleInput = {
+      display: 'inline-block',
+      margin: '0 5px 0 5px',
+      cursor: 'pointer',
+    };
+    const content = [];
+    for (const [key] of Object.entries(props.options)) {
+      content.push(
+          <div key={key}
+            style={styleColumn}>
+            <span style={{cursor: 'pointer'}}>
+              <input
+                type='radio'
+                id={`${props.id}_${key}`}
+                name={`${props.name}_${key}`}
+                value={key}
+                checked={props.checked === key}
+                onChange={handleChange}
+                style={styleInput}
+              />
+              <label htmlFor={`${props.id}_${key}`}
+                style={styleLabel}
+              >
+                {props.options[key]}
+              </label>
+            </span>
+          </div>,
+      );
+    }
+    return <div key={props.name + '_key'}
+      style={styleRow}>
+      <label htmlFor={props.id}><b>{props.label}</b></label>
+      {content}
+    </div>;
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <>
+      {generateRadioLayout()}
+    </>
+  );
+};
+RadioInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  options: PropTypes.object,
+  checked: PropTypes.string,
+  onUserInput: PropTypes.func,
 };
 
 /**
@@ -186,6 +289,7 @@ NumberInput.propTypes = {
 export default {
   FileInput,
   TextInput,
+  RadioInput,
   NumberInput,
   DirectoryInput,
 };

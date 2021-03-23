@@ -7,7 +7,7 @@ import '../css/Converter.css';
 import {Event, SocketContext} from './socket.io';
 
 /**
- * Converter - the iEEG to BIDS component.
+ * Converter - the EDF to BIDS component.
  * @param {object} props
  * @return {JSX.Element}
  */
@@ -22,10 +22,10 @@ const Converter = (props) => {
 
   /**
    * beginBidsCreation - create BIDS format.
-   *   Sent by socket to python: ieeg_to_bids.
+   *   Sent by socket to python: edf_to_bids.
    */
   const beginBidsCreation = () => {
-    socketContext.emit('ieeg_to_bids', {
+    socketContext.emit('edf_to_bids', {
       file_path: appContext.getFromTask('edfFile') ?
         appContext.getFromTask('edfFile').path : '',
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
@@ -34,6 +34,9 @@ const Converter = (props) => {
         appContext.getFromTask('eventsTSV').path : '',
       line_freq: appContext.getFromTask('lineFreq') ?? '',
       site_id: appContext.getFromTask('siteID') ?? '',
+      project_id: appContext.getFromTask('projectID') ?? '',
+      sub_project_id: appContext.getFromTask('subProjectID') ?? '',
+      visit_label: appContext.getFromTask('visitLabel') ?? '',
       subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
@@ -54,7 +57,6 @@ const Converter = (props) => {
    * @param {object} message - response
    */
   const onMessage = (message) => {
-    console.info(message);
     if (message['output_time']) {
       setOutputTime(message['output_time']);
       appContext.setTask('output_time', message['output_time']);
@@ -68,11 +70,11 @@ const Converter = (props) => {
   return props.visible ? (
     <>
       <span className={'header'}>
-        iEEG to BIDS format
+        EDF to BIDS format
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
-          <b>6. Please review your configurations:</b>
+          <b>10. Please review your configurations:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
@@ -145,7 +147,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>7. Please review your LORIS metadata:</b>
+          <b>11. Please review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
@@ -164,10 +166,61 @@ const Converter = (props) => {
                 </>)
               }
             </li>
+            <li>
+              {appContext.getFromTask('projectID') ?
+                (<>
+                  The ProjectID:&nbsp;
+                  {appContext.getFromTask('projectID')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The ProjectID hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('subProjectID') ?
+                (<>
+                  The SubProjectID:&nbsp;
+                  {appContext.getFromTask('subProjectID')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The SubProjectID hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
+            <li>
+              {appContext.getFromTask('visitLabel') ?
+                (<>
+                  The Visit Label:&nbsp;
+                  {appContext.getFromTask('visitLabel')}
+                  <a className={'checkmark tooltip'}> &#x2714;</a>
+                </>) :
+                (<>
+                  The Visit Label hasn't been set in configuration.
+                  <a className={'tooltip'}> &#x274C;
+                    <span className={'tooltiptext'}>
+                      Please correct.
+                    </span>
+                  </a>
+                </>)
+              }
+            </li>
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>8. Please review your iEEG header data:</b>
+          <b>12. Please review your iEEG header data:</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
@@ -285,7 +338,7 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            9. Convert your specifications to BIDS format:&nbsp;
+            13. Convert your specifications to BIDS format:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}

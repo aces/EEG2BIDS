@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import '../../css/Menu.css';
 
 /**
- * Field - the field component.
+ * Field - the field component
+ *   used with HeaderFields component.
  * @param {object} props
  * @return {JSX.Element}
  */

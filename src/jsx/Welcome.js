@@ -15,6 +15,13 @@ const Welcome = (props) => {
     const myAPI = window['myAPI'];
     myAPI.visitGitHub();
   };
+  /**
+   * openSettings - Open pycat settings.
+   */
+  const openSettings = () => {
+    const myAPI = window['myAPI'];
+    myAPI.openSettings();
+  };
 
   /**
    * Renders the React component.
@@ -26,11 +33,10 @@ const Welcome = (props) => {
         Welcome to <b>pyCat!</b>
       </span>
       <div className={'info'}>
-        <br/><br/><br/>
         <p className={'font-large'}>Hello user,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;
-          is a simple tool for de-identification of iEEG datasets.
-          In addition to de-identifying iEEG files, this tool contains a feature
+          is a simple tool for de-identification of EDF datasets.
+          In addition to de-identifying EDF files, this tool contains a feature
           that allows mapping the LORIS candidate's information to its
           study identifier.
         </p>
@@ -40,15 +46,16 @@ const Welcome = (props) => {
         <ul>
           <li>Select the file.edf, events.tsv and BIDS output directory.</li>
           <li>Set the line_freq and LORIS metadata.</li>
-          <li>Anonymize the iEEG header data.</li>
+          <li>Anonymize the EDF header data.</li>
         </ul>
         <p>
-          <b>The iEEG to BIDS tab allows to:</b>
+          <b>The EDF to BIDS tab allows to:</b>
+          <b>The EDF to BIDS tab allows to:</b>
         </p>
         <ul>
           <li>Review your configurations.</li>
           <li>Review your LORIS metadata.</li>
-          <li>Review your iEEG header data.</li>
+          <li>Review your EDF header data.</li>
         </ul>
         <p>
           <b>The Validator tab allows to:</b>
@@ -60,6 +67,9 @@ const Welcome = (props) => {
           You may begin your task by following the menu above.
           Please remember to always backup your data!
         </p>
+      </div>
+      <div>
+        {/*<input value={'Settings'} type={'button'} onClick={openSettings}/>*/}
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
