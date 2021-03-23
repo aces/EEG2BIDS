@@ -35,8 +35,8 @@ const Welcome = (props) => {
       <div className={'info'}>
         <p className={'font-large'}>Hello user,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;
-          is a simple tool for de-identification of iEEG datasets.
-          In addition to de-identifying iEEG files, this tool contains a feature
+          is a simple tool for de-identification of EDF datasets.
+          In addition to de-identifying EDF files, this tool contains a feature
           that allows mapping the LORIS candidate's information to its
           study identifier.
         </p>
@@ -46,15 +46,16 @@ const Welcome = (props) => {
         <ul>
           <li>Select the file.edf, events.tsv and BIDS output directory.</li>
           <li>Set the line_freq and LORIS metadata.</li>
-          <li>Anonymize the iEEG header data.</li>
+          <li>Anonymize the EDF header data.</li>
         </ul>
         <p>
-          <b>The iEEG to BIDS tab allows to:</b>
+          <b>The EDF to BIDS tab allows to:</b>
+          <b>The EDF to BIDS tab allows to:</b>
         </p>
         <ul>
           <li>Review your configurations.</li>
           <li>Review your LORIS metadata.</li>
-          <li>Review your iEEG header data.</li>
+          <li>Review your EDF header data.</li>
         </ul>
         <p>
           <b>The Validator tab allows to:</b>
