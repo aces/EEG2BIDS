@@ -7,10 +7,6 @@ import shutil
 # Writer - writes to tsv file
 class Writer:
     def __init__(self, data):
-        participant_id = ''
-        age = ''
-        sex = ''
-        hand = ''
         print('- Writer: init started.')
         # print(data)
         sep = os.path.sep
@@ -19,26 +15,46 @@ class Writer:
             f.readline()
             reader = csv.reader(f, delimiter='\t')
             rows = list(reader)
-
+        # participants.tsv data collected:
         output = []
         for line in rows:
             try:
                 participant_id, age, sex, hand = line
+                output.append(
+                    [
+                        participant_id,
+                        age,
+                        sex,
+                        hand,
+                        data['site_id'],
+                        data['project_id'],
+                        data['sub_project_id']
+                    ]
+                )
             except ValueError:
                 try:
-                    participant_id, age, sex, hand, site_id = line
+                    participant_id, age, sex, hand, site, project, subproject = line
+                    output.append(
+                        [
+                            participant_id,
+                            age,
+                            sex,
+                            hand,
+                            data['site_id'],
+                            data['project_id'],
+                            data['sub_project_id']
+                        ]
+                    )
                 except ValueError:
                     print('error: ValueError')
-            output.append([participant_id, age, sex, hand, data['site_id']])
-
         with open(file_path, 'w', newline='') as f:
-            headers = ['participant_id', 'age', 'sex', 'hand', 'SiteID']
+            headers = ['participant_id', 'age', 'sex', 'hand', 'site', 'project', 'subproject']
             writer = csv.writer(f, delimiter='\t')
             writer.writerow(headers)
             writer.writerows(output)
 
         # modify the participants.json file
-        # include siteID, projectID, subprojectID
+        #   and include siteID, projectID, subprojectID
         file_path = data['bids_directory'] + sep + data['output_time'] + sep + 'participants.json'
         with open(file_path, 'r+', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
@@ -47,10 +63,10 @@ class Writer:
                     'Description': data['site_id']
                 },
                 'project': {
-                    'Description': data['sub_project_id']
+                    'Description': data['project_id']
                 },
                 'subproject': {
-                    'Description': data['project_id']
+                    'Description': data['sub_project_id']
                 }
             }
             json_data.update(user_data)
