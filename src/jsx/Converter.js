@@ -22,10 +22,10 @@ const Converter = (props) => {
 
   /**
    * beginBidsCreation - create BIDS format.
-   *   Sent by socket to python: ieeg_to_bids.
+   *   Sent by socket to python: edf_to_bids.
    */
   const beginBidsCreation = () => {
-    socketContext.emit('ieeg_to_bids', {
+    socketContext.emit('edf_to_bids', {
       file_path: appContext.getFromTask('edfFile') ?
         appContext.getFromTask('edfFile').path : '',
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
@@ -36,7 +36,7 @@ const Converter = (props) => {
       site_id: appContext.getFromTask('siteID') ?? '',
       project_id: appContext.getFromTask('projectID') ?? '',
       sub_project_id: appContext.getFromTask('subProjectID') ?? '',
-      visit_label: appContext.getFromTask('visit_label') ?? '',
+      visit_label: appContext.getFromTask('visitLabel') ?? '',
       subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
@@ -70,7 +70,7 @@ const Converter = (props) => {
   return props.visible ? (
     <>
       <span className={'header'}>
-        iEEG to BIDS format
+        EDF to BIDS format
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>

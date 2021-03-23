@@ -40,42 +40,75 @@ class Writer:
 class Copy:
     def __init__(self, data):
         print(data)
-        directory_path = 'sub-' + data['subject_id']\
-            .replace('_', '').replace('-', '').replace(' ', '')
-        print(directory_path)
-        new_events_tsv = os.path.join(data['bids_directory'], data['output_time'], directory_path, 'ieeg', 'events.tsv')
-        print('new_events_tsv is ')
-        print(new_events_tsv)
+        directory_path = 'sub-' + data['subject_id'].replace(
+            '_', ''
+        ).replace('-', '').replace(' ', '')
+        # new_events_tsv = os.path.join(
+        #     data['bids_directory'],
+        #     data['output_time'],
+        #     directory_path,
+        #     'ses-' + data['visit_label'],
+        #     'ieeg',
+        #     'events.tsv'
+        # )
         # shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given
         # new
-        start_path = os.path.join(data['bids_directory'], data['output_time'], directory_path, 'ieeg')
-        print('START: ')
+
+        # events.tsv data collected:
+        output = []
+
+        # Open user supplied events.tsv and grab data.
+        with open(data['events_tsv'], newline='') as f:
+            f.readline()
+            reader = csv.reader(f, delimiter='\t')
+            rows = list(reader)
+        for line in rows:
+            try:
+                onset, duration, trial_type, value, sample = line
+                output.append([onset, duration, trial_type, value, sample])
+            except ValueError:
+                try:
+                    onset, duration, trial_type = line
+                    output.append([onset, duration, trial_type, 'n/a', 'n/a'])
+                except ValueError:
+                    print('error: ValueError')
+
+        # The BIDS events.tsv location:
+        start_path = os.path.join(
+            data['bids_directory'],
+            data['output_time'],
+            directory_path,
+            'ses-' + data['visit_label'],
+            'ieeg'
+        )
         path_events_tsv = ''
         # We search for the events.tsv file.
         for path, dirs, files in os.walk(start_path):
             for filename in files:
                 temp = os.path.join(path, filename)
-                print(temp)
                 if temp.endswith('events.tsv'):
                     path_events_tsv = temp
-        print('Found: ')
-        print(path_events_tsv)
-        # we now open tsv file.
+
+        # We now open BIDS events.tsv file.
         with open(path_events_tsv, newline='') as f:
             f.readline()
             reader = csv.reader(f, delimiter='\t')
             rows = list(reader)
-        output = []
-        onset = ''
-        duration = ''
-        trial_type = ''
-        value = ''
-        sample = ''
         for line in rows:
-            print(line)
             try:
                 onset, duration, trial_type, value, sample = line
+                output.append([onset, duration, trial_type, value, sample])
             except ValueError:
-                print('error: ValueError')
-            output.append([onset, duration, trial_type, value, sample])
+                try:
+                    onset, duration, trial_type = line
+                    output.append([onset, duration, trial_type, 'n/a', 'n/a'])
+                except ValueError:
+                    print('error: ValueError')
+
+        # overwrite BIDS events.tsv with collected data.
+        with open(path_events_tsv, 'w', newline='') as f:
+            headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerow(headers)
+            writer.writerows(output)
 

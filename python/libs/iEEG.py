@@ -74,6 +74,7 @@ class Converter:
             file=data['file_path'],
             bids_directory=data['bids_directory'],
             subject_id=data['subject_id'],
+            visit_label=data['visit_label'],
             output_time=data['output_time'],
             read_only=data['read_only'],
             line_freq=data['line_freq']
@@ -95,6 +96,7 @@ class Converter:
                 file,
                 bids_directory,
                 subject_id,
+                visit_label,
                 output_time,
                 task='test',
                 ch_type='seeg',
@@ -129,7 +131,7 @@ class Converter:
             # subject = 'alizee'  # modified will output sub-alizee
             print('END~~~~~~~~~~~')
             bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition="seeg")
-            session = 'test_123'
+            session = visit_label
             bids_basename.update(session=session)
             print(bids_basename.session)
             raw.info['line_freq'] = line_freq

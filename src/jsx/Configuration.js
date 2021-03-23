@@ -276,7 +276,7 @@ const Configuration = (props) => {
         </div>
       </div>
       <span className={'header'}>
-        iEEG header data
+        EDF header data
       </span>
       <div className={'info-flex-container'}>
         {headerFields}
