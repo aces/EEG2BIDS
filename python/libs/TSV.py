@@ -1,3 +1,4 @@
+import json
 import os
 import csv
 import shutil
@@ -36,6 +37,26 @@ class Writer:
             writer.writerow(headers)
             writer.writerows(output)
 
+        # modify the participants.json file
+        # include siteID, projectID, subprojectID
+        file_path = data['bids_directory'] + sep + data['output_time'] + sep + 'participants.json'
+        with open(file_path, 'r+', encoding='utf-8') as json_file:
+            json_data = json.load(json_file)
+            user_data = {
+                'site': {
+                    'Description': data['site_id']
+                },
+                'project': {
+                    'Description': data['sub_project_id']
+                },
+                'subproject': {
+                    'Description': data['project_id']
+                }
+            }
+            json_data.update(user_data)
+            json_file.seek(0)
+            json.dump(json_data, json_file, indent=4)
+
 
 class Copy:
     def __init__(self, data):
@@ -52,7 +73,6 @@ class Copy:
         #     'events.tsv'
         # )
         # shutil.copy2(data['events_tsv'], new_events_tsv)  # complete target filename given
-        # new
 
         # events.tsv data collected:
         output = []
