@@ -15,6 +15,14 @@ class TarFile:
         output_filename = data['bids_directory'] + sep + data['output_time'] + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:
             tar.add(source_dir, arcname=os.path.basename(source_dir))
+        import platform
+        import subprocess
+        if platform.system() == 'Windows':
+            os.startfile(data['bids_directory'])
+        elif platform.system() == 'Darwin':
+            subprocess.Popen(['open', data['bids_directory']])
+        else:
+            subprocess.Popen(['xdg-open', data['bids_directory']])
 
 
 # Anonymize - scrubs edf header data.
