@@ -50,7 +50,6 @@ const Welcome = (props) => {
         </ul>
         <p>
           <b>The EDF to BIDS tab allows to:</b>
-          <b>The EDF to BIDS tab allows to:</b>
         </p>
         <ul>
           <li>Review your configurations.</li>
