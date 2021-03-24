@@ -34,6 +34,19 @@ const Validator = (props) => {
   };
 
   /**
+   * packageBIDS - package BIDS format to tarfile.
+   *   Sent by socket to python: tarfile_bids.
+   */
+  const packageBIDS = () => {
+    console.info('packageBIDS();');
+    socketContext.emit('tarfile_bids', {
+      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
+      subject_id: appContext.getFromTask('subject_id') ?? '',
+      output_time: appContext.getFromTask('output_time') ?? '',
+    });
+  };
+
+  /**
    * Similar to componentDidMount and componentDidUpdate.
    */
   useEffect(() => {
@@ -62,6 +75,16 @@ const Validator = (props) => {
       </div>
       <div className={'terminal'}>
         {renderFields}
+      </div>
+      <div className={'info'}>
+        <div className={'small-pad'}>
+          <b style={{cursor: 'default'}}>
+              15. Package BIDS directory to tarfile:&nbsp;
+          </b>
+          <input onClick={packageBIDS}
+            type={'button'}
+            value={'Compress BIDS'}/>
+        </div>
       </div>
     </>);
   }, [validator]);
