@@ -28,7 +28,6 @@ const Validator = (props) => {
     console.info('validateBIDS();');
     socketContext.emit('validate_bids', {
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      subject_id: appContext.getFromTask('subject_id') ?? '',
       output_time: appContext.getFromTask('output_time') ?? '',
     });
   };
@@ -41,7 +40,6 @@ const Validator = (props) => {
     console.info('packageBIDS();');
     socketContext.emit('tarfile_bids', {
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      subject_id: appContext.getFromTask('subject_id') ?? '',
       output_time: appContext.getFromTask('output_time') ?? '',
     });
   };

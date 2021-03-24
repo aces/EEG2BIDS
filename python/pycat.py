@@ -80,8 +80,6 @@ def validate_bids(sid, data):
     error_messages = []
     if not data['bids_directory']:
         error_messages.append('The BIDS output directory is missing.')
-    if not data['subject_id']:
-        error_messages.append('The LORIS Visit Label is missing.')
     if not data['output_time']:
         error_messages.append('The BIDS format is missing.')
     if not error_messages:
