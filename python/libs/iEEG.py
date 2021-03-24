@@ -106,34 +106,34 @@ class Converter:
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
             self.set_m_info(m_info)
-            print('m_info is ')
-            print(m_info)
-            print('c_info is ')
-            print(c_info)
+            # print('m_info is ')
+            # print(m_info)
+            # print('c_info is ')
+            # print(c_info)
             if read_only:
                 return True
             raw = mne.io.read_raw_edf(input_fname=file)
-            print('VIEW 1:')
-            print(raw)
+            # print('VIEW 1:')
+            # print(raw)
             if read_only:
                 return True
             raw.set_channel_types({ch: ch_type for ch in raw.ch_names})
-            print('VIEW 2:')
-            print(raw)
+            # print('VIEW 2:')
+            # print(raw)
             os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
             bids_directory = bids_directory + os.path.sep + output_time
             bids_root = bids_directory
             m_info['subject_id'] = subject_id  # 'alizee'
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
             # subject = subject_id  # 'alizee
-            print('LOOK:')
-            print(subject)
+            # print('LOOK:')
+            # print(subject)
             # subject = 'alizee'  # modified will output sub-alizee
-            print('END~~~~~~~~~~~')
+            # print('END~~~~~~~~~~~')
             bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition="seeg")
             session = visit_label
             bids_basename.update(session=session)
-            print(bids_basename.session)
+            # print(bids_basename.session)
             raw.info['line_freq'] = line_freq
             raw.info['subject_info'] = {
                 # 'his_id': "test",
