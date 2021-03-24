@@ -13,15 +13,26 @@ app = socketio.WSGIApp(sio)
 def connect(sid, environ):
     print('connect: ', sid)
 
+@sio.event
+def tarfile_bids(sid, data):
+    print('tarfile_bids:', data)
+    iEEG.TarFile(data)
+
 
 @sio.event
 def ieeg_get_header(sid, data):
-    print('ieeg_get_header:')
-    anonymize = iEEG.Anonymize(data)
-    header = anonymize.get_header()
-    response = {
-        'header': header[0]
-    }
+    print('ieeg_get_header:', data)
+    try:
+        anonymize = iEEG.Anonymize(data)
+        header = anonymize.get_header()
+        response = {
+            'header': header[0]
+        }
+    except Exception as ex:
+        print(ex)
+        response = {
+            'error': 'Failed to retrieve EDF header information'
+        }
     sio.emit('response', response)
 
 

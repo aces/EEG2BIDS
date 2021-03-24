@@ -5,6 +5,17 @@ from python.libs import TSV
 from mne_bids import write_raw_bids, BIDSPath
 
 
+# TarFile - tarfile the BIDS data.
+class TarFile:
+    def __init__(self, data):
+        import tarfile
+        import os.path
+        output_filename = data['file_destination']
+        source_dir = data['source_path']
+        with tarfile.open(output_filename, "w:gz") as tar:
+            tar.add(source_dir, arcname=os.path.basename(source_dir))
+
+
 # Anonymize - scrubs edf header data.
 class Anonymize:
     file_path = ''
