@@ -70,7 +70,7 @@ const Validator = (props) => {
           <div className={'info'}>
             <div className={'small-pad'}>
               <b style={{cursor: 'default'}}>
-              15. Package BIDS directory to tarball:&nbsp;
+                Package BIDS directory to tarball:&nbsp;
               </b>
               <input onClick={packageBIDS}
                 type={'button'}
@@ -114,7 +114,7 @@ const Validator = (props) => {
       <div className={'info'}>
         <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            14. Confirm BIDS data structure:&nbsp;
+            Confirm BIDS data structure:&nbsp;
           </b>
           <input onClick={validateBIDS}
             type={'button'}
