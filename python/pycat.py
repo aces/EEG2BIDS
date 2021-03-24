@@ -26,14 +26,6 @@ def ieeg_get_header(sid, data):
 
 
 @sio.event
-def ieeg_anonymize_header(sid, data):
-    print('ieeg_anonymize_header: ', sid)
-    print('data is ')
-    print(data)
-    anonymize = iEEG.Anonymize(data)
-
-
-@sio.event
 def edf_to_bids(sid, data):
     print('edf_to_bids: ', data)
     error_messages = []
