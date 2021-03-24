@@ -141,6 +141,8 @@ class Copy:
                 except ValueError:
                     print('error: ValueError')
 
+        # output is an array of arrays
+        # sort by first element in array
         output.sort(key=lambda x: float(x[0]))
 
         # overwrite BIDS events.tsv with collected data.
