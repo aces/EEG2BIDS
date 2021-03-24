@@ -141,9 +141,7 @@ class Copy:
                 except ValueError:
                     print('error: ValueError')
 
-        # output.sort(key=lambda x: float(x[0]))
-        print('output happens to be')
-        print(output)
+        output.sort(key=lambda x: float(x[0]))
 
         # overwrite BIDS events.tsv with collected data.
         with open(path_events_tsv, 'w', newline='') as f:
