@@ -10,8 +10,9 @@ class TarFile:
     def __init__(self, data):
         import tarfile
         import os.path
-        output_filename = data['file_destination']
-        source_dir = data['source_path']
+        sep = os.path.sep
+        source_dir = data['bids_directory'] + sep + data['output_time']  # current directory
+        output_filename = data['bids_directory'] + sep + data['output_time'] + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:
             tar.add(source_dir, arcname=os.path.basename(source_dir))
 
