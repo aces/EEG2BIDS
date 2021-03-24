@@ -49,6 +49,7 @@ const Validator = (props) => {
    */
   useEffect(() => {
     const renderFields = [];
+    const renderPackageBIDS = [];
     if (validator['file_paths']) {
       validator['file_paths'].forEach((value, index) => {
         if (validator['result'][index]) {
@@ -65,6 +66,18 @@ const Validator = (props) => {
           );
         }
       });
+      renderPackageBIDS.push(
+          <div className={'info'}>
+            <div className={'small-pad'}>
+              <b style={{cursor: 'default'}}>
+              15. Package BIDS directory to tarfile:&nbsp;
+              </b>
+              <input onClick={packageBIDS}
+                type={'button'}
+                value={'Compress BIDS'}/>
+            </div>
+          </div>,
+      );
     }
     setValidPaths(<>
       <div className={'key-terminal'}>
@@ -74,16 +87,7 @@ const Validator = (props) => {
       <div className={'terminal'}>
         {renderFields}
       </div>
-      <div className={'info'}>
-        <div className={'small-pad'}>
-          <b style={{cursor: 'default'}}>
-              15. Package BIDS directory to tarfile:&nbsp;
-          </b>
-          <input onClick={packageBIDS}
-            type={'button'}
-            value={'Compress BIDS'}/>
-        </div>
-      </div>
+      {renderPackageBIDS}
     </>);
   }, [validator]);
 
