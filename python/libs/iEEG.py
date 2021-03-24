@@ -160,7 +160,6 @@ class Converter:
 class Time:
     def __init__(self):
         print('- Time: init started.')
-        # print(data)
         from datetime import datetime
         now = datetime.now()
         self.latest_output = now.strftime("%Y-%m-%d-%Hh%Mm%Ss")

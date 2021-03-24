@@ -52,11 +52,23 @@ def edf_to_bids(sid, data):
 @sio.event
 def validate_bids(sid, data):
     print('validate_bids: ', data)
-    BIDS.Validate(data)
-    response = {
-        'file_paths': BIDS.Validate.file_paths,
-        'result': BIDS.Validate.result
-    }
+    error_messages = []
+    if not data['bids_directory']:
+        error_messages.append('The BIDS output directory is missing.')
+    if not data['subject_id']:
+        error_messages.append('The LORIS Visit Label is missing.')
+    if not data['output_time']:
+        error_messages.append('The BIDS format hasn\'t been generated.')
+    if not error_messages:
+        BIDS.Validate(data)
+        response = {
+            'file_paths': BIDS.Validate.file_paths,
+            'result': BIDS.Validate.result
+        }
+    else:
+        response = {
+            'error': error_messages
+        }
     sio.emit('response', response)
 
 
