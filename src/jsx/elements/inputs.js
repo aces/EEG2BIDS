@@ -129,6 +129,7 @@ export const TextInput = (props) => {
         name={props.name}
         value={props.value}
         onChange={handleChange}
+        className={props.readonly ? 'readonly' : null}
         placeholder={props.placeholder}
         readOnly={props.readonly}
       />

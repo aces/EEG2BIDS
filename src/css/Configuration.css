@@ -2,3 +2,11 @@
     margin-top: 12px;
     max-height: 30px;
 }
+.readonly {
+    cursor: default;
+    border: #3276b1 1px solid;
+    background: transparent;
+}
+.readonly:focus, .readonly:focus{
+    outline: none;
+}
