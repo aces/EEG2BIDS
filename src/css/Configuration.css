@@ -4,8 +4,10 @@
 }
 .readonly {
     cursor: default;
-    border: #3276b1 1px solid;
+    text-align: center;
     background: transparent;
+    border: 1px none #3276b1;
+    border-bottom-style: solid;
 }
 .readonly:focus, .readonly:focus{
     outline: none;
