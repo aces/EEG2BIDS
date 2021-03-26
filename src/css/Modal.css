@@ -1,0 +1,97 @@
+.modalOverlay {
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 102;
+    overflow: auto;
+    display: block;
+    position: fixed;
+    color: #222428;
+    pointer-events: auto;
+    background-color: rgba(33,37,51,0.8);
+}
+.modalContainer {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 104;
+    position: fixed;
+    overflow: hidden;
+    pointer-events: none;
+}
+.modalAnimation {
+    width: auto;
+    z-index: 105;
+    display: flex;
+    overflow: scroll;
+    margin: .2rem auto;
+    position: relative;
+    align-items: center;
+    pointer-events: none;
+    transform: translate(0);
+    min-height: calc(100vh);
+}
+.modalDialog {
+    width: 100%;
+    z-index: 105;
+    display: flex;
+    overflow: scroll;
+    position: relative;
+    border-radius: 3px;
+    color: #222428;
+    pointer-events: auto;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 500px;
+    -webkit-overflow-scrolling: touch;
+    transition: transform .3s ease-out;
+    will-change: transform;
+    background-color: #eaecef;
+}
+.modalHeader {
+    height: 30px;
+    display: flex;
+    padding: 30px;
+    font-size: 18pt;
+    align-items: center;
+    flex-direction: row;
+    -webkit-overflow-scrolling: touch;
+}
+.modalHeaderClose {
+    color: #929192;
+    cursor: pointer;
+    font-size: 18pt;
+    margin-left: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.modalContent {
+    font-size: 14pt;
+    min-height: 80px;
+    padding: 10px 15px 5px 15px;
+    -webkit-overflow-scrolling: touch;
+}
+.bids-errors {
+    font-size: 12pt;
+}
+.bids-loading .bids-success {
+    font-size: 14pt;
+}
+@keyframes blink {
+    0% { opacity: .2; }
+    20% { opacity: 1; }
+    100% { opacity: .2; }
+}
+.bids-loading span {
+    animation-name: blink;
+    animation-duration: 1.4s;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+}
+.bids-loading span:nth-child(2) {
+    animation-delay: .2s;
+}
+.bids-loading span:nth-child(3) {
+    animation-delay: .4s;
+}

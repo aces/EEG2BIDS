@@ -33,12 +33,11 @@
 }
 
 .start_task {
-    margin-top: -10px;
     min-height: 30px;
 }
 .task-finished {
-    padding-left: 40px;
-    font-size: 17pt;
+    padding-left: 20px;
+    font-size: 14pt;
 }
 .convert-bids-row {
     padding-top: 0;
