@@ -13,6 +13,7 @@ app = socketio.WSGIApp(sio)
 def connect(sid, environ):
     print('connect: ', sid)
 
+
 @sio.event
 def tarfile_bids(sid, data):
     print('tarfile_bids:', data)
