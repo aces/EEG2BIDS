@@ -2,3 +2,13 @@
     margin-top: 12px;
     max-height: 30px;
 }
+.readonly {
+    cursor: default;
+    text-align: center;
+    background: transparent;
+    border: 1px none #3276b1;
+    border-bottom-style: solid;
+}
+.readonly:focus, .readonly:focus{
+    outline: none;
+}

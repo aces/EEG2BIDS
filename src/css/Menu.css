@@ -14,18 +14,18 @@
 .menuTab {
     user-select: none;
     position: relative;
-    padding: 0 0 10px 0;
     display: table-cell;
     -webkit-user-select: none;
 }
 
 .menu-title {
+    height: 25px;
     color: black;
     display: block;
     cursor: pointer;
     font-size: 12pt;
     font-weight: 300;
-    margin: 8px 0 0 0;
+    padding: 8px 0 0 0;
     text-align: center;
 }
 .menu-active {

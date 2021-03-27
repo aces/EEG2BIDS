@@ -3,6 +3,9 @@ import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Converter.css';
 
+// Display Loading, Success, Error
+import Modal from './elements/modal';
+
 // Socket.io
 import {Event, SocketContext} from './socket.io';
 
@@ -19,12 +22,38 @@ const Converter = (props) => {
   // React State
   const [outputTime, setOutputTime] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalText, setModalText] = useState({
+    mode: 'loading',
+    title: {
+      loading: '⭐ Task Started!',
+      success: '🌈 Task Finished!',
+      error: '❌ Task Error!',
+    },
+    message: {
+      loading: <span style={{padding: '40px'}}>
+        <a className={'bids-loading'}>
+            BIDS is being created<span>.</span><span>.</span><span>.</span>
+            😴
+        </a>
+      </span>,
+      success: <span style={{padding: '40px'}}>
+        <a className={'bids-success'}>
+          Success creating BIDS! <a className={'checkmark'}> &#x2714;</a>
+        </a></span>,
+      error: '',
+    },
+  });
 
   /**
    * beginBidsCreation - create BIDS format.
    *   Sent by socket to python: edf_to_bids.
    */
   const beginBidsCreation = () => {
+    setModalText((prevState) => {
+      return {...prevState, ['mode']: 'loading'};
+    });
+    setModalVisible(true);
     socketContext.emit('edf_to_bids', {
       file_path: appContext.getFromTask('edfFile') ?
         appContext.getFromTask('edfFile').path : '',
@@ -46,20 +75,43 @@ const Converter = (props) => {
    */
   useEffect(() => {
     if (outputTime) {
+      // cleanup time display for user.
+      let time = outputTime.replace('output-', '');
+      time = time.slice(0, time.lastIndexOf('-')) + ' ' +
+        time.slice(time.lastIndexOf('-')+1);
       setSuccessMessage(<>
-        <a className={'task-finished'}>Task finished! 🙂</a>
+        <a className={'task-finished'}>Last created at: {time}</a>
       </>);
     }
   }, [outputTime]);
+
+  /**
+   * hideModal - display Modal.
+   * @param {boolean} hidden
+   */
+  const hideModal = (hidden) => {
+    setModalVisible(!hidden);
+  };
 
   /**
    * onMessage - received message from python.
    * @param {object} message - response
    */
   const onMessage = (message) => {
+    console.info(message);
     if (message['output_time']) {
       setOutputTime(message['output_time']);
       appContext.setTask('output_time', message['output_time']);
+      setModalText((prevState) => {
+        return {...prevState, ['mode']: 'success'};
+      });
+    } else {
+      setModalText((prevState) => {
+        prevState.message['error'] = <span key={'bids-errors'}
+          className={'bids-errors'}>
+          {message['error']}</span>;
+        return {...prevState, ['mode']: 'error'};
+      });
     }
   };
 
@@ -74,7 +126,7 @@ const Converter = (props) => {
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
-          <b>10. Please review your configurations:</b>
+          <b>Please review your configurations:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
@@ -147,7 +199,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>11. Please review your LORIS metadata:</b>
+          <b>Please review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
@@ -220,7 +272,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>12. Please review your iEEG header data:</b>
+          <b>Please review your iEEG header data:</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
@@ -338,7 +390,7 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            13. Convert your specifications to BIDS format:&nbsp;
+            Convert your specifications to BIDS format:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}
@@ -348,6 +400,14 @@ const Converter = (props) => {
           {successMessage}
         </div>
       </div>
+      <Modal
+        title={modalText.title[modalText.mode]}
+        show={modalVisible}
+        close={hideModal}
+        width={'500px'}
+      >
+        {modalText.message[modalText.mode]}
+      </Modal>
       <Event event='response' handler={onMessage} />
     </>
   ) : null;

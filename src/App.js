@@ -16,7 +16,6 @@ import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
 import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
-// import {Authentication} from './jsx/elements/authentication';
 
 /**
  * App - the main window.
@@ -68,7 +67,7 @@ const App = () => {
                 },
               },
               {
-                title: '2) Configuration', // de-identifier
+                title: '2) Configuration',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(1);

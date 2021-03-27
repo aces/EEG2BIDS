@@ -28,7 +28,18 @@ const Validator = (props) => {
     console.info('validateBIDS();');
     socketContext.emit('validate_bids', {
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      subject_id: appContext.getFromTask('subject_id') ?? '',
+      output_time: appContext.getFromTask('output_time') ?? '',
+    });
+  };
+
+  /**
+   * packageBIDS - package BIDS format to tarfile.
+   *   Sent by socket to python: tarfile_bids.
+   */
+  const packageBIDS = () => {
+    console.info('packageBIDS();');
+    socketContext.emit('tarfile_bids', {
+      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       output_time: appContext.getFromTask('output_time') ?? '',
     });
   };
@@ -38,6 +49,7 @@ const Validator = (props) => {
    */
   useEffect(() => {
     const renderFields = [];
+    const renderPackageBIDS = [];
     if (validator['file_paths']) {
       validator['file_paths'].forEach((value, index) => {
         if (validator['result'][index]) {
@@ -54,6 +66,18 @@ const Validator = (props) => {
           );
         }
       });
+      renderPackageBIDS.push(
+          <div className={'info'}>
+            <div className={'small-pad'}>
+              <b style={{cursor: 'default'}}>
+                Package BIDS directory to tarball:&nbsp;
+              </b>
+              <input onClick={packageBIDS}
+                type={'button'}
+                value={'Compress BIDS'}/>
+            </div>
+          </div>,
+      );
     }
     setValidPaths(<>
       <div className={'key-terminal'}>
@@ -63,6 +87,7 @@ const Validator = (props) => {
       <div className={'terminal'}>
         {renderFields}
       </div>
+      {renderPackageBIDS}
     </>);
   }, [validator]);
 
@@ -89,7 +114,7 @@ const Validator = (props) => {
       <div className={'info'}>
         <div className={'small-pad'}>
           <b style={{cursor: 'default'}}>
-            14. Confirm BIDS data structure:&nbsp;
+            Confirm BIDS data structure:&nbsp;
           </b>
           <input onClick={validateBIDS}
             type={'button'}

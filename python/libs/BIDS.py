@@ -8,12 +8,8 @@ class Validate:
 
     def __init__(self, data):
         print('- Validate: init started.')
-        subject = data['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
         sep = os.path.sep
         start_path = data['bids_directory'] + sep + data['output_time']  # current directory
-        print('start_path is ')
-        print(start_path)
-        # start_path = '/Users/alizee/Desktop/test'  # current directory
         file_paths = []
         result = []
         validator = BIDSValidator()
@@ -22,7 +18,7 @@ class Validate:
                 temp = os.path.join(path, filename)
                 file_paths.append(temp[len(start_path):len(temp)])
                 result.append(validator.is_bids(temp[len(start_path):len(temp)]))
-                print(validator.is_bids(temp[len(start_path):len(temp)]))
+                # print(validator.is_bids(temp[len(start_path):len(temp)]))
 
         self.set_file_paths(file_paths)
         self.set_result(result)
