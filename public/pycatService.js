@@ -1,4 +1,4 @@
-const {spawn} = require('child_process');
+const {execFile} = require('child_process');
 
 /**
  * PycatService
@@ -23,7 +23,7 @@ module.exports = class PycatService {
           'dist/pycat-service-windows.exe' :
           'dist/pycat-service'
     );
-    this.process = spawn(pathToService);
+    this.process = execFile(pathToService);
   }
   /**
    * shutdown the service process
