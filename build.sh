@@ -16,4 +16,6 @@ pyinstaller --paths=python python/pycat.py -F \
 --hidden-import=dns.tsigkeyring --hidden-import=dns.update \
 --hidden-import=dns.version  --hidden-import=dns.zone \
 --hidden-import=engineio.async_drivers.eventlet \
+--hidden-import=json \
+--hidden-import=csv \
 --clean

@@ -170,7 +170,11 @@ class Converter:
                 'preload': False,
                 'verbose': None
             }
-            write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+            try:
+                # raw = raw.anonymize(daysback=None, keep_his=False, verbose=None)
+                write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+            except Exception as ex:
+                print(ex)
             print('finished')
         else:
             print('File not found or is not file: %s', file)

@@ -13,7 +13,7 @@ const PycatService = process.env.DEV ?
 
 // Launch python service.
 const pycatService = new PycatService();
-// pycatService.startup();
+if (!process.env.DEV) pycatService.startup();
 
 if (process.env.DEV) {
   const {
@@ -42,8 +42,8 @@ let mainWindow;
 const createMainWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000?app' :
-    url.pathToFileURL(path.join(
-        __dirname, '/../build/index.html?app')).href;
+    `${url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html')).href}?app`;
   mainWindow = new BrowserWindow({
     show: false,
     icon,
@@ -66,7 +66,7 @@ const createMainWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    process.env.DEV && mainWindow.webContents.openDevTools();
+    if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', function() {
@@ -81,8 +81,8 @@ let settingsWindow;
 const createSettingsWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000?settings' :
-    url.pathToFileURL(path.join(
-        __dirname, '/../build/index.html?settings')).href;
+    `${url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html')).href}?settings`;
   settingsWindow = new BrowserWindow({
     icon,
     show: true,

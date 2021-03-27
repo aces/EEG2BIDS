@@ -153,6 +153,7 @@ const Configuration = (props) => {
    * @param {object} message - response
    */
   const onMessage = (message) => {
+    console.info(message);
     if (message['header']) {
       setHeader(message['header']);
     }
