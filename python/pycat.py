@@ -66,7 +66,7 @@ def edf_to_bids(sid, data):
         # store subject_id for iEEG.Modifier
         data['subject_id'] = iEEG.Converter.m_info['subject_id']
         sio.emit('response', {'3': 3})
-        iEEG.Modifier(data)  # Modifies data of BIDS format
+        iEEG.Modifier(data, sio)  # Modifies data of BIDS format
         sio.emit('response', {'4': 4})
         response = {
             'output_time': data['output_time']
