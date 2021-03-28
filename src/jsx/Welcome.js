@@ -33,38 +33,46 @@ const Welcome = (props) => {
         Welcome to <b>pyCat!</b>
       </span>
       <div className={'info'}>
-        <p className={'font-large'}>Hello user,</p>
+        <p className={'font-large'}>Hello,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;
-          is a simple tool for de-identification of EDF datasets.
-          In addition to de-identifying EDF files, this tool contains a feature
-          that allows mapping the LORIS candidate's information to its
-          study identifier.
+          is a simple tool for de-identification of EDF datasets and conversion to a BIDS-compliant file structure.
+          It's designed to runs on EDF data (EEG or iEEG) for one subject at a time, to prepare data for data sharing.<br>
+     <!-- not until phase2:  This tool also allows mapping the LORIS candidate's information to its
+          study identifier. -->
+        <ul>
+           <li>
+              For more information about BIDS, visit: <a href="https://bids.neuroimaging.io/">bids.neuroimaging.io</a>
+           </li>
+        </ul>
         </p>
         <p>
-          <b>The Configuration tab allows to:</b>
+          Follow the sequence of tabs to prepare your dataset: 
+        </p>
+        <p>
+          <b>Configuration tab:</b>
         </p>
         <ul>
-          <li>Select the file.edf, events.tsv and BIDS output directory.</li>
-          <li>Set the line_freq and LORIS metadata.</li>
-          <li>Anonymize the EDF header data.</li>
+          <li>Select the dataset and output directory</li>
+          <li>Set metadata values and upload task events</li>
+          <li>Anonymize the EDF header data</li>
         </ul>
         <p>
-          <b>The EDF to BIDS tab allows to:</b>
+          <b>EDF to BIDS tab:</b>
         </p>
         <ul>
-          <li>Review your configurations.</li>
-          <li>Review your LORIS metadata.</li>
-          <li>Review your EDF header data.</li>
+          <li>Review your configurations</li>
+          <li>Review metadata values</li>
+          <li>Review your EDF header data</li>
         </ul>
         <p>
-          <b>The Validator tab allows to:</b>
+          <b>Validator tab:</b>
         </p>
         <ul>
-          <li>Confirms the BIDS structure is valid.</li>
+          <li>Automatically validates the resulting BIDS structure</li>
+          <li>Compresses the BIDS structure</li>
         </ul>
-        <p className={'font-medium'}>
-          You may begin your task by following the menu above.
-          Please remember to always backup your data!
+        <p className={'font-medium'}>    
+          Important : Please back up your data before beginning.
         </p>
       </div>
       <div>
@@ -72,8 +80,8 @@ const Welcome = (props) => {
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
-        open source software</a>.<br/>
-        Copyright © 2021 MCIN.
+        open source software</a> and the <a href="http://loris.ca">LORIS team</a> at the Montreal Neurological Institute-Hospital.<br/>
+        Copyright © 2021 <a href="http://mcin.ca">MCIN</a>.
       </div>
     </>
   ) : null;
