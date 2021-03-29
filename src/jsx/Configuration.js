@@ -168,7 +168,7 @@ const Configuration = (props) => {
     ];
     const anonymize = {
       subject_id: '0 X X X',
-      recording_id: 'Startdate 31-DEC-1924 X pycat_anonymize X',
+      recording_id: 'Startdate 31-DEC-1924 X mne-bids_anonymize X',
       day: 31,
       month: 12,
       year: 85,
