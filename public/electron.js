@@ -70,7 +70,7 @@ const createMainWindow = () => {
   });
 
   mainWindow.on('closed', function() {
-    pycatService.shutdown();
+    // pycatService.shutdown();
     mainWindow = null;
   });
 };
@@ -108,7 +108,7 @@ const createSettingsWindow = () => {
   });
 
   settingsWindow.on('closed', function() {
-    // pycatService.shutdown();
+    pycatService.shutdown();
     settingsWindow = null;
   });
 };
@@ -116,14 +116,9 @@ const createSettingsWindow = () => {
 app.on('ready', async () => {
   createMainWindow();
   ipcMain.on('openSettingsWindow', (event, arg) => {
-    console.info('openSettingsWindow has ran!');
-    console.log(settingsWindow);
     if (settingsWindow === undefined || settingsWindow === null) {
-      console.info('opening!');
       createSettingsWindow();
     }
-    // event.sender.send('nameReply', {not_right: false}); // sends back/replies to window 1 - "event" is a reference to this chanel.
-    // window2.webContents.send( 'forWin2', arg ); // sends the stuff from Window1 to Window2.
   });
 });
 

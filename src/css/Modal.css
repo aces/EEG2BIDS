@@ -24,7 +24,7 @@
     width: auto;
     z-index: 105;
     display: flex;
-    overflow: scroll;
+    overflow: hidden;
     margin: .2rem auto;
     position: relative;
     align-items: center;
