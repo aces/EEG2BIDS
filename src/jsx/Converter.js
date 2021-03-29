@@ -26,15 +26,14 @@ const Converter = (props) => {
   const [modalText, setModalText] = useState({
     mode: 'loading',
     title: {
-      loading: '⭐ Task Started!',
-      success: '🌈 Task Finished!',
-      error: '❌ Task Error!',
+      loading: ' Task in Progress',
+      success: ' Success - Complete',
+      error: ' ❌  Error Detected',
     },
     message: {
       loading: <span style={{padding: '40px'}}>
         <a className={'bids-loading'}>
-            BIDS is being created<span>.</span><span>.</span><span>.</span>
-            😴
+            BIDS creation in progress... <span>.</span><span>.</span><span>.</span>
         </a>
       </span>,
       success: <span style={{padding: '40px'}}>
@@ -126,20 +125,20 @@ const Converter = (props) => {
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
-          <b>Please review your configurations:</b>
+          <b>Review your Configuration selections:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
                 (<>
-                  The file.edf:&nbsp;
+                  EDF data file:&nbsp;
                   {appContext.getFromTask('edfFile').name}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The file.edf hasn't been set in configuration.
+                  No EDF file selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please select a valid file under the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -153,10 +152,10 @@ const Converter = (props) => {
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The events.tsv hasn't been set in configuration.
+                  No events.tsv hasn't selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please select a file under the Configuration tab. 
                     </span>
                   </a>
                 </>)
@@ -165,15 +164,15 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('bidsDirectory') ?
                 (<>
-                  BIDS output directory:&nbsp;
+                  BIDS output folder:&nbsp;
                   {appContext.getFromTask('bidsDirectory')}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The BIDS output directory hasn't been set in configuration.
+                  No BIDS output folder selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please select a folder uner the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -187,10 +186,10 @@ const Converter = (props) => {
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The line_freq hasn't been set in configuration.
+                  No Line Frequency set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value under the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -199,7 +198,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Please review your LORIS metadata:</b>
+          <b>Review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
@@ -209,10 +208,10 @@ const Converter = (props) => {
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The SiteID hasn't been set in configuration.
+                  No SiteID set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value in the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -226,10 +225,10 @@ const Converter = (props) => {
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The ProjectID hasn't been set in configuration.
+                  No ProjectID set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value in the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -243,10 +242,10 @@ const Converter = (props) => {
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The SubProjectID hasn't been set in configuration.
+                  No SubProjectID set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value in the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -260,10 +259,10 @@ const Converter = (props) => {
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The Visit Label hasn't been set in configuration.
+                  No Visit Label set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value in the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -272,24 +271,19 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Please review your iEEG header data:</b>
+          <b>Review the EDF header data and verify anonymization &#x26A0;&#xFE0F;</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
                 (<>
                   The subject_id:&nbsp;
                   {appContext.getFromTask('subject_id')}
-                  <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                    <span className={'tooltiptext'}>
-                      Verify the anonymization.
-                    </span>
-                  </a>
                 </>) :
                 (<>
-                  The file.edf hasn't been set in configuration.
+                  No subject_id set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please correct.
+                      Please enter a value in the previous tab.
                     </span>
                   </a>
                 </>)
@@ -299,11 +293,6 @@ const Converter = (props) => {
               (<li>
                 The recording_id:&nbsp;
                 {appContext.getFromTask('recording_id')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -312,11 +301,6 @@ const Converter = (props) => {
               (<li>
                 The day:&nbsp;
                 {appContext.getFromTask('day')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -325,11 +309,6 @@ const Converter = (props) => {
               (<li>
                 The month:&nbsp;
                 {appContext.getFromTask('month')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -338,11 +317,6 @@ const Converter = (props) => {
               (<li>
                 The year:&nbsp;
                 {appContext.getFromTask('year')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -351,11 +325,6 @@ const Converter = (props) => {
               (<li>
                 The hour:&nbsp;
                 {appContext.getFromTask('hour')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -364,11 +333,6 @@ const Converter = (props) => {
               (<li>
                 The minute:&nbsp;
                 {appContext.getFromTask('minute')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -377,11 +341,6 @@ const Converter = (props) => {
               (<li>
                 The second:&nbsp;
                 {appContext.getFromTask('second')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
               </li>) :
               (<>
               </>)
@@ -390,12 +349,12 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            Convert your specifications to BIDS format:&nbsp;
+            Click to Start conversion to BIDS:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}
             onClick={beginBidsCreation}
-            value={'Start Task'}
+            value={'Make it BIDS!'}
           />
           {successMessage}
         </div>
