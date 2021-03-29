@@ -230,7 +230,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <NumberInput id='lineFreq'
             name='lineFreq'
-            label='Line frequency (default 60): '
+            label='Line frequency: '
             value={lineFreq}
             placeholder='60'
             onUserInput={onUserInput}
