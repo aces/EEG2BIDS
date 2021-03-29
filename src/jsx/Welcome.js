@@ -35,16 +35,17 @@ const Welcome = (props) => {
       <div className={'info'}>
         <p className={'font-large'}>Hello,</p>
         <p className={'font-medium'}><b>pyCat</b>&nbsp;
-          is a simple tool for de-identification of EDF datasets and conversion to a BIDS-compliant file structure.
-          It's designed to runs on EDF data (EEG or iEEG) for one subject at a time, to prepare data for data sharing.<br>
-     <!-- not until phase2:  This tool also allows mapping the LORIS candidate's information to its
-          study identifier. -->
+          is a simple tool for de-identification of EDF datasets and conversion to a BIDS-compliant file structure for data sharing.
+        </p>
+        <p>
+          This software is designed to run on EDF data (EEG or iEEG) for one subject at a time, including task events.
+          Study information such as a LORIS ProjectID and Visit Label can be included in the subject metadata.
+        </p>
         <ul>
            <li>
               For more information about BIDS, visit: <a href="https://bids.neuroimaging.io/">bids.neuroimaging.io</a>
            </li>
         </ul>
-        </p>
         <p>
           Follow the sequence of tabs to prepare your dataset: 
         </p>
@@ -52,8 +53,8 @@ const Welcome = (props) => {
           <b>Configuration tab:</b>
         </p>
         <ul>
-          <li>Select the dataset and output directory</li>
-          <li>Set metadata values and upload task events</li>
+          <li>Select the data file, events file (events.tsv), and output folder</li>
+          <li>Set metadata values</li>
           <li>Anonymize the EDF header data</li>
         </ul>
         <p>
@@ -68,11 +69,11 @@ const Welcome = (props) => {
           <b>Validator tab:</b>
         </p>
         <ul>
-          <li>Automatically validates the resulting BIDS structure</li>
-          <li>Compresses the BIDS structure</li>
+          <li>Automatically validates the resulting BIDS output folder</li>
+          <li>Compresses the BIDS output folder</li>
         </ul>
         <p className={'font-medium'}>    
-          Important : Please back up your data before beginning.
+          - Important - Please back up your data before beginning.
         </p>
       </div>
       <div>
@@ -81,7 +82,7 @@ const Welcome = (props) => {
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
         open source software</a> and the <a href="http://loris.ca">LORIS team</a> at the Montreal Neurological Institute-Hospital.<br/>
-        Copyright © 2021 <a href="http://mcin.ca">MCIN</a>.
+        v0.0.1 Copyright © 2021 <a href="http://mcin.ca">MCIN</a>.
       </div>
     </>
   ) : null;
