@@ -30,7 +30,7 @@ const Welcome = (props) => {
   return props.visible ? (
     <>
       <span className={'title'}>
-        Welcome to <b>pyCat!</b>
+        Welcome to <b>pyCat</b>
       </span>
       <div className={'info'}>
         <p className={'font-large'}>Hello,</p>
@@ -42,9 +42,9 @@ const Welcome = (props) => {
           Study information such as a LORIS ProjectID and Visit Label can be included in the subject metadata.
         </p>
         <ul>
-           <li>
+          <li>
               For more information about BIDS, visit: <a href="https://bids.neuroimaging.io/">bids.neuroimaging.io</a>
-           </li>
+          </li>
         </ul>
         <p>
           Follow the sequence of tabs to prepare your dataset: 
