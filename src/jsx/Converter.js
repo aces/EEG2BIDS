@@ -155,7 +155,7 @@ const Converter = (props) => {
                   No events.tsv hasn't selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please select a file under the Configuration tab. 
+                      Please select a file under the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -172,7 +172,7 @@ const Converter = (props) => {
                   No BIDS output folder selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please select a folder uner the Configuration tab.
+                      Please select a folder in the Configuration tab.
                     </span>
                   </a>
                 </>)
@@ -189,7 +189,7 @@ const Converter = (props) => {
                   No Line Frequency set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
-                      Please enter a value under the Configuration tab.
+                      Please enter a value in the Configuration tab.
                     </span>
                   </a>
                 </>)
