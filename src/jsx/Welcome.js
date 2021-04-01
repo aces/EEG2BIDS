@@ -43,7 +43,7 @@ const Welcome = (props) => {
         </p>
         <ul>
           <li>
-              For more information about BIDS, visit: <a href="https://bids.neuroimaging.io/">bids.neuroimaging.io</a>
+              For more information about BIDS, visit bids.neuroimaging.io
           </li>
         </ul>
         <p>
@@ -81,8 +81,8 @@ const Welcome = (props) => {
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
-        open source software</a> and the <a href="http://loris.ca">LORIS team</a> at the Montreal Neurological Institute-Hospital.<br/>
-        v0.0.1 Copyright © 2021 <a href="http://mcin.ca">MCIN</a>.
+        open source software</a> and the LORIS team at the Montreal Neurological Institute-Hospital.<br/>
+        v0.0.1 Copyright © 2021 MCIN.
       </div>
     </>
   ) : null;
