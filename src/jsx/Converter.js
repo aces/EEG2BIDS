@@ -152,7 +152,7 @@ const Converter = (props) => {
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  No events.tsv hasn't selected.
+                  No events.tsv selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please select a file under the Configuration tab.
