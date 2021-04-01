@@ -215,7 +215,7 @@ const Configuration = (props) => {
             name='eventsTSV'
             accept='.tsv'
             placeholder={eventsTSV['name']}
-            label='Select <i>events.tsv</i> format file to upload: '
+            label='Select events.tsv file to upload: '
             onUserInput={onUserInput}
           />
         </div>
