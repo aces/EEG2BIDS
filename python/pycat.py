@@ -60,12 +60,15 @@ def edf_to_bids(sid, data):
     if not error_messages:
         time = iEEG.Time()
         data['output_time'] = 'output-' + time.latest_output
+        sio.emit('response', {'1': 1})
         iEEG.Converter(data)  # EDF to BIDS format.
+        sio.emit('response', {'2': 2})
         # store subject_id for iEEG.Modifier
         data['subject_id'] = iEEG.Converter.m_info['subject_id']
-        iEEG.Modifier(data)  # Modifies data of BIDS format
+        sio.emit('response', {'3': 3})
+        iEEG.Modifier(data, sio)  # Modifies data of BIDS format
+        sio.emit('response', {'4': 4})
         response = {
-            'directory_name': data['subject_id'].replace('_', '').replace('-', '').replace(' ', ''),
             'output_time': data['output_time']
         }
     else:

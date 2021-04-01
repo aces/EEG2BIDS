@@ -13,7 +13,7 @@ const PycatService = process.env.DEV ?
 
 // Launch python service.
 const pycatService = new PycatService();
-// pycatService.startup();
+pycatService.startup();
 
 if (process.env.DEV) {
   const {
@@ -42,8 +42,8 @@ let mainWindow;
 const createMainWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000?app' :
-    url.pathToFileURL(path.join(
-        __dirname, '/../build/index.html?app')).href;
+    `${url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html')).href}?app`;
   mainWindow = new BrowserWindow({
     show: false,
     icon,
@@ -66,11 +66,11 @@ const createMainWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    process.env.DEV && mainWindow.webContents.openDevTools();
+    if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', function() {
-    pycatService.shutdown();
+    // pycatService.shutdown();
     mainWindow = null;
   });
 };
@@ -81,8 +81,8 @@ let settingsWindow;
 const createSettingsWindow = () => {
   const startUrl = process.env.DEV ?
     'http://localhost:3000?settings' :
-    url.pathToFileURL(path.join(
-        __dirname, '/../build/index.html?settings')).href;
+    `${url.pathToFileURL(path.join(
+        __dirname, '/../build/index.html')).href}?settings`;
   settingsWindow = new BrowserWindow({
     icon,
     show: true,
@@ -108,7 +108,7 @@ const createSettingsWindow = () => {
   });
 
   settingsWindow.on('closed', function() {
-    // pycatService.shutdown();
+    pycatService.shutdown();
     settingsWindow = null;
   });
 };
@@ -116,14 +116,9 @@ const createSettingsWindow = () => {
 app.on('ready', async () => {
   createMainWindow();
   ipcMain.on('openSettingsWindow', (event, arg) => {
-    console.info('openSettingsWindow has ran!');
-    console.log(settingsWindow);
     if (settingsWindow === undefined || settingsWindow === null) {
-      console.info('opening!');
       createSettingsWindow();
     }
-    // event.sender.send('nameReply', {not_right: false}); // sends back/replies to window 1 - "event" is a reference to this chanel.
-    // window2.webContents.send( 'forWin2', arg ); // sends the stuff from Window1 to Window2.
   });
 });
 

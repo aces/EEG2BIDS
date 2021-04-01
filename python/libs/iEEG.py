@@ -170,7 +170,11 @@ class Converter:
                 'preload': False,
                 'verbose': None
             }
-            write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+            try:
+                # raw = raw.anonymize(daysback=None, keep_his=False, verbose=None)
+                write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+            except Exception as ex:
+                print(ex)
             print('finished')
         else:
             print('File not found or is not file: %s', file)
@@ -188,8 +192,8 @@ class Time:
 # Modifier - 1) used for SiteID to participants.tsv
 #            2) used for user's events.tsv to BIDS output events.tsv
 class Modifier:
-    def __init__(self, data):
+    def __init__(self, data, sio):
         print('- Modifier: init started.')
         # print(data)
-        TSV.Writer(data)  # includes SiteID to participants.tsv
-        TSV.Copy(data)  # copies events.tsv to ieeg directory.
+        TSV.Writer(data, sio)  # includes SiteID to participants.tsv
+        TSV.Copy(data, sio)  # copies events.tsv to ieeg directory.
