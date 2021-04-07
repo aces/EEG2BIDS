@@ -12,6 +12,8 @@ app = socketio.WSGIApp(sio)
 @sio.event
 def connect(sid, environ):
     print('connect: ', sid)
+    if environ['REMOTE_ADDR'] != '127.0.0.1':
+        return False  # extra precaution.
 
 
 @sio.event
