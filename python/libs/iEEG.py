@@ -42,25 +42,6 @@ class Anonymize:
         self.header = file_in.readHeader()
         file_in.close()
 
-        # print('header is ')
-        # print(self.header)
-        # print('subject_id:')
-        # print(self.header[0]['subject_id'])
-        # print('recording_id:')
-        # print(self.header[0]['recording_id'])
-        # print('day:')
-        # print(self.header[0]['day'])
-        # print('month:')
-        # print(self.header[0]['month'])
-        # print('year:')
-        # print(self.header[0]['year'])
-        # print('hour:')
-        # print(self.header[0]['hour'])
-        # print('minute:')
-        # print(self.header[0]['minute'])
-        # print('second:')
-        # print(self.header[0]['second'])
-
     def get_header(self):
         return self.header
 
