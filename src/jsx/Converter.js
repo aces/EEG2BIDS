@@ -271,13 +271,18 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Review the EDF header data and verify anonymization &#x26A0;&#xFE0F;</b>
+          <b>Review the EDF header data and verify anonymization &#x26A0;</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
                 (<>
                   The subject_id:&nbsp;
                   {appContext.getFromTask('subject_id')}
+                  <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
+                    <span className={'tooltiptext'}>
+                      Verify the subject_id anonymization.
+                    </span>
+                  </a>
                 </>) :
                 (<>
                   No subject_id set.
