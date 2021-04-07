@@ -7,6 +7,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
+    # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
     def __init__(self, data):
         import tarfile
         import os.path
@@ -30,6 +31,7 @@ class Anonymize:
     file_path = ''
     header = []
 
+    # data = { file_path: 'path to iEEG file' }
     def __init__(self, data):
         self.file_path = data['file_path']
 
@@ -83,12 +85,10 @@ class Anonymize:
 class Converter:
     m_info = ''
 
-    # data: {
-    #  file_path: '', // where file located.
-    #  bids_directory: '', // where to output.
-    #  read_only: true/false // read without write or write.
+    # data = { file_path: '', bids_directory: '', read_only: false,
+    # events_tsv: '', line_freq: '', site_id: '', project_id: '',
+    # sub_project_id: '', visit_label: '', subject_id: ''}
     def __init__(self, data):
-        # json_object = json.loads(data)  # file_path, bids_directory, read_only
         print('- Converter: init started.')
         self.to_bids(
             file=data['file_path'],
@@ -183,6 +183,5 @@ class Time:
 class Modifier:
     def __init__(self, data, sio):
         print('- Modifier: init started.')
-        # print(data)
         TSV.Writer(data, sio)  # includes SiteID to participants.tsv
         TSV.Copy(data, sio)  # copies events.tsv to ieeg directory.
