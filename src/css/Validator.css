@@ -6,8 +6,10 @@
     color: #ff0000;
     font-weight: bold;
 }
-.green-font {
-    color: #84fa84;
+.green-font-italic {
+    color: #02a902;
+    font-weight: bold;
+    font-style: italic;
 }
 .red-font {
     color: #ff0000;
