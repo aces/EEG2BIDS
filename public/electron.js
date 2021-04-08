@@ -68,7 +68,7 @@ const createMainWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    if (process.env.DEV) mainWindow.webContents.openDevTools();
+    // if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', function() {
