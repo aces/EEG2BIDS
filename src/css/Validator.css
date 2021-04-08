@@ -1,7 +1,3 @@
-.green-font-bold {
-    color: green;
-    font-weight: bold;
-}
 .red-font-bold {
     color: #ff0000;
     font-weight: bold;
@@ -11,10 +7,6 @@
     font-weight: bold;
     font-style: italic;
 }
-.red-font {
-    color: #ff0000;
-}
-
 .key-terminal {
     margin: 20px;
     padding: 10px;
@@ -22,7 +14,6 @@
     text-align: center;
     background-color: #f4f4f4;
 }
-
 .terminal {
     margin: 20px;
     overflow: auto;
