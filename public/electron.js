@@ -72,7 +72,7 @@ const createMainWindow = () => {
   });
 
   mainWindow.on('closed', function() {
-    // pycatService.shutdown();
+    pycatService.shutdown();
     mainWindow = null;
   });
 };
@@ -110,7 +110,6 @@ const createSettingsWindow = () => {
   });
 
   settingsWindow.on('closed', function() {
-    pycatService.shutdown();
     settingsWindow = null;
   });
 };
