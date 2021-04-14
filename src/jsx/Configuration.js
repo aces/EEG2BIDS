@@ -194,7 +194,7 @@ const Configuration = (props) => {
             name='edfFile'
             accept='.edf'
             placeholder={edfFile['name']}
-            label='Select file to convert (EDF format): '
+            label='File to convert (EDF format): '
             onUserInput={onUserInput}
           />
         </div>
@@ -215,14 +215,14 @@ const Configuration = (props) => {
             name='eventsTSV'
             accept='.tsv'
             placeholder={eventsTSV['name']}
-            label='Select events.tsv file to upload: '
+            label='events.tsv file to upload: '
             onUserInput={onUserInput}
           />
         </div>
         <div className={'small-pad'}>
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
-            label='Select BIDS output directory: '
+            label='BIDS output directory: '
             placeholder={bidsDirectory}
             onUserInput={onUserInput}
           />
@@ -244,7 +244,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='siteID'
             name='siteID'
-            label='SiteID (e.g. 1 for DCC): '
+            label='Site: '
             value={siteID}
             onUserInput={onUserInput}
           />
@@ -252,7 +252,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='projectID'
             name='projectID'
-            label='ProjectID: '
+            label='Project: '
             value={projectID}
             onUserInput={onUserInput}
           />
@@ -260,7 +260,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='subProjectID'
             name='subProjectID'
-            label='SubProjectID: '
+            label='SubProject: '
             value={subProjectID}
             onUserInput={onUserInput}
           />
