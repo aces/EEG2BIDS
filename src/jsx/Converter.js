@@ -181,12 +181,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('lineFreq') ?
                 (<>
-                  line_freq:&nbsp;
+                  Line frequency:&nbsp;
                   {appContext.getFromTask('lineFreq')}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  No Line Frequency set.
+                  No Line frequency set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please enter a value in the Configuration tab.
@@ -203,12 +203,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('siteID') ?
                 (<>
-                  The SiteID:&nbsp;
+                  The Site:&nbsp;
                   {appContext.getFromTask('siteID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  No SiteID set.
+                  No Site set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please enter a value in the Configuration tab.
@@ -220,12 +220,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('projectID') ?
                 (<>
-                  The ProjectID:&nbsp;
+                  The Project:&nbsp;
                   {appContext.getFromTask('projectID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  No ProjectID set.
+                  No Project set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please enter a value in the Configuration tab.
@@ -237,12 +237,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('subProjectID') ?
                 (<>
-                  The SubProjectID:&nbsp;
+                  The SubProject:&nbsp;
                   {appContext.getFromTask('subProjectID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  No SubProjectID set.
+                  No SubProject set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please enter a value in the Configuration tab.
@@ -271,7 +271,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Review the EDF header data and verify anonymization &#x26A0;</b>
+          <b>Verify anonymization of EDF header data: &#x26A0;</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
@@ -389,7 +389,7 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            Click to Start conversion to BIDS:&nbsp;
+            Click to convert data:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}
