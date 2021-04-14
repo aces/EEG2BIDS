@@ -33,16 +33,12 @@ const Welcome = (props) => {
         Welcome to <b>pyCat</b>
       </span>
       <div className={'info'}>
-        <p className={'font-large'}>Hello,</p>
-        <p className={'font-medium'}><b>pyCat</b>&nbsp;
-          is a simple tool for de-identification of EDF datasets and conversion to a
-          BIDS-compliant file structure for data sharing.
+        <p><b>pyCat</b>&nbsp;
+          is a tool for de-identification of EDF data and conversion to BIDS format for data sharing.
         </p>
         <p>
-          This software is designed to run on EDF data (EEG or iEEG) for one subject
-          at a time, including task events.
-          Study information such as a LORIS ProjectID and Visit Label can be included
-          in the subject metadata.
+          This software is designed to run on EDF files (EEG or iEEG) for one subject&nbsp;
+          at a time. Events and metadata such as a LORIS ProjectID and Visit Label can be included.
         </p>
         <ul>
           <li>
@@ -56,7 +52,7 @@ const Welcome = (props) => {
           <b>Configuration tab:</b>
         </p>
         <ul>
-          <li>Select the data file, events file (events.tsv), and output 
+          <li>Select the data file, events file (events.tsv), and output&nbsp;
           folder</li>
           <li>Set metadata values</li>
           <li>Anonymize the EDF header data</li>
@@ -73,10 +69,10 @@ const Welcome = (props) => {
           <b>Validator tab:</b>
         </p>
         <ul>
-          <li>Automatically validates the resulting BIDS output folder</li>
-          <li>Compresses the BIDS output folder</li>
+          <li>Validate the resulting BIDS output folder</li>
+          <li>Compress the BIDS output folder</li>
         </ul>
-        <p className={'font-medium'}>
+        <p>
           - Important - Please back up your data before beginning.
         </p>
       </div>
@@ -85,9 +81,8 @@ const Welcome = (props) => {
       </div>
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
-        open source software</a> and the LORIS team at the Montreal Neurological
-        Institute-Hospital.<br/>
-        v0.0.1 Copyright © 2021 MCIN.
+        open source software</a><br/>
+        Copyright © 2021 MCIN
       </div>
     </>
   ) : null;
