@@ -55,13 +55,13 @@ const Validator = (props) => {
         if (validator['result'][index]) {
           renderFields.push(
               <div key={index} className={'small-pad'}>
-                <a className={'green-font'}>{value}</a>
+                <a className={'green-font-italic'}>{value}</a>
               </div>,
           );
         } else {
           renderFields.push(
               <div key={index} className={'small-pad'}>
-                <a className={'red-font'}>{value}</a>
+                <a className={'red-font-bold'}>{value}</a>
               </div>,
           );
         }
@@ -81,7 +81,7 @@ const Validator = (props) => {
     }
     setValidPaths(<>
       <div className={'key-terminal'}>
-        Valid is <a className={'green-font-bold'}>green</a>.
+        Valid is <a className={'green-font-italic'}>green</a>.
         Invalid is <a className={'red-font-bold'}>red</a>.
       </div>
       <div className={'terminal'}>

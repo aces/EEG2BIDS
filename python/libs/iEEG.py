@@ -7,6 +7,7 @@ from mne_bids import write_raw_bids, BIDSPath
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
+    # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
     def __init__(self, data):
         import tarfile
         import os.path
@@ -30,6 +31,7 @@ class Anonymize:
     file_path = ''
     header = []
 
+    # data = { file_path: 'path to iEEG file' }
     def __init__(self, data):
         self.file_path = data['file_path']
 
@@ -39,25 +41,6 @@ class Anonymize:
         # read header of EDF file.
         self.header = file_in.readHeader()
         file_in.close()
-
-        # print('header is ')
-        # print(self.header)
-        # print('subject_id:')
-        # print(self.header[0]['subject_id'])
-        # print('recording_id:')
-        # print(self.header[0]['recording_id'])
-        # print('day:')
-        # print(self.header[0]['day'])
-        # print('month:')
-        # print(self.header[0]['month'])
-        # print('year:')
-        # print(self.header[0]['year'])
-        # print('hour:')
-        # print(self.header[0]['hour'])
-        # print('minute:')
-        # print(self.header[0]['minute'])
-        # print('second:')
-        # print(self.header[0]['second'])
 
     def get_header(self):
         return self.header
@@ -83,12 +66,10 @@ class Anonymize:
 class Converter:
     m_info = ''
 
-    # data: {
-    #  file_path: '', // where file located.
-    #  bids_directory: '', // where to output.
-    #  read_only: true/false // read without write or write.
+    # data = { file_path: '', bids_directory: '', read_only: false,
+    # events_tsv: '', line_freq: '', site_id: '', project_id: '',
+    # sub_project_id: '', visit_label: '', subject_id: ''}
     def __init__(self, data):
-        # json_object = json.loads(data)  # file_path, bids_directory, read_only
         print('- Converter: init started.')
         self.to_bids(
             file=data['file_path'],
@@ -126,34 +107,24 @@ class Converter:
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
             self.set_m_info(m_info)
-            # print('m_info is ')
-            # print(m_info)
-            # print('c_info is ')
-            # print(c_info)
-            if read_only:
-                return True
+
             raw = mne.io.read_raw_edf(input_fname=file)
-            # print('VIEW 1:')
-            # print(raw)
+
             if read_only:
                 return True
+
             raw.set_channel_types({ch: ch_type for ch in raw.ch_names})
-            # print('VIEW 2:')
-            # print(raw)
+
             os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
             bids_directory = bids_directory + os.path.sep + output_time
             bids_root = bids_directory
             m_info['subject_id'] = subject_id  # 'alizee'
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
-            # subject = subject_id  # 'alizee
-            # print('LOOK:')
-            # print(subject)
-            # subject = 'alizee'  # modified will output sub-alizee
-            # print('END~~~~~~~~~~~')
+
             bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition="seeg")
             session = visit_label
             bids_basename.update(session=session)
-            # print(bids_basename.session)
+
             raw.info['line_freq'] = line_freq
             raw.info['subject_info'] = {
                 # 'his_id': "test",
@@ -171,7 +142,6 @@ class Converter:
                 'verbose': None
             }
             try:
-                # raw = raw.anonymize(daysback=None, keep_his=False, verbose=None)
                 write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
             except Exception as ex:
                 print(ex)
@@ -194,6 +164,5 @@ class Time:
 class Modifier:
     def __init__(self, data, sio):
         print('- Modifier: init started.')
-        # print(data)
         TSV.Writer(data, sio)  # includes SiteID to participants.tsv
         TSV.Copy(data, sio)  # copies events.tsv to ieeg directory.

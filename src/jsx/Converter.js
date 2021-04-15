@@ -26,8 +26,8 @@ const Converter = (props) => {
   const [modalText, setModalText] = useState({
     mode: 'loading',
     title: {
-      loading: '⭐ Task Started!',
-      success: '🌈 Task Finished!',
+      loading: '⏱ Task Started!',
+      success: '⭐ Task Finished!',
       error: '❌ Task Error!',
     },
     message: {

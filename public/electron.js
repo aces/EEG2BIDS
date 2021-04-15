@@ -13,7 +13,9 @@ const PycatService = process.env.DEV ?
 
 // Launch python service.
 const pycatService = new PycatService();
-pycatService.startup();
+if (!process.env.DEV) {
+  pycatService.startup();
+}
 
 if (process.env.DEV) {
   const {
@@ -66,11 +68,11 @@ const createMainWindow = () => {
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    if (process.env.DEV) mainWindow.webContents.openDevTools();
+    // if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', function() {
-    // pycatService.shutdown();
+    pycatService.shutdown();
     mainWindow = null;
   });
 };
@@ -108,7 +110,6 @@ const createSettingsWindow = () => {
   });
 
   settingsWindow.on('closed', function() {
-    pycatService.shutdown();
     settingsWindow = null;
   });
 };

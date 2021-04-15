@@ -16,6 +16,13 @@ const Welcome = (props) => {
     myAPI.visitGitHub();
   };
   /**
+   * openMCIN - Navigate browser to MCIN.
+   */
+  const openMCIN = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitMCIN();
+  };
+  /**
    * openSettings - Open pycat settings.
    */
   const openSettings = () => {
@@ -73,7 +80,8 @@ const Welcome = (props) => {
       <div className={'footer'}>
         Powered by <a className={'open-source'} onClick={openGitHub}>
         open source software</a>.<br/>
-        Copyright © 2021 MCIN.
+        Copyright © 2021 <a className={'mcin'} onClick={openMCIN}>
+        MCIN</a>.
       </div>
     </>
   ) : null;
