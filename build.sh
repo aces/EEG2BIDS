@@ -1,5 +1,5 @@
 source bin/activate
-pyinstaller --paths=python python/pycat.py -F \
+pyinstaller --paths=python python/pycat.py -w -F \
 --name pycat-service \
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/rules/associated_data_rules.json:bids_validator/rules' \

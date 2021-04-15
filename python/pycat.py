@@ -36,7 +36,7 @@ def ieeg_get_header(sid, data):
     except Exception as ex:
         print(ex)
         response = {
-            'error': 'Failed to retrieve EDF header information'
+            'error': 'Failed to retrieve EDF header information',
         }
     sio.emit('response', response)
 
@@ -67,14 +67,11 @@ def edf_to_bids(sid, data):
     if not error_messages:
         time = iEEG.Time()
         data['output_time'] = 'output-' + time.latest_output
-        sio.emit('response', {'1': 1})
         iEEG.Converter(data)  # EDF to BIDS format.
-        sio.emit('response', {'2': 2})
         # store subject_id for iEEG.Modifier
         data['subject_id'] = iEEG.Converter.m_info['subject_id']
-        sio.emit('response', {'3': 3})
         iEEG.Modifier(data, sio)  # Modifies data of BIDS format
-        sio.emit('response', {'4': 4})
+        sio.emit('response', {'4finish': 4})
         response = {
             'output_time': data['output_time']
         }
@@ -114,7 +111,7 @@ def disconnect(sid):
 
 if __name__ == '__main__':
     eventlet.wsgi.server(
-        eventlet.listen(('127.0.0.1', 5000)),
+        eventlet.listen(('127.0.0.1', 7301)),
         app,
-        log_output=False
+        log_output=True
     )
