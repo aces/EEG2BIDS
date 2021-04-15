@@ -4,7 +4,7 @@ import './css/App.css';
 
 // Socket.io
 import {Socket} from './jsx/socket.io';
-const uri = 'http://127.0.0.1:5000';
+const uri = 'http://127.0.0.1:7301';
 const options = {
   transports: ['websocket'],
 };

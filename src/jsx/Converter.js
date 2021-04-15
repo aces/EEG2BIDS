@@ -32,15 +32,15 @@ const Converter = (props) => {
     },
     message: {
       loading: <span style={{padding: '40px'}}>
-        <a className={'bids-loading'}>
+        <span className={'bids-loading'}>
             BIDS is being created<span>.</span><span>.</span><span>.</span>
             😴
-        </a>
+        </span>
       </span>,
       success: <span style={{padding: '40px'}}>
-        <a className={'bids-success'}>
+        <span className={'bids-success'}>
           Success creating BIDS! <a className={'checkmark'}> &#x2714;</a>
-        </a></span>,
+        </span></span>,
       error: '',
     },
   });
