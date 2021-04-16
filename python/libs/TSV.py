@@ -77,6 +77,9 @@ class Writer:
                 },
                 'subproject': {
                     'Description': data['sub_project_id']
+                },
+                'debug': {
+                    'Version': data['appVersion']
                 }
             }
             json_data.update(user_data)
