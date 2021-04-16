@@ -1,7 +1,6 @@
 import os
 import csv
 import json
-import errno
 
 
 # Writer - writes to tsv file
@@ -13,42 +12,14 @@ class Writer:
             data['output_time'],
             'participants.tsv'
         )
-        # if os.access(file_path, os.W_OK):
-        #     sio.emit('response', {'651110': 651110})
-        # else:
-        #     sio.emit('response', {'651111': 651111})
-        # if os.access(file_path, os.R_OK):
-        #     sio.emit('response', {'751110': 751110})
-        # else:
-        #     sio.emit('response', {'751111': 751111})
-        #
-        # sio.emit('response', {'1': 1})
-        # # Open participants.tsv
-        # fd = os.open(file_path, os.O_RDWR)
-        # sio.emit('response', {'2': 2})
-        # # Read text
-        # ret = os.read(fd, 4000)
-        # print(ret)
-        # sio.emit('response', {'3': 3})
-        # sio.emit('response', {'ret': ret.decode("utf-8")})
-        # os.close(fd)
 
-        # sio.emit('response', {'5': 5})
-        # sio.emit('response', {'55': file_path})
         with open(file_path, mode='r') as tsv_file:
-            sio.emit('response', {'55': 55})
-            # tsv_file.readline()
-            data = tsv_file.read()
-            sio.emit('response', {'66': 66})
+            tsv_file.readline()
             reader = csv.reader(tsv_file, delimiter='\t')
-            sio.emit('response', {'77': 77})
             rows = list(reader)
-            sio.emit('response', {'88': 88})
             tsv_file.close()
-            # rows = list(reader)
-            # sio.emit('response', {'88': 88})
+
         # participants.tsv data collected:
-        # sio.emit('response', {'6': 6})
         output = []
         for line in rows:
             try:
@@ -81,14 +52,12 @@ class Writer:
                 except ValueError:
                     print('error: ValueError')
 
-        sio.emit('response', {'7': 7})
         with open(file_path, mode='w', newline='') as tsv_file:
             headers = ['participant_id', 'age', 'sex', 'hand', 'site', 'project', 'subproject']
             writer = csv.writer(tsv_file, delimiter='\t')
             writer.writerow(headers)
             writer.writerows(output)
             tsv_file.close()
-            sio.emit('response', {'77': 77})
 
         # modify the participants.json file
         #   and include siteID, projectID, subprojectID
@@ -108,6 +77,9 @@ class Writer:
                 },
                 'subproject': {
                     'Description': data['sub_project_id']
+                },
+                'debug': {
+                    'Version': data['appVersion']
                 }
             }
             json_data.update(user_data)

@@ -8,6 +8,9 @@ from python.libs import BIDS
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
+# pyCat version
+appVersion = '1.0.0'
+
 
 @sio.event
 def connect(sid, environ):
@@ -68,10 +71,11 @@ def edf_to_bids(sid, data):
         time = iEEG.Time()
         data['output_time'] = 'output-' + time.latest_output
         iEEG.Converter(data)  # EDF to BIDS format.
+
         # store subject_id for iEEG.Modifier
         data['subject_id'] = iEEG.Converter.m_info['subject_id']
+        data['appVersion'] = appVersion
         iEEG.Modifier(data, sio)  # Modifies data of BIDS format
-        sio.emit('response', {'4finish': 4})
         response = {
             'output_time': data['output_time']
         }

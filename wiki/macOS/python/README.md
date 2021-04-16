@@ -11,6 +11,5 @@
 Inside your terminal type:
 ```
 brew install pyenv
-env PYTHON_CONFIGURE_OPTS="--enable-framework"
-pyenv install 3.8.5
+PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.8.5
 ```
