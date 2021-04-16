@@ -2,8 +2,7 @@ const {contextBridge} = require('electron');
 
 contextBridge.exposeInMainWorld('myAPI', {
   dialog: () => {
-    const electron = require('electron');
-    const {dialog} = electron.remote;
+    const {dialog} = require('@electron/remote');
     return dialog;
   },
   visitGitHub: () => {

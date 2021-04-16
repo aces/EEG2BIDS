@@ -3,6 +3,7 @@
   "description": "pycat - iEEG to BIDS format Wizard",
   "version": "1.0.0",
   "dependencies": {
+    "@electron/remote": "^1.1.0",
     "electron-log": "^4.3.4",
     "electron-store": "^7.0.3",
     "prop-types": "^15.7.2",

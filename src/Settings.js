@@ -12,7 +12,7 @@ const Settings = () => {
 
   const handleChangeComplete = (color) => {
     console.info(color);
-    console.log(background);
+    console.info(background);
     setBackground(color.hex);
   };
   /**
