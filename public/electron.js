@@ -2,6 +2,9 @@ const electron = require('electron');
 const path = require('path');
 const url = require('url');
 
+// [security] Used for inputs.js (dialog call) to succeed.
+require('@electron/remote/main').initialize();
+
 const {app} = electron;
 const {BrowserWindow} = electron;
 const {ipcMain} = require('electron');
@@ -14,7 +17,13 @@ const PycatService = process.env.DEV ?
 // Launch python service.
 const pycatService = new PycatService();
 if (!process.env.DEV) {
-  pycatService.startup();
+  pycatService.startup().then((error) => {
+    if (error) {
+      console.info('[SERVICE] pycat-service failed');
+    } else {
+      console.info('[SERVICE] pycat-service success');
+    }
+  });
 }
 
 if (process.env.DEV) {
