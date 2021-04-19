@@ -26,14 +26,14 @@ const Converter = (props) => {
   const [modalText, setModalText] = useState({
     mode: 'loading',
     title: {
-      loading: '⏱ Task Started!',
+      loading: '⏱ Task in Progress!',
       success: '⭐ Task Finished!',
       error: '❌ Task Error!',
     },
     message: {
       loading: <span style={{padding: '40px'}}>
         <span className={'bids-loading'}>
-            BIDS is being created<span>.</span><span>.</span><span>.</span>
+            BIDS creation in progress<span>.</span><span>.</span><span>.</span>
             😴
         </span>
       </span>,
@@ -126,17 +126,17 @@ const Converter = (props) => {
       </span>
       <div className={'info'}>
         <div className={'small-pad'}>
-          <b>Please review your configurations:</b>
+          <b>Review your Configuration selections:</b>
           <ul>
             <li>
               {appContext.getFromTask('edfFile') ?
                 (<>
-                  The file.edf:&nbsp;
+                  EDF data file:&nbsp;
                   {appContext.getFromTask('edfFile').name}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The file.edf hasn't been set in configuration.
+                  No EDF file selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -153,7 +153,7 @@ const Converter = (props) => {
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The events.tsv hasn't been set in configuration.
+                  No events.tsv selected.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -165,7 +165,7 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('bidsDirectory') ?
                 (<>
-                  BIDS output directory:&nbsp;
+                  BIDS output folder:&nbsp;
                   {appContext.getFromTask('bidsDirectory')}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
@@ -182,12 +182,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('lineFreq') ?
                 (<>
-                  line_freq:&nbsp;
+                  Line frequency::&nbsp;
                   {appContext.getFromTask('lineFreq')}
                   <a className={'checkmark'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The line_freq hasn't been set in configuration.
+                  The Line frequency hasn't been set in configuration.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -199,17 +199,17 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Please review your LORIS metadata:</b>
+          <b>Review your LORIS metadata:</b>
           <ul>
             <li>
               {appContext.getFromTask('siteID') ?
                 (<>
-                  The SiteID:&nbsp;
+                  The Site:&nbsp;
                   {appContext.getFromTask('siteID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The SiteID hasn't been set in configuration.
+                  The Site hasn't been set in configuration.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -221,12 +221,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('projectID') ?
                 (<>
-                  The ProjectID:&nbsp;
+                  The Project:&nbsp;
                   {appContext.getFromTask('projectID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The ProjectID hasn't been set in configuration.
+                  The Project hasn't been set in configuration.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -238,12 +238,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('subProjectID') ?
                 (<>
-                  The SubProjectID:&nbsp;
+                  The SubProject:&nbsp;
                   {appContext.getFromTask('subProjectID')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The SubProjectID hasn't been set in configuration.
+                  The SubProject hasn't been set in configuration.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -255,12 +255,12 @@ const Converter = (props) => {
             <li>
               {appContext.getFromTask('visitLabel') ?
                 (<>
-                  The Visit Label:&nbsp;
+                  No Visit Label set:&nbsp;
                   {appContext.getFromTask('visitLabel')}
                   <a className={'checkmark tooltip'}> &#x2714;</a>
                 </>) :
                 (<>
-                  The Visit Label hasn't been set in configuration.
+                  Please enter a value in the Configuration tab.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -272,7 +272,7 @@ const Converter = (props) => {
           </ul>
         </div>
         <div className={'small-pad'}>
-          <b>Please review your iEEG header data:</b>
+          <b>Verify anonymization of EDF header data:</b>
           <ul>
             <li>
               {appContext.getFromTask('subject_id') ?
@@ -286,7 +286,7 @@ const Converter = (props) => {
                   </a>
                 </>) :
                 (<>
-                  The file.edf hasn't been set in configuration.
+                  No subject_id set.
                   <a className={'tooltip'}> &#x274C;
                     <span className={'tooltiptext'}>
                       Please correct.
@@ -390,7 +390,7 @@ const Converter = (props) => {
         </div>
         <div className={'small-pad convert-bids-row'}>
           <b style={{cursor: 'default'}}>
-            Convert your specifications to BIDS format:&nbsp;
+            Click to convert data:&nbsp;
           </b>
           <input type={'button'}
             className={'start_task'}
