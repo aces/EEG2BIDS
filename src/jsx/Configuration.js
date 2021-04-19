@@ -195,14 +195,14 @@ const Configuration = (props) => {
             name='edfFile'
             accept='.edf'
             placeholder={edfFile['name']}
-            label='The file.edf to convert: '
+            label='File to convert (EDF format): '
             onUserInput={onUserInput}
           />
         </div>
         <div className={'small-pad'}>
           <RadioInput id='edfType'
             name='edfType'
-            label='The edf type: '
+            label='Data modality: '
             onUserInput={onUserInput}
             options={{
               iEEG: 'iEEG',
@@ -216,14 +216,14 @@ const Configuration = (props) => {
             name='eventsTSV'
             accept='.tsv'
             placeholder={eventsTSV['name']}
-            label='The events.tsv to include: '
+            label='events.tsv file to upload: '
             onUserInput={onUserInput}
           />
         </div>
         <div className={'small-pad'}>
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
-            label='The BIDS output directory: '
+            label='BIDS output directory: '
             placeholder={bidsDirectory}
             onUserInput={onUserInput}
           />
@@ -231,7 +231,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <NumberInput id='lineFreq'
             name='lineFreq'
-            label='The line_freq used: '
+            label='Line frequency: '
             value={lineFreq}
             placeholder='60'
             onUserInput={onUserInput}
@@ -245,7 +245,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='siteID'
             name='siteID'
-            label='The SiteID from LORIS: '
+            label='Site: '
             value={siteID}
             onUserInput={onUserInput}
           />
@@ -253,7 +253,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='projectID'
             name='projectID'
-            label='The ProjectID from LORIS: '
+            label='Project: '
             value={projectID}
             onUserInput={onUserInput}
           />
@@ -261,7 +261,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='subProjectID'
             name='subProjectID'
-            label='The SubProjectID from LORIS: '
+            label='SubProject: '
             value={subProjectID}
             onUserInput={onUserInput}
           />
@@ -269,7 +269,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <TextInput id='visitLabel'
             name='visitLabel'
-            label='The Visit Label from LORIS: '
+            label='Visit Label: '
             value={visitLabel}
             bannedCharacters={['-', '_', ' ']}
             onUserInput={onUserInput}
