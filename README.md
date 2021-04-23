@@ -15,7 +15,7 @@ pyCat is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudin
 
  * [Node.js](https://nodejs.org/en/download/current) >= 16.0.0
  * NPM >= 7.5.3
- * Python == 3.8.5
+ * [Python](https://www.python.org/downloads/) == 3.8.5
 
 #### Development Build guides
 
