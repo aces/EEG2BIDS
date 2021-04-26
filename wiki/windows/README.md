@@ -12,11 +12,11 @@
 
 #### Development Build guide:
 
-Inside project root using your terminal type:
+Inside project root using your "Windows PowerShell" type:
 ```
 npm install
 npm run start
-# In another terminal inside project root type:
+# In another "Windows PowerShell" inside project root type:
 py -m venv .
 Scripts\activate
 python -m pip install -r .\requirements.txt
@@ -31,7 +31,7 @@ python -m python.pycat
 
 #### Building production app guide:
 
-Inside project root using your terminal type the following,
+Inside project root using your "Windows PowerShell" type the following,
 
 1) python-service build:
 ```
