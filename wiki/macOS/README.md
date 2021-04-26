@@ -4,9 +4,9 @@
 
 #### Development Requirements
 
- * Node.js >= 15.9.0
- * NPM >= 7.5.2
- * Python == 3.8.5
+ * [Node.js](https://nodejs.org/en/download/current) >= 16.0.0
+ * NPM >= 7.10.0
+ * [Python](https://www.python.org/downloads/) == 3.8.5
 
 #### Development Build guide
 
@@ -25,13 +25,6 @@ python -m python.pycat
 
 Inside project root using your terminal type the following,
 
-electron-app build:
-```
-npm install
-npm run build
-# Visit the /dist for the "electron-app" platform builds.
-```
-
 python-service build:
 ```
 # first follow the Development Build guide
@@ -40,4 +33,11 @@ pip install pyinstaller
 chmod +x build.sh
 ./build.sh
 # Visit the /dist for the "python-service" build.
+```
+
+electron-app build:
+```
+npm install
+npm run build
+# Visit the /dist for the "electron-app" platform builds.
 ```
