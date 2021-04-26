@@ -31,7 +31,7 @@ python -m python.pycat
 
 #### Building production app guide:
 
-Inside project root using your "Windows PowerShell" type the following,.
+Inside project root using your "Windows PowerShell" type the following,
 
 1) python-service build:
 ```
