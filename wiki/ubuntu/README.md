@@ -1,14 +1,16 @@
+["Click Here" to return to the project README.md](../../README.md)
+
 # Ubuntu Instructions
 
 ## Development
 
-#### Development Requirements
+#### Development Requirements:
 
  * [Node.js](https://nodejs.org/en/download/current) >= 16.0.0
- * NPM >= 7.10.0
+ * NPM >= 7.10.0 (included with Node.js)
  * [Python](https://www.python.org/downloads/) == 3.8.5
 
-#### Development Build guide
+#### Development Build guide:
 
 Inside project root using your terminal type:
 ```
@@ -22,7 +24,11 @@ pip install -r requirements.txt
 python3 -m python.pycat
 ```
 
-#### Building production app guide
+**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for pyCat to successfully function in development!
+
+## Production
+
+#### Building production app guide:
 
 Inside project root using your terminal type the following,
 
@@ -44,3 +50,5 @@ npm install
 npm run build
 # Visit the /dist for the "electron-app" platform builds.
 ```
+
+**Note:** It's important that the "python-service" is built before the "electron-app" because the python-service is bundled inside the electron-app.
