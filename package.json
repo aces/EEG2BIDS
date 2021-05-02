@@ -43,7 +43,7 @@
     "electron-build-windows": "electron-builder --win -c.extraMetadata.main=build/electron.js",
     "electron-build-mac": "electron-builder --mac -c.extraMetadata.main=build/electron.js",
     "build-linux": "npm run react-build && npm run electron-build-linux",
-    "build-windows": "set \"INLINE_RUNTIME_CHUNK=false\" && npm run react-build && npm run electron-build-windows",
+    "build-windows": "npm run react-build && npm run electron-build-windows",
     "build-mac": "npm run react-build && npm run electron-build-mac",
     "build": "npm run react-build && npm run electron-build-linux && npm run electron-build-windows & npm run electron-build-mac",
     "test": "react-scripts test",
