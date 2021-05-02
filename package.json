@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@electron/remote": "^1.1.0",
-    "electron-log": "^4.3.4",
+    "electron-log": "^4.3.5",
     "electron-store": "^8.0.0",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
@@ -15,11 +15,11 @@
     "socket.io-client": "^4.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.13.16",
+    "@babel/core": "^7.14.0",
     "@babel/eslint-parser": "^7.13.14",
     "concurrently": "^6.0.2",
     "cross-env": "^7.0.3",
-    "electron": "^12.0.5",
+    "electron": "^12.0.6",
     "electron-builder": "^22.10.5",
     "electron-devtools-installer": "^3.2.0",
     "eslint": "^7.25.0",
@@ -36,8 +36,8 @@
     "rebuild": "rebuild --runtime=electron --target=11.2.1",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
-    "start": "concurrently 'npm run react-start' 'wait-on http://localhost:3000/ && npm run electron-start'",
-    "react-build": "react-scripts build",
+    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
+    "react-build": "cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
     "pack": "electron-builder --dir -c.extraMetadata.main=build/electron.js",
     "electron-build-linux": "electron-builder --linux -c.extraMetadata.main=build/electron.js",
     "electron-build-windows": "electron-builder --win -c.extraMetadata.main=build/electron.js",
