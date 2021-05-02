@@ -6,7 +6,7 @@
 
 #### Development Requirements:
 
- * [Node.js](https://nodejs.org/en/download/current) >= 16.0.0
+ * [Node.js](https://nodejs.org/en/download/current) == 14.16.LTS
  * NPM >= 7.10.0 (included with Node.js)
  * [Python](https://www.python.org/downloads/) == 3.8.5
 
