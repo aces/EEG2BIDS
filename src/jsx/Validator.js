@@ -3,6 +3,9 @@ import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Validator.css';
 
+// Display Loading, Success, Error
+import Modal from './elements/modal';
+
 // Socket.io
 import {Event, SocketContext} from './socket.io';
 
@@ -19,6 +22,37 @@ const Validator = (props) => {
   // React State
   const [validator, setValidator] = useState({});
   const [validPath, setValidPaths] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalText, setModalText] = useState({
+    mode: 'loading',
+    title: {
+      loading: '⏱ Task in Progress!',
+      success: '⭐ Task Finished!',
+      error: '❌ Task Error!',
+    },
+    message: {
+      loading: <span style={{padding: '40px'}}>
+        <span className={'bids-loading'}>
+            BIDS compression in progress
+          <span>.</span><span>.</span><span>.</span>
+            😴
+        </span>
+      </span>,
+      success: <span style={{padding: '40px'}}>
+        <span className={'bids-success'}>
+          Success compressing BIDS! <a className={'checkmark'}> &#x2714;</a>
+        </span></span>,
+      error: '',
+    },
+  });
+
+  /**
+   * hideModal - display Modal.
+   * @param {boolean} hidden
+   */
+  const hideModal = (hidden) => {
+    setModalVisible(!hidden);
+  };
 
   /**
    * validateBIDS - get validated BIDS format.
@@ -38,6 +72,10 @@ const Validator = (props) => {
    */
   const packageBIDS = () => {
     console.info('packageBIDS();');
+    setModalText((prevState) => {
+      return {...prevState, ['mode']: 'loading'};
+    });
+    setModalVisible(true);
     socketContext.emit('tarfile_bids', {
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       output_time: appContext.getFromTask('output_time') ?? '',
@@ -99,6 +137,10 @@ const Validator = (props) => {
     console.info(message);
     if (message['file_paths'] && message['result']) {
       setValidator(message);
+    } else if (message['compression_time']) {
+      setModalText((prevState) => {
+        return {...prevState, ['mode']: 'success'};
+      });
     }
   };
 
@@ -122,6 +164,14 @@ const Validator = (props) => {
         </div>
       </div>
       {validPath}
+      <Modal
+        title={modalText.title[modalText.mode]}
+        show={modalVisible}
+        close={hideModal}
+        width={'500px'}
+      >
+        {modalText.message[modalText.mode]}
+      </Modal>
       <Event event='response' handler={onMessage} />
     </>
   ) : null;

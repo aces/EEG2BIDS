@@ -24,7 +24,7 @@ def connect(sid, environ):
 def tarfile_bids_thread(data):
     iEEG.TarFile(data)
     response = {
-            'creation_time': 'example_5mins'
+            'compression_time': 'example_5mins'
         }
     return eventlet.tpool.Proxy(response)
 
@@ -36,6 +36,12 @@ def tarfile_bids(sid, data):
     response = eventlet.tpool.execute(tarfile_bids_thread, data)
     print('response received!')
     print(response)
+    send = {
+            'compression_time': response['compression_time']
+        }
+    print('send received!')
+    print(send)
+    sio.emit('response', send)
 
 
 @sio.event
