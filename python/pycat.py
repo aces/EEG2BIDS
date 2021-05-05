@@ -1,4 +1,6 @@
+# import _thread
 import eventlet
+from eventlet import tpool
 import socketio
 from python.libs import iEEG
 from python.libs import BIDS
@@ -19,11 +21,27 @@ def connect(sid, environ):
         return False  # extra precaution.
 
 
+def tarfile_bids_thread(data):
+    iEEG.TarFile(data)
+    response = {
+            'compression_time': 'example_5mins'
+        }
+    return eventlet.tpool.Proxy(response)
+
+
 @sio.event
 def tarfile_bids(sid, data):
     # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
     print('tarfile_bids:', data)
-    iEEG.TarFile(data)
+    response = eventlet.tpool.execute(tarfile_bids_thread, data)
+    print('response received!')
+    print(response)
+    send = {
+            'compression_time': response['compression_time']
+        }
+    print('send received!')
+    print(send)
+    sio.emit('response', send)
 
 
 @sio.event
@@ -44,12 +62,7 @@ def ieeg_get_header(sid, data):
     sio.emit('response', response)
 
 
-@sio.event
-def edf_to_bids(sid, data):
-    # data = { file_path: '', bids_directory: '', read_only: false,
-    # events_tsv: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', visit_label: '', subject_id: ''}
-    print('edf_to_bids: ', data)
+def edf_to_bids_thread(data):
     error_messages = []
     if not data['file_path']:
         error_messages.append('The file.edf to convert is missing.')
@@ -83,7 +96,22 @@ def edf_to_bids(sid, data):
         response = {
             'error': error_messages
         }
-    sio.emit('response', response)
+    return eventlet.tpool.Proxy(response)
+
+
+@sio.event
+def edf_to_bids(sid, data):
+    # data = { file_path: '', bids_directory: '', read_only: false,
+    # events_tsv: '', line_freq: '', site_id: '', project_id: '',
+    # sub_project_id: '', visit_label: '', subject_id: ''}
+    print('edf_to_bids: ', data)
+    response = eventlet.tpool.execute(edf_to_bids_thread, data)
+    send = {
+            'output_time': response['output_time']
+        }
+    print('send received!')
+    print(send)
+    sio.emit('response', send)
 
 
 @sio.event
