@@ -21,3 +21,7 @@ https://edfrw.readthedocs.io/en/latest/specifications.html
 
 https://programtalk.com/python-examples/mne.io.read_raw_edf/
 https://www.teuniz.net/edflib/
+
+### macOS notarizing production app (possibly useful for future)
+https://latenightsw.com/sd-notary-notarizing-made-easy/
+https://apps.apple.com/us/app/dropdmg/id414234859?mt=12
