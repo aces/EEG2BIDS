@@ -63,6 +63,8 @@ def ieeg_get_header(sid, data):
 
 
 def edf_to_bids_thread(data):
+    print('data is ')
+    print(data)
     error_messages = []
     if not data['file_path']:
         error_messages.append('The file.edf to convert is missing.')
