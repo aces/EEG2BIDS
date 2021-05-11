@@ -7,7 +7,7 @@ pyCat is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudin
 #### System Requirements
 
  * Linux, macOS, Windows
- * 200 MB of disk space
+ * 1 GB of disk space
 
 ## Development
 
