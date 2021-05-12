@@ -45,7 +45,7 @@ python -m pip install pyinstaller
 2) electron-app build:
 ```
 npm install
-npm run build
+npm run build-windows
 # Visit the /dist for the "electron-app" platform builds.
 ```
 
