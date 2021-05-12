@@ -47,7 +47,7 @@ chmod +x build.sh
 electron-app build:
 ```
 npm install
-npm run build
+npm run build-linux
 # Visit the /dist for the "electron-app" platform builds.
 ```
 
