@@ -233,7 +233,7 @@ const Configuration = (props) => {
             name='lineFreq'
             label='Line frequency: '
             value={lineFreq}
-            placeholder='60'
+            placeholder='Example: 60'
             onUserInput={onUserInput}
           />
         </div>
