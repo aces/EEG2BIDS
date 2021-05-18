@@ -122,7 +122,7 @@ class Copy:
             data['output_time'],
             directory_path,
             'ses-' + data['visit_label'],
-            'ieeg'
+            (data['modality'].lower() or 'ieeg')
         )
 
         path_events_tsv = ''
@@ -158,8 +158,7 @@ class Copy:
             except:
                 print('No events.tsv found in the BIDS folder.')
         else:
-            path_events_tsv = path + '/' + re.sub(r"_i?eeg.edf", '_events.tsv', eeg_edf)
-            print(path_events_tsv)
+            path_events_tsv = start_path + '/' + re.sub(r"_i?eeg.edf", '_events.tsv', eeg_edf)
 
         # output is an array of arrays
         # sort by first element in array

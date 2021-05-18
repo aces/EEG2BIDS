@@ -57,6 +57,7 @@ const Converter = (props) => {
     socketContext.emit('edf_to_bids', {
       file_path: appContext.getFromTask('edfFile') ?
         appContext.getFromTask('edfFile').path : '',
+      modality: appContext.getFromTask('edfType') ?? '',
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       read_only: false,
       events_tsv: appContext.getFromTask('eventsTSV') ?

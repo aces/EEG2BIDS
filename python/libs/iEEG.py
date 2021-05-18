@@ -71,8 +71,13 @@ class Converter:
     # sub_project_id: '', visit_label: '', subject_id: ''}
     def __init__(self, data):
         print('- Converter: init started.')
+        modality = 'seeg'
+        if data['modality'] == 'EEG':
+            modality = 'eeg'
+
         self.to_bids(
             file=data['file_path'],
+            ch_type=modality,
             bids_directory=data['bids_directory'],
             subject_id=data['subject_id'],
             visit_label=data['visit_label'],
