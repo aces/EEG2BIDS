@@ -1,7 +1,7 @@
 import os
 import csv
 import json
-
+import re
 
 # Writer - writes to tsv file
 class Writer:
@@ -124,38 +124,49 @@ class Copy:
             'ses-' + data['visit_label'],
             'ieeg'
         )
+
         path_events_tsv = ''
+        eeg_edf         = ''
         # We search for the events.tsv file.
         for path, dirs, files in os.walk(start_path):
             for filename in files:
                 temp = os.path.join(path, filename)
                 if temp.endswith('events.tsv'):
                     path_events_tsv = temp
+                if temp.endswith('eeg.edf'):
+                    eeg_edf = os.path.basename(temp)
 
-        # We now open BIDS events.tsv file.
-        with open(path_events_tsv, mode='r', newline='') as tsv_file:
-            tsv_file.readline()
-            reader = csv.reader(tsv_file, delimiter='\t')
-            rows = list(reader)
-            tsv_file.close()
-
-        for line in rows:
+        # We now open BIDS events.tsv file if it exists
+        if path_events_tsv:
             try:
-                onset, duration, trial_type, value, sample = line
-                output.append([onset, duration, trial_type, value, sample])
-            except ValueError:
-                try:
-                    onset, duration, trial_type = line
-                    output.append([onset, duration, trial_type, 'n/a', 'n/a'])
-                except ValueError:
-                    print('error: ValueError')
+                with open(path_events_tsv, mode='r', newline='') as tsv_file:
+                    tsv_file.readline()
+                    reader = csv.reader(tsv_file, delimiter='\t')
+                    rows = list(reader)
+                    tsv_file.close()
+
+                for line in rows:
+                    try:
+                        onset, duration, trial_type, value, sample = line
+                        output.append([onset, duration, trial_type, value, sample])
+                    except ValueError:
+                        try:
+                            onset, duration, trial_type = line
+                            output.append([onset, duration, trial_type, 'n/a', 'n/a'])
+                        except ValueError:
+                            print('error: ValueError')
+            except:
+                print('No events.tsv found in the BIDS folder.')
+        else:
+            path_events_tsv = path + '/' + re.sub(r"_i?eeg.edf", '_events.tsv', eeg_edf)
+            print(path_events_tsv)
 
         # output is an array of arrays
         # sort by first element in array
         output.sort(key=lambda x: float(x[0]))
 
         # overwrite BIDS events.tsv with collected data.
-        with open(path_events_tsv, mode='w', newline='') as tsv_file:
+        with open(path_events_tsv, mode='a+', newline='') as tsv_file:
             headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
             writer = csv.writer(tsv_file, delimiter='\t')
             writer.writerow(headers)
