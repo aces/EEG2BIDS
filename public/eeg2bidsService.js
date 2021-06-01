@@ -1,9 +1,9 @@
 const {execFile} = require('child_process');
 
 /**
- * PycatService
+ * EEG2BIDS Wizard Service
  */
-module.exports = class PycatService {
+module.exports = class EEG2BIDSService {
   /**
    * constructor
    */
@@ -21,8 +21,8 @@ module.exports = class PycatService {
         __dirname,
         '..',
       this.platform === 'win32' ?
-        'dist/pycat-service-windows.exe' :
-        'dist/pycat-service.app/Contents/MacOS/pycat-service',
+        'dist/eeg2bids-service-windows.exe' :
+        'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
     );
     this.process = execFile(pathToService);
   }
@@ -32,7 +32,7 @@ module.exports = class PycatService {
    */
   shutdown() {
     if (this.process) {
-      console.info('[SHUTDOWN of pycatService]');
+      console.info('[SHUTDOWN of eeg2bidsService]');
       // this.process.kill();
       this.process = null;
     }

@@ -9,7 +9,7 @@ import '../css/Welcome.css';
  */
 const Welcome = (props) => {
   /**
-   * openGitHub - Navigate browser to pycat.
+   * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
   const openGitHub = () => {
     const myAPI = window['myAPI'];
@@ -23,7 +23,7 @@ const Welcome = (props) => {
     myAPI.visitMCIN();
   };
   /**
-   * openSettings - Open pycat settings.
+   * openSettings - Open EEG2BIDS Wizard settings.
    */
   const openSettings = () => {
     const myAPI = window['myAPI'];
@@ -37,10 +37,10 @@ const Welcome = (props) => {
   return props.visible ? (
     <>
       <span className={'title'}>
-        Welcome to <b>pyCat</b>
+        Welcome to <b>EEG2BIDS Wizard</b>
       </span>
       <div className={'info'}>
-        <p><b>pyCat</b>&nbsp;
+        <p><b>EEG2BIDS Wizard</b>&nbsp;
           is a tool for de-identification of EDF data and conversion to BIDS
           &nbsp;format for data sharing.
         </p>

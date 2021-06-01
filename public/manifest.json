@@ -1,6 +1,6 @@
 {
-  "short_name": "pycat",
-  "name": "pycat",
+  "short_name": "eeg2bids",
+  "name": "eeg2bids",
   "icons": [
     {
       "src": "favicon.ico",

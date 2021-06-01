@@ -1,6 +1,6 @@
 {
-  "name": "pycat",
-  "description": "pycat - iEEG to BIDS format Wizard",
+  "name": "eeg2bids",
+  "description": "EEG/iEEG to BIDS format Wizard",
   "version": "1.0.0",
   "dependencies": {
     "@electron/remote": "^1.1.0",
@@ -69,11 +69,11 @@
   "author": {
     "name": "Alizée Wickenheiser",
     "email": "alizee.wickenheiser@mcgill.ca",
-    "url": "https://github.com/aces/pycat"
+    "url": "https://github.com/aces/eeg2bids"
   },
   "build": {
-    "appId": "mni.aces.pycat",
-    "productName": "pycat",
+    "appId": "mni.aces.eeg2bids",
+    "productName": "eeg2bids",
     "copyright": "Open Source",
     "asar": false,
     "linux": {
@@ -126,11 +126,11 @@
             ]
           }
         ],
-        "NSDesktopFolderUsageDescription": "pyCat wants to access the Desktop folder.",
-        "NSDocumentsFolderUsageDescription": "pyCat wants to access the Documents folder.",
-        "NSDownloadsFolderUsageDescription": "pyCat wants to access the Downloads folder.",
-        "NSFileProviderDomainUsageDescription": "pyCat wants to access files managed by a file provider.",
-        "NSSystemAdministrationUsageDescription": "The operation being performed by pyCat requires elevated permission."
+        "NSDesktopFolderUsageDescription": "EEG2BIDS Wizard wants to access the Desktop folder.",
+        "NSDocumentsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Documents folder.",
+        "NSDownloadsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Downloads folder.",
+        "NSFileProviderDomainUsageDescription": "EEG2BIDS Wizard wants to access files managed by a file provider.",
+        "NSSystemAdministrationUsageDescription": "The operation being performed by EEG2BIDS Wizard requires elevated permission."
       }
     },
     "nsis": {
@@ -142,7 +142,7 @@
       "utils/**/*",
       "python/**/*",
       "dist",
-      "dist/pycat-service.app",
+      "dist/eeg2bids-service.app",
       "public/*",
       "package.json"
     ],

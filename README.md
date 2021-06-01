@@ -1,6 +1,6 @@
-# pyCat - iEEG to BIDS format Wizard
+# EEG2BIDS Wizard - iEEG to BIDS format Wizard
 
-pyCat is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudinal Online Research and Imaging System).
+EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudinal Online Research and Imaging System).
 
 ## Installation
 
@@ -30,7 +30,7 @@ pyCat is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudin
 #### Dependencies Requirements
 
  * PyInstaller >= 4.2
- * eventlet >= 0.30.0
+ * eventlet >= 0.31.0
  * mne >= 0.22.0
  * mne-bids >= 0.6
  * mne-features >= 0.1

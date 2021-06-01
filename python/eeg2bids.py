@@ -10,7 +10,7 @@ from python.libs import BIDS
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
-# pyCat version
+# EEG2BIDS Wizard version
 appVersion = '1.0.0'
 
 
