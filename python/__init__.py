@@ -1,1 +1,1 @@
-from .pycat import *
+from .eeg2bids import *

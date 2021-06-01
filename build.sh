@@ -1,6 +1,6 @@
 source bin/activate
-pyinstaller --paths=python python/pycat.py -w -F \
---name pycat-service \
+pyinstaller --paths=python python/eeg2bids.py -w -F \
+--name eeg2bids-service \
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/rules/associated_data_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/rules/file_level_rules.json:bids_validator/rules' \

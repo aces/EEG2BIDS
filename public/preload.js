@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('myAPI', {
   },
   visitGitHub: () => {
     const {shell} = require('electron');
-    shell.openExternal('https://github.com/aces/pyCat');
+    shell.openExternal('https://github.com/aces/eeg2bids');
   },
   visitMCIN: () => {
     const {shell} = require('electron');

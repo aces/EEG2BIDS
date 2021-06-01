@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python3 -m python.pycat
 ```
 
-**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for pyCat to successfully function in development!
+**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
 
 ## Production
 
