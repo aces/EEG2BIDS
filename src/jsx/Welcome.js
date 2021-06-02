@@ -18,6 +18,13 @@ const Welcome = (props) => {
   /**
    * openMCIN - Navigate browser to MCIN.
    */
+  const openMNE = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitMNE();
+  };
+  /**
+   * openMCIN - Navigate browser to MCIN.
+   */
   const openMCIN = () => {
     const myAPI = window['myAPI'];
     myAPI.visitMCIN();
@@ -90,8 +97,13 @@ const Welcome = (props) => {
         {/*<input value={'Settings'} type={'button'} onClick={openSettings}/>*/}
       </div>
       <div className={'footer'}>
-        Powered by <a className={'open-source'} onClick={openGitHub}>
-        open source software</a>.<br/>
+        Powered by&nbsp;
+        <a className={'open-source'} onClick={openGitHub}>
+          open source software
+        </a> and&nbsp;
+        <a className={'open-source'} onClick={openMNE}>
+          MNE-BIDS
+        </a>.<br/>
         Copyright © 2021 <a className={'mcin'} onClick={openMCIN}>
         MCIN</a>.
       </div>

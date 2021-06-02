@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld('myAPI', {
     const {shell} = require('electron');
     shell.openExternal('https://github.com/aces/eeg2bids');
   },
+  visitMNE: () => {
+    const {shell} = require('electron');
+    shell.openExternal('https://mne.tools/mne-bids/');
+  },
   visitMCIN: () => {
     const {shell} = require('electron');
     shell.openExternal('https://mcin.ca');

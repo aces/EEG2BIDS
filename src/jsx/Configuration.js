@@ -193,7 +193,7 @@ const Configuration = (props) => {
         <div className={'small-pad'}>
           <FileInput id='edfFile'
             name='edfFile'
-            accept='.edf'
+            accept='.edf,.EDF'
             placeholder={edfFile['name']}
             label='File to convert (EDF format): '
             onUserInput={onUserInput}
@@ -205,7 +205,7 @@ const Configuration = (props) => {
             label='Data modality: '
             onUserInput={onUserInput}
             options={{
-              iEEG: 'iEEG',
+              iEEG: 'Stereo iEEG',
               EEG: 'EEG',
             }}
             checked={edfType}
@@ -233,7 +233,7 @@ const Configuration = (props) => {
             name='lineFreq'
             label='Line frequency: '
             value={lineFreq}
-            placeholder='Example: 60'
+            placeholder='n/a'
             onUserInput={onUserInput}
           />
         </div>
