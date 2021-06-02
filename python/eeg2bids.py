@@ -70,10 +70,6 @@ def edf_to_bids_thread(data):
         error_messages.append('The file.edf to convert is missing.')
     if not data['bids_directory']:
         error_messages.append('The BIDS output directory is missing.')
-    if not data['events_tsv']:
-        error_messages.append('The events.tsv to include is missing.')
-    if not data['line_freq']:
-        error_messages.append('The line_freq is missing.')
     if not data['site_id']:
         error_messages.append('The LORIS SiteID is missing.')
     if not data['project_id']:
@@ -82,6 +78,7 @@ def edf_to_bids_thread(data):
         error_messages.append('The LORIS SubProjectID is missing.')
     if not data['visit_label']:
         error_messages.append('The LORIS Visit Label is missing.')
+
     if not error_messages:
         time = iEEG.Time()
         data['output_time'] = 'output-' + time.latest_output
@@ -108,12 +105,9 @@ def edf_to_bids(sid, data):
     # sub_project_id: '', visit_label: '', subject_id: ''}
     print('edf_to_bids: ', data)
     response = eventlet.tpool.execute(edf_to_bids_thread, data)
-    send = {
-            'output_time': response['output_time']
-        }
-    print('send received!')
-    print(send)
-    sio.emit('response', send)
+    print(response)
+    print('Response received!')
+    sio.emit('response', response.copy())
 
 
 @sio.event

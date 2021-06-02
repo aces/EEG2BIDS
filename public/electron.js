@@ -72,12 +72,13 @@ const createMainWindow = () => {
     minHeight: 880,
     backgroundColor: '#094580',
   });
+
   mainWindow.removeMenu(); // Hides menu on Linux & Windows
   // mainWindow.maximize();
   mainWindow.show();
 
   mainWindow.loadURL(startUrl).then(() => {
-    // if (process.env.DEV) mainWindow.webContents.openDevTools();
+    if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', function() {

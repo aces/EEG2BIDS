@@ -57,12 +57,12 @@ const Converter = (props) => {
     socketContext.emit('edf_to_bids', {
       file_path: appContext.getFromTask('edfFile') ?
         appContext.getFromTask('edfFile').path : '',
-      modality: appContext.getFromTask('edfType') ?? '',
+      modality: appContext.getFromTask('edfType') ?? 'ieeg',
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       read_only: false,
       events_tsv: appContext.getFromTask('eventsTSV') ?
         appContext.getFromTask('eventsTSV').path : '',
-      line_freq: appContext.getFromTask('lineFreq') ?? '',
+      line_freq: appContext.getFromTask('lineFreq') ?? 'n/a',
       site_id: appContext.getFromTask('siteID') ?? '',
       project_id: appContext.getFromTask('projectID') ?? '',
       sub_project_id: appContext.getFromTask('subProjectID') ?? '',
@@ -108,9 +108,11 @@ const Converter = (props) => {
       });
     } else {
       setModalText((prevState) => {
-        prevState.message['error'] = <span key={'bids-errors'}
-          className={'bids-errors'}>
-          {message['error']}</span>;
+        prevState.message['error'] = (
+          <div key={'bids-errors'} className={'bids-errors'}>
+            {message['error'].map((error, i) => <p key={i}>{error}</p>)}
+          </div>
+        );
         return {...prevState, ['mode']: 'error'};
       });
     }
