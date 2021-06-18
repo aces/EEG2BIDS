@@ -1,11 +1,8 @@
-.red-font-bold {
+.red {
     color: #ff0000;
-    font-weight: bold;
 }
-.green-font-italic {
+.green {
     color: #02a902;
-    font-weight: bold;
-    font-style: italic;
 }
 .key-terminal {
     margin: 20px;
@@ -15,6 +12,7 @@
     background-color: #f4f4f4;
 }
 .terminal {
+    color: white;
     margin: 20px;
     overflow: auto;
     max-height: 600px;

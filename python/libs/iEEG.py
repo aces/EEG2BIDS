@@ -1,9 +1,8 @@
 import os
 import mne
 from python.libs import EDF
-from python.libs import TSV
 from mne_bids import write_raw_bids, BIDSPath
-
+import json
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
@@ -68,23 +67,26 @@ class Converter:
 
     # data = { file_path: '', bids_directory: '', read_only: false,
     # events_tsv: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', visit_label: '', subject_id: ''}
+    # sub_project_id: '', session: '', subject_id: ''}
     def __init__(self, data):
         print('- Converter: init started.')
         modality = 'seeg'
-        if data['modality'] == 'EEG':
+        if data['modality'] == 'eeg':
             modality = 'eeg'
 
-        self.to_bids(
-            file=data['file_path'],
-            ch_type=modality,
-            bids_directory=data['bids_directory'],
-            subject_id=data['subject_id'],
-            visit_label=data['visit_label'],
-            output_time=data['output_time'],
-            read_only=data['read_only'],
-            line_freq=data['line_freq']
-        )
+        for i, file_path in enumerate(data['file_paths']):
+            self.to_bids(
+                file=file_path,
+                ch_type=modality,
+                task=data['taskName'],
+                bids_directory=data['bids_directory'],
+                subject_id=data['participantID'],
+                session=data['session'],
+                split=((i+1) if len(data['file_paths']) > 1 else None),
+                output_time=data['output_time'],
+                read_only=data['read_only'],
+                line_freq=data['line_freq']
+            )
 
     @staticmethod
     def validate(path):
@@ -102,12 +104,13 @@ class Converter:
                 file,
                 bids_directory,
                 subject_id,
-                visit_label,
+                session,
                 output_time,
                 task='test',
+                split=None,
                 ch_type='seeg',
                 read_only=False,
-                line_freq=60):
+                line_freq='n/a'):
         if self.validate(file):
             reader = EDF.EDFReader(fname=file)
             m_info, c_info = reader.open(fname=file)
@@ -123,20 +126,16 @@ class Converter:
             os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
             bids_directory = bids_directory + os.path.sep + output_time
             bids_root = bids_directory
-            m_info['subject_id'] = subject_id  # 'alizee'
+            
+            m_info['subject_id'] = subject_id
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
 
-            bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition="seeg")
-            session = visit_label
+            bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, split=split)
+            session = session
             bids_basename.update(session=session)
 
             raw.info['line_freq'] = line_freq
-            raw.info['subject_info'] = {
-                # 'his_id': "test",
-                # 'birthday': (1993, 1, 26),
-                # 'sex': 1,
-                # 'hand': 2,
-            }
+            
             raw._init_kwargs = {
                 'input_fname': file,
                 'eog': None,
@@ -147,7 +146,11 @@ class Converter:
                 'verbose': None
             }
             try:
-                write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+                write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
+                with open(bids_basename, 'r+b') as f:
+                    f.seek(8)  # id_info field starts 8 bytes in
+                    f.write(bytes("X X X X".ljust(80), 'ascii'))
+            
             except Exception as ex:
                 print(ex)
             print('finished')
@@ -162,12 +165,3 @@ class Time:
         from datetime import datetime
         now = datetime.now()
         self.latest_output = now.strftime("%Y-%m-%d-%Hh%Mm%Ss")
-
-
-# Modifier - 1) used for SiteID to participants.tsv
-#            2) used for user's events.tsv to BIDS output events.tsv
-class Modifier:
-    def __init__(self, data, sio):
-        print('- Modifier: init started.')
-        TSV.Writer(data, sio)  # includes SiteID to participants.tsv
-        TSV.Copy(data, sio)  # copies events.tsv to ieeg directory.

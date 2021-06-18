@@ -5,6 +5,7 @@ import '../css/Converter.css';
 
 // Display Loading, Success, Error
 import Modal from './elements/modal';
+import {TextInput} from './elements/inputs';
 
 // Socket.io
 import {Event, SocketContext} from './socket.io';
@@ -15,6 +16,8 @@ import {Event, SocketContext} from './socket.io';
  * @return {JSX.Element}
  */
 const Converter = (props) => {
+  const [preparedBy, setPreparedBy] = useState('');
+
   // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
@@ -32,14 +35,14 @@ const Converter = (props) => {
     },
     message: {
       loading: <span style={{padding: '40px'}}>
-        <span className={'bids-loading'}>
+        <span className='bids-loading'>
             BIDS creation in progress<span>.</span><span>.</span><span>.</span>
             😴
         </span>
       </span>,
       success: <span style={{padding: '40px'}}>
-        <span className={'bids-success'}>
-          Success creating BIDS! <a className={'checkmark'}> &#x2714;</a>
+        <span className='bids-success'>
+          <span className='checkmark'>&#x2714;</span> Success creating BIDS!
         </span></span>,
       error: '',
     },
@@ -55,18 +58,32 @@ const Converter = (props) => {
     });
     setModalVisible(true);
     socketContext.emit('edf_to_bids', {
-      file_path: appContext.getFromTask('edfFile') ?
-        appContext.getFromTask('edfFile').path : '',
+      file_paths: appContext.getFromTask('edfFiles') ?
+        appContext.getFromTask('edfFiles')
+            .map((edfFile) => edfFile['path']) : [],
       modality: appContext.getFromTask('edfType') ?? 'ieeg',
       bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
       read_only: false,
-      events_tsv: appContext.getFromTask('eventsTSV') ?
-        appContext.getFromTask('eventsTSV').path : '',
-      line_freq: appContext.getFromTask('lineFreq') ?? 'n/a',
+      events_tsv: appContext.getFromTask('eventsTSV').length > 0 ?
+        appContext.getFromTask('eventsTSV')[0]['path'] : '',
+      annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
+        appContext.getFromTask('annotationsTSV')[0]['path'] : '',
+      annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
+        appContext.getFromTask('annotationsJSON')[0]['path'] : '',
       site_id: appContext.getFromTask('siteID') ?? '',
       project_id: appContext.getFromTask('projectID') ?? '',
-      sub_project_id: appContext.getFromTask('subProjectID') ?? '',
-      visit_label: appContext.getFromTask('visitLabel') ?? '',
+      sub_project_id: appContext.getFromTask('subprojectID') ?? '',
+      session: appContext.getFromTask('session') ?? '',
+      participantID: appContext.getFromTask('participantID') ?? '',
+      age: appContext.getFromTask('participantAge') ?? '',
+      hand: appContext.getFromTask('participantHand') ?? '',
+      sex: appContext.getFromTask('participantSex') ?? '',
+      preparedBy: appContext.getFromTask('preparedBy') ?? '',
+      line_freq: appContext.getFromTask('lineFreq') || 'n/a',
+      software_filters: appContext.getFromTask('softwareFilters') ?? 'n/a',
+      recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
+      taskName: appContext.getFromTask('taskName') ?? '',
+      reference: appContext.getFromTask('reference') ?? '',
       subject_id: appContext.getFromTask('subject_id') ?? '',
     });
   };
@@ -81,7 +98,7 @@ const Converter = (props) => {
       time = time.slice(0, time.lastIndexOf('-')) + ' ' +
         time.slice(time.lastIndexOf('-')+1);
       setSuccessMessage(<>
-        <a className={'task-finished'}>Last created at: {time}</a>
+        <a className='task-finished'>Last created at: {time}</a>
       </>);
     }
   }, [outputTime]);
@@ -109,8 +126,9 @@ const Converter = (props) => {
     } else {
       setModalText((prevState) => {
         prevState.message['error'] = (
-          <div key={'bids-errors'} className={'bids-errors'}>
-            {message['error'].map((error, i) => <p key={i}>{error}</p>)}
+          <div className='bids-errors'>
+            {message['error'].map((error, i) =>
+              <span key={i}>{error}<br/></span>)}
           </div>
         );
         return {...prevState, ['mode']: 'error'};
@@ -118,287 +136,271 @@ const Converter = (props) => {
     }
   };
 
+  let error = false;
+
   /**
    * Renders the React component.
+   *
+   * @param {string} _
+   * @param {string} value
+   *
    * @return {JSX.Element} - React markup for component.
    */
   return props.visible ? (
     <>
-      <span className={'header'}>
+      <span className='header'>
         EDF to BIDS format
       </span>
-      <div className={'info'}>
-        <div className={'small-pad'}>
-          <b>Review your Configuration selections:</b>
-          <ul>
-            <li>
-              {appContext.getFromTask('edfFile') ?
-                (<>
-                  EDF data file:&nbsp;
-                  {appContext.getFromTask('edfFile').name}
-                  <a className={'checkmark'}> &#x2714;</a>
-                </>) :
-                (<>
-                  No EDF file selected.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('eventsTSV') ?
-                (<>
-                  Including:&nbsp;
-                  {appContext.getFromTask('eventsTSV').name}
-                  <a className={'checkmark'}> &#x2714;</a>
-                </>) :
-                (<>
-                  No events.tsv selected.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('bidsDirectory') ?
-                (<>
-                  BIDS output folder:&nbsp;
-                  {appContext.getFromTask('bidsDirectory')}
-                  <a className={'checkmark'}> &#x2714;</a>
-                </>) :
-                (<>
-                  The BIDS output directory hasn't been set in configuration.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('lineFreq') ?
-                (<>
-                  Line frequency::&nbsp;
-                  {appContext.getFromTask('lineFreq')}
-                  <a className={'checkmark'}> &#x2714;</a>
-                </>) :
-                (<>
-                  The Line frequency hasn't been set in configuration.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-          </ul>
+      <div className='info report'>
+        <div className='small-pad'>
+          <b>Review your data configuration:</b>
+          <div>
+            {(appContext.getFromTask('edfFiles') &&
+              appContext.getFromTask('edfFiles').length > 0) ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                EDF data file(s):&nbsp;
+                {appContext.getFromTask('edfFiles')
+                    .map((edfFile) => edfFile['name']).join(', ')
+                }
+              </> :
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span> No EDF file selected.
+              </>
+            }
+          </div>
+          <div>
+            {(appContext.getFromTask('eventsTSV') &&
+              Object.keys(appContext.getFromTask('eventsTSV'))
+                  .length > 0) ?
+              <>
+                <span className='checkmark'>&#x2714;</span> Including:
+                {appContext.getFromTask('eventsTSV').name}
+              </> :
+              <>
+                <span className='warning'>&#x26A0;</span>
+                No events.tsv selected.
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('bidsDirectory') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                BIDS output directory:
+                {appContext.getFromTask('bidsDirectory')}
+              </> :
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                No BIDS output directory selected.
+              </>
+            }
+          </div>
         </div>
-        <div className={'small-pad'}>
-          <b>Review your LORIS metadata:</b>
-          <ul>
-            <li>
-              {appContext.getFromTask('siteID') ?
-                (<>
-                  The Site:&nbsp;
-                  {appContext.getFromTask('siteID')}
-                  <a className={'checkmark tooltip'}> &#x2714;</a>
-                </>) :
-                (<>
-                  The Site hasn't been set in configuration.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('projectID') ?
-                (<>
-                  The Project:&nbsp;
-                  {appContext.getFromTask('projectID')}
-                  <a className={'checkmark tooltip'}> &#x2714;</a>
-                </>) :
-                (<>
-                  The Project hasn't been set in configuration.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('subProjectID') ?
-                (<>
-                  The SubProject:&nbsp;
-                  {appContext.getFromTask('subProjectID')}
-                  <a className={'checkmark tooltip'}> &#x2714;</a>
-                </>) :
-                (<>
-                  The SubProject hasn't been set in configuration.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            <li>
-              {appContext.getFromTask('visitLabel') ?
-                (<>
-                  No Visit Label set:&nbsp;
-                  {appContext.getFromTask('visitLabel')}
-                  <a className={'checkmark tooltip'}> &#x2714;</a>
-                </>) :
-                (<>
-                  Please enter a value in the Configuration tab.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-          </ul>
+        <div className='small-pad'>
+          <b>Review your recording details:</b>
+          <div>
+            {appContext.getFromTask('taskName') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Task name: {appContext.getFromTask('taskName')}
+              </> :
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                Task name is not specified.
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('siteID') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Site: {appContext.getFromTask('siteID')}
+              </> :
+              <>
+                {appContext.getFromTask('LORIScompliant') ?
+                  <>
+                    {error = true}
+                    <span className='error'>&#x274C;</span>
+                    Site is not specified.
+                  </> :
+                  <span>Site is not specified.</span>
+                }
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('projectID') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Project: {appContext.getFromTask('projectID')}
+              </> :
+              <>
+                {appContext.getFromTask('LORIScompliant') ?
+                  <>
+                    {error = true}
+                    <span className='error'>&#x274C;</span>
+                    Project is not specified.
+                  </> :
+                  <span>
+                    Project is not specified.
+                  </span>
+                }
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('subprojectID') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                SubProject: {appContext.getFromTask('subprojectID')}
+              </> :
+              <>
+                {appContext.getFromTask('LORIScompliant') ?
+                  <>
+                    <>
+                      {error = true}
+                      <span className='error'>&#x274C;</span>
+                      Subproject is not specified.
+                    </>
+                  </> :
+                  <span>
+                    Subproject is not specified.
+                  </span>
+                }
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('session') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Session label: {appContext.getFromTask('session')}
+              </> :
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                Session label is not specified.
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('lineFreq') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Powerline frequency: {appContext.getFromTask('lineFreq')}
+              </> :
+              <>
+                <span className='warning'>&#x26A0;</span>
+                Powerline frequency is not specified.
+              </>
+            }
+          </div>
+          <div>
+            {appContext.getFromTask('reference') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Reference: {appContext.getFromTask('reference')}
+              </> :
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                Reference is not specified.
+              </>
+            }
+          </div>
         </div>
-        <div className={'small-pad'}>
+        <div className='small-pad'>
+          <b>Review your participant data:</b>
+          <div>
+            {appContext.getFromTask('participantID') ?
+              <>
+                <span className='checkmark'>&#x2714;</span>
+                Participant ID: {appContext.getFromTask('participantID')}
+              </> :
+              <>
+                {error = true}
+                <>
+                  <span className='error'>&#x274C;</span>
+                  Participant ID is not specified.
+                </>
+              </>
+            }
+          </div>
+        </div>
+        <div className='small-pad'>
           <b>Verify anonymization of EDF header data:</b>
-          <ul>
-            <li>
-              {appContext.getFromTask('subject_id') ?
-                (<>
-                  The subject_id:&nbsp;
-                  {appContext.getFromTask('subject_id')}
-                  <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                    <span className={'tooltiptext'}>
-                      Verify the anonymization.
-                    </span>
-                  </a>
-                </>) :
-                (<>
-                  No subject_id set.
-                  <a className={'tooltip'}> &#x274C;
-                    <span className={'tooltiptext'}>
-                      Please correct.
-                    </span>
-                  </a>
-                </>)
-              }
-            </li>
-            {appContext.getFromTask('recording_id') ?
-              (<li>
-                The recording_id:&nbsp;
-                {appContext.getFromTask('recording_id')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
+          <div>
+            {appContext.getFromTask('subject_id') ?
+              <>
+                Subject ID:&nbsp;
+                {appContext.getFromTask('subject_id')}
+              </> :
+              <>
+                <span className='warning'>&#x26A0;</span>
+                Subject ID is not modified.
+              </>
             }
-            {appContext.getFromTask('day') ?
-              (<li>
-                The day:&nbsp;
-                {appContext.getFromTask('day')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-            {appContext.getFromTask('month') ?
-              (<li>
-                The month:&nbsp;
-                {appContext.getFromTask('month')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-            {appContext.getFromTask('year') ?
-              (<li>
-                The year:&nbsp;
-                {appContext.getFromTask('year')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-            {appContext.getFromTask('hour') ?
-              (<li>
-                The hour:&nbsp;
-                {appContext.getFromTask('hour')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-            {appContext.getFromTask('minute') ?
-              (<li>
-                The minute:&nbsp;
-                {appContext.getFromTask('minute')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-            {appContext.getFromTask('second') ?
-              (<li>
-                The second:&nbsp;
-                {appContext.getFromTask('second')}
-                <a className={'warning tooltip'}> &#x26A0;&#xFE0F;
-                  <span className={'tooltiptext'}>
-                    Verify the anonymization.
-                  </span>
-                </a>
-              </li>) :
-              (<>
-              </>)
-            }
-          </ul>
+          </div>
+          {appContext.getFromTask('recording_id') &&
+            <div>
+              Recording ID:&nbsp;
+              {appContext.getFromTask('recording_id')}
+            </div>
+          }
+          {appContext.getFromTask('recordingDate') &&
+            <div>
+              Recording Date:&nbsp;
+              {new Intl.DateTimeFormat(
+                  'en-US',
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                  },
+              ).format(appContext.getFromTask('recordingDate'))}
+            </div>
+          }
         </div>
-        <div className={'small-pad convert-bids-row'}>
-          <b style={{cursor: 'default'}}>
-            Click to convert data:&nbsp;
-          </b>
-          <input type={'button'}
-            className={'start_task'}
+
+        {error ?
+          <div className="alert alert-danger" role="alert">
+            &#x274C; Please correct the above errors.
+          </div> :
+          <div className="alert alert-success" role="alert">
+            &#x2714; Ready to proceed
+          </div>
+        }
+
+        <hr/>
+
+        <div className='small-pad'>
+          <TextInput id='preparedBy'
+            name='preparedBy'
+            required={true}
+            label='Prepared by'
+            value={preparedBy}
+            placeholder='Enter your name'
+            onUserInput={(_, value) => setPreparedBy(value)}
+          />
+          {!preparedBy &&
+            <div>
+              <span className='error'>&#x274C;</span>
+              Please enter your name for verification tracking purposes.
+            </div>
+          }
+        </div>
+        <div className='small-pad convert-bids-row'>
+          <input type='button'
+            className='start_task primary-btn'
             onClick={beginBidsCreation}
-            value={'Start Task'}
+            value='Convert to BIDS'
+            disabled={error || !preparedBy}
           />
           {successMessage}
         </div>
@@ -407,7 +409,7 @@ const Converter = (props) => {
         title={modalText.title[modalText.mode]}
         show={modalVisible}
         close={hideModal}
-        width={'500px'}
+        width='500px'
       >
         {modalText.message[modalText.mode]}
       </Modal>

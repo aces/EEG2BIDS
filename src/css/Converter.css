@@ -1,15 +1,20 @@
 .checkmark {
-    cursor: default;
-    font-size: 24px;
-    color: transparent;
-    text-shadow: 0 0 0 #43a243;
+    font-size: 18px;
+    padding-right: 10px;
+    color: #43a243;
     font-family: Segoe UI Symbol, serif;
 }
 .warning {
-    font-size: 24px;
+    font-size: 20px;
+    padding-right: 10px;
+    color: #FF8C00;
     font-family: Segoe UI Symbol, serif;
 }
-
+.error {
+    font-size: 18px;
+    padding-right: 10px;
+    color: red;
+}
 .tooltip {
     cursor: default;
     position: relative;
@@ -41,5 +46,5 @@
 }
 .convert-bids-row {
     padding-top: 0;
-    margin-top: -5px;
+    margin-top: 10px;
 }

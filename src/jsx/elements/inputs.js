@@ -13,8 +13,8 @@ export const FileInput = (props) => {
    */
   const handleChange = (event) => {
     // Send current file to parent component
-    const file = event.target.files[0] ? event.target.files[0] : '';
-    props.onUserInput(props.id, file);
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    props.onUserInput(props.id, files);
   };
   /**
    * Renders the React component.
@@ -22,26 +22,42 @@ export const FileInput = (props) => {
    */
   return (
     <>
-      <label><b>{props.label}</b></label>
+      <label className="label">
+        <b>
+          {props.label} {props.required ?
+            <span className="red">*</span> :
+            null
+          }
+        </b></label>
       <button>
-        <label htmlFor={props.id}>Choose file</label>
+        <label htmlFor={props.id}>
+          {
+            'Choose file' +
+            (props.multiple ? '(s)' : '')
+          }
+        </label>
       </button>
       <input
         type='file'
         id={props.id}
+        multiple={props.multiple}
         name={props.name}
         accept={props.accept}
         style={{display: 'none'}}
         onChange={handleChange}
-      />
-      <a style={{fontSize: '14px', cursor: 'default'}}>
-        &nbsp;{props.placeholder ?? 'No file chosen'}
-      </a>
+      /> <a style={{
+        fontSize: '14px',
+        cursor: 'default',
+      }}>{props.placeholder ?? 'No file chosen'}</a>
     </>
   );
 };
+FileInput.defaultProps = {
+  multiple: false,
+};
 FileInput.propTypes = {
   id: PropTypes.string,
+  multiple: PropTypes.bool,
   name: PropTypes.string,
   label: PropTypes.string,
   accept: PropTypes.string,
@@ -73,7 +89,14 @@ export const DirectoryInput = (props) => {
    */
   return (
     <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
+      <label className="label" htmlFor={props.id}>
+        <b>
+          {props.label} {props.required ?
+            <span className="red">*</span> :
+            null
+          }
+        </b>
+      </label>
       <input
         type='button'
         id={props.id}
@@ -122,7 +145,16 @@ export const TextInput = (props) => {
    */
   return (
     <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
+      {props.label &&
+        <label className="label" htmlFor={props.id}>
+          <b>
+            {props.label} {props.required ?
+              <span className="red">*</span> :
+              null
+            }
+          </b>
+        </label>
+      }
       <input
         type='text'
         id={props.id}
@@ -138,10 +170,12 @@ export const TextInput = (props) => {
 };
 TextInput.defaultProps = {
   readonly: false,
+  required: false,
 };
 TextInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
+  required: PropTypes.bool,
   label: PropTypes.string,
   value: PropTypes.oneOfType([
     PropTypes.string,
@@ -167,8 +201,10 @@ export const RadioInput = (props) => {
    * @param {object} event - input event
    */
   const handleChange = (event) => {
-    const value = event.target.value;
-    props.onUserInput(props.id, value);
+    props.onUserInput(
+        props.id,
+        event.target.value,
+    );
   };
   /**
    * generateRadioLayout - creates the radio input layout.
@@ -221,9 +257,13 @@ export const RadioInput = (props) => {
           </div>,
       );
     }
-    return <div key={props.name + '_key'}
-      style={styleRow}>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
+    return <div key={props.name + '_key'} style={styleRow}>
+      <label className="label" htmlFor={props.id}>
+        <b>{props.label} {props.required ?
+            <span className="red">*</span> :
+            null
+        }</b>
+      </label>
       {content}
     </div>;
   };
@@ -237,12 +277,114 @@ export const RadioInput = (props) => {
     </>
   );
 };
+RadioInput.defaultProps = {
+  required: false,
+};
 RadioInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
+  required: PropTypes.bool,
   label: PropTypes.string,
   options: PropTypes.object,
   checked: PropTypes.string,
+  onUserInput: PropTypes.func,
+};
+
+/**
+ * SelectInput - the select component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const SelectInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    props.onUserInput(
+        props.id,
+        event.target.value,
+    );
+  };
+  /**
+   * generateRadioLayout - creates the radio input layout.
+   * @return {JSX.Element}
+   */
+  const generateSelectLayout = () => {
+    const styleRow = {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      width: '100%',
+    };
+    const styleColumn = {
+      display: 'flex',
+      flexDirection: 'column',
+      alignSelf: 'flex-start',
+      marginRight: '10px',
+    };
+    const styleInput = {
+      display: 'inline-block',
+      margin: '0 10px 10px 0',
+      cursor: 'pointer',
+    };
+
+    let emptyOptionHTML = null;
+    // Add empty option
+    if (props.emptyOption) {
+      emptyOptionHTML = <option>{props.emptyOption}</option>;
+    }
+
+    const optionList = Object.keys(props.options).map((key, index) => {
+      return (
+        <option value={key} key={index}>
+          {props.options[key]}
+        </option>
+      );
+    });
+
+    return (
+      <>
+        {props.label &&
+          <label className="label" htmlFor={props.id}>
+            <b>
+              {props.label} {props.required ?
+                <span className="red">*</span> :
+                null
+              }
+            </b>
+          </label>
+        }
+        <select
+          id={props.id}
+          name={props.name}
+          value={props.value || ''}
+          onChange={handleChange}
+          style={styleInput}
+        >
+          {emptyOptionHTML}
+          {optionList}
+        </select>
+      </>
+    );
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <>
+      {generateSelectLayout()}
+    </>
+  );
+};
+SelectInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.string,
+  emptyOption: PropTypes.string,
+  options: PropTypes.object,
   onUserInput: PropTypes.func,
 };
 
@@ -257,8 +399,10 @@ export const NumberInput = (props) => {
    * @param {object} event - input event
    */
   const handleChange = (event) => {
-    const value = event.target.value;
-    props.onUserInput(props.id, value);
+    props.onUserInput(
+        props.id,
+        event.target.value,
+    );
   };
   /**
    * Renders the React component.
@@ -266,7 +410,9 @@ export const NumberInput = (props) => {
    */
   return (
     <>
-      <label htmlFor={props.id}><b>{props.label}</b></label>
+      <label className="label" htmlFor={props.id}>
+        <b>{props.label}</b>
+      </label>
       <input
         type='number'
         id={props.id}
@@ -287,10 +433,64 @@ NumberInput.propTypes = {
   placeholder: PropTypes.string,
 };
 
-export default {
-  FileInput,
-  TextInput,
-  RadioInput,
-  NumberInput,
-  DirectoryInput,
+/**
+ * TextareaInput - the textarea component
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const TextareaInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    props.onUserInput(
+        props.name,
+        event.target.value,
+    );
+  };
+
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for the component
+   */
+  return (
+    <>
+      <label className="label" htmlFor={props.id}>
+        <b>
+          {props.label} {props.required ?
+            <span className="red">*</span> :
+            null
+          }
+        </b>
+      </label>
+      <textarea
+        cols={props.cols}
+        rows={props.rows}
+        className="form-control"
+        name={props.name}
+        id={props.id}
+        value={props.value || ''}
+        onChange={handleChange}
+      >
+      </textarea>
+    </>
+  );
+};
+
+TextareaInput.propTypes = {
+  name: PropTypes.string.isRequired,
+  label: PropTypes.string,
+  value: PropTypes.string,
+  id: PropTypes.string,
+  required: PropTypes.bool,
+  rows: PropTypes.number,
+  cols: PropTypes.number,
+  onUserInput: PropTypes.func,
+};
+
+TextareaInput.defaultProps = {
+  required: false,
+  rows: 4,
+  cols: 25,
 };

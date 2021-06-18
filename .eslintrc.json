@@ -20,7 +20,11 @@
       "globalReturn": false
     }
   },
-  "extends": ["eslint:recommended", "plugin:react/recommended", "google"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "google"
+  ],
   "rules": {
     "max-len": ["error", {
         "code": 80,
@@ -35,7 +39,9 @@
     "require-jsdoc": "error",
     "no-console": ["warn", {
       "allow": ["info", "warn", "error"]
-    }]
+    }],
+    "react/jsx-curly-brace-presence": "warn",
+    "react/jsx-key": "warn"
   },
   "globals": {
     "React": true,
