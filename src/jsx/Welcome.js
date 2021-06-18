@@ -11,9 +11,23 @@ const Welcome = (props) => {
   /**
    * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
+  const openBIDS = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitBIDS();
+  };
+  /**
+   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   */
   const openGitHub = () => {
     const myAPI = window['myAPI'];
     myAPI.visitGitHub();
+  };
+  /**
+   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   */
+  const openIssues = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitIssues();
   };
   /**
    * openMCIN - Navigate browser to MCIN.
@@ -43,22 +57,25 @@ const Welcome = (props) => {
    */
   return props.visible ? (
     <>
-      <span className={'title'}>
+      <span className='title'>
         Welcome to <b>EEG2BIDS Wizard</b>
       </span>
-      <div className={'info'}>
-        <p><b>EEG2BIDS Wizard</b>&nbsp;
-          is a tool for de-identification of EDF data and conversion to BIDS
-          &nbsp;format for data sharing.
+      <div className='info'>
+        <p>
+          <b>EEG2BIDS Wizard</b> is a tool for de-identification of EDF data
+          and conversion to BIDS format for data sharing.
         </p>
         <p>
           This software is designed to run on EDF files (EEG or iEEG) for
-          &nbsp;one subject at a time. Events and metadata such as a
-          &nbsp;LORIS ProjectID and Visit Label can be included.
+          one recording from one subject at a time. Events and metadata such as
+          a LORIS ProjectID and Visit Label can be included.
         </p>
         <ul>
           <li>
-            For more information about BIDS, visit bids.neuroimaging.io
+            For more information about BIDS, visit <a
+              className='open-source' onClick={openBIDS}>
+                bids.neuroimaging.io
+            </a>
           </li>
         </ul>
         <p>
@@ -68,8 +85,10 @@ const Welcome = (props) => {
           <b>Configuration tab:</b>
         </p>
         <ul>
-          <li>Select the data file, events file (events.tsv), and output&nbsp;
-            folder
+          <li>
+            Select the data file(s) (multiple files allowed for a
+            single recording split into multiple files),
+            events file (events.tsv), and output folder
           </li>
           <li>Set metadata values</li>
           <li>Anonymize the EDF header data</li>
@@ -96,15 +115,16 @@ const Welcome = (props) => {
       <div>
         {/*<input value={'Settings'} type={'button'} onClick={openSettings}/>*/}
       </div>
-      <div className={'footer'}>
-        Powered by&nbsp;
-        <a className={'open-source'} onClick={openGitHub}>
+      <div className='footer'>
+        Powered by <a className='open-source' onClick={openGitHub}>
           open source software
-        </a> and&nbsp;
-        <a className={'open-source'} onClick={openMNE}>
+        </a> and <a className='open-source' onClick={openMNE}>
           MNE-BIDS
         </a>.<br/>
-        Copyright © 2021 <a className={'mcin'} onClick={openMCIN}>
+        <a className='open-source' onClick={openIssues}>
+          Contact us
+        </a> with your feedback.<br/>
+        Copyright © 2021 <a className='mcin' onClick={openMCIN}>
         MCIN</a>.
       </div>
     </>

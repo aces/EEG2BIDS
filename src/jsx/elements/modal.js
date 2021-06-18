@@ -13,22 +13,22 @@ const Modal = (props) => {
     transform: props.show ? 'translateY(0)' : 'translateY(-25%)',
   };
   return (
-    <div className={'modalOverlay'}
+    <div className='modalOverlay'
       style={styleVisible}>
-      <div className={'modalContainer'}
+      <div className='modalContainer'
         style={styleVisible}>
-        <div className={'modalAnimation'}
+        <div className='modalAnimation'
           style={styleAnimation}>
-          <div className={'modalDialog'}
+          <div className='modalDialog'
             style={styleContainer}>
-            <span className={'modalHeader'}>
+            <span className='modalHeader'>
               {props.title}
-              <span className={'modalHeaderClose'}
+              <span className='modalHeaderClose'
                 onClick={handleClose}>
                 ×
               </span>
             </span>
-            <div className={'modalContent'}>
+            <div className='modalContent'>
               {props.children}
             </div>
           </div>

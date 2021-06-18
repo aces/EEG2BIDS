@@ -1,14 +1,24 @@
-.anonymize {
-    margin-top: 12px;
-    max-height: 30px;
-}
 .readonly {
     cursor: default;
-    text-align: center;
     background: transparent;
     border: 1px none #3276b1;
     border-bottom-style: solid;
 }
 .readonly:focus, .readonly:focus{
     outline: none;
+}
+input[type="button"].primary-btn {
+    color: #fff;
+    background-color: #064785;
+    border: none;
+    border-radius: .25rem;
+    padding: .375rem .75rem;
+}
+input[type="button"].primary-btn:disabled {
+    color: #000;
+    background-color: #ddd;
+    border: 1px solid #333;
+}
+textarea {
+    vertical-align: top;
 }

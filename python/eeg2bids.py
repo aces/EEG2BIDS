@@ -3,12 +3,15 @@ import eventlet
 from eventlet import tpool
 import socketio
 from python.libs import iEEG
+from python.libs.Modifier import Modifier
 from python.libs import BIDS
-
+from python.libs.loris_api import LorisAPI
+import csv
 
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
+loris_api = LorisAPI()
 
 # EEG2BIDS Wizard version
 appVersion = '1.0.0'
@@ -45,6 +48,22 @@ def tarfile_bids(sid, data):
 
 
 @sio.event
+def get_loris_sites(sid):
+    sio.emit('loris_sites', loris_api.get_sites())
+
+@sio.event
+def get_loris_projects(sid):
+    sio.emit('loris_projects', loris_api.get_projects())
+
+@sio.event
+def get_loris_subprojects(sid, project):
+    sio.emit('loris_subprojects', loris_api.get_subprojects(project))
+
+@sio.event
+def get_loris_visits(sid, project):
+    sio.emit('loris_visits', loris_api.get_visits(project))
+
+@sio.event
 def ieeg_get_header(sid, data):
     # data = { file_path: 'path to iEEG file' }
     print('ieeg_get_header:', data)
@@ -59,24 +78,42 @@ def ieeg_get_header(sid, data):
         response = {
             'error': 'Failed to retrieve EDF header information',
         }
-    sio.emit('response', response)
+    sio.emit('edf_header', response)
 
+@sio.event
+def get_metadata(sid, data):
+    # data = { file_path: 'path to metadata file' }
+    print('metadata file:', data)
+    
+    if not data['file_path']:
+        print('No file path found.')
+        response = {
+            'error': 'No file path found.',
+        }
+    else :    
+        try:
+            with open(data['file_path']) as fd:
+                reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
+                response = {
+                    'metadata': {rows['Field']:rows['Value'] for rows in reader}
+                }
+        except IOError:
+            print("Could not read the metadata file.")
+            response = {
+                'error': 'No file path found.',
+            }
+
+    sio.emit('metadata', response)
 
 def edf_to_bids_thread(data):
     print('data is ')
     print(data)
     error_messages = []
-    if not data['file_path']:
-        error_messages.append('The file.edf to convert is missing.')
+    if not data['file_paths']:
+        error_messages.append('No .edf file(s) to convert.')
     if not data['bids_directory']:
         error_messages.append('The BIDS output directory is missing.')
-    if not data['site_id']:
-        error_messages.append('The LORIS SiteID is missing.')
-    if not data['project_id']:
-        error_messages.append('The LORIS ProjectID is missing.')
-    if not data['sub_project_id']:
-        error_messages.append('The LORIS SubProjectID is missing.')
-    if not data['visit_label']:
+    if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
 
     if not error_messages:
@@ -84,10 +121,10 @@ def edf_to_bids_thread(data):
         data['output_time'] = 'output-' + time.latest_output
         iEEG.Converter(data)  # EDF to BIDS format.
 
-        # store subject_id for iEEG.Modifier
+        # store subject_id for Modifier
         data['subject_id'] = iEEG.Converter.m_info['subject_id']
         data['appVersion'] = appVersion
-        iEEG.Modifier(data, sio)  # Modifies data of BIDS format
+        Modifier(data)  # Modifies data of BIDS format
         response = {
             'output_time': data['output_time']
         }
@@ -100,9 +137,9 @@ def edf_to_bids_thread(data):
 
 @sio.event
 def edf_to_bids(sid, data):
-    # data = { file_path: '', bids_directory: '', read_only: false,
+    # data = { file_paths: [], bids_directory: '', read_only: false,
     # events_tsv: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', visit_label: '', subject_id: ''}
+    # sub_project_id: '', session: '', subject_id: ''}
     print('edf_to_bids: ', data)
     response = eventlet.tpool.execute(edf_to_bids_thread, data)
     print(response)
