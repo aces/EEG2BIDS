@@ -20,10 +20,10 @@ npm run start
 python -m venv .
 source bin/activate
 pip install -r requirements.txt
-python -m python.pycat
+python -m python.eeg2bids
 ```
 
-**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for pyCat to successfully function in development!
+**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
 
 ## Production
 

@@ -6,15 +6,12 @@
     border-bottom: 5px solid #252326;
 }
 .menu {
-    width: 100%;
-    margin: 0 auto;
-    display: table;
+    display: flex;
+    justify-content: space-around;
 }
 
 .menuTab {
     user-select: none;
-    position: relative;
-    display: table-cell;
     -webkit-user-select: none;
 }
 

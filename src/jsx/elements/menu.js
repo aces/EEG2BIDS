@@ -9,7 +9,6 @@ import '../../css/Menu.css';
  */
 const MenuTab = (props) => {
   // css styling.
-  const menuTabWidth = {width: props.width};
   const classesTitleText = props.active ?
     'menu-title menu-active' : 'menu-title';
   /**
@@ -17,7 +16,7 @@ const MenuTab = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <div className={'menuTab'} style={menuTabWidth}>
+    <div className='menuTab'>
       <div className={classesTitleText}
         onClick={props.onClick}>
         {props.title}
@@ -43,14 +42,13 @@ const Menu = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return props.visible ? (
-    <div className={'root'}>
-      <div className={'menu'}>
+    <div className='root'>
+      <div className='menu'>
         { props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
             index={index}
             length={props.tabs.length}
-            width={100 / props.tabs.length}
             title={tab.title}
             onClick={tab.onClick}
             active={index === props.activeTab}

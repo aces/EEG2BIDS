@@ -25,10 +25,16 @@ body {
     text-align: center;
     vertical-align: middle;
 }
+.container {
+    display: flex;
+}
 .info {
     padding: 14px;
     background-color: #f3f4f8;
     /*background-color: #039b83;*/
+}
+.half {
+    width: 50%;
 }
 .small-pad {
     padding: 10px;
@@ -38,10 +44,50 @@ body {
     padding: 14px;
     flex-wrap: wrap;
     background-color: #f3f4f8;
-    /*background-color: #039b83;*/
+}
+.info-flex-container input {
+    width: 100%;
 }
 .small-pad-flex {
     flex: 1;
     padding: 10px;
     max-width: 175px;
+}
+.label {
+    width: 210px;
+    display: inline-block;
+    max-width: 100%;
+    padding-right: 20px;
+}
+.report .label {
+    width: auto;
+}
+input {
+    max-width: 100%;
+}
+.react-switch {
+    vertical-align: middle;
+    margin-right: 15px;
+}
+.comboField {
+    display: inline-block;
+    max-width: calc(100% - 230px);
+    vertical-align: top;
+}
+.alert {
+    position: relative;
+    padding: .75rem 1.25rem;
+    margin: 1rem 0 2rem 0;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
 }

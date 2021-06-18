@@ -32,15 +32,15 @@ const Validator = (props) => {
     },
     message: {
       loading: <span style={{padding: '40px'}}>
-        <span className={'bids-loading'}>
+        <span className='bids-loading'>
             BIDS compression in progress
           <span>.</span><span>.</span><span>.</span>
             😴
         </span>
       </span>,
       success: <span style={{padding: '40px'}}>
-        <span className={'bids-success'}>
-          Success compressing BIDS! <a className={'checkmark'}> &#x2714;</a>
+        <span className='bids-success'>
+          Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
         </span></span>,
       error: '',
     },
@@ -92,37 +92,33 @@ const Validator = (props) => {
       validator['file_paths'].forEach((value, index) => {
         if (validator['result'][index]) {
           renderFields.push(
-              <div key={index} className={'small-pad'}>
-                <a className={'green-font-italic'}>{value}</a>
+              <div key={index} className='small-pad'>
+                <span className='green'>&#x2714;</span> {value}
               </div>,
           );
         } else {
           renderFields.push(
-              <div key={index} className={'small-pad'}>
-                <a className={'red-font-bold'}>{value}</a>
+              <div key={index} className='small-pad'>
+                <span className='red'>&#x274C;</span> {value}
               </div>,
           );
         }
       });
       renderPackageBIDS.push(
-          <div className={'info'}>
-            <div className={'small-pad'}>
+          <div key='compressed-bids' className='info'>
+            <div className='small-pad'>
               <b style={{cursor: 'default'}}>
                 Package BIDS output folder into a compressed file:&nbsp;
               </b>
               <input onClick={packageBIDS}
-                type={'button'}
-                value={'Compress BIDS'}/>
+                type='button'
+                value='Compress BIDS'/>
             </div>
           </div>,
       );
     }
     setValidPaths(<>
-      <div className={'key-terminal'}>
-        Valid is <a className={'green-font-italic'}>green</a>.
-        Invalid is <a className={'red-font-bold'}>red</a>.
-      </div>
-      <div className={'terminal'}>
+      <div className='terminal'>
         {renderFields}
       </div>
       {renderPackageBIDS}
@@ -150,17 +146,17 @@ const Validator = (props) => {
    */
   return props.visible ? (
     <>
-      <span className={'header'}>
+      <span className='header'>
         Validation confirmation
       </span>
-      <div className={'info'}>
-        <div className={'small-pad'}>
+      <div className='info'>
+        <div className='small-pad'>
           <b style={{cursor: 'default'}}>
             Run BIDS Validator:&nbsp;
           </b>
           <input onClick={validateBIDS}
-            type={'button'}
-            value={' Validate BIDS '}/>
+            type='button'
+            value='Validate BIDS'/>
         </div>
       </div>
       {validPath}
@@ -168,7 +164,7 @@ const Validator = (props) => {
         title={modalText.title[modalText.mode]}
         show={modalVisible}
         close={hideModal}
-        width={'500px'}
+        width='500px'
       >
         {modalText.message[modalText.mode]}
       </Modal>

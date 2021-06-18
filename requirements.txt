@@ -1,8 +1,12 @@
 eventlet>=0.31.0
-mne~=0.22.0
-mne-bids~=0.6
+mne~=0.23.0
+# MNE-BIDS 0.8 will support the .EDF extension   
+# Before its release we need to use the dev version        
+git+git://github.com/mne-tools/mne-bids@main#egg=mne-bids
 mne-features~=0.1
 numpy~=1.19.5
 python-socketio~=5.0.4
 python-engineio~=4.0.0
 bids-validator~=1.6.0
+pybv>=0.4
+requests>=2.25.0

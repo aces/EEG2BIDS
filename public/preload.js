@@ -5,9 +5,17 @@ contextBridge.exposeInMainWorld('myAPI', {
     const {dialog} = require('@electron/remote');
     return dialog;
   },
+  visitBIDS: () => {
+    const {shell} = require('electron');
+    shell.openExternal('https://bids.neuroimaging.io');
+  },
   visitGitHub: () => {
     const {shell} = require('electron');
     shell.openExternal('https://github.com/aces/eeg2bids');
+  },
+  visitIssues: () => {
+    const {shell} = require('electron');
+    shell.openExternal('https://github.com/aces/eeg2bids/issues');
   },
   visitMNE: () => {
     const {shell} = require('electron');
