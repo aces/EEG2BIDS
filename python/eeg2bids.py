@@ -8,13 +8,15 @@ from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
 import csv
 
+# EEG2BIDS Wizard version
+appVersion = '1.0.0'
+
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
-loris_api = LorisAPI()
 
-# EEG2BIDS Wizard version
-appVersion = '1.0.0'
+# Create Loris API handler.
+loris_api = LorisAPI()
 
 
 @sio.event
@@ -84,13 +86,13 @@ def ieeg_get_header(sid, data):
 def get_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('metadata file:', data)
-    
+
     if not data['file_path']:
         print('No file path found.')
         response = {
             'error': 'No file path found.',
         }
-    else :    
+    else :
         try:
             with open(data['file_path']) as fd:
                 reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
