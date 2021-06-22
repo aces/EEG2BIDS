@@ -128,13 +128,13 @@ const Configuration = (props) => {
     if (!isNaN(parseInt(state.edfHeader.get['year']))) {
       const date = new Date(
         state.edfHeader.get['year'] < 85 ?
-          '20' + state.edfHeader.get['year'] :
-          '19' + state.edfHeader.get['year'],
-        (state.edfHeader.get['month']-1),
-        state.edfHeader.get['day'],
-        state.edfHeader.get['hour'],
-        state.edfHeader.get['minute'],
-        state.edfHeader.get['second'],
+          Number('20' + state.edfHeader.get['year']) :
+          Number('19' + state.edfHeader.get['year']),
+        Number(state.edfHeader.get['month']-1),
+        Number(state.edfHeader.get['day']),
+        Number(state.edfHeader.get['hour']),
+        Number(state.edfHeader.get['minute']),
+        Number(state.edfHeader.get['second']),
       );
       state.recordingDate.set(date);
       appContext.setTask('recordingDate', date);
@@ -231,7 +231,7 @@ const Configuration = (props) => {
         state.LORIScompliant.set(value);
         break;
       case 'siteID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           value = '';
           state.siteUseAPI.set(false);
         } else {
@@ -245,7 +245,7 @@ const Configuration = (props) => {
         name = 'siteID';
         break;
       case 'projectID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.projectUseAPI.set(false);
           value = '';
         } else {
@@ -261,7 +261,7 @@ const Configuration = (props) => {
         name = 'projectID';
         break;
       case 'subprojectID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.subprojectUseAPI.set(false);
           value = '';
         } else {
@@ -275,7 +275,7 @@ const Configuration = (props) => {
         name = 'subprojectID';
         break;
       case 'session_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.sessionUseAPI.set(false);
           value = '';
         } else {
@@ -667,7 +667,7 @@ const Configuration = (props) => {
             />
           </div>
         }
-        {state.participantEntryMode.get == 'loris' &&
+        {state.participantEntryMode.get === 'loris' &&
           <>
             <div className='small-pad'>
               <label className="label" htmlFor={props.id}>
@@ -716,7 +716,7 @@ const Configuration = (props) => {
             />
           </>
         }
-        {state.participantEntryMode.get == 'manual' &&
+        {state.participantEntryMode.get === 'manual' &&
           <>
             <div className='small-pad'>
               <TextInput id='participantID'

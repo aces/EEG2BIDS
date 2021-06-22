@@ -15,8 +15,9 @@ appVersion = '1.0.0'
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
+
 # Create Loris API handler.
-loris_api = LorisAPI()
+# loris_api = LorisAPI()
 
 
 @sio.event
@@ -29,8 +30,8 @@ def connect(sid, environ):
 def tarfile_bids_thread(data):
     iEEG.TarFile(data)
     response = {
-            'compression_time': 'example_5mins'
-        }
+        'compression_time': 'example_5mins'
+    }
     return eventlet.tpool.Proxy(response)
 
 
@@ -42,8 +43,8 @@ def tarfile_bids(sid, data):
     print('response received!')
     print(response)
     send = {
-            'compression_time': response['compression_time']
-        }
+        'compression_time': response['compression_time']
+    }
     print('send received!')
     print(send)
     sio.emit('response', send)
@@ -51,19 +52,27 @@ def tarfile_bids(sid, data):
 
 @sio.event
 def get_loris_sites(sid):
-    sio.emit('loris_sites', loris_api.get_sites())
+    print('get_loris_sites has ran!')
+    # sio.emit('loris_sites', loris_api.get_sites())
+
 
 @sio.event
 def get_loris_projects(sid):
-    sio.emit('loris_projects', loris_api.get_projects())
+    print('get_loris_projects has ran!')
+    # sio.emit('loris_projects', loris_api.get_projects())
+
 
 @sio.event
 def get_loris_subprojects(sid, project):
-    sio.emit('loris_subprojects', loris_api.get_subprojects(project))
+    print('get_loris_subprojects has ran!')
+    # sio.emit('loris_subprojects', loris_api.get_subprojects(project))
+
 
 @sio.event
 def get_loris_visits(sid, project):
-    sio.emit('loris_visits', loris_api.get_visits(project))
+    print('get_loris_visits has ran!')
+    # sio.emit('loris_visits', loris_api.get_visits(project))
+
 
 @sio.event
 def ieeg_get_header(sid, data):
@@ -82,6 +91,7 @@ def ieeg_get_header(sid, data):
         }
     sio.emit('edf_header', response)
 
+
 @sio.event
 def get_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
@@ -92,12 +102,12 @@ def get_metadata(sid, data):
         response = {
             'error': 'No file path found.',
         }
-    else :
+    else:
         try:
             with open(data['file_path']) as fd:
                 reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
                 response = {
-                    'metadata': {rows['Field']:rows['Value'] for rows in reader}
+                    'metadata': {rows['Field']: rows['Value'] for rows in reader}
                 }
         except IOError:
             print("Could not read the metadata file.")
@@ -106,6 +116,7 @@ def get_metadata(sid, data):
             }
 
     sio.emit('metadata', response)
+
 
 def edf_to_bids_thread(data):
     print('data is ')
