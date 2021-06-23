@@ -3,6 +3,7 @@ import csv
 import json
 import re
 import shutil
+from python.libs.iEEG import metadata as metadata_fields
 
 class Modifier:
     def __init__(self, data):
@@ -14,6 +15,7 @@ class Modifier:
         self.modify_dataset_description_json()
         self.modify_participants_tsv()
         self.modify_participants_json()
+        self.clean_dataset_files()
         self.copy_events_tsv()
         self.copy_annotations_files()
         self.modify_eeg_json()
@@ -27,13 +29,43 @@ class Modifier:
 
     def get_eeg_path(self):
         directory_path = 'sub-' + self.data['participantID'].replace('_', '').replace('-', '').replace(' ', '')
-        
+
         return os.path.join(
             self.get_bids_root_path(),
             directory_path,
             'ses-' + self.data['session'],
             self.data['modality']
         )
+
+
+    def clean_dataset_files(self):
+        if len(self.data['edfData']['files']) > 0:
+            # for split recording, clean the duplicates _eeg.json and _channels.tsv
+            channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
+            for i in range(1, len(channels_files)):
+                filename = os.path.join(self.get_eeg_path(), channels_files[i])
+                os.remove(filename)
+
+            sidecar_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('eeg.json')]
+            for i in range(1, len(sidecar_files)):
+                filename = os.path.join(self.get_eeg_path(), sidecar_files[i])
+                os.remove(filename)
+
+            # remove the split suffix in the file names
+            fileOrig = os.path.join(self.get_eeg_path(), channels_files[0])
+            fileDest = os.path.join(
+                self.get_eeg_path(),
+                re.sub(r"_split-[0-9]+", '', channels_files[0])
+            )
+            os.rename(fileOrig, fileDest)
+
+            fileOrig = os.path.join(self.get_eeg_path(), sidecar_files[0])
+            fileDest = os.path.join(
+                self.get_eeg_path(),
+                re.sub(r"_split-[0-9]+", '', sidecar_files[0])
+            )
+            os.rename(fileOrig, fileDest)
+
 
     def modify_dataset_description_json(self):
         file_path = os.path.join(
@@ -52,7 +84,7 @@ class Modifier:
         except IOError:
             print("Could not read or write dataset_description.json file")
 
-        
+
     def modify_participants_tsv(self):
         file_path = os.path.join(
             self.get_bids_root_path(),
@@ -137,7 +169,7 @@ class Modifier:
     def copy_annotations_files(self):
         if not self.data['annotations_tsv'] and not self.data['annotations_json']:
             return
-        
+
         file = os.path.join(
             self.get_bids_root_path(),
             '.bidsignore'
@@ -150,7 +182,7 @@ class Modifier:
 
         edf_file = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('.edf')]
         filename = os.path.join(self.get_eeg_path(), re.sub(r"_i?eeg.edf", '_annotations', edf_file[0]))
-        
+
         if self.data['annotations_tsv']:
             shutil.copyfile(
                 self.data['annotations_tsv'],
@@ -163,11 +195,11 @@ class Modifier:
                 os.path.join(self.get_eeg_path(), filename + '.json')
             )
 
-        
+
     def copy_events_tsv(self):
         if not self.data['events_tsv']:
             return
-        
+
         # events.tsv data collected:
         output = []
 
@@ -246,17 +278,21 @@ class Modifier:
             raise ValueError('Found more than one eeg.json file')
 
         file_path = os.path.join(self.get_eeg_path(), eeg_json[0])
-        
+
         try:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
                 file_data["SoftwareFilters"] = self.data['software_filters']
                 file_data["RecordingType"] = self.data['recording_type']
-                
-                if (self.data["modality"] == "ieeg"):
-                    file_data["iEEGReference"] = self.data['reference']
-                else:
-                    file_data["EEGReference"] = self.data['reference']
+
+                referenceField = metadata_fields[self.data["modality"]]['Reference']
+                file_data[referenceField] = self.data['reference']
+
+                if 'metadata' in self.data['bidsMetadata'] and 'invalid_keys' in self.data['bidsMetadata']:
+                    for key in self.data['bidsMetadata']['metadata']:
+                        if key not in self.data['bidsMetadata']['invalid_keys']:    
+                            fieldName = metadata_fields[self.data["modality"]][key]
+                            file_data[fieldName] = self.data['bidsMetadata']['metadata'][key]
 
                 with open(file_path, "w") as fp:
                     json.dump(file_data, fp, indent=4)

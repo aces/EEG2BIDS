@@ -11,8 +11,6 @@ const Settings = () => {
   const [background, setBackground] = useState('#25c4b1');
 
   const handleChangeComplete = (color) => {
-    console.info(color);
-    console.info(background);
     setBackground(color.hex);
   };
   /**

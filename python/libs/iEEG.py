@@ -4,6 +4,88 @@ from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
 import json
 
+class ReadError(PermissionError):
+    """Raised when a PermissionError is thrown while reading a file"""
+    pass
+
+class WriteError(PermissionError):
+    """Raised when a PermissionError is thrown while writing a file"""
+    pass
+
+metadata = {
+    'eeg': {
+        'Task Name': 'TaskName',
+        'Institution Name': 'InstitutionName',
+        'Institution Address': 'InstitutionAddress',
+        'Manufacturer': 'Manufacturer',
+        'Manufacturer\'s Model Name': 'ManufacturersModelName',
+        'Software Versions': 'SoftwareVersions',
+        'Task Description': 'TaskDescription',
+        'Instructions': 'Instructions',
+        'CogAtlas ID': 'CogAtlasID',
+        'CogPOID': 'CogPOID',
+        'Device Serial Number': 'DeviceSerialNumber',
+        'Reference': 'EEGReference',
+        'Sampling Frequency': 'SamplingFrequency',
+        'Power Line Frequency': 'PowerLineFrequency',
+        'Software Filters': 'SoftwareFilters',
+        'Cap Manufacturer': 'CapManufacturer',
+        'Cap Manufacturer\'s Model Name': 'CapManufacturersModelName',
+        'EEG Channel Count': 'EEGChannelCount',
+        'EOG Channel Count': 'EOGChannelCount',
+        'ECG Channel Count': 'ECGChannelCount',
+        'EMG Channel Count': 'EMGChannelCount',
+        'Misc Channel Count': 'MiscChannelCount',
+        'Trigger Channel Count': 'TriggerChannelCount',
+        'Recording Duration': 'RecordingDuration',
+        'RecordingType': 'RecordingType',
+        'Epoch Length': 'EpochLength',
+        'Ground': 'EEGGround',
+        'Head Circumference': 'HeadCircumference',
+        'Placement Scheme': 'EEGPlacementScheme',
+        'Hardware Filters': 'HardwareFilters',
+        'Subject Artefact Description': 'SubjectArtefactDescription',
+    },
+    'ieeg': {
+        'Task Name': 'TaskName',
+        'Institution Name': 'InstitutionName',
+        'Institution Address': 'InstitutionAddress',
+        'Manufacturer': 'Manufacturer',
+        'Manufacturer\'s Model Name': 'ManufacturersModelName',
+        'Software Versions': 'SoftwareVersions',
+        'Task Description': 'TaskDescription',
+        'Instructions': 'Instructions',
+        'CogAtlas ID': 'CogAtlasID',
+        'CogPOID': 'CogPOID',
+        'Device Serial Number': 'DeviceSerialNumber',
+        'Reference': 'iEEGReference',
+        'Sampling Frequency': 'SamplingFrequency',
+        'Power Line Frequency': 'PowerLineFrequency',
+        'Software Filters': 'SoftwareFilters',
+        'DC Offset Correction': 'DCOffsetCorrection',
+        'Hardware Filters': 'HardwareFilters',
+        'Electrode Manufacturer': 'ElectrodeManufacturer',
+        'Electrode Manufacturer\'s Model Name': 'ElectrodeManufacturersModelName',
+        'ECOG Channel Count': 'ECOGChannelCount',
+        'SEEG Channel Count': 'SEEGChannelCount',
+        'EEG Channel Count': 'EEGChannelCount',
+        'EOG Channel Count': 'EOGChannelCount',
+        'ECG Channel Count': 'ECGChannelCount',
+        'EMG Channel Count': 'EMGChannelCount',
+        'Misc Channel Count': 'MiscChannelCount',
+        'Trigger Channel Count': 'TriggerChannelCount',
+        'Recording Duration': 'RecordingDuration',
+        'RecordingType': 'RecordingType',
+        'Epoch Length': 'EpochLength',
+        'Ground': 'iEEGGround',
+        'Placement Scheme': 'iEEGPlacementScheme',
+        'iEEG Electrode Groups': 'iEEGElectrodeGroups',
+        'Subject Artefact Description': 'SubjectArtefactDescription',
+        'Electrical Stimulation': 'ElectricalStimulation',
+        'Electrical Stimulation Parameters': 'ElectricalStimulationParameters',
+    }
+}
+
 # TarFile - tarfile the BIDS data.
 class TarFile:
     # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
@@ -31,15 +113,17 @@ class Anonymize:
     header = []
 
     # data = { file_path: 'path to iEEG file' }
-    def __init__(self, data):
-        self.file_path = data['file_path']
+    def __init__(self, file_path):
+        self.file_path = file_path
 
-        # read EDF file from file_path,
-        file_in = EDF.EDFReader(fname=self.file_path)
-
-        # read header of EDF file.
-        self.header = file_in.readHeader()
-        file_in.close()
+        try:
+            # read EDF file from file_path,
+            file_in = EDF.EDFReader(fname=self.file_path)
+            # read header of EDF file.
+            self.header = file_in.readHeader()
+            file_in.close()
+        except PermissionError as ex:
+            raise ReadError(ex)
 
     def get_header(self):
         return self.header
@@ -74,15 +158,15 @@ class Converter:
         if data['modality'] == 'eeg':
             modality = 'eeg'
 
-        for i, file_path in enumerate(data['file_paths']):
+        for i, file in enumerate(data['edfData']['files']):
             self.to_bids(
-                file=file_path,
+                file=file['path'],
                 ch_type=modality,
                 task=data['taskName'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                split=((i+1) if len(data['file_paths']) > 1 else None),
+                split=((i+1) if len(data['edfData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq']
@@ -112,7 +196,11 @@ class Converter:
                 read_only=False,
                 line_freq='n/a'):
         if self.validate(file):
-            reader = EDF.EDFReader(fname=file)
+            try:
+                reader = EDF.EDFReader(fname=file)
+            except PermissionError as ex:
+                raise ReadError(ex)
+
             m_info, c_info = reader.open(fname=file)
             self.set_m_info(m_info)
 
@@ -121,18 +209,27 @@ class Converter:
             if read_only:
                 return True
 
-            raw.set_channel_types({ch: ch_type for ch in raw.ch_names})
+            ch_types = {}
+            for ch in raw.ch_names:
+                ch_name = ch.lower()
+                if 'eeg' in ch_name:
+                    ch_types[ch] = 'eeg'
+                elif 'eog' in ch_name:
+                    ch_types[ch] = 'eog'
+                elif 'ecg' in ch_name or 'ekg' in ch_name:
+                    ch_types[ch] = 'ecg'
+                elif 'lflex' in ch or 'rflex'in ch or 'chin' in ch:
+                    ch_types[ch] = 'emg'
+                elif 'trigger' in ch:
+                    ch_types[ch] = 'stim'
+                    
+                else:
+                    ch_types[ch] = ch_type
 
-            os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
-            bids_directory = bids_directory + os.path.sep + output_time
-            bids_root = bids_directory
-            
+            raw.set_channel_types(ch_types)
+
             m_info['subject_id'] = subject_id
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
-
-            bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, split=split)
-            session = session
-            bids_basename.update(session=session)
 
             raw.info['line_freq'] = line_freq
             
@@ -145,12 +242,23 @@ class Converter:
                 'preload': False,
                 'verbose': None
             }
+
             try:
+                os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
+                bids_directory = bids_directory + os.path.sep + output_time
+                bids_root = bids_directory
+            
+                bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, split=split)
+                bids_basename.update(session=session)
+
                 write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
                 with open(bids_basename, 'r+b') as f:
                     f.seek(8)  # id_info field starts 8 bytes in
                     f.write(bytes("X X X X".ljust(80), 'ascii'))
             
+            except PermissionError as ex:
+                raise WriteError(ex)
+
             except Exception as ex:
                 print(ex)
             print('finished')

@@ -492,5 +492,5 @@ TextareaInput.propTypes = {
 TextareaInput.defaultProps = {
   required: false,
   rows: 4,
-  cols: 25,
+  cols: 23,
 };

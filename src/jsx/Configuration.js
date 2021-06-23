@@ -36,10 +36,14 @@ const Configuration = (props) => {
 
   // React State
   const state = {};
+  state.errors = {};
+  [state.errors.get, state.errors.set] = useState([]);
   state.edfFiles = {};
   [state.edfFiles.get, state.edfFiles.set] = useState([]);
-  state.edfType = {};
-  [state.edfType.get, state.edfType.set] = useState('ieeg');
+  state.edfData = {};
+  [state.edfData.get, state.edfData.set] = useState([]);
+  state.modality = {};
+  [state.modality.get, state.modality.set] = useState('ieeg');
   state.eventsTSV = {};
   [state.eventsTSV.get, state.eventsTSV.set] = useState([]);
   state.annotationsTSV = {};
@@ -64,8 +68,6 @@ const Configuration = (props) => {
   [state.projectUseAPI.get, state.projectUseAPI.set] = useState(false);
   state.subprojectID = {};
   [state.subprojectID.get, state.subprojectID.set] = useState('n/a');
-  state.recordingDate = {};
-  [state.recordingDate.get, state.recordingDate.set] = useState(null);
   state.subprojectOptions = {};
   [state.subprojectOptions.get, state.subprojectOptions.set] = useState([]);
   state.subprojectUseAPI = {};
@@ -73,10 +75,10 @@ const Configuration = (props) => {
   state.session = {};
   [state.session.get, state.session.set] = useState('');
   state.sessionOptions = {};
-  state.eegMetadataFile = {};
-  [state.eegMetadataFile.get, state.eegMetadataFile.set] = useState([]);
-  state.eegMetadata = {};
-  [state.eegMetadata.get, state.eegMetadata.set] = useState([]);
+  state.bidsMetadataFile = {};
+  [state.bidsMetadataFile.get, state.bidsMetadataFile.set] = useState([]);
+  state.bidsMetadata = {};
+  [state.bidsMetadata.get, state.bidsMetadata.set] = useState(null);
   state.lineFreq = {};
   [state.lineFreq.get, state.lineFreq.set] = useState('');
   state.taskName = {};
@@ -94,7 +96,7 @@ const Configuration = (props) => {
   [
     state.participantEntryMode.get,
     state.participantEntryMode.set,
-  ] = useState('loris');
+  ] = useState('manual');
   state.participantID = {};
   [state.participantID.get, state.participantID.set] = useState('');
   state.participantDOB = {};
@@ -109,50 +111,56 @@ const Configuration = (props) => {
   [state.anonymize.get, state.anonymize.set] = useState(false);
   state.subjectID = {};
   [state.subjectID.get, state.subjectID.set] = useState('');
-  state.edfHeader = {};
-  [state.edfHeader.get, state.edfHeader.set] = useState({
-    subject_id: '', recording_id: '',
-    day: '', month: '', year: '',
-    hour: '', minute: '', second: '',
-    subtype: '',
-  });
-  const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
-
-  useEffect(() => {
-    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
-  }, []);
-
-  useEffect(() => {
-    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
-  }, []);
+  state.authCredentialsVisible = {};
+  [
+    state.authCredentialsVisible.get,
+    state.authCredentialsVisible.set,
+  ] = useState(false);
+  state.isAuthenticated = {};
+  [state.isAuthenticated.get, state.isAuthenticated.set] = useState(false);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
   useEffect(() => {
-    Object.keys(state.edfHeader.get).map((key) => {
-      appContext.setTask(key, state.edfHeader.get[key]);
-    });
+    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
+  }, []);
 
-    if (!isNaN(parseInt(state.edfHeader.get['year']))) {
-      const date = new Date(
-        state.edfHeader.get['year'] < 85 ?
-          Number('20' + state.edfHeader.get['year']) :
-          Number('19' + state.edfHeader.get['year']),
-        Number(state.edfHeader.get['month']-1),
-        Number(state.edfHeader.get['day']),
-        Number(state.edfHeader.get['hour']),
-        Number(state.edfHeader.get['minute']),
-        Number(state.edfHeader.get['second']),
-      );
-      state.recordingDate.set(date);
-      appContext.setTask('recordingDate', date);
+  useEffect(() => {
+    state.errors.set([]);
+  }, [state.edfFiles.get]);
+
+  useEffect(() => {
+    console.log(state.isAuthenticated.get);
+  }, [state.isAuthenticated.get]);
+
+  useEffect(() => {
+    console.log(state.participantEntryMode.get);
+  }, [state.participantEntryMode.get]);
+
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.emit('get_edf_data', {
+        files: state.edfFiles.get.map((edfFile) =>
+          ({
+            path: edfFile['path'],
+            name: edfFile['name'],
+          })),
+      });
     }
-  }, [state.edfHeader.get]);
+  }, [state.edfFiles.get]);
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
+  useEffect(() => {
+    if (socketContext) {
+      if (state.bidsMetadataFile.get.length > 0) {
+        socketContext.emit('get_bids_metadata', {
+          file_path: state.bidsMetadataFile.get[0]['path'],
+          modality: state.modality.get,
+        });
+      }
+    }
+  }, [state.bidsMetadataFile.get, state.modality.get]);
+
   useEffect(() => {
     if (socketContext) {
       // socketContext.emit('get_loris_sites');
@@ -189,24 +197,42 @@ const Configuration = (props) => {
         state.sessionOptions.set(visitOpts);
       });
 
-      socketContext.on('edf_header', (message) => {
+      socketContext.on('edf_data', (message) => {
         if (message['error']) {
           console.error(message['error']);
+          state.errors.set([...state.errors.get, message['error']]);
         }
 
-        if (message['header']) {
-          state.edfHeader.set(message['header']);
-          state.subjectID.set(message['header']['subject_id']);
+        if (message['date']) {
+          message['date'] = new Date(message['date']);
         }
+
+        state.subjectID.set(message?.['subjectID'] || '');
+        state.edfData.set(message);
+        appContext.setTask('edfData', message);
       });
 
-      socketContext.on('metadata', (message) => {
+      socketContext.on('bids_metadata', (message) => {
         if (message['error']) {
           console.error(message['error']);
         }
 
-        if (message['metadata']) {
-          state.eegMetadata.set(message['metadata']);
+        state.bidsMetadata.set(message);
+        appContext.setTask('bidsMetadata', message);
+      });
+
+      socketContext.on('new_candidate_created', (data) => {
+        console.log(data);
+        state.participantID.set(data['PSCID']);
+        appContext.setTask('participantID', data['PSCID']);
+      });
+
+      socketContext.on('loris_login_response', (data) => {
+        if (data.error) {
+          // todo display error message - login failure
+        } else {
+          state.isAuthenticated.set(true);
+          state.participantEntryMode.set('new_loris');
         }
       });
     }
@@ -221,18 +247,27 @@ const Configuration = (props) => {
   const onUserInput = (name, value) => {
     // Update the state of Configuration.
     switch (name) {
-      case 'edfFiles':
-        state.edfFiles.set(value);
-        createHeaderFields(value[0]['path']);
+      case 'recordingID':
+        state.edfData.set((prevState) => {
+          return {...prevState, [name]: value};
+        });
+        appContext.setTask(name, value);
         break;
-      case 'eegMetadataFile':
-        state.eegMetadataFile.set(value);
-        createMetadataFields(value[0]['path']);
+      case 'subjectID':
+        state.edfData.set((prevState) => {
+          return {...prevState, [name]: value};
+        });
+        state.subjectID.set(value);
+        appContext.setTask(name, value);
         break;
       case 'LORIScompliant':
         if (value === 'yes') {
           value = true;
-          state.participantEntryMode.set('loris');
+          if (state.isAuthenticated.get) {
+            state.participantEntryMode.set('new_loris');
+          } else {
+            state.participantEntryMode.set('manual');
+          }
         } else {
           value = false;
           state.participantEntryMode.set('manual');
@@ -240,7 +275,7 @@ const Configuration = (props) => {
         state.LORIScompliant.set(value);
         break;
       case 'siteID_API':
-        if (value === 'Manual entry') {
+        if (value == 'Enter manually') {
           value = '';
           state.siteUseAPI.set(false);
         } else {
@@ -254,13 +289,12 @@ const Configuration = (props) => {
         name = 'siteID';
         break;
       case 'projectID_API':
-        if (value === 'Manual entry') {
+        if (value == 'Enter manually') {
           state.projectUseAPI.set(false);
           value = '';
         } else {
           state.projectUseAPI.set(true);
           socketContext.emit('get_loris_subprojects', value);
-          socketContext.emit('get_loris_visits', value);
         }
         state.projectID.set(value);
         name = 'projectID';
@@ -270,11 +304,12 @@ const Configuration = (props) => {
         name = 'projectID';
         break;
       case 'subprojectID_API':
-        if (value === 'Manual entry') {
+        if (value == 'Enter manually') {
           state.subprojectUseAPI.set(false);
           value = '';
         } else {
           state.subprojectUseAPI.set(true);
+          socketContext.emit('get_loris_visits', value);
         }
         state.subprojectID.set(value);
         name = 'subprojectID';
@@ -284,7 +319,7 @@ const Configuration = (props) => {
         name = 'subprojectID';
         break;
       case 'session_API':
-        if (value === 'Manual entry') {
+        if (value == 'Enter manually') {
           state.sessionUseAPI.set(false);
           value = '';
         } else {
@@ -299,9 +334,15 @@ const Configuration = (props) => {
         break;
       case 'anonymize':
         if (value) {
-          anonymizeHeaderValues();
+          state.edfData.set((prevState) => {
+            return {...prevState, ['subjectID']: 'X X X X'};
+          });
+          appContext.setTask('subjectID', 'X X X X');
         } else {
-          onUserHeaderFieldInput('subject_id', state.subjectID.get);
+          state.edfData.set((prevState) => {
+            return {...prevState, ['subjectID']: state.subjectID.get};
+          });
+          appContext.setTask('subjectID', state.subjectID.get);
         }
         state.anonymize.set(value);
         break;
@@ -314,40 +355,6 @@ const Configuration = (props) => {
       // Update the 'task' of app context.
       appContext.setTask(name, value);
     }
-  };
-
-  /**
-   * onUserHeaderFieldInput - input change by user.
-   * @param {string} name - element name
-   * @param {object|string} value - element value
-   */
-  const onUserHeaderFieldInput = (name, value) => {
-    state.edfHeader.set((prevState) => {
-      return {...prevState, [name]: value};
-    });
-    // Update the 'task' of app context.
-    appContext.setTask(name, value);
-  };
-
-  /**
-   * createHeaderFields - EDF file given from user.
-   * @param {string} path - edf file path
-   * Creates Header fields for EDF file.
-   */
-  const createHeaderFields = (path) => {
-    socketContext.emit('ieeg_get_header', {
-      file_path: path,
-    });
-  };
-
-  /**
-   * createMetadataFields - Metadata file given from user.
-   * @param {string} path - metadata file path
-   */
-  const createMetadataFields = (path) => {
-    socketContext.emit('get_metadata', {
-      file_path: path,
-    });
   };
 
   /**
@@ -368,21 +375,26 @@ const Configuration = (props) => {
   };
 
   /**
-   * anonymizeHeaderValues - anonymize iEEG header values.
-   */
-  const anonymizeHeaderValues = () => {
-    const keys = ['subject_id'];
-    const anonymize = {subject_id: 'X X X X'};
-    for (const key of keys) {
-      onUserHeaderFieldInput(key, anonymize[key]);
-      appContext.setTask(key, anonymize[key]);
-    }
-  };
-
-  /**
-   * createCandidate
+   * create candidate
    */
   const createCandidate = () => {
+    if (socketContext) {
+      const dob = state.participantDOB.get.toISOString().replace(/T.*/, '');
+      if (!state.edfData.get?.['date']) return;
+
+      const visitDate = state.edfData.get['date']
+          .toISOString().replace(/T.*/, '');
+
+      socketContext.emit('create_candidate_and_visit', {
+        project: state.projectID.get,
+        dob: dob,
+        sex: state.participantSex.get,
+        site: state.siteID.get,
+        subproject: state.subprojectID.get,
+        visit: state.session.get,
+        date: visitDate,
+      });
+    }
   };
 
   /**
@@ -390,16 +402,23 @@ const Configuration = (props) => {
    * @param {boolean} hidden
    */
   const hideAuthCredentials = (hidden) => {
-    setAuthCredentialsVisible(!hidden);
+    state.authCredentialsVisible.set(!hidden);
   };
 
   return props.visible ? (
     <>
       <AuthenticationMessage
-        setAuthCredentialsVisible={setAuthCredentialsVisible}
+        setAuthCredentialsVisible={state.authCredentialsVisible.set}
       />
+      <div className="errors">
+        {state.errors.get.map((error, index) =>
+          <div key={index} className="alert alert-danger" role="alert">
+            &#x274C; {error}
+          </div>,
+        )}
+      </div>
       <span className='header'>
-        Data Configuration
+        Select data and metadata
       </span>
       <div className='info'>
         <div className='small-pad'>
@@ -414,11 +433,15 @@ const Configuration = (props) => {
             required={true}
             onUserInput={onUserInput}
           />
-          <div><small>Can be split into multiple EDF files</small></div>
+          <div>
+            <small>
+              Multiple EDF files can be selected for a single recording
+            </small>
+          </div>
         </div>
         <div className='small-pad'>
-          <RadioInput id='edfType'
-            name='edfType'
+          <RadioInput id='modality'
+            name='modality'
             label='Data modality'
             required={true}
             onUserInput={onUserInput}
@@ -426,7 +449,7 @@ const Configuration = (props) => {
               ieeg: 'Stereo iEEG',
               eeg: 'EEG',
             }}
-            checked={state.edfType.get}
+            checked={state.modality.get}
           />
         </div>
         <div className='small-pad'>
@@ -457,12 +480,12 @@ const Configuration = (props) => {
           />
         </div>
         <div className='small-pad'>
-          <FileInput id='eegMetadataFile'
-            name='eegMetadataFile'
+          <FileInput id='bidsMetadataFile'
+            name='bidsMetadataFile'
             accept='.tsv'
             placeholder={
-              state.eegMetadataFile.get.map(
-                  (eegMetadataFile) => eegMetadataFile['name'],
+              state.bidsMetadataFile.get.map(
+                  (bidsMetadataFile) => bidsMetadataFile['name'],
               ).join(', ')
             }
             label='Parameter metadata (tsv)'
@@ -473,7 +496,7 @@ const Configuration = (props) => {
           <DirectoryInput id='bidsDirectory'
             name='bidsDirectory'
             required={true}
-            label='BIDS output directory'
+            label='BIDS output folder'
             placeholder={state.bidsDirectory.get}
             onUserInput={onUserInput}
           />
@@ -520,7 +543,7 @@ const Configuration = (props) => {
                     label=''
                     required={true}
                     value={state.siteID.get}
-                    emptyOption='Manual entry'
+                    emptyOption='Enter manually'
                     options={arrayToObject(state.siteOptions.get)}
                     onUserInput={onUserInput}
                   />
@@ -547,7 +570,7 @@ const Configuration = (props) => {
                     label=''
                     required={true}
                     value={state.projectID.get}
-                    emptyOption='Manual entry'
+                    emptyOption='Enter manually'
                     options={arrayToObject(state.projectOptions.get)}
                     onUserInput={onUserInput}
                   />
@@ -574,7 +597,7 @@ const Configuration = (props) => {
                     label=''
                     required={true}
                     value={state.subprojectID.get}
-                    emptyOption='Manual entry'
+                    emptyOption='Enter manually'
                     options={arrayToObject(state.subprojectOptions.get)}
                     onUserInput={onUserInput}
                   />
@@ -594,10 +617,10 @@ const Configuration = (props) => {
           <div className='small-pad'>
             <label className="label" htmlFor='#session_API'>
               <b>
-                Session label <span className="red">*</span>
+                Session <span className="red">*</span>
               </b>
               {state.LORIScompliant.get &&
-                <div><small>Use the LORIS Visit label</small></div>
+                <div><small>(LORIS Visit Label)</small></div>
               }
             </label>
             <div className='comboField'>
@@ -607,7 +630,7 @@ const Configuration = (props) => {
                   label=''
                   required={true}
                   value={state.session.get}
-                  emptyOption='Manual entry'
+                  emptyOption='Enter manually'
                   options={arrayToObject(state.sessionOptions.get)}
                   onUserInput={onUserInput}
                 />
@@ -669,47 +692,56 @@ const Configuration = (props) => {
         </div>
       </div>
       <span className='header'>
-        Participant Data
+        Participant Details
       </span>
       <div className='info'>
-        {state.LORIScompliant.get &&
+        {state.LORIScompliant.get && state.isAuthenticated.get &&
           <div className='small-pad'>
             <RadioInput id='participantEntryMode'
               name='participantEntryMode'
               label='Entry mode'
               required={true}
               onUserInput={onUserInput}
-              options={{
-                loris: 'Create a LORIS candidate',
-                manual: 'Manual',
-              }}
+              options={state.isAuthenticated.get ?
+                {
+                  new_loris: 'Create a LORIS candidate',
+                  existing_loris: 'Use an existing LORIS candidate',
+                  manual: 'Manual',
+                } :
+                {
+                  manual: 'Manual',
+                }
+              }
               checked={state.participantEntryMode.get}
             />
           </div>
         }
-        {state.participantEntryMode.get == 'loris' &&
+        {state.participantEntryMode.get == 'new_loris' &&
+          state.isAuthenticated.get &&
           <>
             <div className='small-pad'>
               <label className="label" htmlFor={props.id}>
-                <b>Date of birth <span className="red">*</span></b>
+                <b>Date of Birth <span className="red">*</span></b>
               </label>
               <DatePicker id='participantDOB'
                 name='participantDOB'
                 required={true}
                 selected={state.participantDOB.get}
+                dateFormat="yyyy-MM-dd"
                 onChange={(date) => onUserInput('participantDOB', date)}
               />
             </div>
             <div className='small-pad'>
               <SelectInput id='participantSex'
                 name='participantSex'
-                label='Biological sex'
+                label='Biological Sex'
                 required={true}
                 value={state.participantSex.get}
                 emptyOption=' '
                 options={{
-                  'F': 'Female',
-                  'M': 'Male',
+                  'female': 'Female',
+                  'male': 'Male',
+                  'other': 'Other',
                 }}
                 onUserInput={onUserInput}
               />
@@ -717,7 +749,7 @@ const Configuration = (props) => {
             <div className='small-pad'>
               <SelectInput id='participantHand'
                 name='participantHand'
-                label='Hand'
+                label='Handedness'
                 value={state.participantHand.get}
                 emptyOption='n/a'
                 options={{
@@ -734,6 +766,33 @@ const Configuration = (props) => {
               value='Create Candidate'
               onClick={createCandidate}
             />
+          </>
+        }
+        {state.participantEntryMode.get == 'existing_loris' &&
+          state.isAuthenticated.get &&
+          <>
+            <div className='small-pad'>
+              <TextInput id='participantCanID'
+                name='participantCanID'
+                label='LORIS CandID'
+                value={state.participantID.get}
+                onUserInput={onUserInput}
+              />
+            </div>
+            <div className='small-pad'>
+              <SelectInput id='participantHand'
+                name='participantHand'
+                label='Handedness'
+                value={state.participantHand.get}
+                emptyOption='n/a'
+                options={{
+                  'R': 'Right',
+                  'L': 'Left',
+                  'A': 'Ambidextrous',
+                }}
+                onUserInput={onUserInput}
+              />
+            </div>
           </>
         }
         {state.participantEntryMode.get == 'manual' &&
@@ -762,7 +821,7 @@ const Configuration = (props) => {
             <div className='small-pad'>
               <SelectInput id='participantSex'
                 name='participantSex'
-                label='Biological sex'
+                label='Biological Sex'
                 value={state.participantSex.get}
                 emptyOption='n/a'
                 options={{
@@ -775,7 +834,7 @@ const Configuration = (props) => {
             <div className='small-pad'>
               <SelectInput id='participantHand'
                 name='participantHand'
-                label='Hand'
+                label='Handedness'
                 value={state.participantHand.get}
                 emptyOption='n/a'
                 options={{
@@ -811,6 +870,7 @@ const Configuration = (props) => {
             name='anonymize'
             onChange={(checked) => onUserInput('anonymize', checked)}
             checked={state.anonymize.get}
+            disabled={state.edfData.get?.files?.length > 0 ? false : true}
           />
           <span>Anonymize</span>
         </label>
@@ -818,15 +878,12 @@ const Configuration = (props) => {
       <div className='info-flex-container'>
         <div className='container'>
           <div className='half small-pad'>
-            <TextInput id='subject_id'
-              name='subject_id'
+            <TextInput id='subjectID'
+              name='subjectID'
               label='Subject ID'
-              value={state.edfHeader.get['subject_id']}
-              onUserInput={(name, value) => {
-                state.subjectID.set(value);
-                onUserHeaderFieldInput(name, value);
-              }}
-              placeholder={state.edfHeader.get['subject_id']}
+              value={state.edfData?.get['subjectID'] || ''}
+              onUserInput={onUserInput}
+              readonly={state.edfData.get?.files?.length > 0 ? false : true}
             />
             <div>
               <small>Recommended EDF anonymization: "X X X X"<br/>
@@ -835,12 +892,12 @@ const Configuration = (props) => {
             </div>
           </div>
           <div className='half small-pad'>
-            <TextInput id='recording_id'
-              name='recording_idd'
+            <TextInput id='recordingID'
+              name='recordingID'
               label='Recording ID'
-              value={state.edfHeader.get['recording_id']}
-              onUserInput={onUserHeaderFieldInput}
-              placeholder={state.edfHeader.get['recording_id']}
+              value={state.edfData.get?.['recordingID'] || ''}
+              onUserInput={onUserInput}
+              readonly={state.edfData.get?.files?.length > 0 ? false : true}
             />
             <div>
               <small>(EDF spec: Startdate dd-MMM-yyyy
@@ -853,7 +910,7 @@ const Configuration = (props) => {
               name='recording_date'
               label='Recording Date'
               readonly={true}
-              value={state.recordingDate.get ?
+              value={state.edfData.get?.['date'] ?
                   new Intl.DateTimeFormat(
                       'en-US',
                       {
@@ -863,7 +920,7 @@ const Configuration = (props) => {
                         hour: 'numeric',
                         minute: 'numeric',
                       },
-                  ).format(state.recordingDate.get) :
+                  ).format(state.edfData.get['date']) :
                   ''
               }
             />
@@ -872,7 +929,7 @@ const Configuration = (props) => {
       </div>
       <AuthenticationCredentials
         title='LORIS Authentication'
-        show={authCredentialsVisible}
+        show={state.authCredentialsVisible.get}
         close={hideAuthCredentials}
         width='500px'
       />

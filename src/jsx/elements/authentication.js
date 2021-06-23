@@ -30,7 +30,6 @@ export const AuthenticationMessage = (props) => {
   useEffect(async () => {
     const myAPI = window['myAPI'];
     const credentials = await myAPI.getLorisAuthenticationCredentials();
-    console.log(credentials);
     if (credentials &&
       credentials.lorisURL &&
       credentials.lorisUsername &&
@@ -54,7 +53,8 @@ export const AuthenticationMessage = (props) => {
         if (data.error) {
           // todo display error message - login failure
         } else {
-          setLoginMessage(`LORIS Account set as ${appContext.lorisUsername}`);
+          console.log(data);
+          setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
           setLoginLink('Sign in to another account..');
         }
       });

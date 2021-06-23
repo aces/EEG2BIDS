@@ -20,10 +20,10 @@ class Validate:
 
                 if filename.endswith('_annotations.tsv'):
                     continue
-                
+
                 if filename.endswith('_annotations.json'):
                     continue
-                
+
                 temp = os.path.join(path, filename)
                 file_paths.append(temp[len(start_path):len(temp)])
                 result.append(validator.is_bids(temp[len(start_path):len(temp)]))

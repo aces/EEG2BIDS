@@ -49,6 +49,14 @@ const Converter = (props) => {
   });
 
   /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+    // if (socketContext) {}
+  }, [socketContext]);
+
+
+  /**
    * beginBidsCreation - create BIDS format.
    *   Sent by socket to python: edf_to_bids.
    */
@@ -57,35 +65,37 @@ const Converter = (props) => {
       return {...prevState, ['mode']: 'loading'};
     });
     setModalVisible(true);
-    socketContext.emit('edf_to_bids', {
-      file_paths: appContext.getFromTask('edfFiles') ?
-        appContext.getFromTask('edfFiles')
-            .map((edfFile) => edfFile['path']) : [],
-      modality: appContext.getFromTask('edfType') ?? 'ieeg',
-      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      read_only: false,
-      events_tsv: appContext.getFromTask('eventsTSV').length > 0 ?
-        appContext.getFromTask('eventsTSV')[0]['path'] : '',
-      annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
-        appContext.getFromTask('annotationsTSV')[0]['path'] : '',
-      annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
-        appContext.getFromTask('annotationsJSON')[0]['path'] : '',
-      site_id: appContext.getFromTask('siteID') ?? '',
-      project_id: appContext.getFromTask('projectID') ?? '',
-      sub_project_id: appContext.getFromTask('subprojectID') ?? '',
-      session: appContext.getFromTask('session') ?? '',
-      participantID: appContext.getFromTask('participantID') ?? '',
-      age: appContext.getFromTask('participantAge') ?? '',
-      hand: appContext.getFromTask('participantHand') ?? '',
-      sex: appContext.getFromTask('participantSex') ?? '',
-      preparedBy: appContext.getFromTask('preparedBy') ?? '',
-      line_freq: appContext.getFromTask('lineFreq') || 'n/a',
-      software_filters: appContext.getFromTask('softwareFilters') ?? 'n/a',
-      recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
-      taskName: appContext.getFromTask('taskName') ?? '',
-      reference: appContext.getFromTask('reference') ?? '',
-      subject_id: appContext.getFromTask('subject_id') ?? '',
-    });
+
+    if (appContext.getFromTask('edfData')?.['files'].length > 0) {
+      socketContext.emit('edf_to_bids', {
+        edfData: appContext.getFromTask('edfData') ?? [],
+        modality: appContext.getFromTask('modality') ?? 'ieeg',
+        bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
+        read_only: false,
+        events_tsv: appContext.getFromTask('eventsTSV').length > 0 ?
+          appContext.getFromTask('eventsTSV')[0]['path'] : '',
+        annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
+          appContext.getFromTask('annotationsTSV')[0]['path'] : '',
+        annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
+          appContext.getFromTask('annotationsJSON')[0]['path'] : '',
+        bidsMetadata: appContext.getFromTask('bidsMetadata') ?? '',
+        site_id: appContext.getFromTask('siteID') ?? '',
+        project_id: appContext.getFromTask('projectID') ?? '',
+        sub_project_id: appContext.getFromTask('subprojectID') ?? '',
+        session: appContext.getFromTask('session') ?? '',
+        participantID: appContext.getFromTask('participantID') ?? '',
+        age: appContext.getFromTask('participantAge') ?? '',
+        hand: appContext.getFromTask('participantHand') ?? '',
+        sex: appContext.getFromTask('participantSex') ?? '',
+        preparedBy: preparedBy ?? '',
+        line_freq: appContext.getFromTask('lineFreq') || 'n/a',
+        software_filters: appContext.getFromTask('softwareFilters') ?? 'n/a',
+        recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
+        taskName: appContext.getFromTask('taskName') ?? '',
+        reference: appContext.getFromTask('reference') ?? '',
+        subject_id: appContext.getFromTask('subject_id') ?? '',
+      });
+    }
   };
 
   /**
@@ -111,32 +121,71 @@ const Converter = (props) => {
     setModalVisible(!hidden);
   };
 
-  /**
-   * onMessage - received message from python.
-   * @param {object} message - response
-   */
-  const onMessage = (message) => {
-    console.info(message);
-    if (message['output_time']) {
-      setOutputTime(message['output_time']);
-      appContext.setTask('output_time', message['output_time']);
-      setModalText((prevState) => {
-        return {...prevState, ['mode']: 'success'};
-      });
-    } else {
-      setModalText((prevState) => {
-        prevState.message['error'] = (
-          <div className='bids-errors'>
-            {message['error'].map((error, i) =>
-              <span key={i}>{error}<br/></span>)}
-          </div>
-        );
-        return {...prevState, ['mode']: 'error'};
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('bids', (message) => {
+        if (message['output_time']) {
+          setOutputTime(message['output_time']);
+          appContext.setTask('output_time', message['output_time']);
+          setModalText((prevState) => {
+            return {...prevState, ['mode']: 'success'};
+          });
+        } else if (message['error']) {
+          setModalText((prevState) => {
+            prevState.message['error'] = (
+              <div className='bids-errors'>
+                {message['error'].map((error, i) =>
+                  <span key={i}>{error}<br/></span>)}
+              </div>
+            );
+            return {...prevState, ['mode']: 'error'};
+          });
+        }
       });
     }
-  };
+  }, [socketContext]);
 
   let error = false;
+  const metadataReport = [];
+  if (appContext.getFromTask('bidsMetadata')) {
+    if (
+      'metadata' in appContext.getFromTask('bidsMetadata') &&
+      'invalid_keys' in appContext.getFromTask('bidsMetadata')
+    ) {
+      const metadata = appContext.getFromTask('bidsMetadata')['metadata'];
+      const invalidKeys =
+        appContext.getFromTask('bidsMetadata')['invalid_keys'];
+
+      Object.keys(metadata).map((key) => {
+        metadataReport.push(
+            <div key={key}>
+              {invalidKeys.indexOf(key) > -1 ?
+                <>
+                  <span className='warning'>&#x26A0;</span>
+                  {key}: {metadata[key]}
+                </> :
+                <>
+                  {key}: {metadata[key]}
+                </>
+              }
+            </div>,
+        );
+      });
+      metadataReport.push(
+          <p key="message">
+            <span className='warning'>&#x26A0;</span>
+            Invalid keys for the selected modality will be ignored.
+          </p>,
+      );
+    } else if ('error' in appContext.getFromTask('bidsMetadata')) {
+      metadataReport.push(
+          <div key="error ">
+            <span className='warning'>&#x26A0;</span>
+            {appContext.getFromTask('bidsMetadata')['error']}
+          </div>,
+      );
+    }
+  }
 
   /**
    * Renders the React component.
@@ -155,19 +204,25 @@ const Converter = (props) => {
         <div className='small-pad'>
           <b>Review your data configuration:</b>
           <div>
-            {(appContext.getFromTask('edfFiles') &&
-              appContext.getFromTask('edfFiles').length > 0) ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                EDF data file(s):&nbsp;
-                {appContext.getFromTask('edfFiles')
-                    .map((edfFile) => edfFile['name']).join(', ')
-                }
-              </> :
-              <>
+            {appContext.getFromTask('edfData')?.['error'] ?
+              <div>
                 {error = true}
-                <span className='error'>&#x274C;</span> No EDF file selected.
-              </>
+                <span className='error'>&#x274C;</span>
+                {appContext.getFromTask('edfData')['error']}
+              </div> :
+              appContext.getFromTask('edfData') &&
+              appContext.getFromTask('edfData')?.['files']?.length > 0 ?
+                <>
+                  <span className='checkmark'>&#x2714;</span>
+                  EDF data file(s):&nbsp;
+                  {appContext.getFromTask('edfData')['files']
+                      .map((edfFile) => edfFile['name']).join(', ')
+                  }
+                </> :
+                <>
+                  {error = true}
+                  <span className='error'>&#x274C;</span> No EDF file selected.
+                </>
             }
           </div>
           <div>
@@ -278,12 +333,12 @@ const Converter = (props) => {
             {appContext.getFromTask('session') ?
               <>
                 <span className='checkmark'>&#x2714;</span>
-                Session label: {appContext.getFromTask('session')}
+                Session: {appContext.getFromTask('session')}
               </> :
               <>
                 {error = true}
                 <span className='error'>&#x274C;</span>
-                Session label is not specified.
+                Session is not specified.
               </>
             }
           </div>
@@ -314,7 +369,7 @@ const Converter = (props) => {
           </div>
         </div>
         <div className='small-pad'>
-          <b>Review your participant data:</b>
+          <b>Review your participant details:</b>
           <div>
             {appContext.getFromTask('participantID') ?
               <>
@@ -332,12 +387,26 @@ const Converter = (props) => {
           </div>
         </div>
         <div className='small-pad'>
+          <b>Review your uploaded EEG Parameter metadata:</b>
+          <div>
+            {metadataReport.length > 0 ?
+              <>
+                {metadataReport}
+              </> :
+              <>
+                <span className='warning'>&#x26A0;</span>
+                No EEG Parameter metadata file selected.
+              </>
+            }
+          </div>
+        </div>
+        <div className='small-pad'>
           <b>Verify anonymization of EDF header data:</b>
           <div>
-            {appContext.getFromTask('subject_id') ?
+            {appContext.getFromTask('subjectID') ?
               <>
                 Subject ID:&nbsp;
-                {appContext.getFromTask('subject_id')}
+                {appContext.getFromTask('subjectID')}
               </> :
               <>
                 <span className='warning'>&#x26A0;</span>
@@ -351,7 +420,7 @@ const Converter = (props) => {
               {appContext.getFromTask('recording_id')}
             </div>
           }
-          {appContext.getFromTask('recordingDate') &&
+          {appContext.getFromTask('edfData')?.['date'] &&
             <div>
               Recording Date:&nbsp;
               {new Intl.DateTimeFormat(
@@ -363,7 +432,7 @@ const Converter = (props) => {
                     hour: 'numeric',
                     minute: 'numeric',
                   },
-              ).format(appContext.getFromTask('recordingDate'))}
+              ).format(appContext.getFromTask('edfData')['date'])}
             </div>
           }
         </div>
@@ -413,7 +482,6 @@ const Converter = (props) => {
       >
         {modalText.message[modalText.mode]}
       </Modal>
-      <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };

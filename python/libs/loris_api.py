@@ -4,29 +4,30 @@ import urllib
 
 
 class LorisAPI:
-    url = 'https://localhost/api/v0.0.4-dev/'
+    url = ''
     username = ''
     password = ''
-
     token = ''
-
-    def __init__(self):
-        # self.login()
-
+    
     def login(self):
-        resp = json.loads(requests.post(
+        resp = requests.post(
             url = self.url + 'login',
             json = {
-                'username': self.username, 
+                'username': self.username,
                 'password': self.password
             },
             verify = False
-        ).content.decode('ascii'))
+        )
+        
+        print(resp)
+        
+        resp_json = json.loads(resp.content.decode('ascii'))
 
-        if resp.get('error'):
-            raise RuntimeError(resp.get('error'))
+        if resp_json.get('error'):
+            raise RuntimeError(resp_json.get('error'))
 
-        self.token = resp.get('token')
+        self.token = resp_json.get('token')
+
         print(self.token)
 
     def get_projects(self):
@@ -39,13 +40,31 @@ class LorisAPI:
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp.get('Projects')
 
+    def get_all_subprojects(self):
+        resp = requests.get(
+            url=self.url + 'subprojects',
+            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            verify=False
+        )
+
+        print (resp)
+        json_resp = json.loads(resp.content.decode('ascii'))
+        return json_resp.get('Subprojects')
+
     def get_subprojects(self, project):
         project = self.get_project(project)
         return project.get('Subprojects')
 
-    def get_visits(self, project):
-        project = self.get_project(project)
-        return project.get('Visits')
+    def get_visits(self, subproject):
+        resp = requests.get(
+            url=self.url + 'subprojects/' + urllib.parse.quote(subproject),
+            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            verify=False
+        )
+
+        print (resp)
+        json_resp = json.loads(resp.content.decode('ascii'))
+        return json_resp.get('Visits')
 
     def get_sites(self):
         resp = requests.get(
@@ -129,16 +148,16 @@ class LorisAPI:
         print(resp.status_code)
         print(resp.text)
 
-    def create_candidate(self):
+    def create_candidate(self, project, dob, sex, site):
         resp = requests.post(
-            url=self.url + '/candidates/',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data=json.dumps({
-                "Candidate": {
-                    "Project": 'Pumpernickel',
-                    "DoB": "1985-12-22",
-                    "Sex": "Female",
-                    "Site": 'Montreal',
+            url = self.url + '/candidates/',
+            headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            data = json.dumps({
+                "Candidate" : {
+                    "Project" : project,
+                    "DoB"     : dob,
+                    "Sex"     : sex,
+                    "Site"    : site,
                 }
             }),
             verify=False
@@ -147,3 +166,22 @@ class LorisAPI:
         print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
+        return json_resp
+
+    def create_visit(self, candid, visit, site, project, subproject):
+        resp = requests.put(
+            url = self.url + '/candidates/' + candid + '/' + visit,
+            headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            data = json.dumps({
+                "CandID" : candid,
+                "Visit"  : visit,
+                "Site"   : site,
+                "Battery": subproject,
+                "Project" : project
+            }),
+            verify = False
+        )
+
+        print(resp)
+        #json_resp = json.loads(resp.content.decode('ascii'))
+        #print(json_resp)
