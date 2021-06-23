@@ -66,9 +66,9 @@ const createMainWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
       nativeWindowOpen: true,
     },
-    width: 900,
+    width: 1000,
     height: 880,
-    minWidth: 900,
+    minWidth: 1000,
     minHeight: 880,
     backgroundColor: '#094580',
   });
@@ -150,7 +150,7 @@ app.on('ready', async () => {
         const schema = {
           lorisURL: {
             type: 'string',
-            format: 'url',
+            //format: 'url',
           },
         };
         const store = new Store({schema});

@@ -21,7 +21,7 @@ sudo apt-get install python3-venv
 python3 -m venv .
 source bin/activate
 pip install -r requirements.txt
-python3 -m python.pycat
+python3 -m python.eeg2bids
 ```
 
 **Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
