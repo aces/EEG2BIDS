@@ -9,7 +9,7 @@ from python.libs.loris_api import LorisAPI
 import csv
 
 # EEG2BIDS Wizard version
-appVersion = '1.0.0'
+appVersion = '1.0.1'
 
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
