@@ -16,6 +16,9 @@ import {
   SelectInput,
   TextareaInput,
 } from './elements/inputs';
+import {
+  Authentication,
+} from './elements/authentication';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -378,6 +381,7 @@ const Configuration = (props) => {
 
   return props.visible ? (
     <>
+      <Authentication/>
       <span className='header'>
         Data Configuration
       </span>

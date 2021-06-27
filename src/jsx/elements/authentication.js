@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 export const Authentication = (props) => {
   const handleClick = () => {
-    // Send current file to parent component
+
   };
   return (
     <>
