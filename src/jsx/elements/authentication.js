@@ -2,7 +2,12 @@ import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import '../../css/Authentication.css';
 
+import {
+  TextInput,
+} from './inputs';
+
 export const AuthenticationMessage = (props) => {
+  // React state
   const [loginStatus, setLoginStatus] = useState(false);
   const [loginMessage, setLoginMessage] = useState(
       'You are not logged in to LORIS Account',
@@ -50,8 +55,34 @@ AuthenticationMessage.propTypes = {
 };
 
 export const AuthenticationCredentials = (props) => {
+  // React state
+  const [lorisURL, setLorisURL] = useState('');
+  const [lorisUsername, setLorisUsername] = useState('');
+  const [lorisPassword, setLorisPassword] = useState('');
+  /**
+   * Close the Authentication Credentials
+   */
   const handleClose = () => {
     props.close(true);
+  };
+  /**
+   * onUserInput - input change by user.
+   * @param {string} name - element name
+   * @param {object|string|boolean} value - element value
+   */
+  const onUserInput = (name, value) => {
+    console.log(name);
+    switch (name) {
+      case 'lorisURL':
+        setLorisURL(value);
+        break;
+      case 'lorisUsername':
+        setLorisUsername(value);
+        break;
+      case 'lorisPassword':
+        setLorisPassword(value);
+        break;
+    }
   };
   const styleVisible = {visibility: props.show ? 'visible' : 'hidden'};
   const styleAnimation = {width: props.width ? props.width : 'auto'};
@@ -76,6 +107,30 @@ export const AuthenticationCredentials = (props) => {
               </span>
             </span>
             <div className='authCredentialsContent'>
+              <TextInput id='lorisURL'
+                name='lorisURL'
+                required={true}
+                label='URL of LORIS instance'
+                placeholder={'Example: https://loris.ca'}
+                value={lorisURL}
+                onUserInput={onUserInput}
+              />
+              <TextInput id='lorisUsername'
+                name='lorisUsername'
+                required={true}
+                label='Username'
+                placeholder={'Username'}
+                value={lorisUsername}
+                onUserInput={onUserInput}
+              />
+              <TextInput id='lorisPassword'
+                name='lorisPassword'
+                required={true}
+                label='Password'
+                placeholder={'Password'}
+                value={lorisPassword}
+                onUserInput={onUserInput}
+              />
               {props.children}
             </div>
           </div>
