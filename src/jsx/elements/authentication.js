@@ -15,6 +15,12 @@ export const AuthenticationMessage = (props) => {
    * Similar to componentDidMount and componentDidUpdate.
    */
   useEffect(() => {
+    const myAPI = window['myAPI'];
+    const credentials = myAPI.getLorisAuthenticationCredentials();
+    if (credentials) {
+      setLoginMessage('LORIS Account set as [todo username]');
+      setLoginLink('Sign in to another account..');
+    }
   }, []);
 
   /**

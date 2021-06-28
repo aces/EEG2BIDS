@@ -28,6 +28,13 @@ contextBridge.exposeInMainWorld('myAPI', {
     const {shell} = require('electron');
     shell.openExternal('https://mcin.ca');
   },
+  getLorisAuthenticationCredentials: () => {
+    // todo
+    return 'hello world';
+  },
+  setLorisAuthenticationCredentials: () => {
+    // todo
+  },
   openSettings: () => {
     const ipcRenderer = require('electron').ipcRenderer;
     ipcRenderer.send('openSettingsWindow', null);
