@@ -70,12 +70,13 @@
     "not op_mini all"
   ],
   "contributors": [
+    "Alizée Wickenheiser",
     "Christine Rogers",
     "Laëtitia Fesselier"
   ],
   "author": {
-    "name": "Alizée Wickenheiser",
-    "email": "alizee.wickenheiser@mcgill.ca",
+    "name": "Loris Team",
+    "email": "loris-dev@bic.mni.mcgill.ca",
     "url": "https://github.com/aces/eeg2bids"
   },
   "build": {

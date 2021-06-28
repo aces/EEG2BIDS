@@ -867,7 +867,7 @@ const Configuration = (props) => {
         </div>
       </div>
       <AuthenticationCredentials
-        title={'LORIS Authentication'}
+        title='LORIS Authentication'
         show={authCredentialsVisible}
         close={hideAuthCredentials}
         width='500px'
