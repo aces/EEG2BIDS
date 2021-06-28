@@ -2,8 +2,6 @@ import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Configuration.css';
-import Switch from 'react-switch';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 // Components
@@ -17,8 +15,11 @@ import {
   TextareaInput,
 } from './elements/inputs';
 import {
-  Authentication,
+  AuthenticationMessage,
+  AuthenticationCredentials,
 } from './elements/authentication';
+import Switch from 'react-switch';
+import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -115,6 +116,7 @@ const Configuration = (props) => {
     hour: '', minute: '', second: '',
     subtype: '',
   });
+  const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
 
   useEffect(() => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
@@ -379,9 +381,19 @@ const Configuration = (props) => {
   const createCandidate = () => {
   };
 
+  /**
+   * hideAuthCredentials - display AuthCredentials.
+   * @param {boolean} hidden
+   */
+  const hideAuthCredentials = (hidden) => {
+    setAuthCredentialsVisible(!hidden);
+  };
+
   return props.visible ? (
     <>
-      <Authentication/>
+      <AuthenticationMessage
+        setAuthCredentialsVisible={setAuthCredentialsVisible}
+      />
       <span className='header'>
         Data Configuration
       </span>
@@ -854,6 +866,12 @@ const Configuration = (props) => {
           </div>
         </div>
       </div>
+      <AuthenticationCredentials
+        title={'LORIS Authentication'}
+        show={authCredentialsVisible}
+        close={hideAuthCredentials}
+        width='500px'
+      />
     </>
   ) : null;
 };

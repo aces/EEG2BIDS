@@ -30,7 +30,7 @@ const Welcome = (props) => {
     myAPI.visitIssues();
   };
   /**
-   * openMCIN - Navigate browser to MCIN.
+   * openMNE - Navigate browser to MNE.
    */
   const openMNE = () => {
     const myAPI = window['myAPI'];
