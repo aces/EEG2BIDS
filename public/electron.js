@@ -138,12 +138,23 @@ app.on('ready', async () => {
         credentials.lorisUsername,
         credentials.lorisPassword,
     );
+    const Store = require('electron-store');
+    const schema = {
+      lorisURL: {
+        type: 'string',
+        format: 'url',
+      },
+    };
+    const store = new Store({schema});
+    store.set('lorisURL', credentials.lorisURL);
   });
   ipcMain.handle('getLorisAuthenticationCredentials', async (event, arg) => {
     const keytar = require('keytar');
     const credentials = await keytar.findCredentials('EEG2BIDS');
+    const Store = require('electron-store');
+    const store = new Store();
     return {
-      lorisURL: '',
+      lorisURL: store.get('lorisURL') ?? '',
       lorisUsername: credentials[0] ? credentials[0].account : '',
       lorisPassword: credentials[0] ? credentials[0].password : '',
     };
