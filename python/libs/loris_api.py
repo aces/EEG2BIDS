@@ -4,24 +4,12 @@ import urllib
 
 class LorisAPI:
     url = 'https://localhost/api/v0.0.4-dev/'
-    username = 'admin'
+    username = ''
     password = ''
-
-    #url = 'https://inhance-dev.loris.ca/api/v0.0.3/'
-    #username = 'admin'
-    #password = 'LORISitb2021!'
     token = ''
 
     def __init__(self):
         self.login()
-        #self.get_projects()
-        #self.get_sites()
-        #self.save_instrument()
-        #self.get_project('Pumpernickel')
-        #self.create_candidate()
-        #visit = self.get_visit(317604, 'Visit 01', 'Data Coordinating Center', 'Stale', 'Pumpernickel')
-        #print(visit)
-        #self.start_next_stage(317604, 'Visit 01', 'Data Coordinating Center', 'Stale', 'Pumpernickel', "2021-03-06")
 
     def login(self):
         resp = json.loads(requests.post(
@@ -32,7 +20,7 @@ class LorisAPI:
             },
             verify = False
         ).content.decode('ascii'))
-        
+
         if resp.get('error'):
             raise RuntimeError(resp.get('error'))
 
@@ -45,7 +33,7 @@ class LorisAPI:
             headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify = False
         )
-        
+
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp.get('Projects')
 
@@ -63,7 +51,7 @@ class LorisAPI:
             headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify = False
         )
-        
+
         json_resp = json.loads(resp.content.decode('ascii'))
         sites = json_resp.get('Sites')
         return sites
@@ -74,7 +62,7 @@ class LorisAPI:
             headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify = False
         )
-        
+
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp
 
@@ -97,7 +85,7 @@ class LorisAPI:
             }),
             verify = False
         )
-        
+
         print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
@@ -117,10 +105,10 @@ class LorisAPI:
             }),
             verify = False
         )
-        
+
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp
-    
+
     def start_next_stage(self, candid, visit, site, subproject, project, date):
         resp = requests.patch(
             url = self.url + '/candidates/' + str(candid) + '/' + urllib.parse.quote(visit),
@@ -153,8 +141,8 @@ class LorisAPI:
             }),
             verify = False
         )
-        
+
         print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
-    
+
