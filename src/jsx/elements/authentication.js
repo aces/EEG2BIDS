@@ -36,7 +36,7 @@ export const AuthenticationMessage = (props) => {
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
       appContext.setTask('lorisPassword', credentials.lorisPassword);
-      socketContext.emit('lorisCredentials', credentials);
+      socketContext.emit('set_loris_credentials', credentials);
     }
   }, []);
 
@@ -94,7 +94,7 @@ export const AuthenticationCredentials = (props) => {
       lorisPassword: lorisPassword,
     };
     myAPI.setLorisAuthenticationCredentials(credentials);
-    socketContext.emit('lorisCredentials', credentials);
+    socketContext.emit('set_loris_credentials', credentials);
     props.close(true);
   };
 

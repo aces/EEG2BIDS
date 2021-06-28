@@ -14,7 +14,7 @@ class LorisAPI:
     token = ''
 
     def __init__(self):
-        self.login()
+        # self.login()
         # self.get_projects()
         # self.get_sites()
         # self.save_instrument()

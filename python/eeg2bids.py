@@ -11,13 +11,20 @@ import csv
 # EEG2BIDS Wizard version
 appVersion = '1.0.1'
 
+# LORIS credentials of user
+lorisCredentials = {
+    'lorisURL': '',
+    'lorisUsername': '',
+    'lorisPassword': '',
+}
+
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 
 
 # Create Loris API handler.
-# loris_api = LorisAPI()
+loris_api = LorisAPI()
 
 
 @sio.event
@@ -51,27 +58,39 @@ def tarfile_bids(sid, data):
 
 
 @sio.event
+def set_loris_credentials(sid, data):
+    print('set_loris_credentials:', data)
+    lorisCredentials = data
+    loris_api.url = lorisCredentials.lorisURL
+    loris_api.username = lorisCredentials.lorisUsername
+    loris_api.password = lorisCredentials.lorisPassword
+    loris_api.login()
+    sio.emit('loris_sites', loris_api.get_sites())
+    sio.emit('loris_projects', loris_api.get_projects())
+
+
+@sio.event
 def get_loris_sites(sid):
     print('get_loris_sites has ran!')
-    # sio.emit('loris_sites', loris_api.get_sites())
+    sio.emit('loris_sites', loris_api.get_sites())
 
 
 @sio.event
 def get_loris_projects(sid):
     print('get_loris_projects has ran!')
-    # sio.emit('loris_projects', loris_api.get_projects())
+    sio.emit('loris_projects', loris_api.get_projects())
 
 
 @sio.event
 def get_loris_subprojects(sid, project):
     print('get_loris_subprojects has ran!')
-    # sio.emit('loris_subprojects', loris_api.get_subprojects(project))
+    sio.emit('loris_subprojects', loris_api.get_subprojects(project))
 
 
 @sio.event
 def get_loris_visits(sid, project):
     print('get_loris_visits has ran!')
-    # sio.emit('loris_visits', loris_api.get_visits(project))
+    sio.emit('loris_visits', loris_api.get_visits(project))
 
 
 @sio.event

@@ -151,7 +151,7 @@ const Configuration = (props) => {
    */
   useEffect(() => {
     if (socketContext) {
-      socketContext.emit('get_loris_sites');
+      // socketContext.emit('get_loris_sites');
       socketContext.on('loris_sites', (sites) => {
         const siteOpts = [];
         sites.map((site) => {
@@ -160,7 +160,7 @@ const Configuration = (props) => {
         state.siteOptions.set(siteOpts);
       });
 
-      socketContext.emit('get_loris_projects');
+      // socketContext.emit('get_loris_projects');
       socketContext.on('loris_projects', (projects) => {
         const projectOpts = [];
         Object.keys(projects).map((project) => {
