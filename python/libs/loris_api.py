@@ -8,30 +8,19 @@ class LorisAPI:
     username = ''
     password = ''
 
-    # url = 'https://inhance-dev.loris.ca/api/v0.0.3/'
-    # username = 'admin'
-    # password = 'LORISitb2021!'
     token = ''
 
     def __init__(self):
         # self.login()
-        # self.get_projects()
-        # self.get_sites()
-        # self.save_instrument()
-        # self.get_project('Pumpernickel')
-        # self.create_candidate()
-        # visit = self.get_visit(317604, 'Visit 01', 'Data Coordinating Center', 'Stale', 'Pumpernickel')
-        # print(visit)
-        # self.start_next_stage(317604, 'Visit 01', 'Data Coordinating Center', 'Stale', 'Pumpernickel', "2021-03-06")
 
     def login(self):
         resp = json.loads(requests.post(
-            url=self.url + 'login',
-            json={
-                'username': self.username,
+            url = self.url + 'login',
+            json = {
+                'username': self.username, 
                 'password': self.password
             },
-            verify=False
+            verify = False
         ).content.decode('ascii'))
 
         if resp.get('error'):

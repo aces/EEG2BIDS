@@ -122,6 +122,10 @@ const Configuration = (props) => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
   }, []);
 
+  useEffect(() => {
+    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
+  }, []);
+
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
@@ -683,7 +687,7 @@ const Configuration = (props) => {
             />
           </div>
         }
-        {state.participantEntryMode.get === 'loris' &&
+        {state.participantEntryMode.get == 'loris' &&
           <>
             <div className='small-pad'>
               <label className="label" htmlFor={props.id}>
@@ -732,7 +736,7 @@ const Configuration = (props) => {
             />
           </>
         }
-        {state.participantEntryMode.get === 'manual' &&
+        {state.participantEntryMode.get == 'manual' &&
           <>
             <div className='small-pad'>
               <TextInput id='participantID'

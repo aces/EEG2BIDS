@@ -21,6 +21,7 @@ lorisCredentials = {
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
+loris_api = LorisAPI()
 
 
 # Create Loris API handler.
@@ -71,27 +72,22 @@ def set_loris_credentials(sid, data):
     sio.emit('loris_projects', loris_api.get_projects())
 
 
-@sio.event
 def get_loris_sites(sid):
-    print('get_loris_sites has ran!')
     sio.emit('loris_sites', loris_api.get_sites())
 
-
+    
 @sio.event
 def get_loris_projects(sid):
-    print('get_loris_projects has ran!')
     sio.emit('loris_projects', loris_api.get_projects())
 
 
 @sio.event
 def get_loris_subprojects(sid, project):
-    print('get_loris_subprojects has ran!')
     sio.emit('loris_subprojects', loris_api.get_subprojects(project))
 
 
 @sio.event
 def get_loris_visits(sid, project):
-    print('get_loris_visits has ran!')
     sio.emit('loris_visits', loris_api.get_visits(project))
 
 
@@ -117,18 +113,18 @@ def ieeg_get_header(sid, data):
 def get_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('metadata file:', data)
-
+    
     if not data['file_path']:
         print('No file path found.')
         response = {
             'error': 'No file path found.',
         }
-    else:
+    else :    
         try:
             with open(data['file_path']) as fd:
                 reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
                 response = {
-                    'metadata': {rows['Field']: rows['Value'] for rows in reader}
+                    'metadata': {rows['Field']:rows['Value'] for rows in reader}
                 }
         except IOError:
             print("Could not read the metadata file.")
