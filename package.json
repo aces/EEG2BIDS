@@ -69,6 +69,10 @@
     "not ie <= 11",
     "not op_mini all"
   ],
+  "contributors": [
+    "Christine Rogers",
+    "Laëtitia Fesselier"
+  ],
   "author": {
     "name": "Alizée Wickenheiser",
     "email": "alizee.wickenheiser@mcgill.ca",
