@@ -1,5 +1,8 @@
 const {contextBridge} = require('electron');
 
+/**
+ * contextBridge should be cautious of security risk.
+ */
 contextBridge.exposeInMainWorld('myAPI', {
   dialog: () => {
     const {dialog} = require('@electron/remote');
@@ -24,6 +27,18 @@ contextBridge.exposeInMainWorld('myAPI', {
   visitMCIN: () => {
     const {shell} = require('electron');
     shell.openExternal('https://mcin.ca');
+  },
+  getLorisAuthenticationCredentials: async () => {
+    const ipcRenderer = require('electron').ipcRenderer;
+    const credentials = await ipcRenderer.invoke(
+        'getLorisAuthenticationCredentials',
+        null,
+    );
+    return credentials;
+  },
+  setLorisAuthenticationCredentials: (credentials) => {
+    const ipcRenderer = require('electron').ipcRenderer;
+    ipcRenderer.send('setLorisAuthenticationCredentials', credentials);
   },
   openSettings: () => {
     const ipcRenderer = require('electron').ipcRenderer;

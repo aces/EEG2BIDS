@@ -2,8 +2,6 @@ import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import '../css/Configuration.css';
-import Switch from 'react-switch';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 // Components
@@ -16,6 +14,12 @@ import {
   SelectInput,
   TextareaInput,
 } from './elements/inputs';
+import {
+  AuthenticationMessage,
+  AuthenticationCredentials,
+} from './elements/authentication';
+import Switch from 'react-switch';
+import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -112,6 +116,11 @@ const Configuration = (props) => {
     hour: '', minute: '', second: '',
     subtype: '',
   });
+  const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
+
+  useEffect(() => {
+    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
+  }, []);
 
   useEffect(() => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
@@ -128,13 +137,13 @@ const Configuration = (props) => {
     if (!isNaN(parseInt(state.edfHeader.get['year']))) {
       const date = new Date(
         state.edfHeader.get['year'] < 85 ?
-          '20' + state.edfHeader.get['year'] :
-          '19' + state.edfHeader.get['year'],
-        (state.edfHeader.get['month']-1),
-        state.edfHeader.get['day'],
-        state.edfHeader.get['hour'],
-        state.edfHeader.get['minute'],
-        state.edfHeader.get['second'],
+          Number('20' + state.edfHeader.get['year']) :
+          Number('19' + state.edfHeader.get['year']),
+        Number(state.edfHeader.get['month']-1),
+        Number(state.edfHeader.get['day']),
+        Number(state.edfHeader.get['hour']),
+        Number(state.edfHeader.get['minute']),
+        Number(state.edfHeader.get['second']),
       );
       state.recordingDate.set(date);
       appContext.setTask('recordingDate', date);
@@ -146,7 +155,7 @@ const Configuration = (props) => {
    */
   useEffect(() => {
     if (socketContext) {
-      socketContext.emit('get_loris_sites');
+      // socketContext.emit('get_loris_sites');
       socketContext.on('loris_sites', (sites) => {
         const siteOpts = [];
         sites.map((site) => {
@@ -155,7 +164,7 @@ const Configuration = (props) => {
         state.siteOptions.set(siteOpts);
       });
 
-      socketContext.emit('get_loris_projects');
+      // socketContext.emit('get_loris_projects');
       socketContext.on('loris_projects', (projects) => {
         const projectOpts = [];
         Object.keys(projects).map((project) => {
@@ -231,7 +240,7 @@ const Configuration = (props) => {
         state.LORIScompliant.set(value);
         break;
       case 'siteID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           value = '';
           state.siteUseAPI.set(false);
         } else {
@@ -245,7 +254,7 @@ const Configuration = (props) => {
         name = 'siteID';
         break;
       case 'projectID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.projectUseAPI.set(false);
           value = '';
         } else {
@@ -261,7 +270,7 @@ const Configuration = (props) => {
         name = 'projectID';
         break;
       case 'subprojectID_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.subprojectUseAPI.set(false);
           value = '';
         } else {
@@ -275,7 +284,7 @@ const Configuration = (props) => {
         name = 'subprojectID';
         break;
       case 'session_API':
-        if (value == 'Manual entry') {
+        if (value === 'Manual entry') {
           state.sessionUseAPI.set(false);
           value = '';
         } else {
@@ -376,8 +385,19 @@ const Configuration = (props) => {
   const createCandidate = () => {
   };
 
+  /**
+   * hideAuthCredentials - display AuthCredentials.
+   * @param {boolean} hidden
+   */
+  const hideAuthCredentials = (hidden) => {
+    setAuthCredentialsVisible(!hidden);
+  };
+
   return props.visible ? (
     <>
+      <AuthenticationMessage
+        setAuthCredentialsVisible={setAuthCredentialsVisible}
+      />
       <span className='header'>
         Data Configuration
       </span>
@@ -850,6 +870,12 @@ const Configuration = (props) => {
           </div>
         </div>
       </div>
+      <AuthenticationCredentials
+        title='LORIS Authentication'
+        show={authCredentialsVisible}
+        close={hideAuthCredentials}
+        width='500px'
+      />
     </>
   ) : null;
 };

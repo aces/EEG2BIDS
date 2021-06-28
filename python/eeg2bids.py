@@ -8,13 +8,24 @@ from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
 import csv
 
+# EEG2BIDS Wizard version
+appVersion = '1.0.1'
+
+# LORIS credentials of user
+lorisCredentials = {
+    'lorisURL': '',
+    'lorisUsername': '',
+    'lorisPassword': '',
+}
+
 # Create socket listener.
 sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
 app = socketio.WSGIApp(sio)
 loris_api = LorisAPI()
 
-# EEG2BIDS Wizard version
-appVersion = '1.0.0'
+
+# Create Loris API handler.
+loris_api = LorisAPI()
 
 
 @sio.event
@@ -27,8 +38,8 @@ def connect(sid, environ):
 def tarfile_bids_thread(data):
     iEEG.TarFile(data)
     response = {
-            'compression_time': 'example_5mins'
-        }
+        'compression_time': 'example_5mins'
+    }
     return eventlet.tpool.Proxy(response)
 
 
@@ -40,28 +51,45 @@ def tarfile_bids(sid, data):
     print('response received!')
     print(response)
     send = {
-            'compression_time': response['compression_time']
-        }
+        'compression_time': response['compression_time']
+    }
     print('send received!')
     print(send)
     sio.emit('response', send)
 
 
 @sio.event
+def set_loris_credentials(sid, data):
+    print('set_loris_credentials:', data)
+    lorisCredentials = data
+    if lorisCredentials.lorisURL.endswith('/'):
+        lorisCredentials.lorisURL = lorisCredentials.lorisURL[:-1]
+    loris_api.url = lorisCredentials.lorisURL + '/api/v0.0.4-dev/'
+    loris_api.username = lorisCredentials.lorisUsername
+    loris_api.password = lorisCredentials.lorisPassword
+    loris_api.login()
+    sio.emit('loris_sites', loris_api.get_sites())
+    sio.emit('loris_projects', loris_api.get_projects())
+
+
 def get_loris_sites(sid):
     sio.emit('loris_sites', loris_api.get_sites())
 
+    
 @sio.event
 def get_loris_projects(sid):
     sio.emit('loris_projects', loris_api.get_projects())
+
 
 @sio.event
 def get_loris_subprojects(sid, project):
     sio.emit('loris_subprojects', loris_api.get_subprojects(project))
 
+
 @sio.event
 def get_loris_visits(sid, project):
     sio.emit('loris_visits', loris_api.get_visits(project))
+
 
 @sio.event
 def ieeg_get_header(sid, data):
@@ -79,6 +107,7 @@ def ieeg_get_header(sid, data):
             'error': 'Failed to retrieve EDF header information',
         }
     sio.emit('edf_header', response)
+
 
 @sio.event
 def get_metadata(sid, data):
@@ -104,6 +133,7 @@ def get_metadata(sid, data):
             }
 
     sio.emit('metadata', response)
+
 
 def edf_to_bids_thread(data):
     print('data is ')
