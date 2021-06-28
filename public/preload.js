@@ -34,8 +34,6 @@ contextBridge.exposeInMainWorld('myAPI', {
         'getLorisAuthenticationCredentials',
         null,
     );
-    console.log('credentials is ');
-    console.log(credentials);
     return credentials;
   },
   setLorisAuthenticationCredentials: (credentials) => {

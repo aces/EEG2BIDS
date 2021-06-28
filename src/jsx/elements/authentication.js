@@ -36,10 +36,6 @@ export const AuthenticationMessage = (props) => {
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
       appContext.setTask('lorisPassword', credentials.lorisPassword);
-      console.log('Check here 1:');
-      console.log(appContext.getFromTask('lorisURL'));
-      console.log(appContext.getFromTask('lorisUsername'));
-      console.log(appContext.getFromTask('lorisPassword'));
     }
   }, []);
 
