@@ -61,7 +61,9 @@ def tarfile_bids(sid, data):
 def set_loris_credentials(sid, data):
     print('set_loris_credentials:', data)
     lorisCredentials = data
-    loris_api.url = lorisCredentials.lorisURL
+    if lorisCredentials.lorisURL.endswith('/'):
+        lorisCredentials.lorisURL = lorisCredentials.lorisURL[:-1]
+    loris_api.url = lorisCredentials.lorisURL + '/api/v0.0.4-dev/'
     loris_api.username = lorisCredentials.lorisUsername
     loris_api.password = lorisCredentials.lorisPassword
     loris_api.login()
