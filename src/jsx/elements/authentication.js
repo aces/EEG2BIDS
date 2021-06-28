@@ -30,7 +30,12 @@ export const AuthenticationMessage = (props) => {
   useEffect(async () => {
     const myAPI = window['myAPI'];
     const credentials = await myAPI.getLorisAuthenticationCredentials();
-    if (credentials) {
+    console.log(credentials);
+    if (credentials &&
+      credentials.lorisURL &&
+      credentials.lorisUsername &&
+      credentials.lorisPassword
+    ) {
       setLoginMessage(`LORIS Account set as ${credentials.lorisUsername}`);
       setLoginLink('Sign in to another account..');
       appContext.setTask('lorisURL', credentials.lorisURL);
@@ -39,6 +44,22 @@ export const AuthenticationMessage = (props) => {
       socketContext.emit('set_loris_credentials', credentials);
     }
   }, []);
+
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(async () => {
+    if (socketContext) {
+      socketContext.on('loris_login_response', (data) => {
+        if (data.error) {
+          // todo display error message - login failure
+        } else {
+          setLoginMessage(`LORIS Account set as ${appContext.lorisUsername}`);
+          setLoginLink('Sign in to another account..');
+        }
+      });
+    }
+  }, [socketContext]);
 
   /**
    * User clicked sign in..
