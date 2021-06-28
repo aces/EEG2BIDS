@@ -68,6 +68,7 @@ def set_loris_credentials(sid, data):
     loris_api.username = lorisCredentials.lorisUsername
     loris_api.password = lorisCredentials.lorisPassword
     loris_api.login()
+    sio.emit('loris_login_response', {'success': 200})
     sio.emit('loris_sites', loris_api.get_sites())
     sio.emit('loris_projects', loris_api.get_projects())
 
@@ -75,7 +76,7 @@ def set_loris_credentials(sid, data):
 def get_loris_sites(sid):
     sio.emit('loris_sites', loris_api.get_sites())
 
-    
+
 @sio.event
 def get_loris_projects(sid):
     sio.emit('loris_projects', loris_api.get_projects())
@@ -113,13 +114,13 @@ def ieeg_get_header(sid, data):
 def get_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('metadata file:', data)
-    
+
     if not data['file_path']:
         print('No file path found.')
         response = {
             'error': 'No file path found.',
         }
-    else :    
+    else :
         try:
             with open(data['file_path']) as fd:
                 reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
