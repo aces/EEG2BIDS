@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import '../../css/Authentication.css';
 
@@ -10,6 +10,16 @@ export const AuthenticationMessage = (props) => {
   const [loginLink, setLoginLink] = useState(
       'Log in...',
   );
+
+  /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+  }, []);
+
+  /**
+   * User clicked sign in..
+   */
   const handleClick = () => {
     props.setAuthCredentialsVisible(true);
     if (loginStatus) {
@@ -19,16 +29,14 @@ export const AuthenticationMessage = (props) => {
     }
   };
   return (
-    <>
-      <div className='authMessageContainer'>
-        <span className='loginMessage'>
-          {loginMessage}
-        </span>
-        <a className='loginLink' onClick={handleClick}>
-          &nbsp;&nbsp;&nbsp;&nbsp;{loginLink}
-        </a>
-      </div>
-    </>
+    <div className='authMessageContainer'>
+      <span className='loginMessage'>
+        {loginMessage}
+      </span>
+      <a className='loginLink' onClick={handleClick}>
+        &nbsp;&nbsp;&nbsp;&nbsp;{loginLink}
+      </a>
+    </div>
   );
 };
 AuthenticationMessage.propTypes = {

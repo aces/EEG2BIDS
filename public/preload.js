@@ -1,5 +1,8 @@
 const {contextBridge} = require('electron');
 
+/**
+ * contextBridge should be cautious of security risk.
+ */
 contextBridge.exposeInMainWorld('myAPI', {
   dialog: () => {
     const {dialog} = require('@electron/remote');
