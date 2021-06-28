@@ -28,12 +28,19 @@ contextBridge.exposeInMainWorld('myAPI', {
     const {shell} = require('electron');
     shell.openExternal('https://mcin.ca');
   },
-  getLorisAuthenticationCredentials: () => {
-    // todo
-    return 'hello world';
+  getLorisAuthenticationCredentials: async () => {
+    const ipcRenderer = require('electron').ipcRenderer;
+    const credentials = await ipcRenderer.invoke(
+        'getLorisAuthenticationCredentials',
+        null,
+    );
+    console.log('credentials is ');
+    console.log(credentials);
+    return credentials;
   },
-  setLorisAuthenticationCredentials: () => {
-    // todo
+  setLorisAuthenticationCredentials: (credentials) => {
+    const ipcRenderer = require('electron').ipcRenderer;
+    ipcRenderer.send('setLorisAuthenticationCredentials', credentials);
   },
   openSettings: () => {
     const ipcRenderer = require('electron').ipcRenderer;

@@ -12,6 +12,10 @@ import {
 } from './inputs';
 
 export const AuthenticationMessage = (props) => {
+  // React Context
+  const appContext = useContext(AppContext);
+  const socketContext = useContext(SocketContext);
+
   // React state
   const [loginStatus, setLoginStatus] = useState(false);
   const [loginMessage, setLoginMessage] = useState(
@@ -24,12 +28,19 @@ export const AuthenticationMessage = (props) => {
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
-  useEffect(() => {
+  useEffect(async () => {
     const myAPI = window['myAPI'];
-    const credentials = myAPI.getLorisAuthenticationCredentials();
+    const credentials = await myAPI.getLorisAuthenticationCredentials();
     if (credentials) {
       setLoginMessage('LORIS Account set as [todo username]');
       setLoginLink('Sign in to another account..');
+      appContext.setTask('lorisURL', credentials.lorisURL);
+      appContext.setTask('lorisUsername', credentials.lorisUsername);
+      appContext.setTask('lorisPassword', credentials.lorisPassword);
+      console.log('Check here 1:');
+      console.log(appContext.getFromTask('lorisURL'));
+      console.log(appContext.getFromTask('lorisUsername'));
+      console.log(appContext.getFromTask('lorisPassword'));
     }
   }, []);
 
@@ -72,17 +83,25 @@ export const AuthenticationCredentials = (props) => {
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
-  useEffect(() => {
-    setLorisURL(appContext.getFromTask('lorisURL'));
-    setLorisUsername(appContext.getFromTask('lorisUsername'));
-    setLorisPassword(appContext.getFromTask('lorisPassword'));
+  useEffect(async () => {
+    const myAPI = window['myAPI'];
+    const credentials = await myAPI.getLorisAuthenticationCredentials();
+    setLorisURL(credentials.lorisURL);
+    setLorisUsername(credentials.lorisUsername);
+    setLorisPassword(credentials.lorisPassword);
   }, []);
 
   /**
    * Close the Authentication Credentials
+   *   but first update (?new) credentials.
    */
   const handleClose = () => {
-    // todo send update - user credentials changed
+    const myAPI = window['myAPI'];
+    myAPI.setLorisAuthenticationCredentials({
+      lorisURL: lorisURL,
+      lorisUsername: lorisUsername,
+      lorisPassword: lorisPassword,
+    });
     props.close(true);
   };
 
