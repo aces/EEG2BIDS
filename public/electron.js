@@ -131,23 +131,31 @@ app.on('ready', async () => {
       createSettingsWindow();
     }
   });
-  ipcMain.on('setLorisAuthenticationCredentials', (event, credentials) => {
-    const keytar = require('keytar');
-    keytar.setPassword(
-        'EEG2BIDS',
-        credentials.lorisUsername,
-        credentials.lorisPassword,
-    );
-    const Store = require('electron-store');
-    const schema = {
-      lorisURL: {
-        type: 'string',
-        format: 'url',
-      },
-    };
-    const store = new Store({schema});
-    store.set('lorisURL', credentials.lorisURL);
-  });
+  ipcMain.on('setLorisAuthenticationCredentials',
+      async (event, credentials) => {
+        const keytar = require('keytar');
+        // Delete all old credentials
+        const services = await keytar.findCredentials('EEG2BIDS');
+        for (const service of services) {
+          await keytar.deletePassword('EEG2BIDS', service.account);
+        }
+        // Set new credentials (secure)
+        await keytar.setPassword(
+            'EEG2BIDS',
+            credentials.lorisUsername,
+            credentials.lorisPassword,
+        );
+        // Set lorisURL in electron-store (not secure)
+        const Store = require('electron-store');
+        const schema = {
+          lorisURL: {
+            type: 'string',
+            format: 'url',
+          },
+        };
+        const store = new Store({schema});
+        store.set('lorisURL', credentials.lorisURL);
+      });
   ipcMain.handle('getLorisAuthenticationCredentials', async (event, arg) => {
     const keytar = require('keytar');
     const credentials = await keytar.findCredentials('EEG2BIDS');

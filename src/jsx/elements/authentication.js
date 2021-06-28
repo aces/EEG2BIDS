@@ -17,7 +17,6 @@ export const AuthenticationMessage = (props) => {
   const socketContext = useContext(SocketContext);
 
   // React state
-  const [loginStatus, setLoginStatus] = useState(false);
   const [loginMessage, setLoginMessage] = useState(
       'You are not logged in to LORIS Account',
   );
@@ -32,7 +31,7 @@ export const AuthenticationMessage = (props) => {
     const myAPI = window['myAPI'];
     const credentials = await myAPI.getLorisAuthenticationCredentials();
     if (credentials) {
-      setLoginMessage('LORIS Account set as [todo username]');
+      setLoginMessage(`LORIS Account set as ${credentials.lorisUsername}`);
       setLoginLink('Sign in to another account..');
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
@@ -49,11 +48,6 @@ export const AuthenticationMessage = (props) => {
    */
   const handleClick = () => {
     props.setAuthCredentialsVisible(true);
-    if (loginStatus) {
-      // Already logged in.
-    } else {
-      // Not logged in.
-    }
   };
   return (
     <div className='authMessageContainer'>
