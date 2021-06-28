@@ -70,9 +70,19 @@ export const AuthenticationCredentials = (props) => {
   const [lorisPassword, setLorisPassword] = useState('');
 
   /**
+   * Similar to componentDidMount and componentDidUpdate.
+   */
+  useEffect(() => {
+    setLorisURL(appContext.getFromTask('lorisURL'));
+    setLorisUsername(appContext.getFromTask('lorisUsername'));
+    setLorisPassword(appContext.getFromTask('lorisPassword'));
+  }, []);
+
+  /**
    * Close the Authentication Credentials
    */
   const handleClose = () => {
+    // todo send update - user credentials changed
     props.close(true);
   };
 
@@ -93,6 +103,8 @@ export const AuthenticationCredentials = (props) => {
         setLorisPassword(value);
         break;
     }
+    // Update the 'task' of app context.
+    appContext.setTask(name, value);
   };
 
   // Styling for rendering

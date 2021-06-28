@@ -52,7 +52,7 @@ const App = () => {
           setTask(task);
         },
         getFromTask: (key) => {
-          return task[key];
+          return task[key] ?? '';
         },
       }}>
         <>
