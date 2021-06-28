@@ -5,7 +5,7 @@ import urllib
 
 class LorisAPI:
     url = 'https://localhost/api/v0.0.4-dev/'
-    username = 'admin'
+    username = ''
     password = ''
 
     # url = 'https://inhance-dev.loris.ca/api/v0.0.3/'
