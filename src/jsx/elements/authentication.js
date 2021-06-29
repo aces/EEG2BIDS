@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useContext} from 'react';
 import {AppContext} from '../../context';
 import PropTypes from 'prop-types';
-import '../../css/Authentication.css';
+import styles from '../../css/Authentication.module.css';
 
 // Socket.io
 import {SocketContext} from '../socket.io';
@@ -23,7 +23,6 @@ export const AuthenticationMessage = (props) => {
   const [loginLink, setLoginLink] = useState(
       'Log in...',
   );
-  const [loginSuccess, setLoginSuccess] = useState(false);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -36,8 +35,6 @@ export const AuthenticationMessage = (props) => {
       credentials.lorisUsername &&
       credentials.lorisPassword
     ) {
-      // setLoginMessage(`LORIS Account set as ${credentials.lorisUsername}`);
-      // setLoginLink('Sign in to another account..');
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
       appContext.setTask('lorisPassword', credentials.lorisPassword);
@@ -51,8 +48,6 @@ export const AuthenticationMessage = (props) => {
   useEffect(async () => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
-        console.log('loris_login_response has ran!');
-        console.log(data);
         if (data.error) {
           setLoginMessage(`Your credentials are incorrect!`);
           setLoginLink('Log in...');
@@ -71,11 +66,11 @@ export const AuthenticationMessage = (props) => {
     props.setAuthCredentialsVisible(true);
   };
   return (
-    <div className='authMessageContainer'>
-      <span className='loginMessage'>
+    <div className={styles.authMessageContainer}>
+      <span className={styles.loginMessage}>
         {loginMessage}
       </span>
-      <a className='loginLink' onClick={handleClick}>
+      <a className={styles.loginLink} onClick={handleClick}>
         &nbsp;&nbsp;&nbsp;&nbsp;{loginLink}
       </a>
     </div>
@@ -117,8 +112,14 @@ export const AuthenticationCredentials = (props) => {
       lorisUsername: lorisUsername,
       lorisPassword: lorisPassword,
     };
-    myAPI.setLorisAuthenticationCredentials(credentials);
-    socketContext.emit('set_loris_credentials', credentials);
+    if (credentials &&
+      credentials.lorisURL &&
+      credentials.lorisUsername &&
+      credentials.lorisPassword
+    ) {
+      myAPI.setLorisAuthenticationCredentials(credentials);
+      socketContext.emit('set_loris_credentials', credentials);
+    }
     props.close(true);
   };
 
@@ -151,22 +152,22 @@ export const AuthenticationCredentials = (props) => {
     transform: props.show ? 'translateY(0)' : 'translateY(-25%)',
   };
   return (
-    <div className='authCredentialsOverlay'
+    <div className={styles.authCredentialsOverlay}
       style={styleVisible}>
-      <div className='authCredentialsContainer'
+      <div className={styles.authCredentialsContainer}
         style={styleVisible}>
-        <div className='authCredentialsAnimation'
+        <div className={styles.authCredentialsAnimation}
           style={styleAnimation}>
-          <div className='authCredentialsDialog'
+          <div className={styles.authCredentialsDialog}
             style={styleContainer}>
-            <span className='authCredentialsHeader'>
+            <span className={styles.authCredentialsHeader}>
               {props.title}
-              <span className='authCredentialsHeaderClose'
+              <span className={styles.authCredentialsHeaderClose}
                 onClick={handleClose}>
                 ×
               </span>
             </span>
-            <div className='authCredentialsContent'>
+            <div className={styles.authCredentialsContent}>
               <TextInput id='lorisURL'
                 name='lorisURL'
                 required={true}

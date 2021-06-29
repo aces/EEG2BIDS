@@ -1,14 +1,14 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
-import '../css/Converter.css';
+import styles from '../css/Converter.module.css';
 
 // Display Loading, Success, Error
 import Modal from './elements/modal';
 import {TextInput} from './elements/inputs';
 
 // Socket.io
-import {Event, SocketContext} from './socket.io';
+import {SocketContext} from './socket.io';
 
 /**
  * Converter - the EDF to BIDS component.
@@ -35,14 +35,16 @@ const Converter = (props) => {
     },
     message: {
       loading: <span style={{padding: '40px'}}>
-        <span className='bids-loading'>
+        <span className={styles['bids-loading']}>
             BIDS creation in progress<span>.</span><span>.</span><span>.</span>
             😴
         </span>
       </span>,
       success: <span style={{padding: '40px'}}>
-        <span className='bids-success'>
-          <span className='checkmark'>&#x2714;</span> Success creating BIDS!
+        <span className={styles['bids-success']}>
+          <span className={styles.checkmark}>
+            &#x2714;
+          </span> Success creating BIDS!
         </span></span>,
       error: '',
     },
@@ -108,7 +110,7 @@ const Converter = (props) => {
       time = time.slice(0, time.lastIndexOf('-')) + ' ' +
         time.slice(time.lastIndexOf('-')+1);
       setSuccessMessage(<>
-        <a className='task-finished'>Last created at: {time}</a>
+        <a className={styles['task-finished']}>Last created at: {time}</a>
       </>);
     }
   }, [outputTime]);
@@ -133,7 +135,7 @@ const Converter = (props) => {
         } else if (message['error']) {
           setModalText((prevState) => {
             prevState.message['error'] = (
-              <div className='bids-errors'>
+              <div className={styles['bids-errors']}>
                 {message['error'].map((error, i) =>
                   <span key={i}>{error}<br/></span>)}
               </div>
@@ -161,7 +163,7 @@ const Converter = (props) => {
             <div key={key}>
               {invalidKeys.indexOf(key) > -1 ?
                 <>
-                  <span className='warning'>&#x26A0;</span>
+                  <span className={styles.warning}>&#x26A0;</span>
                   {key}: {metadata[key]}
                 </> :
                 <>
@@ -173,14 +175,14 @@ const Converter = (props) => {
       });
       metadataReport.push(
           <p key="message">
-            <span className='warning'>&#x26A0;</span>
+            <span className={styles.warning}>&#x26A0;</span>
             Invalid keys for the selected modality will be ignored.
           </p>,
       );
     } else if ('error' in appContext.getFromTask('bidsMetadata')) {
       metadataReport.push(
           <div key="error ">
-            <span className='warning'>&#x26A0;</span>
+            <span className={styles.warning}>&#x26A0;</span>
             {appContext.getFromTask('bidsMetadata')['error']}
           </div>,
       );
@@ -207,13 +209,13 @@ const Converter = (props) => {
             {appContext.getFromTask('edfData')?.['error'] ?
               <div>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 {appContext.getFromTask('edfData')['error']}
               </div> :
               appContext.getFromTask('edfData') &&
               appContext.getFromTask('edfData')?.['files']?.length > 0 ?
                 <>
-                  <span className='checkmark'>&#x2714;</span>
+                  <span className={styles.checkmark}>&#x2714;</span>
                   EDF data file(s):&nbsp;
                   {appContext.getFromTask('edfData')['files']
                       .map((edfFile) => edfFile['name']).join(', ')
@@ -221,7 +223,9 @@ const Converter = (props) => {
                 </> :
                 <>
                   {error = true}
-                  <span className='error'>&#x274C;</span> No EDF file selected.
+                  <span className={styles.error}>
+                    &#x274C;
+                  </span> No EDF file selected.
                 </>
             }
           </div>
@@ -230,11 +234,11 @@ const Converter = (props) => {
               Object.keys(appContext.getFromTask('eventsTSV'))
                   .length > 0) ?
               <>
-                <span className='checkmark'>&#x2714;</span> Including:
+                <span className={styles.checkmark}>&#x2714;</span> Including:
                 {appContext.getFromTask('eventsTSV').name}
               </> :
               <>
-                <span className='warning'>&#x26A0;</span>
+                <span className={styles.warning}>&#x26A0;</span>
                 No events.tsv selected.
               </>
             }
@@ -242,13 +246,13 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('bidsDirectory') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 BIDS output directory:
                 {appContext.getFromTask('bidsDirectory')}
               </> :
               <>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 No BIDS output directory selected.
               </>
             }
@@ -259,12 +263,12 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('taskName') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Task name: {appContext.getFromTask('taskName')}
               </> :
               <>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 Task name is not specified.
               </>
             }
@@ -272,14 +276,14 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('siteID') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Site: {appContext.getFromTask('siteID')}
               </> :
               <>
                 {appContext.getFromTask('LORIScompliant') ?
                   <>
                     {error = true}
-                    <span className='error'>&#x274C;</span>
+                    <span className={styles.error}>&#x274C;</span>
                     Site is not specified.
                   </> :
                   <span>Site is not specified.</span>
@@ -290,14 +294,14 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('projectID') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Project: {appContext.getFromTask('projectID')}
               </> :
               <>
                 {appContext.getFromTask('LORIScompliant') ?
                   <>
                     {error = true}
-                    <span className='error'>&#x274C;</span>
+                    <span className={styles.error}>&#x274C;</span>
                     Project is not specified.
                   </> :
                   <span>
@@ -310,7 +314,7 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('subprojectID') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 SubProject: {appContext.getFromTask('subprojectID')}
               </> :
               <>
@@ -318,7 +322,7 @@ const Converter = (props) => {
                   <>
                     <>
                       {error = true}
-                      <span className='error'>&#x274C;</span>
+                      <span className={styles.error}>&#x274C;</span>
                       Subproject is not specified.
                     </>
                   </> :
@@ -336,18 +340,18 @@ const Converter = (props) => {
                 appContext.getFromTask('session').indexOf('-') >= 0 ?
                   <>
                     {error = true}
-                    <span className='error'>&#x274C;</span>
+                    <span className={styles.error}>&#x274C;</span>
                     Session is containing a dash/space.
                   </> :
                   <>
-                    <span className='checkmark'>&#x2714;</span>
+                    <span className={styles.checkmark}>&#x2714;</span>
                     Session: {appContext.getFromTask('session')}
                   </>
                 }
               </> :
               <>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 Session is not specified.
               </>
             }
@@ -355,11 +359,11 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('lineFreq') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Powerline frequency: {appContext.getFromTask('lineFreq')}
               </> :
               <>
-                <span className='warning'>&#x26A0;</span>
+                <span className={styles.warning}>&#x26A0;</span>
                 Powerline frequency is not specified.
               </>
             }
@@ -367,12 +371,12 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('reference') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Reference: {appContext.getFromTask('reference')}
               </> :
               <>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 Reference is not specified.
               </>
             }
@@ -384,13 +388,13 @@ const Converter = (props) => {
             {appContext.getFromTask('participantCandID')?.error ?
               <>
                 {error = true}
-                <span className='error'>&#x274C;</span>
+                <span className={styles.error}>&#x274C;</span>
                 {appContext.getFromTask('participantCandID').error}
               </> :
               <>
                 {appContext.getFromTask('participantCandID') &&
                   <>
-                    <span className='checkmark'>&#x2714;</span>
+                    <span className={styles.checkmark}>&#x2714;</span>
                     LORIS CandID: {appContext.getFromTask(
                         'participantCandID',
                     )}
@@ -402,13 +406,13 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('participantID') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
+                <span className={styles.checkmark}>&#x2714;</span>
                 Participant ID: {appContext.getFromTask('participantID')}
               </> :
               <>
                 {error = true}
                 <>
-                  <span className='error'>&#x274C;</span>
+                  <span className={styles.error}>&#x274C;</span>
                   Participant ID is not specified.
                 </>
               </>
@@ -423,7 +427,7 @@ const Converter = (props) => {
                 {metadataReport}
               </> :
               <>
-                <span className='warning'>&#x26A0;</span>
+                <span className={styles.warning}>&#x26A0;</span>
                 No EEG Parameter metadata file selected.
               </>
             }
@@ -438,7 +442,7 @@ const Converter = (props) => {
                 {appContext.getFromTask('subjectID')}
               </> :
               <>
-                <span className='warning'>&#x26A0;</span>
+                <span className={styles.warning}>&#x26A0;</span>
                 Subject ID is not modified.
               </>
             }
@@ -488,7 +492,7 @@ const Converter = (props) => {
           />
           {!preparedBy &&
             <div>
-              <span className='error'>&#x274C;</span>
+              <span className={styles.error}>&#x274C;</span>
               Please enter your name for verification tracking purposes.
             </div>
           }
