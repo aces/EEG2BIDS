@@ -46,31 +46,25 @@ def tarfile_bids_thread(data):
 @sio.event
 def tarfile_bids(sid, data):
     # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
-    print('tarfile_bids:', data)
     response = eventlet.tpool.execute(tarfile_bids_thread, data)
-    print('response received!')
-    print(response)
     send = {
         'compression_time': response['compression_time']
     }
-    print('send received!')
-    print(send)
     sio.emit('response', send)
 
 
 @sio.event
 def set_loris_credentials(sid, data):
-    print('set_loris_credentials:', data)
-    lorisCredentials = data
-    if 'lorisURL' not in lorisCredentials:
+    loris_credentials = data
+    if 'lorisURL' not in loris_credentials:
         print('error with credentials:', data)
         return
 
-    if lorisCredentials['lorisURL'].endswith('/'):
-        lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
-    loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
-    loris_api.username = lorisCredentials['lorisUsername']
-    loris_api.password = lorisCredentials['lorisPassword']
+    if loris_credentials['lorisURL'].endswith('/'):
+        loris_credentials['lorisURL'] = loris_credentials['lorisURL'][:-1]
+    loris_api.url = loris_credentials['lorisURL'] + '/api/v0.0.4-dev/'
+    loris_api.username = loris_credentials['lorisUsername']
+    loris_api.password = loris_credentials['lorisPassword']
     loris_api.login()
 
     if loris_api.token:
