@@ -417,8 +417,11 @@ const Configuration = (props) => {
           </div>,
         )}
       </div>
-      <span className='header'>
+      <span className='header-with-hint'>
         Select data and metadata
+        <p className={'header-hint'}>
+          ⓘ for details please see BIDS specification
+        </p>
       </span>
       <div className='info'>
         <div className='small-pad'>
