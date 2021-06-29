@@ -66,18 +66,17 @@ def set_loris_credentials(sid, data):
     loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
     loris_api.username = lorisCredentials['lorisUsername']
     loris_api.password = lorisCredentials['lorisPassword']
-    loris_api.login()
+    login_succeeded = loris_api.login()
 
-    if loris_api.token:
+    if login_succeeded['error']:
+        sio.emit('loris_login_response', {'error': "Can't login to the LORIS instance."})
+    else:
         sio.emit('loris_login_response', {
             'success': 200,
             'lorisUsername': loris_api.username
         })
-    else:
-        sio.emit('loris_login_response', {'error': "Can't login to the LORIS instance."})
-
-    sio.emit('loris_sites', loris_api.get_sites())
-    sio.emit('loris_projects', loris_api.get_projects())
+        sio.emit('loris_sites', loris_api.get_sites())
+        sio.emit('loris_projects', loris_api.get_projects())
 
 
 def get_loris_sites(sid):

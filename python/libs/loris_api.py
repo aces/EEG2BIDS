@@ -18,17 +18,19 @@ class LorisAPI:
             },
             verify=False
         )
-
-        print(resp)
-
-        resp_json = json.loads(resp.content.decode('ascii'))
-
-        if resp_json.get('error'):
-            raise RuntimeError(resp_json.get('error'))
-
-        self.token = resp_json.get('token')
-
-        print(self.token)
+        login_succeeded = {}
+        if resp.status_code == 405:
+            login_succeeded = {'error': 'User credentials error!'}
+            print('User credentials error!')
+        else:
+            resp_json = json.loads(resp.content.decode('ascii'))
+            print(resp_json)
+            if resp_json.get('error'):
+                login_succeeded = {'error': resp_json.get('error')}
+            else:
+                self.token = resp_json.get('token')
+                print(self.token)
+        return login_succeeded
 
     def get_projects(self):
         resp = requests.get(
