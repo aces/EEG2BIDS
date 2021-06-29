@@ -242,7 +242,7 @@ def edf_to_bids_thread(data):
 
             # store subject_id for Modifier
             data['subject_id'] = iEEG.Converter.m_info['subject_id']
-            data['appVersion'] = app_version
+            data['appVersion'] = appVersion
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']
