@@ -23,6 +23,7 @@ export const AuthenticationMessage = (props) => {
   const [loginLink, setLoginLink] = useState(
       'Log in...',
   );
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -35,8 +36,8 @@ export const AuthenticationMessage = (props) => {
       credentials.lorisUsername &&
       credentials.lorisPassword
     ) {
-      setLoginMessage(`LORIS Account set as ${credentials.lorisUsername}`);
-      setLoginLink('Sign in to another account..');
+      // setLoginMessage(`LORIS Account set as ${credentials.lorisUsername}`);
+      // setLoginLink('Sign in to another account..');
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
       appContext.setTask('lorisPassword', credentials.lorisPassword);
@@ -50,8 +51,11 @@ export const AuthenticationMessage = (props) => {
   useEffect(async () => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
+        console.log('loris_login_response has ran!');
+        console.log(data);
         if (data.error) {
-          // todo display error message - login failure
+          setLoginMessage(`Your credentials are incorrect!`);
+          setLoginLink('Log in...');
         } else {
           console.log(data);
           setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
