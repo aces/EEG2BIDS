@@ -2,7 +2,6 @@ import os
 import mne
 from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
-import json
 
 
 class ReadError(PermissionError):
