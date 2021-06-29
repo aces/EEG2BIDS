@@ -8,19 +8,19 @@ class LorisAPI:
     username = ''
     password = ''
     token = ''
-    
+
     def login(self):
         resp = requests.post(
-            url = self.url + 'login',
-            json = {
+            url=self.url + 'login',
+            json={
                 'username': self.username,
                 'password': self.password
             },
-            verify = False
+            verify=False
         )
-        
+
         print(resp)
-        
+
         resp_json = json.loads(resp.content.decode('ascii'))
 
         if resp_json.get('error'):
@@ -47,7 +47,7 @@ class LorisAPI:
             verify=False
         )
 
-        print (resp)
+        print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp.get('Subprojects')
 
@@ -62,7 +62,7 @@ class LorisAPI:
             verify=False
         )
 
-        print (resp)
+        print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp.get('Visits')
 
@@ -150,14 +150,14 @@ class LorisAPI:
 
     def create_candidate(self, project, dob, sex, site):
         resp = requests.post(
-            url = self.url + '/candidates/',
-            headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data = json.dumps({
-                "Candidate" : {
-                    "Project" : project,
-                    "DoB"     : dob,
-                    "Sex"     : sex,
-                    "Site"    : site,
+            url=self.url + '/candidates/',
+            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            data=json.dumps({
+                "Candidate": {
+                    "Project": project,
+                    "DoB": dob,
+                    "Sex": sex,
+                    "Site": site,
                 }
             }),
             verify=False
@@ -170,18 +170,18 @@ class LorisAPI:
 
     def create_visit(self, candid, visit, site, project, subproject):
         resp = requests.put(
-            url = self.url + '/candidates/' + candid + '/' + visit,
-            headers = {'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data = json.dumps({
-                "CandID" : candid,
-                "Visit"  : visit,
-                "Site"   : site,
+            url=self.url + '/candidates/' + candid + '/' + visit,
+            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            data=json.dumps({
+                "CandID": candid,
+                "Visit": visit,
+                "Site": site,
                 "Battery": subproject,
-                "Project" : project
+                "Project": project
             }),
-            verify = False
+            verify=False
         )
 
         print(resp)
-        #json_resp = json.loads(resp.content.decode('ascii'))
-        #print(json_resp)
+        # json_resp = json.loads(resp.content.decode('ascii'))
+        # print(json_resp)

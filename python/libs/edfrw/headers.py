@@ -111,14 +111,14 @@ class EdfSubjectId:
         elif isinstance(dob, dt.date):
             self._dob = dob
         elif isinstance(dob, str):
+            try:
+                dob = dt.datetime.strptime(dob, ISO_DATE_FMT)
+            except ValueError:
                 try:
-                    dob = dt.datetime.strptime(dob, ISO_DATE_FMT)
-                except ValueError:
-                    try:
-                        dob = dt.datetime.strptime(dob, EDF_DOB_FMT)
-                    except ValueError as error:
-                        raise ValueError(error)
-                self._dob = dob.date()
+                    dob = dt.datetime.strptime(dob, EDF_DOB_FMT)
+                except ValueError as error:
+                    raise ValueError(error)
+            self._dob = dob.date()
         else:
             raise ValueError('Invalid date format')
 
@@ -289,7 +289,7 @@ class EdfSignal(object):
                'number_of_samples_in_data_record', 'reserved')
 
     # Byte size of each field
-    _sizes = (16, 80,  8,  8,  8,  8,  8, 80,  8, 32)
+    _sizes = (16, 80, 8, 8, 8, 8, 8, 80, 8, 32)
 
     # Slots are created by prepending an underscore to each field. Extra
     # extra fields 'sampling_freq' and 'gain' (not part of the EDF
@@ -306,7 +306,7 @@ class EdfSignal(object):
         # _update_gain, which is called every time the values are set
         # by their @property setters.
         self._digital_min = 0
-        self._digital_max =1
+        self._digital_max = 1
         self._physical_min = 0
         self._physical_max = 1
 
@@ -336,7 +336,7 @@ class EdfSignal(object):
         if len(value) > size:
             warnings.warn('Label is too long.')
             value = value[:size]
-        self._label = value.strip() #replace(' ', '_')
+        self._label = value.strip()  # replace(' ', '_')
 
     @property
     def transducer_type(self):
@@ -468,7 +468,6 @@ class EdfSignal(object):
 
 
 class EdfHeader:
-
     # Fields and sizes (i.e. number of bytes) as per the EDF
     # specification.
     _fields = ('version', 'subject_id', 'recording_id', 'startdate',
@@ -501,16 +500,16 @@ class EdfHeader:
         *duration_of_data_record* can be a float, but it is recommended
         to be an integer value.
         """
-        self.version = '0' # Version is always 0.
+        self.version = '0'  # Version is always 0.
         if date_time is None:
             date_time = dt.datetime.now()
         self.startdate = date_time
         self.starttime = date_time
         self.subject_id = EdfSubjectId(subject_code, subject_sex,
-                                     subject_dob, subject_name)
+                                       subject_dob, subject_name)
         self.recording_id = EdfRecordingId(date_time, experiment_id,
-                                         investigator_id,
-                                         equipment_code)
+                                           investigator_id,
+                                           equipment_code)
         self.reserved = reserved
 
         # From the EDF+ specs: "The 'number of data records' can only be
@@ -534,16 +533,16 @@ class EdfHeader:
                                                self.starttime.minute,
                                                self.starttime.second)
         main_hdr = main_hdr.format(
-                self.version,
-                self.subject_id,
-                self.recording_id,
-                startdate,
-                starttime,
-                self.number_of_bytes_in_header,
-                self.reserved,
-                self.number_of_data_records,
-                self.duration_of_data_record,
-                self.number_of_signals)
+            self.version,
+            self.subject_id,
+            self.recording_id,
+            startdate,
+            starttime,
+            self.number_of_bytes_in_header,
+            self.reserved,
+            self.number_of_data_records,
+            self.duration_of_data_record,
+            self.number_of_signals)
         main_hdr = main_hdr.encode('ascii')
         assert len(main_hdr) == 256
 
@@ -619,7 +618,7 @@ class EdfHeader:
                 raise EdfHeaderException('subject_id not understood')
         if not isinstance(value, EdfSubjectId):
             raise EdfHeaderException(
-                    'subject_id must be of class edfrw.EdfSubjectId')
+                'subject_id must be of class edfrw.EdfSubjectId')
         self._subject_id = value
 
     @property
@@ -636,12 +635,12 @@ class EdfHeader:
                 (start_str, startdate, experiment_id, investigator_id,
                  equipment_code) = value.split()
                 value = EdfRecordingId(startdate, experiment_id,
-                                    investigator_id, equipment_code)
+                                       investigator_id, equipment_code)
             except ValueError:
                 raise EdfHeaderException('recording_id not understood')
         if not isinstance(value, EdfRecordingId):
             raise EdfHeaderException(
-                    'recording_id must be of class edfrw.EdfRecordingId')
+                'recording_id must be of class edfrw.EdfRecordingId')
         self._recording_id = value
 
     @property
@@ -739,7 +738,6 @@ class EdfHeader:
 
 
 if __name__ == '__main__':
-
     fname = '../daq/data/SC4181E0-PSG.edf'
 
     header = EdfHeader(subject_dob='2016-08-09')

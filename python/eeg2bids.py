@@ -27,6 +27,7 @@ app = socketio.WSGIApp(sio)
 # Create Loris API handler.
 loris_api = LorisAPI()
 
+
 @sio.event
 def connect(sid, environ):
     print('connect: ', sid)
@@ -64,7 +65,7 @@ def set_loris_credentials(sid, data):
     if 'lorisURL' not in lorisCredentials:
         print('error with credentials:', data)
         return
-         
+
     if lorisCredentials['lorisURL'].endswith('/'):
         lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
     loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
@@ -113,10 +114,13 @@ def create_candidate_and_visit(sid, data):
     )
 
     if new_candidate['CandID']:
-        loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'], data['subproject'])
-        loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
+        loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
+                               data['subproject'])
+        loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
+                                   data['project'], data['date'])
         print('new_candidate_created')
         sio.emit('new_candidate_created', {'PSCID': new_candidate['PSCID']})
+
 
 @sio.event
 def get_edf_data(sid, data):
@@ -136,7 +140,8 @@ def get_edf_data(sid, data):
             anonymize = iEEG.Anonymize(file['path'])
             metadata = anonymize.get_header()
             year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
-            date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'], metadata[0]['minute'], metadata[0]['second'])
+            date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
+                                     metadata[0]['minute'], metadata[0]['second'])
 
             headers.append({
                 'file': file,
@@ -145,7 +150,7 @@ def get_edf_data(sid, data):
             })
 
         for i in range(1, len(headers)):
-            if set(headers[i-1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
+            if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
                 msg = 'The files selected contain more than one recording.'
                 print(msg)
                 response = {
@@ -196,7 +201,7 @@ def get_bids_metadata(sid, data):
             with open(data['file_path']) as fd:
                 reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
                 try:
-                    metadata = {rows['Field']:rows['Value'] for rows in reader}
+                    metadata = {rows['Field']: rows['Value'] for rows in reader}
                     diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']].keys()))
                     response = {
                         'metadata': metadata,

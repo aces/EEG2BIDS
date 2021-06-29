@@ -21,7 +21,6 @@ with edfrw. If not, see <http://www.gnu.org/licenses/>.
 
 
 class EdfWriter(object):
-
     # Size and position in the header of number_of_data_records (nr)
     _nr_size = 8
     _nr_pos = 236
@@ -113,7 +112,7 @@ class EdfWriter(object):
         current_pointer = self._f.tell()
         # Pack the number_of_data_records into bytes of the right size.
         nr = '{:<{}}'.format(
-                self.header.number_of_data_records, self._nr_size)
+            self.header.number_of_data_records, self._nr_size)
         nr = nr.encode()
         # Move pointer to the position in header and write value.
         self._f.seek(self._nr_pos)
@@ -125,7 +124,7 @@ class EdfWriter(object):
         self._f.flush()
 
     def close(self):
-        #self.write_header()
+        # self.write_header()
         self.update_number_of_records()
         self.flush()
         self._f.close()
