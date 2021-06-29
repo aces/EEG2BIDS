@@ -57,7 +57,6 @@ export const AuthenticationMessage = (props) => {
           setLoginMessage(`Your credentials are incorrect!`);
           setLoginLink('Log in...');
         } else {
-          console.log(data);
           setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
           setLoginLink('Sign in to another account..');
         }

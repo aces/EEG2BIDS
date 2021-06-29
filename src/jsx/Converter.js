@@ -332,8 +332,18 @@ const Converter = (props) => {
           <div>
             {appContext.getFromTask('session') ?
               <>
-                <span className='checkmark'>&#x2714;</span>
-                Session: {appContext.getFromTask('session')}
+                {appContext.getFromTask('session').indexOf(' ') >= 0 ||
+                appContext.getFromTask('session').indexOf('-') >= 0 ?
+                  <>
+                    {error = true}
+                    <span className='error'>&#x274C;</span>
+                    Session is containing a dash/space.
+                  </> :
+                  <>
+                    <span className='checkmark'>&#x2714;</span>
+                    Session: {appContext.getFromTask('session')}
+                  </>
+                }
               </> :
               <>
                 {error = true}
@@ -370,6 +380,25 @@ const Converter = (props) => {
         </div>
         <div className='small-pad'>
           <b>Review your participant details:</b>
+          <div>
+            {appContext.getFromTask('participantCandID')?.error ?
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                {appContext.getFromTask('participantCandID').error}
+              </> :
+              <>
+                {appContext.getFromTask('participantCandID') &&
+                  <>
+                    <span className='checkmark'>&#x2714;</span>
+                    LORIS CandID: {appContext.getFromTask(
+                        'participantCandID',
+                    )}
+                  </>
+                }
+              </>
+            }
+          </div>
           <div>
             {appContext.getFromTask('participantID') ?
               <>

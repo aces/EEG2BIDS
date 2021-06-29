@@ -36,8 +36,8 @@ const Configuration = (props) => {
 
   // React State
   const state = {};
-  state.errors = {};
-  [state.errors.get, state.errors.set] = useState([]);
+  /* state.errors = {};
+  [state.errors.get, state.errors.set] = useState({}); */
   state.edfFiles = {};
   [state.edfFiles.get, state.edfFiles.set] = useState([]);
   state.edfData = {};
@@ -97,6 +97,8 @@ const Configuration = (props) => {
     state.participantEntryMode.get,
     state.participantEntryMode.set,
   ] = useState('manual');
+  state.participantCandID = {};
+  [state.participantCandID.get, state.participantCandID.set] = useState('');
   state.participantID = {};
   [state.participantID.get, state.participantID.set] = useState('');
   state.participantDOB = {};
@@ -126,17 +128,37 @@ const Configuration = (props) => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
   }, []);
 
-  useEffect(() => {
-    state.errors.set([]);
-  }, [state.edfFiles.get]);
+  /* useEffect(() => {
+    state.errors.set({});
+  }, [state.edfFiles.get]); */
 
   useEffect(() => {
-    console.log(state.isAuthenticated.get);
-  }, [state.isAuthenticated.get]);
+    if (socketContext) {
+      socketContext.emit('get_participant_data', {
+        candID: state.participantCandID.get,
+      });
+    }
+  }, [state.participantCandID.get]);
 
   useEffect(() => {
-    console.log(state.participantEntryMode.get);
-  }, [state.participantEntryMode.get]);
+    if (!state.participantCandID.get || !state.session.get ||
+      !state.siteID.get || !state.projectID.get ||
+      !state.subprojectID.get || !state.edfData.get?.date) return;
+
+    const visitDate = state.edfData.get['date']
+        .toISOString().replace(/T.*/, '');
+
+    socketContext.emit('create_visit', {
+      candID: state.participantCandID.get,
+      project: state.projectID.get,
+      site: state.siteID.get,
+      subproject: state.subprojectID.get,
+      visit: state.session.get,
+      date: visitDate,
+    });
+  }, [state.participantCandID.get, state.session.get,
+    state.siteID.get, state.projectID.get, state.subprojectID.get,
+    state.edfData.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -162,9 +184,18 @@ const Configuration = (props) => {
   }, [state.bidsMetadataFile.get, state.modality.get]);
 
   useEffect(() => {
+    if (!state.edfData.get?.date || !state.participantDOB.get) return;
+
+    const age = getAge(state.participantDOB.get, state.edfData.get.date);
+    state.participantAge.set(age);
+    appContext.setTask('participantAge', age);
+  }, [state.participantDOB.get, state.edfData.get]);
+
+  useEffect(() => {
     if (socketContext) {
       // socketContext.emit('get_loris_sites');
       socketContext.on('loris_sites', (sites) => {
+        if (!sites) return;
         const siteOpts = [];
         sites.map((site) => {
           siteOpts.push(site.Name);
@@ -200,7 +231,7 @@ const Configuration = (props) => {
       socketContext.on('edf_data', (message) => {
         if (message['error']) {
           console.error(message['error']);
-          state.errors.set([...state.errors.get, message['error']]);
+          // state.errors.set([...state.errors.get, message['error']]);
         }
 
         if (message['date']) {
@@ -223,6 +254,7 @@ const Configuration = (props) => {
 
       socketContext.on('new_candidate_created', (data) => {
         console.log(data);
+
         state.participantID.set(data['PSCID']);
         appContext.setTask('participantID', data['PSCID']);
       });
@@ -233,6 +265,23 @@ const Configuration = (props) => {
         } else {
           state.isAuthenticated.set(true);
           state.participantEntryMode.set('new_loris');
+        }
+      });
+
+      socketContext.on('participant_data', (data) => {
+        console.log(data);
+        if (data?.error) {
+          console.log(data);
+          appContext.setTask('participantCandID', {error: data.error});
+        } else {
+          state.participantID.set(data.PSCID);
+          appContext.setTask('participantID', data.PSCID);
+
+          state.participantDOB.set(new Date(data.DoB));
+          appContext.setTask('participantDoB', data.DoB);
+
+          state.participantSex.set(data.Sex);
+          appContext.setTask('participantSex', data.Sex);
         }
       });
     }
@@ -358,6 +407,27 @@ const Configuration = (props) => {
   };
 
   /**
+   * Get age at visit
+   *
+   * @param {Date} birthDate
+   * @param {Date} visitDate
+   *
+   * @return {Number}
+   */
+  const getAge = (birthDate, visitDate) => {
+    console.log(birthDate);
+    console.log(visitDate);
+    if (!birthDate || !visitDate) return;
+
+    let age = visitDate.getFullYear() - birthDate.getFullYear();
+    const m = visitDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && visitDate.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  /**
    * arrayToObject - Convert an array to an object
    * { value: value }
    *
@@ -378,6 +448,7 @@ const Configuration = (props) => {
    * create candidate
    */
   const createCandidate = () => {
+    // todo disable button if one of the fields missing
     if (socketContext) {
       const dob = state.participantDOB.get.toISOString().replace(/T.*/, '');
       if (!state.edfData.get?.['date']) return;
@@ -410,17 +481,17 @@ const Configuration = (props) => {
       <AuthenticationMessage
         setAuthCredentialsVisible={state.authCredentialsVisible.set}
       />
-      <div className="errors">
+      {/*<div className="errors">
         {state.errors.get.map((error, index) =>
           <div key={index} className="alert alert-danger" role="alert">
             &#x274C; {error}
           </div>,
         )}
-      </div>
+      </div> */}
       <span className='header-with-hint'>
         Select data and metadata
         <p className={'header-hint'}>
-          ⓘ for details please see BIDS specification
+          ⓘ  for details please see BIDS specification
         </p>
       </span>
       <div className='info'>
@@ -775,10 +846,11 @@ const Configuration = (props) => {
           state.isAuthenticated.get &&
           <>
             <div className='small-pad'>
-              <TextInput id='participantCanID'
-                name='participantCanID'
+              <TextInput id='participantCandID'
+                name='participantCandID'
                 label='LORIS CandID'
-                value={state.participantID.get}
+                required={true}
+                value={state.participantCandID.get}
                 onUserInput={onUserInput}
               />
             </div>

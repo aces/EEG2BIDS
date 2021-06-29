@@ -54,6 +54,16 @@ def tarfile_bids(sid, data):
 
 
 @sio.event
+def get_participant_data(sid, data):
+    # todo helper to to data validation
+    if 'candID' not in data or not data['candID']:
+        return
+    
+    candidate = loris_api.get_candidate(data['candID'])
+    sio.emit('participant_data', candidate)
+          
+
+@sio.event
 def set_loris_credentials(sid, data):
     global lorisCredentials
     lorisCredentials = data
@@ -68,7 +78,7 @@ def set_loris_credentials(sid, data):
     loris_api.password = lorisCredentials['lorisPassword']
     login_succeeded = loris_api.login()
 
-    if login_succeeded['error']:
+    if login_succeeded.get('error'):
         sio.emit('loris_login_response', {'error': "Can't login to the LORIS instance."})
     else:
         sio.emit('loris_login_response', {
@@ -97,6 +107,11 @@ def get_loris_subprojects(sid, project):
 def get_loris_visits(sid, subproject):
     sio.emit('loris_visits', loris_api.get_visits(subproject))
 
+
+@sio.event
+def create_visit(sid, data):
+    loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
+    loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
 
 @sio.event
 def create_candidate_and_visit(sid, data):
