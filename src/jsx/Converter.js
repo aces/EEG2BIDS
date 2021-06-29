@@ -371,6 +371,25 @@ const Converter = (props) => {
         <div className='small-pad'>
           <b>Review your participant details:</b>
           <div>
+            {appContext.getFromTask('participantCandID')?.error ?
+              <>
+                {error = true}
+                <span className='error'>&#x274C;</span>
+                {appContext.getFromTask('participantCandID').error}
+              </> :
+              <>
+                {appContext.getFromTask('participantCandID') &&
+                  <>
+                    <span className='checkmark'>&#x2714;</span>
+                    LORIS CandID: {appContext.getFromTask(
+                        'participantCandID',
+                    )}
+                  </>
+                }
+              </>
+            }
+          </div>
+          <div>
             {appContext.getFromTask('participantID') ?
               <>
                 <span className='checkmark'>&#x2714;</span>
