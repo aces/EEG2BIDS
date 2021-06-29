@@ -55,16 +55,17 @@ def tarfile_bids(sid, data):
 
 @sio.event
 def set_loris_credentials(sid, data):
-    loris_credentials = data
-    if 'lorisURL' not in loris_credentials:
+    global lorisCredentials
+    lorisCredentials = data
+    if 'lorisURL' not in lorisCredentials:
         print('error with credentials:', data)
         return
 
-    if loris_credentials['lorisURL'].endswith('/'):
-        loris_credentials['lorisURL'] = loris_credentials['lorisURL'][:-1]
-    loris_api.url = loris_credentials['lorisURL'] + '/api/v0.0.4-dev/'
-    loris_api.username = loris_credentials['lorisUsername']
-    loris_api.password = loris_credentials['lorisPassword']
+    if lorisCredentials['lorisURL'].endswith('/'):
+        lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
+    loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
+    loris_api.username = lorisCredentials['lorisUsername']
+    loris_api.password = lorisCredentials['lorisPassword']
     loris_api.login()
 
     if loris_api.token:
