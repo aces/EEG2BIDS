@@ -18,6 +18,9 @@ class LorisAPI:
             },
             verify=False
         )
+
+        print(resp)
+
         login_succeeded = {}
         if resp.status_code == 405:
             login_succeeded = {'error': 'User credentials error!'}
@@ -75,7 +78,10 @@ class LorisAPI:
             verify=False
         )
 
+        print(resp)
+
         json_resp = json.loads(resp.content.decode('ascii'))
+        print (json_resp)
         sites = json_resp.get('Sites')
         return sites
 
@@ -187,3 +193,20 @@ class LorisAPI:
         print(resp)
         # json_resp = json.loads(resp.content.decode('ascii'))
         # print(json_resp)
+
+    def get_candidate(self, candid):
+        resp = requests.get(
+            url=self.url + '/candidates/' + candid,
+            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+            verify=False
+        )
+
+        print(resp)
+        json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
+
+        # validate candid
+        if json_resp.get('error'):
+            return {'error': 'CandID is not valid.'}
+
+        return json_resp.get('Meta')
