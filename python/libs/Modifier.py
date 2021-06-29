@@ -5,6 +5,7 @@ import re
 import shutil
 from python.libs.iEEG import metadata as metadata_fields
 
+
 class Modifier:
     def __init__(self, data):
         self.data = data
@@ -19,7 +20,6 @@ class Modifier:
         self.copy_events_tsv()
         self.copy_annotations_files()
         self.modify_eeg_json()
-
 
     def get_bids_root_path(self):
         return os.path.join(
@@ -36,7 +36,6 @@ class Modifier:
             'ses-' + self.data['session'],
             self.data['modality']
         )
-
 
     def clean_dataset_files(self):
         if len(self.data['edfData']['files']) > 0:
@@ -66,7 +65,6 @@ class Modifier:
             )
             os.rename(fileOrig, fileDest)
 
-
     def modify_dataset_description_json(self):
         file_path = os.path.join(
             self.get_bids_root_path(),
@@ -83,7 +81,6 @@ class Modifier:
 
         except IOError:
             print("Could not read or write dataset_description.json file")
-
 
     def modify_participants_tsv(self):
         file_path = os.path.join(
@@ -137,7 +134,6 @@ class Modifier:
             writer.writerows(output)
             tsv_file.close()
 
-
     def modify_participants_json(self):
         file_path = os.path.join(
             self.get_bids_root_path(),
@@ -164,7 +160,6 @@ class Modifier:
             json_file.seek(0)
             json.dump(json_data, json_file, indent=4)
             json_file.close()
-
 
     def copy_annotations_files(self):
         if not self.data['annotations_tsv'] and not self.data['annotations_json']:
@@ -195,7 +190,6 @@ class Modifier:
                 os.path.join(self.get_eeg_path(), filename + '.json')
             )
 
-
     def copy_events_tsv(self):
         if not self.data['events_tsv']:
             return
@@ -225,7 +219,7 @@ class Modifier:
         start_path = self.get_eeg_path()
 
         path_events_tsv = ''
-        eeg_edf         = ''
+        eeg_edf = ''
         # We search for the events.tsv file.
         for path, dirs, files in os.walk(start_path):
             for filename in files:
@@ -271,7 +265,6 @@ class Modifier:
             writer.writerows(output)
             tsv_file.close()
 
-
     def modify_eeg_json(self):
         eeg_json = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('eeg.json')]
         if len(eeg_json) != 1:
@@ -290,7 +283,7 @@ class Modifier:
 
                 if 'metadata' in self.data['bidsMetadata'] and 'invalid_keys' in self.data['bidsMetadata']:
                     for key in self.data['bidsMetadata']['metadata']:
-                        if key not in self.data['bidsMetadata']['invalid_keys']:    
+                        if key not in self.data['bidsMetadata']['invalid_keys']:
                             fieldName = metadata_fields[self.data["modality"]][key]
                             file_data[fieldName] = self.data['bidsMetadata']['metadata'][key]
 

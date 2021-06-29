@@ -4,13 +4,16 @@ from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
 import json
 
+
 class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
     pass
 
+
 class WriteError(PermissionError):
     """Raised when a PermissionError is thrown while writing a file"""
     pass
+
 
 metadata = {
     'eeg': {
@@ -85,6 +88,7 @@ metadata = {
         'Electrical Stimulation Parameters': 'ElectricalStimulationParameters',
     }
 }
+
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
@@ -166,7 +170,7 @@ class Converter:
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                split=((i+1) if len(data['edfData']['files']) > 1 else None),
+                split=((i + 1) if len(data['edfData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq']
@@ -218,11 +222,11 @@ class Converter:
                     ch_types[ch] = 'eog'
                 elif 'ecg' in ch_name or 'ekg' in ch_name:
                     ch_types[ch] = 'ecg'
-                elif 'lflex' in ch or 'rflex'in ch or 'chin' in ch:
+                elif 'lflex' in ch or 'rflex' in ch or 'chin' in ch:
                     ch_types[ch] = 'emg'
                 elif 'trigger' in ch:
                     ch_types[ch] = 'stim'
-                    
+
                 else:
                     ch_types[ch] = ch_type
 
@@ -232,7 +236,7 @@ class Converter:
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
 
             raw.info['line_freq'] = line_freq
-            
+
             raw._init_kwargs = {
                 'input_fname': file,
                 'eog': None,
@@ -247,7 +251,7 @@ class Converter:
                 os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
                 bids_directory = bids_directory + os.path.sep + output_time
                 bids_root = bids_directory
-            
+
                 bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, split=split)
                 bids_basename.update(session=session)
 
@@ -255,7 +259,7 @@ class Converter:
                 with open(bids_basename, 'r+b') as f:
                     f.seek(8)  # id_info field starts 8 bytes in
                     f.write(bytes("X X X X".ljust(80), 'ascii'))
-            
+
             except PermissionError as ex:
                 raise WriteError(ex)
 
