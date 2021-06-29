@@ -61,6 +61,7 @@ class LorisAPI:
         return project.get('Subprojects')
 
     def get_visits(self, subproject):
+        print('get_visits look here:')
         resp = requests.get(
             url=self.url + 'subprojects/' + urllib.parse.quote(subproject),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
@@ -69,6 +70,7 @@ class LorisAPI:
 
         print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
         return json_resp.get('Visits')
 
     def get_sites(self):
