@@ -222,9 +222,11 @@ const Configuration = (props) => {
 
       socketContext.on('loris_visits', (visits) => {
         const visitOpts = [];
-        visits.map((visit) => {
-          visitOpts.push(visit);
-        });
+        if (visits && visits?.length > 0) {
+          visits.map((visit) => {
+            visitOpts.push(visit);
+          });
+        }
         state.sessionOptions.set(visitOpts);
       });
 
