@@ -1,4 +1,4 @@
-.\Scripts\activate
+.\venv\Scripts\activate
 pyinstaller --paths=python python/eeg2bids.py -F `
 --name eeg2bids-service-windows `
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json;./bids_validator/rules' `
