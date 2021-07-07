@@ -18,7 +18,7 @@ export const AuthenticationMessage = (props) => {
 
   // React state
   const [loginMessage, setLoginMessage] = useState(
-      'You are not logged in to LORIS Account',
+      'You are not logged into a LORIS Account',
   );
   const [loginLink, setLoginLink] = useState(
       'Log in...',
@@ -171,8 +171,8 @@ export const AuthenticationCredentials = (props) => {
               <TextInput id='lorisURL'
                 name='lorisURL'
                 required={true}
-                label='URL of LORIS instance'
-                placeholder='Example: https://loris.ca'
+                label='LORIS URL'
+                placeholder='Example: https://demo.loris.ca'
                 value={lorisURL}
                 onUserInput={onUserInput}
               />
