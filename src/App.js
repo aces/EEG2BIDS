@@ -95,8 +95,7 @@ const App = () => {
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>
-          <Configuration visible={appMode === 'Configuration'}/>
-          <Converter visible={appMode === 'Converter'}/>
+          <Configuration appMode={appMode}/>
           <Validator visible={appMode === 'Validator'}/>
         </>
       </AppContext.Provider>
