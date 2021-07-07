@@ -66,7 +66,7 @@ const Welcome = (props) => {
           and conversion to BIDS format for data sharing.
         </p>
         <p>
-          This software is designed to run on EDF files (EEG or iEEG) for
+          This software is designed to run on EDF files (EEG or stereo iEEG) for
           one recording from one subject at a time. Events and metadata such as
           a LORIS ProjectID and Visit Label can be included.
         </p>
@@ -86,9 +86,10 @@ const Welcome = (props) => {
         </p>
         <ul>
           <li>
-            Select the data file(s) (multiple files allowed for a
-            single recording split into multiple files),
-            events file (events.tsv), and output folder
+            Select the data and metadata to be converted,
+            and output folder.<br/>
+            Note that only one <em>run</em> will be converted at a time
+            by this tool, and this run can be split over several files.
           </li>
           <li>Set metadata values</li>
           <li>Anonymize the EDF header data</li>
