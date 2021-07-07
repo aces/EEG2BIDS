@@ -56,7 +56,7 @@ const App = () => {
         },
       }}>
         <>
-          <Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>
+          {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
           <Menu visible={appMode !== 'SplashScreen'}
             tabs={[
               {
