@@ -1,0 +1,98 @@
+.root {
+    right: 0;
+    width: 40px;
+    height: 33px;
+    float: right;
+    color: #c8c8c8;
+    cursor: pointer;
+    font-size: 20pt;
+    position: sticky;
+    text-align: center;
+    background: #282828;
+    position: -webkit-sticky;
+    font-family: Verdana, sans-serif;
+    transition: max-width 0.15s ease-out;
+}
+.root:hover {
+    width: 100px;
+    max-width: 100px;
+    transition: max-width 0.25s ease-in;
+}
+.root:hover:before {
+    content: 'Help'
+}
+
+.modalOverlay {
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 102;
+    overflow: auto;
+    display: block;
+    position: fixed;
+    color: #222428;
+    pointer-events: auto;
+    background-color: rgba(33,37,51,0.8);
+}
+.modalContainer {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 104;
+    position: fixed;
+    overflow: hidden;
+    pointer-events: none;
+}
+.modalAnimation {
+    width: auto;
+    z-index: 105;
+    display: flex;
+    overflow: hidden;
+    margin: .2rem auto;
+    position: relative;
+    align-items: center;
+    pointer-events: none;
+    transform: translate(0);
+    min-height: calc(100vh);
+}
+.modalDialog {
+    width: 100%;
+    z-index: 105;
+    display: flex;
+    overflow: scroll;
+    position: relative;
+    border-radius: 3px;
+    color: #222428;
+    pointer-events: auto;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 900px;
+    -webkit-overflow-scrolling: touch;
+    transition: transform .3s ease-out;
+    will-change: transform;
+    background-color: #eaecef;
+}
+.modalHeader {
+    height: 30px;
+    display: flex;
+    padding: 30px 30px 0 30px;
+    font-size: 18pt;
+    align-items: center;
+    flex-direction: row;
+    -webkit-overflow-scrolling: touch;
+}
+.modalHeaderClose {
+    color: #929192;
+    cursor: pointer;
+    font-size: 18pt;
+    margin-left: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.modalContent {
+    font-size: 14pt;
+    min-height: 500px;
+    padding: 30px;
+    -webkit-overflow-scrolling: touch;
+}
