@@ -1,6 +1,6 @@
 # EEG2BIDS Wizard - iEEG to BIDS format Wizard
 
-EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudinal Online Research and Imaging System).
+EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudinal Online Research and Imaging System). Users can use their LORIS credentials with a LORIS URL and automatically retrieve LORIS data for the EEG to BIDS format.
 
 ## Installation
 
