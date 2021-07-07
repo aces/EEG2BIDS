@@ -17,7 +17,7 @@
 ## LORIS authentication
 
  * The GUI stores a user's LORIS credentials securely using [keytar](https://www.npmjs.com/package/keytar).
- * The frontend passes the credential python and where they can be reused for refreshing the user's auth token before making LORIS API requests.
+ * The frontend passes the credentials to python and where they can be reused for refreshing the user's auth token before making LORIS API requests.
 
 ## Things to remember:
 
