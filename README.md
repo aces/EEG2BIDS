@@ -25,6 +25,12 @@ EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (
 
  * [Windows 10: build instructions](./wiki/windows/README.md)
 
+#### Development documentation
+
+* [Introduction](wiki/dev_notes/react/README.md)
+  
+* [React Help](wiki/dev_notes/react/README.md)
+
 ## Dependencies
 
 #### Python Dependencies Requirements
