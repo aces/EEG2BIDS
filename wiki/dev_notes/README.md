@@ -1,6 +1,8 @@
 ["Click Here" to return to the project README.md](../../README.md)
 
-# Development Documentation
+["Click Here" to read React Development](react/README.md)
+
+# Development Introduction
 
  * EEG2BIDS/src - contains the frontend code:
    * Electron used for Multi-OS window rendering.
