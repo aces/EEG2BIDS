@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import '../../css/Modal.css';
 
 const Modal = (props) => {
+  /**
+   * handleClose - close the Modal.
+   */
   const handleClose = () => {
     props.close(true);
   };
@@ -12,6 +15,10 @@ const Modal = (props) => {
     opacity: props.show ? 1 : 0,
     transform: props.show ? 'translateY(0)' : 'translateY(-25%)',
   };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
   return (
     <div className='modalOverlay'
       style={styleVisible}>
