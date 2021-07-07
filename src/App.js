@@ -14,7 +14,6 @@ import Menu from './jsx/elements/menu';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
-import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
 
 /**
