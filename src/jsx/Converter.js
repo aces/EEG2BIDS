@@ -55,7 +55,6 @@ const Converter = (props) => {
     // if (socketContext) {}
   }, [socketContext]);
 
-
   /**
    * beginBidsCreation - create BIDS format.
    *   Sent by socket to python: edf_to_bids.
@@ -72,8 +71,8 @@ const Converter = (props) => {
         modality: appContext.getFromTask('modality') ?? 'ieeg',
         bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
         read_only: false,
-        events_tsv: appContext.getFromTask('eventsTSV').length > 0 ?
-          appContext.getFromTask('eventsTSV')[0]['path'] : '',
+        event_files: appContext.getFromTask('eventFiles').length > 0 ?
+          appContext.getFromTask('eventFiles')[0]['path'] : '',
         annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
           appContext.getFromTask('annotationsTSV')[0]['path'] : '',
         annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
@@ -146,46 +145,403 @@ const Converter = (props) => {
   }, [socketContext]);
 
   let error = false;
-  const metadataReport = [];
-  if (appContext.getFromTask('bidsMetadata')) {
-    if (
-      'metadata' in appContext.getFromTask('bidsMetadata') &&
-      'invalid_keys' in appContext.getFromTask('bidsMetadata')
-    ) {
-      const metadata = appContext.getFromTask('bidsMetadata')['metadata'];
-      const invalidKeys =
-        appContext.getFromTask('bidsMetadata')['invalid_keys'];
+  const formatError = (msg) => {
+    error = true;
+    return (
+      <>
+        <span className='error'>&#x274C;</span> {msg}
+      </>
+    );
+  };
 
-      Object.keys(metadata).map((key) => {
-        metadataReport.push(
+  const formatWarning = (msg) => {
+    return (
+      <>
+        <span className='warning'>&#x26A0;</span> {msg}
+      </>
+    );
+  };
+
+  const formatPass = (msg) => {
+    return (
+      <>
+        <span className='checkmark'>&#x2714;</span>
+        {msg}
+      </>
+    );
+  };
+
+  const validateData = () => {
+    const result = [];
+
+    // edfData
+    let edfDataStatus = '';
+    if (appContext.getFromTask('edfData')?.['error']) {
+      edfDataStatus = formatError(appContext.getFromTask('edfData')['error']);
+    } else if (
+      appContext.getFromTask('edfData') &&
+      appContext.getFromTask('edfData')?.['files']?.length > 0
+    ) {
+      edfDataStatus = formatPass('EDF data file(s): ' +
+        appContext.getFromTask('edfData')['files'].map(
+            (edfFile) => edfFile['name'],
+        ).join(', '),
+      );
+    } else {
+      edfDataStatus = formatError('No EDF file selected.');
+    }
+    result.push(<div key='edfDataStatus'>{edfDataStatus}</div>);
+
+    // Data modality
+    let modalityStatus = '';
+    if (appContext.getFromTask('modality')) {
+      modalityStatus = formatPass(
+          `Modality: ${appContext.getFromTask('modality')}`,
+      );
+    } else {
+      modalityStatus = formatError('No modality selected.');
+    }
+    result.push(<div key='modalityStatus'>{modalityStatus}</div>);
+
+    // events
+    let eventsStatus = '';
+    if (!appContext.getFromTask('eventFiles') ||
+      Object.keys(appContext.getFromTask('eventFiles'))?.length < 1
+    ) {
+      eventsStatus = formatWarning('No events.tsv selected.');
+    } else {
+      let match = true;
+
+      // If we have more than 1 edf files,
+      // check that the events files are appropriatly named
+      if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
+        appContext.getFromTask('eventFiles').map((eventFile) => {
+          if (!appContext.getFromTask('edfData')['files'].find(
+              (edfFile) => {
+                const edfFileName = edfFile['name'].toLowerCase()
+                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                const eventFileName = eventFile['name'].toLowerCase()
+                    .replace('_events.tsv', '').replace('.tsv', '');
+                return edfFileName === eventFileName;
+              },
+          )) {
+            match = false;
+            eventsStatus = formatError(
+                `Event file ${eventFile['name']}
+                is not matching any edf file names.`,
+            );
+          }
+        });
+      }
+
+      if (match) {
+        eventsStatus = formatPass('Event file(s): ' +
+          appContext.getFromTask('eventFiles').map(
+              (eventFile) => eventFile['name'],
+          ).join(', '),
+        );
+      }
+    }
+    result.push(<div key='eventsStatus'>{eventsStatus}</div>);
+
+    // annotations TSV
+    let annotationsTSVStatus = '';
+    if (!appContext.getFromTask('annotationsTSV') ||
+      Object.keys(appContext.getFromTask('annotationsTSV'))?.length < 1
+    ) {
+      annotationsTSVStatus = formatWarning('No annotations.tsv selected.');
+    } else {
+      let match = true;
+
+      // If we have more than 1 edf files,
+      // check that the events files are appropriatly named
+      if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
+        appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
+          if (!appContext.getFromTask('edfData')['files'].find(
+              (edfFile) => {
+                const edfFileName = edfFile['name'].toLowerCase()
+                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                const annotationsTSVFileName = annotationsTSVFile['name']
+                    .toLowerCase()
+                    .replace('_annotations.tsv', '').replace('.tsv', '');
+                return edfFileName === annotationsTSVFileName;
+              },
+          )) {
+            match = false;
+            annotationsTSVStatus = formatError(
+                `Annotation file ${annotationsTSVFile['name']}
+                is not matching any edf file names.`,
+            );
+          }
+        });
+      }
+
+      if (match) {
+        annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
+          appContext.getFromTask('annotationsTSV').map(
+              (annotationsTSVFile) => annotationsTSVFile['name'],
+          ).join(', '),
+        );
+      }
+    }
+    result.push(<div key='annotationsTSVStatus'>{annotationsTSVStatus}</div>);
+
+    // annotations JSON
+    let annotationsJSONStatus = '';
+    if (appContext.getFromTask('annotationsTSV') &&
+      Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
+    ) {
+      if (!appContext.getFromTask('annotationsJSON') ||
+        Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
+      ) {
+        annotationsJSONStatus = formatWarning('No annotations.json selected.');
+      } else {
+        let match = true;
+
+        // If we have more than 1 edf files,
+        // check that the events files are appropriatly named
+        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
+          appContext.getFromTask('annotationsJSON')
+              .map((annotationsJSONFile) => {
+                if (!appContext.getFromTask('edfData')['files'].find(
+                    (edfFile) => {
+                      const edfFileName = edfFile['name'].toLowerCase()
+                          .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                      const annotationsJSONFileName =
+                          annotationsJSONFile['name'].toLowerCase()
+                              .replace('_annotations.json', '')
+                              .replace('.json', '');
+                      return edfFileName === annotationsJSONFileName;
+                    },
+                )) {
+                  match = false;
+                  annotationsJSONStatus = formatError(
+                      `Annotation file ${annotationsJSONFile['name']}
+                      is not matching any edf file names.`,
+                  );
+                }
+              });
+        }
+
+        if (match) {
+          annotationsJSONStatus = formatPass('Annotations JSON file(s): ' +
+            appContext.getFromTask('annotationsJSON').map(
+                (annotationsJSONFile) => annotationsJSONFile['name'],
+            ).join(', '),
+          );
+        }
+      }
+      result.push(
+          <div key='annotationsJSONStatus'>{annotationsJSONStatus}</div>,
+      );
+    }
+
+    // bidsDirectory
+    let bidsDirectoryStatus = '';
+    if (appContext.getFromTask('bidsDirectory')) {
+      bidsDirectoryStatus = formatPass('BIDS output directory: ' +
+        appContext.getFromTask('bidsDirectory'),
+      );
+    } else {
+      bidsDirectoryStatus = formatError('No BIDS output directory selected.');
+    }
+    result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
+
+    // LORIS compliant
+    let LORIScompliantStatus = '';
+    if (appContext.getFromTask('LORIScompliant')) {
+      LORIScompliantStatus = formatPass(
+          `Data loaded in LORIS: ${appContext.getFromTask('LORIScompliant')}`,
+      );
+    } else {
+      LORIScompliantStatus = formatError(
+          'Select if the data will be loaded into LORIS.',
+      );
+    }
+    result.push(<div key='LORIScompliantStatus'>{LORIScompliantStatus}</div>);
+
+    return result;
+  };
+
+  const validateRecordingParameters = () => {
+    const result = [];
+
+    if (!appContext.getFromTask('bidsMetadata')) {
+      return formatWarning('No EEG Parameter metadata file selected.');
+    }
+
+    if ('error' in appContext.getFromTask('bidsMetadata')) {
+      return formatWarning(appContext.getFromTask('bidsMetadata')['error']);
+    }
+
+    const metadata = appContext.getFromTask('bidsMetadata')?.metadata;
+    const invalidKeys = appContext.getFromTask('bidsMetadata')?.invalid_keys;
+
+    if (!metadata || !invalidKeys || metadata.length < 1) {
+      return formatWarning(
+          'An error occured while processing ' +
+          'the recording parameters file selected.',
+      );
+    }
+
+    Object.keys(metadata).map((key) => {
+      if (invalidKeys.indexOf(key) > -1) {
+        result.push(
             <div key={key}>
-              {invalidKeys.indexOf(key) > -1 ?
-                <>
-                  <span className='warning'>&#x26A0;</span>
-                  {key}: {metadata[key]}
-                </> :
-                <>
-                  {key}: {metadata[key]}
-                </>
+              {formatWarning(`${key}: ${metadata[key]}`)}
+            </div>,
+        );
+      } else {
+        result.push(
+            <div key={key}>
+              {key}: {typeof metadata[key] == 'object' ?
+                JSON.stringify(metadata[key]) :
+                metadata[key]
               }
             </div>,
         );
-      });
-      metadataReport.push(
-          <p key="message">
-            <span className='warning'>&#x26A0;</span>
-            Invalid keys for the selected modality will be ignored.
-          </p>,
+      }
+    });
+
+    result.push(
+        <p key="message">
+          <span className='warning'>&#x26A0;</span>
+          Invalid keys for the selected modality will be ignored.
+        </p>,
+    );
+
+    return result;
+  };
+
+  const validateRecordingDetails = () => {
+    const result = [];
+
+    // taskName
+    let taskNameStatus = '';
+    if (appContext.getFromTask('taskName')) {
+      taskNameStatus = formatPass(
+          `Task name: ${appContext.getFromTask('taskName')}`,
       );
-    } else if ('error' in appContext.getFromTask('bidsMetadata')) {
-      metadataReport.push(
-          <div key="error ">
-            <span className='warning'>&#x26A0;</span>
-            {appContext.getFromTask('bidsMetadata')['error']}
-          </div>,
+    } else {
+      taskNameStatus = formatError('Task name is not specified.');
+    }
+    result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
+
+    if (appContext.getFromTask('LORIScompliant')) {
+      // siteID
+      let siteIDStatus = '';
+      if (appContext.getFromTask('siteID')) {
+        siteIDStatus = formatPass(
+            `Site: ${appContext.getFromTask('siteID')}`,
+        );
+      } else {
+        siteIDStatus = formatError('Site is not specified.');
+      }
+      result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
+
+      // projectID
+      let projectIDStatus = '';
+      if (appContext.getFromTask('projectID')) {
+        projectIDStatus = formatPass(
+            `Project: ${appContext.getFromTask('projectID')}`,
+        );
+      } else {
+        projectIDStatus = formatError('Project is not specified.');
+      }
+      result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
+
+      // subprojectID
+      let subprojectIDStatus = '';
+      if (appContext.getFromTask('subprojectID')) {
+        subprojectIDStatus = formatPass(
+            `Subproject: ${appContext.getFromTask('subprojectID')}`,
+        );
+      } else {
+        projectIDStatus = formatError('Subproject is not specified.');
+      }
+      result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
+    }
+
+    // session
+    let sessionStatus = '';
+    if (appContext.getFromTask('session')) {
+      if (
+        appContext.getFromTask('session').indexOf(' ') >= 0 ||
+        appContext.getFromTask('session').indexOf('-') >= 0
+      ) {
+        sessionStatus = formatError('Session is containing a dash/space.');
+      } else {
+        sessionStatus = formatPass(
+            `Session: ${appContext.getFromTask('session')}`,
+        );
+      }
+    } else {
+      sessionStatus = formatError('Session is not specified.');
+    }
+    result.push(<div key='sessionStatus'>{sessionStatus}</div>);
+
+    // lineFreq
+    let lineFreqStatus = '';
+    if (appContext.getFromTask('lineFreq')) {
+      lineFreqStatus = formatPass(
+          `Powerline frequency: ${appContext.getFromTask('lineFreq')}`,
+      );
+    } else {
+      lineFreqStatus = formatWarning('Powerline frequency is not specified.');
+    }
+    result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
+
+    // reference
+    let referenceStatus = '';
+    if (appContext.getFromTask('reference')) {
+      referenceStatus = formatPass(
+          `Reference: ${appContext.getFromTask('reference')}`,
+      );
+    } else {
+      referenceStatus = formatError('Reference is not specified.');
+    }
+    result.push(<div key='referenceStatus'>{referenceStatus}</div>);
+
+    return result;
+  };
+
+  const validateParticipantDetails = () => {
+    const result = [];
+
+    // participantCandID
+    let participantCandIDStatus = '';
+    if (appContext.getFromTask('participantCandID')?.error) {
+      participantCandIDStatus = formatError(
+          appContext.getFromTask('participantCandID').error,
+      );
+    } else if (appContext.getFromTask('participantCandID')) {
+      participantCandIDStatus = formatPass(
+          `LORIS CandID: ${appContext.getFromTask('participantCandID')}`,
       );
     }
-  }
+    result.push(
+        <div key='participantCandIDStatus'>
+          {participantCandIDStatus}
+        </div>,
+    );
+
+    // participantID
+    let participantIDStatus = '';
+    if (appContext.getFromTask('participantID')) {
+      participantIDStatus = formatPass(
+          `Participant ID: ${appContext.getFromTask('participantID')}`,
+      );
+    } else {
+      participantIDStatus = formatError(
+          'Participant ID is not specified.',
+      );
+    }
+    result.push(
+        <div key='participantID'>{participantIDStatus}</div>,
+    );
+
+    return result;
+  };
 
   /**
    * Renders the React component.
@@ -202,218 +558,31 @@ const Converter = (props) => {
       </span>
       <div className='info report'>
         <div className='small-pad'>
-          <b>Review your data configuration:</b>
-          <div>
-            {appContext.getFromTask('edfData')?.['error'] ?
-              <div>
-                {error = true}
-                <span className='error'>&#x274C;</span>
-                {appContext.getFromTask('edfData')['error']}
-              </div> :
-              appContext.getFromTask('edfData') &&
-              appContext.getFromTask('edfData')?.['files']?.length > 0 ?
-                <>
-                  <span className='checkmark'>&#x2714;</span>
-                  EDF data file(s):&nbsp;
-                  {appContext.getFromTask('edfData')['files']
-                      .map((edfFile) => edfFile['name']).join(', ')
-                  }
-                </> :
-                <>
-                  {error = true}
-                  <span className='error'>&#x274C;</span> No EDF file selected.
-                </>
-            }
-          </div>
-          <div>
-            {(appContext.getFromTask('eventsTSV') &&
-              Object.keys(appContext.getFromTask('eventsTSV'))
-                  .length > 0) ?
-              <>
-                <span className='checkmark'>&#x2714;</span> Including:
-                {appContext.getFromTask('eventsTSV').name}
-              </> :
-              <>
-                <span className='warning'>&#x26A0;</span>
-                No events.tsv selected.
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('bidsDirectory') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                BIDS output directory:
-                {appContext.getFromTask('bidsDirectory')}
-              </> :
-              <>
-                {error = true}
-                <span className='error'>&#x274C;</span>
-                No BIDS output directory selected.
-              </>
-            }
-          </div>
+          <b>Review your data and metadata:</b>
+          {validateData()}
         </div>
         <div className='small-pad'>
           <b>Review your recording details:</b>
-          <div>
-            {appContext.getFromTask('taskName') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Task name: {appContext.getFromTask('taskName')}
-              </> :
-              <>
-                {error = true}
-                <span className='error'>&#x274C;</span>
-                Task name is not specified.
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('siteID') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Site: {appContext.getFromTask('siteID')}
-              </> :
-              <>
-                {appContext.getFromTask('LORIScompliant') ?
-                  <>
-                    {error = true}
-                    <span className='error'>&#x274C;</span>
-                    Site is not specified.
-                  </> :
-                  <span>Site is not specified.</span>
-                }
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('projectID') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Project: {appContext.getFromTask('projectID')}
-              </> :
-              <>
-                {appContext.getFromTask('LORIScompliant') ?
-                  <>
-                    {error = true}
-                    <span className='error'>&#x274C;</span>
-                    Project is not specified.
-                  </> :
-                  <span>
-                    Project is not specified.
-                  </span>
-                }
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('subprojectID') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                SubProject: {appContext.getFromTask('subprojectID')}
-              </> :
-              <>
-                {appContext.getFromTask('LORIScompliant') ?
-                  <>
-                    <>
-                      {error = true}
-                      <span className='error'>&#x274C;</span>
-                      Subproject is not specified.
-                    </>
-                  </> :
-                  <span>
-                    Subproject is not specified.
-                  </span>
-                }
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('session') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Session: {appContext.getFromTask('session')}
-              </> :
-              <>
-                {error = true}
-                <span className='error'>&#x274C;</span>
-                Session is not specified.
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('lineFreq') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Powerline frequency: {appContext.getFromTask('lineFreq')}
-              </> :
-              <>
-                <span className='warning'>&#x26A0;</span>
-                Powerline frequency is not specified.
-              </>
-            }
-          </div>
-          <div>
-            {appContext.getFromTask('reference') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Reference: {appContext.getFromTask('reference')}
-              </> :
-              <>
-                {error = true}
-                <span className='error'>&#x274C;</span>
-                Reference is not specified.
-              </>
-            }
-          </div>
+          {validateRecordingDetails()}
         </div>
         <div className='small-pad'>
           <b>Review your participant details:</b>
-          <div>
-            {appContext.getFromTask('participantID') ?
-              <>
-                <span className='checkmark'>&#x2714;</span>
-                Participant ID: {appContext.getFromTask('participantID')}
-              </> :
-              <>
-                {error = true}
-                <>
-                  <span className='error'>&#x274C;</span>
-                  Participant ID is not specified.
-                </>
-              </>
-            }
-          </div>
+          {validateParticipantDetails()}
         </div>
         <div className='small-pad'>
           <b>Review your uploaded EEG Parameter metadata:</b>
-          <div>
-            {metadataReport.length > 0 ?
-              <>
-                {metadataReport}
-              </> :
-              <>
-                <span className='warning'>&#x26A0;</span>
-                No EEG Parameter metadata file selected.
-              </>
-            }
-          </div>
+          <div>{validateRecordingParameters()}</div>
         </div>
         <div className='small-pad'>
           <b>Verify anonymization of EDF header data:</b>
-          <div>
-            {appContext.getFromTask('subjectID') ?
-              <>
-                Subject ID:&nbsp;
-                {appContext.getFromTask('subjectID')}
-              </> :
-              <>
-                <span className='warning'>&#x26A0;</span>
-                Subject ID is not modified.
-              </>
-            }
-          </div>
+          {appContext.getFromTask('subjectID') ?
+            <div>
+              Subject ID: {appContext.getFromTask('subjectID')}
+            </div> :
+            <div>
+              {formatWarning('Subject ID is not modified.')}
+            </div>
+          }
           {appContext.getFromTask('recording_id') &&
             <div>
               Recording ID:&nbsp;

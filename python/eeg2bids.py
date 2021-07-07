@@ -9,6 +9,7 @@ from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
 import csv
 import datetime
+import json 
 
 # EEG2BIDS Wizard version
 appVersion = '1.0.1'
@@ -68,7 +69,7 @@ def set_loris_credentials(sid, data):
     loris_api.password = lorisCredentials['lorisPassword']
     login_succeeded = loris_api.login()
 
-    if login_succeeded['error']:
+    if login_succeeded.get('error'):
         sio.emit('loris_login_response', {'error': "Can't login to the LORIS instance."})
     else:
         sio.emit('loris_login_response', {
@@ -193,15 +194,15 @@ def get_bids_metadata(sid, data):
     else:
         try:
             with open(data['file_path']) as fd:
-                reader = csv.DictReader(fd, delimiter="\t", quotechar='"')
                 try:
-                    metadata = {rows['Field']: rows['Value'] for rows in reader}
-                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']].keys()))
+                    metadata = json.load(fd)
+                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]))
                     response = {
                         'metadata': metadata,
                         'invalid_keys': diff,
                     }
-                except KeyError:
+                except ValueError as e:
+                    print(e)
                     metadata = {}
                     response = {
                         'error': 'Metadata file format is not valid.',
@@ -256,7 +257,7 @@ def edf_to_bids_thread(data):
 @sio.event
 def edf_to_bids(sid, data):
     # data = { file_paths: [], bids_directory: '', read_only: false,
-    # events_tsv: '', line_freq: '', site_id: '', project_id: '',
+    # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
     print('edf_to_bids: ', data)
     response = eventlet.tpool.execute(edf_to_bids_thread, data)
