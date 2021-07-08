@@ -2,6 +2,7 @@
     content: '🐵';
     cursor: pointer;
     margin-left: -20px;
+    font-size: 10pt;
 }
 .eye-open:after {
     content: '🐵';
@@ -10,6 +11,7 @@
     content: '🙈';
     cursor: pointer;
     margin-left: -20px;
+    font-size: 10pt;
 }
 .eye-close:after {
     content: '🙈';
