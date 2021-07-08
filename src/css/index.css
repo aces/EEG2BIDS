@@ -18,31 +18,15 @@ body {
 }
 .header {
     color: #f6ffff;
-    padding: 20px;
+    padding: 15px;
     display: block;
     cursor: default;
     font-size: 20px;
     text-align: center;
-    vertical-align: middle;
-}
-.header-with-hint {
-    color: #f6ffff;
-    padding: 20px;
-    display: block;
-    cursor: default;
-    font-size: 20px;
-    line-height: 10px;
-    text-align: center;
-    margin-bottom: 10px;
     vertical-align: middle;
 }
 .header-hint {
     font-size: 9pt;
-    position: absolute;
-    left: 50%;
-    line-height: 5px;
-    -webkit-transform: translateX(-50%);
-    transform: translateX(-50%);
 }
 .container {
     display: flex;

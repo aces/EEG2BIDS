@@ -49,7 +49,7 @@ export const AuthenticationMessage = (props) => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
         if (data.error) {
-          setLoginMessage(`Your credentials are incorrect!`);
+          setLoginMessage(data.error);
           setLoginLink('Log in...');
         } else {
           setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);

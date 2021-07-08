@@ -51,13 +51,14 @@ class LorisAPI:
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
-
+        print('getting subprojects')
         print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp.get('Subprojects')
 
     def get_subprojects(self, project):
         project = self.get_project(project)
+        print(project)
         return project.get('Subprojects')
 
     def get_visits(self, subproject):
@@ -94,6 +95,7 @@ class LorisAPI:
             verify=False
         )
 
+        print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp
 

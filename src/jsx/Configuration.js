@@ -95,8 +95,6 @@ const Configuration = (props) => {
   [state.reference.get, state.reference.set] = useState('n/a');
   state.recordingType = {};
   [state.recordingType.get, state.recordingType.set] = useState('n/a');
-  state.softwareFilters = {};
-  [state.softwareFilters.get, state.softwareFilters.set] = useState('n/a');
   [state.sessionOptions.get, state.sessionOptions.set] = useState([]);
   state.sessionUseAPI = {};
   [state.sessionUseAPI.get, state.sessionUseAPI.set] = useState(false);
@@ -130,6 +128,7 @@ const Configuration = (props) => {
   [state.isAuthenticated.get, state.isAuthenticated.set] = useState(false);
 
   const [preparedBy, setPreparedBy] = useState('');
+  const [displayErrors, setDisplayErrors] = useState(false);
 
   // React State
   const [outputTime, setOutputTime] = useState('');
@@ -162,6 +161,11 @@ const Configuration = (props) => {
    *   Sent by socket to python: edf_to_bids.
    */
   const beginBidsCreation = () => {
+    if (!preparedBy) {
+      setDisplayErrors(true);
+      return;
+    }
+
     setModalText((prevState) => {
       return {...prevState, ['mode']: 'loading'};
     });
@@ -191,7 +195,6 @@ const Configuration = (props) => {
         sex: appContext.getFromTask('participantSex') ?? '',
         preparedBy: preparedBy ?? '',
         line_freq: appContext.getFromTask('lineFreq') || 'n/a',
-        software_filters: appContext.getFromTask('softwareFilters') ?? 'n/a',
         recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
         taskName: appContext.getFromTask('taskName') ?? '',
         reference: appContext.getFromTask('reference') ?? '',
@@ -305,7 +308,7 @@ const Configuration = (props) => {
         ).join(', '),
       );
     } else {
-      edfDataStatus = formatError('No EDF file selected.');
+      edfDataStatus = formatError('No EDF file selected');
     }
     result.push(<div key='edfDataStatus'>{edfDataStatus}</div>);
 
@@ -316,7 +319,7 @@ const Configuration = (props) => {
           `Modality: ${appContext.getFromTask('modality')}`,
       );
     } else {
-      modalityStatus = formatError('No modality selected.');
+      modalityStatus = formatError('No modality selected');
     }
     result.push(<div key='modalityStatus'>{modalityStatus}</div>);
 
@@ -325,7 +328,8 @@ const Configuration = (props) => {
     if (!appContext.getFromTask('eventFiles') ||
       Object.keys(appContext.getFromTask('eventFiles'))?.length < 1
     ) {
-      eventsStatus = formatWarning('No events.tsv selected.');
+      eventsStatus = formatWarning('No events.tsv selected ' +
+      '(for additional events)');
     } else {
       let match = true;
 
@@ -366,7 +370,7 @@ const Configuration = (props) => {
     if (!appContext.getFromTask('annotationsTSV') ||
       Object.keys(appContext.getFromTask('annotationsTSV'))?.length < 1
     ) {
-      annotationsTSVStatus = formatWarning('No annotations.tsv selected.');
+      annotationsTSVStatus = formatWarning('No annotations.tsv selected');
     } else {
       let match = true;
 
@@ -411,7 +415,7 @@ const Configuration = (props) => {
       if (!appContext.getFromTask('annotationsJSON') ||
         Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
       ) {
-        annotationsJSONStatus = formatWarning('No annotations.json selected.');
+        annotationsJSONStatus = formatWarning('No annotations.json selected');
       } else {
         let match = true;
 
@@ -460,13 +464,13 @@ const Configuration = (props) => {
         appContext.getFromTask('bidsDirectory'),
       );
     } else {
-      bidsDirectoryStatus = formatError('No BIDS output directory selected.');
+      bidsDirectoryStatus = formatError('No BIDS output directory selected');
     }
     result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
 
     // LORIS compliant
     let LORIScompliantStatus = '';
-    if (appContext.getFromTask('LORIScompliant')) {
+    if (typeof appContext.getFromTask('LORIScompliant') == 'boolean') {
       LORIScompliantStatus = formatPass(
           `Data loaded in LORIS: ${appContext.getFromTask('LORIScompliant')}`,
       );
@@ -484,7 +488,7 @@ const Configuration = (props) => {
     const result = [];
 
     if (!appContext.getFromTask('bidsMetadata')) {
-      return formatWarning('No EEG Parameter metadata file selected.');
+      return formatWarning('No EEG Parameter metadata file selected');
     }
 
     if ('error' in appContext.getFromTask('bidsMetadata')) {
@@ -540,7 +544,7 @@ const Configuration = (props) => {
           `Task name: ${appContext.getFromTask('taskName')}`,
       );
     } else {
-      taskNameStatus = formatError('Task name is not specified.');
+      taskNameStatus = formatError('Task name is not specified');
     }
     result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
 
@@ -552,7 +556,7 @@ const Configuration = (props) => {
             `Site: ${appContext.getFromTask('siteID')}`,
         );
       } else {
-        siteIDStatus = formatError('Site is not specified.');
+        siteIDStatus = formatError('Site is not specified');
       }
       result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
 
@@ -563,7 +567,7 @@ const Configuration = (props) => {
             `Project: ${appContext.getFromTask('projectID')}`,
         );
       } else {
-        projectIDStatus = formatError('Project is not specified.');
+        projectIDStatus = formatError('Project is not specified');
       }
       result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
 
@@ -574,7 +578,7 @@ const Configuration = (props) => {
             `Subproject: ${appContext.getFromTask('subprojectID')}`,
         );
       } else {
-        projectIDStatus = formatError('Subproject is not specified.');
+        projectIDStatus = formatError('Subproject is not specified');
       }
       result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
     }
@@ -593,7 +597,7 @@ const Configuration = (props) => {
         );
       }
     } else {
-      sessionStatus = formatError('Session is not specified.');
+      sessionStatus = formatError('Session is not specified');
     }
     result.push(<div key='sessionStatus'>{sessionStatus}</div>);
 
@@ -604,7 +608,7 @@ const Configuration = (props) => {
           `Powerline frequency: ${appContext.getFromTask('lineFreq')}`,
       );
     } else {
-      lineFreqStatus = formatWarning('Powerline frequency is not specified.');
+      lineFreqStatus = formatWarning('Powerline frequency is not specified');
     }
     result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
 
@@ -615,7 +619,7 @@ const Configuration = (props) => {
           `Reference: ${appContext.getFromTask('reference')}`,
       );
     } else {
-      referenceStatus = formatError('Reference is not specified.');
+      referenceStatus = formatError('Reference is not specified');
     }
     result.push(<div key='referenceStatus'>{referenceStatus}</div>);
 
@@ -650,7 +654,7 @@ const Configuration = (props) => {
       );
     } else {
       participantIDStatus = formatError(
-          'Participant ID is not specified.',
+          'Participant ID is not specified',
       );
     }
     result.push(
@@ -869,7 +873,7 @@ const Configuration = (props) => {
 
       socketContext.on('loris_subprojects', (subprojects) => {
         const subprojectOpts = [];
-        subprojects.map((subproject) => {
+        subprojects?.map((subproject) => {
           subprojectOpts.push(subproject);
         });
         state.subprojectOptions.set(subprojectOpts);
@@ -1114,11 +1118,8 @@ const Configuration = (props) => {
         <AuthenticationMessage
           setAuthCredentialsVisible={state.authCredentialsVisible.set}
         />
-        <span className='header-with-hint'>
-          Select data and metadata
-          <p className='header-hint'>
-            ⓘ  for details please see BIDS specification
-          </p>
+        <span className='header'>
+          Recording data
         </span>
         <div className='info'>
           <div className='small-pad'>
@@ -1140,6 +1141,15 @@ const Configuration = (props) => {
             </div>
           </div>
           <div className='small-pad'>
+            <DirectoryInput id='bidsDirectory'
+              name='bidsDirectory'
+              required={true}
+              label='BIDS output folder'
+              placeholder={state.bidsDirectory.get}
+              onUserInput={onUserInput}
+            />
+          </div>
+          <div className='small-pad'>
             <RadioInput id='modality'
               name='modality'
               label='Data modality'
@@ -1150,69 +1160,6 @@ const Configuration = (props) => {
                 eeg: 'EEG',
               }}
               checked={state.modality.get}
-            />
-          </div>
-          <div className='small-pad'>
-            <FileInput id='bidsMetadataFile'
-              name='bidsMetadataFile'
-              accept='.json'
-              placeholder={
-                state.bidsMetadataFile.get.map(
-                    (bidsMetadataFile) => bidsMetadataFile['name'],
-                ).join(', ')
-              }
-              label='Recording parameters (json)'
-              onUserInput={onUserInput}
-            />
-          </div>
-          <div className='small-pad'>
-            <FileInput id='eventFiles'
-              name='eventFiles'
-              multiple={true}
-              accept='.tsv'
-              placeholder={
-                state.eventFiles.get.map(
-                    (eventFile) => eventFile['name'],
-                ).join(', ')
-              }
-              label='events.tsv'
-              onUserInput={onUserInput}
-            />
-          </div>
-          <div className='small-pad'>
-            <FileInput id='annotationsTSV'
-              name='annotationsTSV'
-              multiple={true}
-              accept='.tsv'
-              placeholder={
-                state.annotationsTSV.get.map(
-                    (annotationTSV) => annotationTSV['name'],
-                ).join(', ')
-              }
-              label='annotations.tsv'
-              onUserInput={onUserInput}
-            />
-          </div>
-          <div className='small-pad'>
-            <FileInput id='annotationsJSON'
-              name='annotationsJSON'
-              accept='.json'
-              placeholder={
-                state.annotationsJSON.get.map(
-                    (annotationJSON) => annotationJSON['name'],
-                ).join(', ')
-              }
-              label='annotations.json'
-              onUserInput={onUserInput}
-            />
-          </div>
-          <div className='small-pad'>
-            <DirectoryInput id='bidsDirectory'
-              name='bidsDirectory'
-              required={true}
-              label='BIDS output folder'
-              placeholder={state.bidsDirectory.get}
-              onUserInput={onUserInput}
             />
           </div>
           <div className='small-pad'>
@@ -1227,6 +1174,77 @@ const Configuration = (props) => {
               }}
               checked={state.LORIScompliant.get ? 'yes' : 'no'}
             />
+          </div>
+        </div>
+        <span className='header'>
+          Recording metadata
+          <div className='header-hint'>
+            ⓘ For details please see BIDS specification
+          </div>
+        </span>
+        <div className='info'>
+          <small>Annotation and events file names
+          must match one of the EDF file names.</small>
+        </div>
+        <div className='container'>
+          <div className='info half'>
+            <div className='small-pad'>
+              <FileInput id='eventFiles'
+                name='eventFiles'
+                multiple={true}
+                accept='.tsv'
+                placeholder={
+                  state.eventFiles.get.map(
+                      (eventFile) => eventFile['name'],
+                  ).join(', ')
+                }
+                label='events.tsv (additional)'
+                onUserInput={onUserInput}
+              />
+            </div>
+            <div className='small-pad'>
+              <FileInput id='annotationsTSV'
+                name='annotationsTSV'
+                multiple={true}
+                accept='.tsv'
+                placeholder={
+                  state.annotationsTSV.get.map(
+                      (annotationTSV) => annotationTSV['name'],
+                  ).join(', ')
+                }
+                label='annotations.tsv'
+                onUserInput={onUserInput}
+              />
+            </div>
+          </div>
+          <div className='info half'>
+            <div className='small-pad'>
+              <FileInput id='bidsMetadataFile'
+                name='bidsMetadataFile'
+                accept='.json'
+                placeholder={
+                  state.bidsMetadataFile.get.map(
+                      (bidsMetadataFile) => bidsMetadataFile['name'],
+                  ).join(', ')
+                }
+                label='Recording parameters (json)'
+                onUserInput={onUserInput}
+              />
+            </div>
+            <div className='small-pad'>
+              <FileInput id='annotationsJSON'
+                name='annotationsJSON'
+                multiple={true}
+                accept='.json'
+                placeholder={
+                  state.annotationsJSON.get.map(
+                      (annotationJSON) => annotationJSON['name'],
+                  ).join(', ')
+                }
+                label='annotations.json'
+                onUserInput={onUserInput}
+              />
+            </div>
           </div>
         </div>
         <span className='header'>
@@ -1395,14 +1413,6 @@ const Configuration = (props) => {
                 onUserInput={onUserInput}
               />
             </div>
-            <div className='small-pad'>
-              <TextareaInput id='softwareFilters'
-                name='softwareFilters'
-                label='Software Filters'
-                value={state.softwareFilters.get}
-                onUserInput={onUserInput}
-              />
-            </div>
           </div>
         </div>
         <span className='header'>
@@ -1451,7 +1461,7 @@ const Configuration = (props) => {
                   label='Biological Sex'
                   required={true}
                   value={state.participantSex.get}
-                  emptyOption=' '
+                  emptyOption='n/a'
                   options={{
                     'female': 'Female',
                     'male': 'Male',
@@ -1534,8 +1544,9 @@ const Configuration = (props) => {
                   value={state.participantSex.get}
                   emptyOption='n/a'
                   options={{
-                    'F': 'Female',
-                    'M': 'Male',
+                    'female': 'Female',
+                    'male': 'Male',
+                    'other': 'Other',
                   }}
                   onUserInput={onUserInput}
                 />
@@ -1720,10 +1731,10 @@ const Configuration = (props) => {
               placeholder='Enter your name'
               onUserInput={(_, value) => setPreparedBy(value)}
             />
-            {!preparedBy &&
+            {!preparedBy && displayErrors &&
               <div>
                 <span className='error'>&#x274C;</span>
-                Please enter your name for verification tracking purposes.
+                Required for conversion logging
               </div>
             }
           </div>
@@ -1732,7 +1743,7 @@ const Configuration = (props) => {
               className='start_task primary-btn'
               onClick={beginBidsCreation}
               value='Convert to BIDS'
-              disabled={error || !preparedBy}
+              disabled={error}
             />
             {successMessage}
           </div>

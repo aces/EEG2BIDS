@@ -276,7 +276,6 @@ class Modifier:
         try:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
-                file_data["SoftwareFilters"] = self.data['software_filters']
                 file_data["RecordingType"] = self.data['recording_type']
 
                 if (self.data["modality"] == 'ieeg'):
