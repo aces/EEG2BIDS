@@ -21,4 +21,5 @@ input[type="button"].primary-btn:disabled {
 }
 textarea {
     vertical-align: top;
+    font-family: Arial;
 }

@@ -9,7 +9,7 @@ from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
 import csv
 import datetime
-import json 
+import json
 
 # EEG2BIDS Wizard version
 appVersion = '1.0.1'
@@ -59,10 +59,10 @@ def get_participant_data(sid, data):
     # todo helper to to data validation
     if 'candID' not in data or not data['candID']:
         return
-    
+
     candidate = loris_api.get_candidate(data['candID'])
     sio.emit('participant_data', candidate)
-          
+
 
 @sio.event
 def set_loris_credentials(sid, data):
@@ -77,10 +77,10 @@ def set_loris_credentials(sid, data):
     loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
     loris_api.username = lorisCredentials['lorisUsername']
     loris_api.password = lorisCredentials['lorisPassword']
-    login_succeeded = loris_api.login()
+    resp = loris_api.login()
 
-    if login_succeeded.get('error'):
-        sio.emit('loris_login_response', {'error': "Can't login to the LORIS instance."})
+    if resp.get('error'):
+        sio.emit('loris_login_response', {'error': resp.get('error')})
     else:
         sio.emit('loris_login_response', {
             'success': 200,
