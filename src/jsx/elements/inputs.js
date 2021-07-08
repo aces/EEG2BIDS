@@ -237,22 +237,13 @@ export const PasswordInput = (props) => {
     </>
   );
 };
-PasswordInput.defaultProps = {
-  required: false,
-};
 PasswordInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
+  value: PropTypes.string,
   onUserInput: PropTypes.func,
-  placeholder: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
+  placeholder: PropTypes.string,
 };
 
 /**
