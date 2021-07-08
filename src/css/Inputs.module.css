@@ -1,0 +1,16 @@
+.eye-open {
+    content: '🐵';
+    cursor: pointer;
+    margin-left: -20px;
+}
+.eye-open:after {
+    content: '🐵';
+}
+.eye-close {
+    content: '🙈';
+    cursor: pointer;
+    margin-left: -20px;
+}
+.eye-close:after {
+    content: '🙈';
+}

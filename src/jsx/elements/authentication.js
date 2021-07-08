@@ -8,6 +8,7 @@ import {SocketContext} from '../socket.io';
 
 // Components
 import {
+  PasswordInput,
   TextInput,
 } from './inputs';
 
@@ -170,7 +171,6 @@ export const AuthenticationCredentials = (props) => {
             <div className={styles.authCredentialsContent}>
               <TextInput id='lorisURL'
                 name='lorisURL'
-                required={true}
                 label='LORIS URL'
                 placeholder='Example: https://demo.loris.ca'
                 value={lorisURL}
@@ -178,15 +178,13 @@ export const AuthenticationCredentials = (props) => {
               />
               <TextInput id='lorisUsername'
                 name='lorisUsername'
-                required={true}
                 label='Username'
                 placeholder='Username'
                 value={lorisUsername}
                 onUserInput={onUserInput}
               />
-              <TextInput id='lorisPassword'
+              <PasswordInput id='lorisPassword'
                 name='lorisPassword'
-                required={true}
                 label='Password'
                 placeholder='Password'
                 value={lorisPassword}

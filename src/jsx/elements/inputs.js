@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
+import styles from '../../css/Inputs.module.css';
 
 /**
  * FileInput - the input type='file' component.
@@ -188,6 +189,70 @@ TextInput.propTypes = {
   ]),
   bannedCharacters: PropTypes.array,
   readonly: PropTypes.bool,
+};
+
+/**
+ * PasswordInput - the input type='text' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const PasswordInput = (props) => {
+  const [hidden, setHidden] = useState(true);
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    props.onUserInput(props.id, event.target.value);
+  };
+  /**
+   * handleVisibility - handles visibility of password.
+   */
+  const handleVisibility = () => {
+    setHidden(!hidden);
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <>
+      {props.label &&
+        <label className='label' htmlFor={props.id}>
+          <b>{props.label}</b>
+        </label>
+      }
+      <input
+        type={hidden ? 'password' : 'text'}
+        id={props.id}
+        name={props.name}
+        value={props.value}
+        onChange={handleChange}
+        placeholder={props.placeholder}
+      />
+      <span
+        className={styles['eye-' + (hidden ? 'close' : 'open')]}
+        onClick={handleVisibility}
+      />
+    </>
+  );
+};
+PasswordInput.defaultProps = {
+  required: false,
+};
+PasswordInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+  onUserInput: PropTypes.func,
+  placeholder: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
 };
 
 /**
