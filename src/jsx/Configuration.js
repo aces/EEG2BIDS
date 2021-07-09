@@ -672,10 +672,34 @@ const Configuration = (props) => {
 
   const validate = () => {
     if (socketContext) {
+      if (state.session.get && state.siteID.get &&
+          state.projectID.get && state.subprojectID.get &&
+          state.edfData.get?.date && state.participantDOB.get &&
+          state.participantSex.get
+      ) {
+        const visitDate = state.edfData.get['date']
+            .toISOString().replace(/T.*/, '');
+
+        const dob = state.participantDOB.get
+            .toISOString().replace(/T.*/, '');
+
+        console.log('start request for new candidate');
+        socketContext.emit('create_candidate_and_visit', {
+          project: state.projectID.get,
+          dob: dob,
+          sex: state.participantSex.get,
+          site: state.siteID.get,
+          subproject: state.subprojectID.get,
+          visit: state.session.get,
+          date: visitDate,
+        });
+      }
+
       if (state.participantCandID.get && state.session.get &&
           state.siteID.get && state.projectID.get &&
           state.subprojectID.get && state.edfData.get?.date
       ) {
+        console.log('start request to create the visit');
         const visitDate = state.edfData.get['date']
             .toISOString().replace(/T.*/, '');
 
@@ -687,22 +711,6 @@ const Configuration = (props) => {
           visit: state.session.get,
           date: visitDate,
         });
-
-        if (state.participantDOB.get && state.participantSex.get) {
-          console.log(state.participantDOB.get);
-          const dob = state.participantDOB.get
-              .toISOString().replace(/T.*/, '');
-
-          socketContext.emit('create_candidate_and_visit', {
-            project: state.projectID.get,
-            dob: dob,
-            sex: state.participantSex.get,
-            site: state.siteID.get,
-            subproject: state.subprojectID.get,
-            visit: state.session.get,
-            date: visitDate,
-          });
-        }
       }
 
       if (state.edfData.get?.files?.length > 0) {
@@ -919,6 +927,7 @@ const Configuration = (props) => {
       });
 
       socketContext.on('new_candidate_created', (data) => {
+        console.log('candidate created !!!');
         console.log(data);
 
         state.participantID.set(data['PSCID']);

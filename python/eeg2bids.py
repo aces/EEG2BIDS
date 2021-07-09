@@ -123,6 +123,8 @@ def create_candidate_and_visit(sid, data):
         data['site'],
     )
 
+    print(new_candidate)
+
     if new_candidate['CandID']:
         loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
                                data['subproject'])
