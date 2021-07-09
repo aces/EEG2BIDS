@@ -654,9 +654,9 @@ const Configuration = (props) => {
 
     // participantID
     let participantIDStatus = '';
-    if (appContext.getFromTask('participantID')) {
+    if (state.participantID.get) {
       participantIDStatus = formatPass(
-          `Participant ID: ${appContext.getFromTask('participantID')}`,
+          `Participant ID: ${state.participantID.get}`,
       );
     } else {
       participantIDStatus = formatError(

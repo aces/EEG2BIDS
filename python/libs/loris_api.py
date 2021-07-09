@@ -139,6 +139,8 @@ class LorisAPI:
             verify=False
         )
 
+        print(visit)
+        print(resp)
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp
 
