@@ -218,6 +218,12 @@ const Configuration = (props) => {
     }
   }, [outputTime]);
 
+  useEffect(() => {
+    if (state.isAuthenticated && state.LORIScompliant) {
+      state.participantEntryMode.set('new_loris');
+    }
+  }, [state.LORIScompliant.get]);
+
   /**
    * hideModal - display Modal.
    * @param {boolean} hidden
@@ -924,7 +930,7 @@ const Configuration = (props) => {
           // todo display error message - login failure
         } else {
           state.isAuthenticated.set(true);
-          state.participantEntryMode.set('new_loris');
+          //state.participantEntryMode.set('new_loris');
         }
       });
 
@@ -1189,6 +1195,35 @@ const Configuration = (props) => {
         <div className='container'>
           <div className='info half'>
             <div className='small-pad'>
+              <FileInput id='bidsMetadataFile'
+                name='bidsMetadataFile'
+                accept='.json'
+                placeholder={
+                  state.bidsMetadataFile.get.map(
+                      (bidsMetadataFile) => bidsMetadataFile['name'],
+                  ).join(', ')
+                }
+                label='Recording parameters (json)'
+                onUserInput={onUserInput}
+              />
+            </div>
+            <div className='small-pad'>
+              <FileInput id='annotationsJSON'
+                name='annotationsJSON'
+                multiple={true}
+                accept='.json'
+                placeholder={
+                  state.annotationsJSON.get.map(
+                      (annotationJSON) => annotationJSON['name'],
+                  ).join(', ')
+                }
+                label='annotations.json'
+                onUserInput={onUserInput}
+              />
+            </div>
+          </div>
+          <div className='info half'>
+            <div className='small-pad'>
               <FileInput id='eventFiles'
                 name='eventFiles'
                 multiple={true}
@@ -1213,35 +1248,6 @@ const Configuration = (props) => {
                   ).join(', ')
                 }
                 label='annotations.tsv'
-                onUserInput={onUserInput}
-              />
-            </div>
-          </div>
-          <div className='info half'>
-            <div className='small-pad'>
-              <FileInput id='bidsMetadataFile'
-                name='bidsMetadataFile'
-                accept='.json'
-                placeholder={
-                  state.bidsMetadataFile.get.map(
-                      (bidsMetadataFile) => bidsMetadataFile['name'],
-                  ).join(', ')
-                }
-                label='Recording parameters (json)'
-                onUserInput={onUserInput}
-              />
-            </div>
-            <div className='small-pad'>
-              <FileInput id='annotationsJSON'
-                name='annotationsJSON'
-                multiple={true}
-                accept='.json'
-                placeholder={
-                  state.annotationsJSON.get.map(
-                      (annotationJSON) => annotationJSON['name'],
-                  ).join(', ')
-                }
-                label='annotations.json'
                 onUserInput={onUserInput}
               />
             </div>
@@ -1492,7 +1498,7 @@ const Configuration = (props) => {
               <div className='small-pad'>
                 <TextInput id='participantCandID'
                   name='participantCandID'
-                  label='LORIS CandID'
+                  label='LORIS DCCID (CandID)'
                   required={true}
                   value={state.participantCandID.get}
                   onUserInput={onUserInput}
