@@ -190,6 +190,13 @@ export const AuthenticationCredentials = (props) => {
                 value={lorisPassword}
                 onUserInput={onUserInput}
               />
+              <div className={styles.authSubmitContainer}>
+                <input
+                  type='button'
+                  value='Submit'
+                  onClick={handleClose}
+                  className={styles.authSubmitButton}/>
+              </div>
             </div>
           </div>
         </div>
