@@ -644,6 +644,8 @@ const Configuration = (props) => {
     } else if (appContext.getFromTask('participantCandID')) {
       participantCandIDStatus = formatPass(
           `LORIS CandID: ${appContext.getFromTask('participantCandID')}`,
+      ) + formatPass(
+          `LORIS CandID: ${appContext.getFromTask('participantCandID')}`,
       );
     }
     result.push(
@@ -655,6 +657,8 @@ const Configuration = (props) => {
     // participantID
     let participantIDStatus = '';
     if (state.participantID.get) {
+      console.log('look: ');
+      console.log(state);
       participantIDStatus = formatPass(
           `Participant ID: ${state.participantID.get}`,
       );
@@ -663,8 +667,20 @@ const Configuration = (props) => {
           'Participant ID is not specified',
       );
     }
+    // participantCandID
+    // let participantCandID;
+    // if (state.participantCandID.get) {
+    //   participantCandID = formatPass(
+    //       `DSCID: ${state.participantCandID.get}`,
+    //   );
+    // } else {
+    //   participantCandID = formatError(
+    //       'DSCID is unknown',
+    //   );
+    // }
     result.push(
         <div key='participantID'>{participantIDStatus}</div>,
+        // <div key='participantCandID'>{participantCandID}</div>,
     );
 
     return result;
@@ -931,10 +947,14 @@ const Configuration = (props) => {
         console.log(data);
 
         state.participantID.set(data['PSCID']);
+        state.participantCandID.set(data['CandID']);
         appContext.setTask('participantID', data['PSCID']);
+        appContext.setTask('participantCandID', data['CandID']);
       });
 
       socketContext.on('loris_login_response', (data) => {
+        // todo from alizee - this code should not,
+        //  isAuthenticated should be passed back from authentication component
         if (data.error) {
           // todo display error message - login failure
         } else {
@@ -1434,7 +1454,8 @@ const Configuration = (props) => {
           Participant Details
         </span>
         <div className='info'>
-          {state.LORIScompliant.get && state.isAuthenticated.get &&
+          {state.LORIScompliant.get &&
+            state.isAuthenticated.get &&
             <div className='small-pad'>
               <RadioInput id='participantEntryMode'
                 name='participantEntryMode'
@@ -1456,7 +1477,6 @@ const Configuration = (props) => {
             </div>
           }
           {state.participantEntryMode.get == 'new_loris' &&
-            state.isAuthenticated.get &&
             <>
               <div className='small-pad'>
                 <label className="label" htmlFor={props.id}>
@@ -1502,7 +1522,6 @@ const Configuration = (props) => {
             </>
           }
           {state.participantEntryMode.get == 'existing_loris' &&
-            state.isAuthenticated.get &&
             <>
               <div className='small-pad'>
                 <TextInput id='participantCandID'
