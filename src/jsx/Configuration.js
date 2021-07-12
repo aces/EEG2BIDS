@@ -219,7 +219,8 @@ const Configuration = (props) => {
   }, [outputTime]);
 
   useEffect(() => {
-    if (state.isAuthenticated && state.LORIScompliant) {
+    if (state.isAuthenticated.get && state.LORIScompliant) {
+      console.log('wtf 1');
       state.participantEntryMode.set('new_loris');
     }
   }, [state.LORIScompliant.get]);
@@ -989,6 +990,10 @@ const Configuration = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
+    console.log('name');
+    console.log(name);
+    console.log('value');
+    console.log(value);
     // Update the state of Configuration.
     switch (name) {
       case 'recordingID':
@@ -1004,10 +1009,23 @@ const Configuration = (props) => {
         state.subjectID.set(value);
         appContext.setTask(name, value);
         break;
+      case 'participantEntryMode':
+        console.log('look:');
+        console.log(state.participantEntryMode.get);
+        if (state.isAuthenticated.get) {
+          console.log(1);
+          console.log('wtf 2');
+          state.participantEntryMode.set('new_loris');
+        } else {
+          console.log(2);
+          state.participantEntryMode.set('manual');
+        }
+        break;
       case 'LORIScompliant':
         if (value === 'yes') {
           value = true;
           if (state.isAuthenticated.get) {
+            console.log('wtf 3');
             state.participantEntryMode.set('new_loris');
           } else {
             state.participantEntryMode.set('manual');
@@ -1462,11 +1480,11 @@ const Configuration = (props) => {
                 label='Entry mode'
                 required={true}
                 onUserInput={onUserInput}
-                options={state.isAuthenticated.get ?
+                options={state.isAuthenticated.get === true ?
                   {
+                    manual: 'Manual',
                     new_loris: 'Create a LORIS candidate',
                     existing_loris: 'Use an existing LORIS candidate',
-                    manual: 'Manual',
                   } :
                   {
                     manual: 'Manual',
@@ -1476,7 +1494,7 @@ const Configuration = (props) => {
               />
             </div>
           }
-          {state.participantEntryMode.get == 'new_loris' &&
+          {state.participantEntryMode.get === 'new_loris' &&
             <>
               <div className='small-pad'>
                 <label className="label" htmlFor={props.id}>
@@ -1521,7 +1539,7 @@ const Configuration = (props) => {
               </div>
             </>
           }
-          {state.participantEntryMode.get == 'existing_loris' &&
+          {state.participantEntryMode.get === 'existing_loris' &&
             <>
               <div className='small-pad'>
                 <TextInput id='participantCandID'
@@ -1548,7 +1566,7 @@ const Configuration = (props) => {
               </div>
             </>
           }
-          {state.participantEntryMode.get == 'manual' &&
+          {state.participantEntryMode.get === 'manual' &&
             <>
               <div className='small-pad'>
                 <TextInput id='participantID'
