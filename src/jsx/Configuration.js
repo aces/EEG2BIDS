@@ -987,6 +987,8 @@ const Configuration = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
+    console.log(name);
+    console.log(value);
     // Update the state of Configuration.
     switch (name) {
       case 'recordingID':
@@ -1003,10 +1005,10 @@ const Configuration = (props) => {
         appContext.setTask(name, value);
         break;
       case 'participantEntryMode':
-        if (state.isAuthenticated.get) {
+        if (state.isAuthenticated.get === false) {
           state.participantEntryMode.set('new_loris');
         } else {
-          state.participantEntryMode.set('manual');
+          state.participantEntryMode.set(value);
         }
         break;
       case 'LORIScompliant':
