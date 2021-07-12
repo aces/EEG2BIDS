@@ -6,11 +6,124 @@ import styles from '../../css/Authentication.module.css';
 // Socket.io
 import {SocketContext} from '../socket.io';
 
-// Components
-import {
-  PasswordInput,
-  TextInput,
-} from './inputs';
+/**
+ * PasswordInput - the input type='text' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+const PasswordInput = (props) => {
+  const [hidden, setHidden] = useState(true);
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    props.onUserInput(props.id, event.target.value);
+  };
+  /**
+   * handleVisibility - handles visibility of password.
+   */
+  const handleVisibility = () => {
+    setHidden(!hidden);
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <div style={{
+      width: '400px',
+      height: '20px',
+      position: 'relative',
+      marginBottom: '50px',
+    }}>
+      <input
+        type={hidden ? 'password' : 'text'}
+        id={props.id}
+        name={props.name}
+        value={props.value}
+        onChange={handleChange}
+        className={styles.input}
+        placeholder={props.placeholder}
+      />
+      {props.label &&
+        <label className={styles.label}
+          htmlFor={props.id}>
+          {props.label}
+        </label>
+      }
+      <span
+        className={styles['eye-' + (hidden ? 'close' : 'open')]}
+        onClick={handleVisibility}
+      />
+    </div>
+  );
+};
+PasswordInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.string,
+  onUserInput: PropTypes.func,
+  placeholder: PropTypes.string,
+};
+
+/**
+ * AuthInput - the input type='text' component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+const AuthInput = (props) => {
+  /**
+   * handleChange - input change by user.
+   * @param {object} event - input event
+   */
+  const handleChange = (event) => {
+    props.onUserInput(props.id, event.target.value);
+  };
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return (
+    <div style={{
+      width: '400px',
+      height: '20px',
+      position: 'relative',
+      marginBottom: '50px',
+    }}>
+      <input
+        type='text'
+        id={props.id}
+        name={props.name}
+        value={props.value}
+        onChange={handleChange}
+        className={styles.input}
+        placeholder={' '}
+      />
+      {props.label &&
+        <label className={styles.label}
+          htmlFor={props.id}>
+          {props.label}
+        </label>
+      }
+    </div>
+  );
+};
+AuthInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  value: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+  onUserInput: PropTypes.func,
+  placeholder: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+};
 
 export const AuthenticationMessage = (props) => {
   // React Context
@@ -19,7 +132,7 @@ export const AuthenticationMessage = (props) => {
 
   // React state
   const [loginMessage, setLoginMessage] = useState(
-      'You are not logged into a LORIS Account',
+      '(Optional) You are not logged into a LORIS Account',
   );
   const [loginLink, setLoginLink] = useState(
       'Log in...',
@@ -103,7 +216,19 @@ export const AuthenticationCredentials = (props) => {
   }, []);
 
   /**
-   * Close the Authentication Credentials
+   * handleClear - Close the Authentication Credentials
+   *   but first update (?new) credentials.
+   */
+  const handleClear = () => {
+    const myAPI = window['myAPI'];
+    myAPI.removeLorisAuthenticationCredentials();
+    setLorisURL('');
+    setLorisUsername('');
+    setLorisPassword('');
+  };
+
+  /**
+   * handleClose - Close the Authentication Credentials
    *   but first update (?new) credentials.
    */
   const handleClose = () => {
@@ -169,14 +294,14 @@ export const AuthenticationCredentials = (props) => {
               </span>
             </span>
             <div className={styles.authCredentialsContent}>
-              <TextInput id='lorisURL'
+              <AuthInput id='lorisURL'
                 name='lorisURL'
-                label='LORIS URL'
+                label='LORIS URL: (Example: https://demo.loris.ca)'
                 placeholder='Example: https://demo.loris.ca'
                 value={lorisURL}
                 onUserInput={onUserInput}
               />
-              <TextInput id='lorisUsername'
+              <AuthInput id='lorisUsername'
                 name='lorisUsername'
                 label='Username'
                 placeholder='Username'
@@ -186,11 +311,16 @@ export const AuthenticationCredentials = (props) => {
               <PasswordInput id='lorisPassword'
                 name='lorisPassword'
                 label='Password'
-                placeholder='Password'
+                placeholder=' '
                 value={lorisPassword}
                 onUserInput={onUserInput}
               />
               <div className={styles.authSubmitContainer}>
+                <input
+                  type='button'
+                  value='Clear'
+                  onClick={handleClear}
+                  className={styles.authClearButton}/>
                 <input
                   type='button'
                   value='Submit'

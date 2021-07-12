@@ -1,3 +1,4 @@
+/* Authentication "notification message" CSS */
 .authMessageContainer {
     color: #0b4681;
     padding: 10px;
@@ -15,6 +16,7 @@
     cursor: pointer;
 }
 
+/* Authentication "modal" CSS */
 .authCredentialsOverlay {
     top: 0;
     width: 100%;
@@ -42,7 +44,7 @@
     z-index: 105;
     display: flex;
     overflow: hidden;
-    margin: .2rem auto;
+    margin: 3px auto;
     position: relative;
     align-items: center;
     pointer-events: none;
@@ -70,10 +72,11 @@
 .authCredentialsHeader {
     height: 30px;
     display: flex;
-    padding: 30px 30px 0 30px;
+    color: #074785;
     font-size: 18pt;
     align-items: center;
     flex-direction: row;
+    padding: 30px 30px 0 30px;
     -webkit-overflow-scrolling: touch;
 }
 .authCredentialsHeaderClose {
@@ -90,10 +93,27 @@
     -webkit-overflow-scrolling: touch;
 }
 
+/* Authentication "Submit" button CSS */
 .authSubmitContainer {
     display: block;
-    text-align: right;
     margin: 10px 50px 0 0;
+    text-align: right;
+}
+.authClearButton {
+    border: 0;
+    width: 100px;
+    height: 35px;
+    color: #fff;
+    cursor: pointer;
+    margin: 0 30px 0 0;
+    border-radius: 30px;
+    text-decoration: none;
+    background-color: #6591be;
+    box-shadow: 0 2px 8px 0 rgb(223, 226, 229),
+        0 2px 10px 0 rgb(225, 226, 229);
+}
+.authClearButton:focus {
+  outline: 0;
 }
 .authSubmitButton {
     border: 0;
@@ -109,4 +129,77 @@
 }
 .authSubmitButton:focus {
   outline: 0;
+}
+
+/* Authentication "input" animation CSS */
+.label {
+    top: 16px;
+    left: 16px;
+    color: #074785;
+    font-size: 12pt;
+    transition: .3s;
+    padding: 0 4px;
+    position: absolute;
+    background-color: #eaecef;
+}
+.input {
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    padding: 16px;
+    font-size: 12pt;
+    background: none;
+    position: absolute;
+    border-radius: 25px;
+    border: 1px solid #cbd1d9;
+}
+.input:focus + .label{
+    top: -8px;
+    left: 12px;
+    z-index: 10;
+    color: #074785;
+    font-size: 10pt;
+    font-weight: 500;
+}
+.input:not(:placeholder-shown).input:not(:focus)+ .label{
+    top: -8px;
+    left: 12px;
+    z-index: 10;
+    color: #074785;
+    font-size: 10pt;
+    font-weight: 500;
+}
+.input:focus{
+    border: 1px solid #074785;
+}
+
+/* Authentication "hide" password CSS */
+.eye-open {
+    right: 0;
+    top: 15px;
+    z-index: 11;
+    content: 'Hide';
+    cursor: pointer;
+    font-size: 14pt;
+    position: absolute;
+    margin-left: -20px;
+}
+.eye-open:after {
+    content: 'Hide';
+}
+.eye-close {
+    right: 0;
+    top: 15px;
+    z-index: 11;
+    content: 'Show';
+    cursor: pointer;
+    font-size: 14pt;
+    position: absolute;
+    margin-left: -20px;
+}
+.eye-close:after {
+    content: 'Show';
 }
