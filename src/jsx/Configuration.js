@@ -220,7 +220,6 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (state.isAuthenticated.get && state.LORIScompliant) {
-      console.log('wtf 1');
       state.participantEntryMode.set('new_loris');
     }
   }, [state.LORIScompliant.get]);
@@ -243,7 +242,7 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (props.appMode === 'Converter') {
-      console.log('validate');
+      console.info('validate');
       validate();
     }
   }, [props.appMode]);
@@ -658,8 +657,6 @@ const Configuration = (props) => {
     // participantID
     let participantIDStatus = '';
     if (state.participantID.get) {
-      console.log('look: ');
-      console.log(state);
       participantIDStatus = formatPass(
           `Participant ID: ${state.participantID.get}`,
       );
@@ -700,7 +697,7 @@ const Configuration = (props) => {
         const dob = state.participantDOB.get
             .toISOString().replace(/T.*/, '');
 
-        console.log('start request for new candidate');
+        console.info('start request for new candidate');
         socketContext.emit('create_candidate_and_visit', {
           project: state.projectID.get,
           dob: dob,
@@ -716,7 +713,7 @@ const Configuration = (props) => {
           state.siteID.get && state.projectID.get &&
           state.subprojectID.get && state.edfData.get?.date
       ) {
-        console.log('start request to create the visit');
+        console.info('start request to create the visit');
         const visitDate = state.edfData.get['date']
             .toISOString().replace(/T.*/, '');
 
@@ -944,8 +941,8 @@ const Configuration = (props) => {
       });
 
       socketContext.on('new_candidate_created', (data) => {
-        console.log('candidate created !!!');
-        console.log(data);
+        console.info('candidate created !!!');
+        console.info(data);
 
         state.participantID.set(data['PSCID']);
         state.participantCandID.set(data['CandID']);
@@ -965,9 +962,9 @@ const Configuration = (props) => {
       });
 
       socketContext.on('participant_data', (data) => {
-        console.log(data);
+        console.info(data);
         if (data?.error) {
-          console.log(data);
+          console.info(data);
           appContext.setTask('participantCandID', {error: data.error});
         } else {
           state.participantID.set(data.PSCID);
@@ -990,10 +987,6 @@ const Configuration = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
-    console.log('name');
-    console.log(name);
-    console.log('value');
-    console.log(value);
     // Update the state of Configuration.
     switch (name) {
       case 'recordingID':
@@ -1010,14 +1003,9 @@ const Configuration = (props) => {
         appContext.setTask(name, value);
         break;
       case 'participantEntryMode':
-        console.log('look:');
-        console.log(state.participantEntryMode.get);
         if (state.isAuthenticated.get) {
-          console.log(1);
-          console.log('wtf 2');
           state.participantEntryMode.set('new_loris');
         } else {
-          console.log(2);
           state.participantEntryMode.set('manual');
         }
         break;
@@ -1025,7 +1013,6 @@ const Configuration = (props) => {
         if (value === 'yes') {
           value = true;
           if (state.isAuthenticated.get) {
-            console.log('wtf 3');
             state.participantEntryMode.set('new_loris');
           } else {
             state.participantEntryMode.set('manual');
@@ -1128,8 +1115,8 @@ const Configuration = (props) => {
    * @return {Number}
    */
   const getAge = (birthDate, visitDate) => {
-    console.log(birthDate);
-    console.log(visitDate);
+    console.info(birthDate);
+    console.info(visitDate);
     if (!birthDate || !visitDate) return;
 
     let age = visitDate.getFullYear() - birthDate.getFullYear();
