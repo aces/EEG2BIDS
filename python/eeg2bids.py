@@ -133,7 +133,7 @@ def create_candidate_and_visit(sid, data):
         #loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
         #                           data['project'], data['date'])
         print('new_candidate_created')
-        sio.emit('new_candidate_created', {'PSCID': new_candidate['PSCID']})
+        sio.emit('new_candidate_created', new_candidate)
 
 
 @sio.event
