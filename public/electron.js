@@ -131,6 +131,25 @@ app.on('ready', async () => {
       createSettingsWindow();
     }
   });
+  ipcMain.on('removeLorisAuthenticationCredentials',
+      async (event, arg) => {
+        const keytar = require('keytar');
+        // Delete all old credentials
+        const services = await keytar.findCredentials('EEG2BIDS');
+        for (const service of services) {
+          await keytar.deletePassword('EEG2BIDS', service.account);
+        }
+        // Set lorisURL in electron-store (not secure)
+        const Store = require('electron-store');
+        const schema = {
+          lorisURL: {
+            type: 'string',
+            //format: 'url',
+          },
+        };
+        const store = new Store({schema});
+        store.set('lorisURL', '');
+      });
   ipcMain.on('setLorisAuthenticationCredentials',
       async (event, credentials) => {
         const keytar = require('keytar');

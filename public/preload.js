@@ -40,6 +40,10 @@ contextBridge.exposeInMainWorld('myAPI', {
     const ipcRenderer = require('electron').ipcRenderer;
     ipcRenderer.send('setLorisAuthenticationCredentials', credentials);
   },
+  removeLorisAuthenticationCredentials: () => {
+    const ipcRenderer = require('electron').ipcRenderer;
+    ipcRenderer.send('removeLorisAuthenticationCredentials', null);
+  },
   openSettings: () => {
     const ipcRenderer = require('electron').ipcRenderer;
     ipcRenderer.send('openSettingsWindow', null);
