@@ -8,9 +8,42 @@ pyinstaller --paths=python python/eeg2bids.py -F `
 --add-data 'python/libs/bids_validator/rules/session_level_rules.json;./bids_validator/rules' `
 --add-data 'python/libs/bids_validator/rules/subject_level_rules.json;./bids_validator/rules' `
 --add-data 'python/libs/bids_validator/tsv/non_custom_columns.json;./bids_validator/tsv' `
+--add-data 'python/libs/mne/channels/data/montages/EGI_256.csd;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-128.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-129.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-256.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-257.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-32.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-64_1.0.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/GSN-HydroCel-65_1.0.sfp;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/artinis-brite23.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/artinis-octamon.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi128.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi16.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi160.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi256.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi32.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/biosemi64.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/easycap-M1.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/easycap-M10.txt;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/mgh60.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/mgh70.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_1005.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_1020.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_alphabetic.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_postfixed.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_prefixed.elc;./mne/channels/data/montages' `
+--add-data 'python/libs/mne/channels/data/montages/standard_primed.elc;./mne/channels/data/montages' `
 --hidden-import=eventlet.hubs.epolls `
 --hidden-import=eventlet.hubs.kqueue `
 --hidden-import=eventlet.hubs.selects `
+--hidden-import=eventlet.tpool `
+--hidden-import=eventlet.event `
+--hidden-import=eventlet.greenio `
+--hidden-import=eventlet.greenthread `
+--hidden-import=eventlet.patcher `
+--hidden-import=eventlet.timeout `
+--hidden-import=eventlet.six `
 --hidden-import=dns --hidden-import=dns.dnssec --hidden-import=dns.e164 `
 --hidden-import=dns.hash --hidden-import=dns.namedict `
 --hidden-import=dns.tsigkeyring --hidden-import=dns.update `

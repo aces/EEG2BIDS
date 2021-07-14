@@ -256,13 +256,17 @@ class Converter:
                 bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, run=run)
                 bids_basename.update(session=session)
 
-                write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
-                with open(bids_basename, 'r+b') as f:
-                    f.seek(8)  # id_info field starts 8 bytes in
-                    f.write(bytes("X X X X".ljust(80), 'ascii'))
+                try:
+                    write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+                    with open(bids_basename, 'r+b') as f:
+                        f.seek(8)  # id_info field starts 8 bytes in
+                        f.write(bytes("X X X X".ljust(80), 'ascii'))
+                except Exception as ex:
+                    print('Exception ex:')
+                    print(ex)
 
                 print('finished')
-                
+
                 return bids_basename.basename
 
             except PermissionError as ex:
