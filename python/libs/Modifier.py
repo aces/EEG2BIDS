@@ -66,6 +66,10 @@ class Modifier:
             )
             os.rename(fileOrig, fileDest)
 
+        # remove the mne citations README
+        filename = os.path.join(self.get_bids_root_path(), 'README')
+        os.remove(filename)
+
 
     def modify_dataset_description_json(self):
         file_path = os.path.join(
