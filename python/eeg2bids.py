@@ -38,8 +38,8 @@ def connect(sid, environ):
         return False  # extra precaution.
 
 
-def tarfile_bids_thread(data):
-    iEEG.TarFile(data)
+def tarfile_bids_thread(bids_directory):
+    iEEG.TarFile(bids_directory)
     response = {
         'compression_time': 'example_5mins'
     }
@@ -47,9 +47,8 @@ def tarfile_bids_thread(data):
 
 
 @sio.event
-def tarfile_bids(sid, data):
-    # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
-    response = eventlet.tpool.execute(tarfile_bids_thread, data)
+def tarfile_bids(sid, bids_directory):
+    response = eventlet.tpool.execute(tarfile_bids_thread, bids_directory)
     send = {
         'compression_time': response['compression_time']
     }
@@ -288,16 +287,14 @@ def edf_to_bids(sid, data):
 
 
 @sio.event
-def validate_bids(sid, data):
-    # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
-    print('validate_bids: ', data)
+def validate_bids(sid, bids_directory):
+    print('validate_bids: ', bids_directory)
     error_messages = []
-    if 'bids_directory' not in data or not data['bids_directory']:
+    if not bids_directory:
         error_messages.append('The BIDS output directory is missing.')
-    if 'output_time' not in data or not data['output_time']:
-        error_messages.append('The BIDS format is missing.')
+
     if not error_messages:
-        BIDS.Validate(data)
+        BIDS.Validate(bids_directory)
         response = {
             'file_paths': BIDS.Validate.file_paths,
             'result': BIDS.Validate.result

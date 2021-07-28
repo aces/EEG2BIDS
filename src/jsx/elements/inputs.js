@@ -15,6 +15,10 @@ export const FileInput = (props) => {
   const handleChange = (event) => {
     // Send current file to parent component
     const files = event.target.files ? Array.from(event.target.files) : [];
+
+    // Clear the input file
+    event.target.value = null;
+
     props.onUserInput(props.id, files);
   };
   /**

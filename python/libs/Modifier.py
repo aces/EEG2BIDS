@@ -29,7 +29,7 @@ class Modifier:
 
     def get_eeg_path(self):
         directory_path = 'sub-' + self.data['participantID'].replace('_', '').replace('-', '').replace(' ', '')
-        
+
         return os.path.join(
             self.get_bids_root_path(),
             directory_path,
@@ -40,29 +40,29 @@ class Modifier:
 
     def clean_dataset_files(self):
         if len(self.data['edfData']['files']) > 0:
-            # for split recording, clean the duplicates _eeg.json and _channels.tsv
+            # for multiple run recording, clean the duplicates _eeg.json and _channels.tsv
             channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
             for i in range(1, len(channels_files)):
                 filename = os.path.join(self.get_eeg_path(), channels_files[i])
-                os.remove(filename) 
-                
+                os.remove(filename)
+
             sidecar_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('eeg.json')]
             for i in range(1, len(sidecar_files)):
                 filename = os.path.join(self.get_eeg_path(), sidecar_files[i])
-                os.remove(filename) 
-            
-            # remove the split suffix in the file names
+                os.remove(filename)
+
+            # remove the run suffix in the file names
             fileOrig = os.path.join(self.get_eeg_path(), channels_files[0])
             fileDest = os.path.join(
                 self.get_eeg_path(),
-                re.sub(r"_split-[0-9]+", '', channels_files[0])
+                re.sub(r"_run-[0-9]+", '', channels_files[0])
             )
             os.rename(fileOrig, fileDest)
 
             fileOrig = os.path.join(self.get_eeg_path(), sidecar_files[0])
             fileDest = os.path.join(
                 self.get_eeg_path(),
-                re.sub(r"_split-[0-9]+", '', sidecar_files[0])
+                re.sub(r"_run-[0-9]+", '', sidecar_files[0])
             )
             os.rename(fileOrig, fileDest)
 
@@ -84,7 +84,7 @@ class Modifier:
         except IOError:
             print("Could not read or write dataset_description.json file")
 
-        
+
     def modify_participants_tsv(self):
         file_path = os.path.join(
             self.get_bids_root_path(),
@@ -180,13 +180,13 @@ class Modifier:
         for eegRun in self.data.get('eegRuns'):
             edf_file = eegRun['edfBIDSBasename']
             filename = os.path.join(self.get_eeg_path(), edf_file + '_annotations')
-            
+
             if eegRun['annotationsTSV']:
                 shutil.copyfile(
                     eegRun['annotationsTSV'],
                     os.path.join(self.get_eeg_path(), filename + '.tsv')
                 )
-            
+
             if eegRun['annotationsJSON']:
                 shutil.copyfile(
                     eegRun['annotationsJSON'],
@@ -198,7 +198,7 @@ class Modifier:
         for eegRun in self.data.get('eegRuns'):
             edf_file = eegRun['edfBIDSBasename']
             filename = os.path.join(self.get_eeg_path(), edf_file + '_annotations')
-            
+
             if eegRun['eventFile']:
                 # events.tsv data collected:
                 output = []
@@ -228,7 +228,7 @@ class Modifier:
                         temp = os.path.join(path, filename)
                         if temp.endswith(eegRun['edfBIDSBasename'] + '_events.tsv'):
                             path_event_files = temp
-                        
+
                 # We now open BIDS events.tsv file if it exists
                 if path_event_files:
                     try:
@@ -272,7 +272,7 @@ class Modifier:
             raise ValueError('Found more than one eeg.json file')
 
         file_path = os.path.join(self.get_eeg_path(), eeg_json[0])
-        
+
         try:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
@@ -284,12 +284,12 @@ class Modifier:
                     referenceField = 'EGGReference'
 
                 file_data[referenceField] = self.data['reference']
-                
+
                 if 'metadata' in self.data['bidsMetadata'] and 'invalid_keys' in self.data['bidsMetadata']:
                     for key in self.data['bidsMetadata']['metadata']:
-                        if key not in self.data['bidsMetadata']['invalid_keys']:    
+                        if key not in self.data['bidsMetadata']['invalid_keys']:
                             file_data[key] = self.data['bidsMetadata']['metadata'][key]
-                  
+
                 with open(file_path, "w") as fp:
                     json.dump(file_data, fp, indent=4)
 

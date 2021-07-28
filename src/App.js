@@ -84,7 +84,7 @@ const App = () => {
                 },
               },
               {
-                title: '4) Validator',
+                title: '4) Validate and package',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(3);

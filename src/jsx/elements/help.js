@@ -96,7 +96,7 @@ const Help = (props) => {
       <p>Create your BIDS output if your configuration is correct!</p>
     </>,
     Validator: <>
-      <h3>4) Validator</h3>
+      <h3>4) Validate and package</h3>
       <p>Validate the BIDS output and then compress it for storage!</p>
     </>,
   };

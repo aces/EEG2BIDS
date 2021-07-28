@@ -6,14 +6,12 @@ class Validate:
     file_paths = []
     result = []
 
-    def __init__(self, data):
+    def __init__(self, bids_directory):
         print('- Validate: init started.')
-        sep = os.path.sep
-        start_path = data['bids_directory'] + sep + data['output_time']  # current directory
         file_paths = []
         result = []
         validator = BIDSValidator()
-        for path, dirs, files in os.walk(start_path):
+        for path, dirs, files in os.walk(bids_directory):
             for filename in files:
                 if filename == '.bidsignore':
                     continue
@@ -25,9 +23,9 @@ class Validate:
                     continue
 
                 temp = os.path.join(path, filename)
-                file_paths.append(temp[len(start_path):len(temp)])
-                result.append(validator.is_bids(temp[len(start_path):len(temp)]))
-                # print(validator.is_bids(temp[len(start_path):len(temp)]))
+                file_paths.append(temp[len(bids_directory):len(temp)])
+                result.append(validator.is_bids(temp[len(bids_directory):len(temp)]))
+                # print(validator.is_bids(temp[len(bids_directory):len(temp)]))
 
         self.set_file_paths(file_paths)
         self.set_result(result)

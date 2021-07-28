@@ -23,3 +23,8 @@ textarea {
     vertical-align: top;
     font-family: Arial;
 }
+.resetBtn {
+    text-align: right;
+    width: 50%;
+    background-color: #e9eaee;
+}

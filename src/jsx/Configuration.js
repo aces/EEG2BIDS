@@ -41,96 +41,56 @@ const Configuration = (props) => {
   const socketContext = useContext(SocketContext);
 
   // React State
+  const initialState = {
+    eegRuns: null,
+    edfData: [],
+    edfFiles: [],
+    modality: 'ieeg',
+    eventFiles: [],
+    annotationsTSV: [],
+    annotationsJSON: [],
+    bidsDirectory: null,
+    LORIScompliant: true,
+    siteID: 'n/a',
+    siteOptions: [],
+    siteUseAPI: false,
+    projectID: 'n/a',
+    projectOptions: [],
+    projectUseAPI: false,
+    subprojectID: 'n/a',
+    subprojectOptions: [],
+    subprojectUseAPI: false,
+    session: '',
+    sessionOptions: [],
+    sessionUseAPI: false,
+    bidsMetadataFile: [],
+    bidsMetadata: null,
+    lineFreq: 'n/a',
+    taskName: '',
+    reference: 'n/a',
+    recordingType: 'n/a',
+    participantEntryMode: 'manual',
+    participantCandID: '',
+    participantID: '',
+    participantDOB: null,
+    participantAge: 'n/a',
+    participantSex: 'n/a',
+    participantHand: 'n/a',
+    anonymize: false,
+    subjectID: '',
+  };
+
   const state = {};
-  state.eegRuns = {};
-  [state.eegRuns.get, state.eegRuns.set] = useState(null);
-  state.edfData = {};
-  [state.edfData.get, state.edfData.set] = useState([]);
+  for (const [key, value] of Object.entries(initialState)) {
+    state[key] = {};
+    [state[key].get, state[key].set] = useState(value);
+  }
 
-  state.edfFiles = {};
-  [state.edfFiles.get, state.edfFiles.set] = useState([]);
-  state.modality = {};
-  [state.modality.get, state.modality.set] = useState('ieeg');
-  state.eventFiles = {};
-  [state.eventFiles.get, state.eventFiles.set] = useState([]);
-  state.annotationsTSV = {};
-  [state.annotationsTSV.get, state.annotationsTSV.set] = useState([]);
-  state.annotationsJSON = {};
-  [state.annotationsJSON.get, state.annotationsJSON.set] = useState([]);
-
-  state.bidsDirectory = {};
-  [state.bidsDirectory.get, state.bidsDirectory.set] = useState(null);
-  state.LORIScompliant = {};
-  [state.LORIScompliant.get, state.LORIScompliant.set] = useState(true);
-  state.siteID = {};
-  [state.siteID.get, state.siteID.set] = useState('n/a');
-  state.siteOptions = {};
-  [state.siteOptions.get, state.siteOptions.set] = useState([]);
-  state.siteUseAPI = {};
-  [state.siteUseAPI.get, state.siteUseAPI.set] = useState(false);
-  state.projectID = {};
-  [state.projectID.get, state.projectID.set] = useState('n/a');
-  state.projectOptions = {};
-  [state.projectOptions.get, state.projectOptions.set] = useState([]);
-  state.projectUseAPI = {};
-  [state.projectUseAPI.get, state.projectUseAPI.set] = useState(false);
-  state.subprojectID = {};
-  [state.subprojectID.get, state.subprojectID.set] = useState('n/a');
-  state.subprojectOptions = {};
-  [state.subprojectOptions.get, state.subprojectOptions.set] = useState([]);
-  state.subprojectUseAPI = {};
-  [state.subprojectUseAPI.get, state.subprojectUseAPI.set] = useState(false);
-  state.session = {};
-  [state.session.get, state.session.set] = useState('');
-  state.sessionOptions = {};
-  state.bidsMetadataFile = {};
-  [state.bidsMetadataFile.get, state.bidsMetadataFile.set] = useState([]);
-  state.bidsMetadata = {};
-  [state.bidsMetadata.get, state.bidsMetadata.set] = useState(null);
-  state.lineFreq = {};
-  [state.lineFreq.get, state.lineFreq.set] = useState('n/a');
-  state.taskName = {};
-  [state.taskName.get, state.taskName.set] = useState('');
-  state.reference = {};
-  [state.reference.get, state.reference.set] = useState('n/a');
-  state.recordingType = {};
-  [state.recordingType.get, state.recordingType.set] = useState('n/a');
-  [state.sessionOptions.get, state.sessionOptions.set] = useState([]);
-  state.sessionUseAPI = {};
-  [state.sessionUseAPI.get, state.sessionUseAPI.set] = useState(false);
-  state.participantEntryMode = {};
-  [
-    state.participantEntryMode.get,
-    state.participantEntryMode.set,
-  ] = useState('manual');
-  state.participantCandID = {};
-  [state.participantCandID.get, state.participantCandID.set] = useState('');
-  state.participantID = {};
-  [state.participantID.get, state.participantID.set] = useState('');
-  state.participantDOB = {};
-  [state.participantDOB.get, state.participantDOB.set] = useState(null);
-  state.participantAge = {};
-  [state.participantAge.get, state.participantAge.set] = useState('n/a');
-  state.participantSex = {};
-  [state.participantSex.get, state.participantSex.set] = useState('n/a');
-  state.participantHand = {};
-  [state.participantHand.get, state.participantHand.set] = useState('n/a');
-  state.anonymize = {};
-  [state.anonymize.get, state.anonymize.set] = useState(false);
-  state.subjectID = {};
-  [state.subjectID.get, state.subjectID.set] = useState('');
-  state.authCredentialsVisible = {};
-  [
-    state.authCredentialsVisible.get,
-    state.authCredentialsVisible.set,
-  ] = useState(false);
-  state.isAuthenticated = {};
-  [state.isAuthenticated.get, state.isAuthenticated.set] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
 
   const [preparedBy, setPreparedBy] = useState('');
   const [displayErrors, setDisplayErrors] = useState(false);
-
-  // React State
   const [outputTime, setOutputTime] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -155,6 +115,15 @@ const Configuration = (props) => {
       error: '',
     },
   });
+
+  /**
+   * reset - reset the form fields (state).
+   */
+  const reset = () => {
+    for (const [key, value] of Object.entries(initialState)) {
+      state[key].set(value);
+    }
+  };
 
   /**
    * beginBidsCreation - create BIDS format.
@@ -219,7 +188,7 @@ const Configuration = (props) => {
   }, [outputTime]);
 
   useEffect(() => {
-    if (state.isAuthenticated.get && state.LORIScompliant) {
+    if (isAuthenticated && state.LORIScompliant) {
       state.participantEntryMode.set('new_loris');
     }
   }, [state.LORIScompliant.get]);
@@ -492,6 +461,7 @@ const Configuration = (props) => {
 
   const validateRecordingParameters = () => {
     const result = [];
+    let invalidKeyFound = false;
 
     if (!appContext.getFromTask('bidsMetadata')) {
       return formatWarning('No EEG Parameter metadata file selected');
@@ -513,6 +483,7 @@ const Configuration = (props) => {
 
     Object.keys(metadata).map((key) => {
       if (invalidKeys.indexOf(key) > -1) {
+        invalidKeyFound = true;
         result.push(
             <div key={key}>
               {formatWarning(`${key}: ${metadata[key]}`)}
@@ -530,12 +501,15 @@ const Configuration = (props) => {
       }
     });
 
-    result.push(
-        <p key="message">
-          <span className='warning'>&#x26A0;</span>
-          Invalid keys for the selected modality will be ignored.
-        </p>,
-    );
+    if (invalidKeyFound) {
+      result.push(
+          <p key="message">
+            <span className='warning'>&#x26A0;</span>
+            Note: if invalid or extra parameters are found
+            in the .json file, they are ignored.
+          </p>,
+      );
+    }
 
     return result;
   };
@@ -850,6 +824,7 @@ const Configuration = (props) => {
   }, []);
 
   useEffect(() => {
+    console.log(state.edfFiles.get);
     if (socketContext) {
       socketContext.emit('get_edf_data', {
         files: state.edfFiles.get.map((edfFile) =>
@@ -956,7 +931,7 @@ const Configuration = (props) => {
         if (data.error) {
           // todo display error message - login failure
         } else {
-          state.isAuthenticated.set(true);
+          setIsAuthenticated(true);
           //state.participantEntryMode.set('new_loris');
         }
       });
@@ -1005,7 +980,7 @@ const Configuration = (props) => {
         appContext.setTask(name, value);
         break;
       case 'participantEntryMode':
-        if (state.isAuthenticated.get === false) {
+        if (isAuthenticated === false) {
           state.participantEntryMode.set('new_loris');
         } else {
           state.participantEntryMode.set(value);
@@ -1014,7 +989,7 @@ const Configuration = (props) => {
       case 'LORIScompliant':
         if (value === 'yes') {
           value = true;
-          if (state.isAuthenticated.get) {
+          if (isAuthenticated) {
             state.participantEntryMode.set('new_loris');
           } else {
             state.participantEntryMode.set('manual');
@@ -1151,15 +1126,24 @@ const Configuration = (props) => {
    * @param {boolean} hidden
    */
   const hideAuthCredentials = (hidden) => {
-    state.authCredentialsVisible.set(!hidden);
+    setAuthCredentialsVisible(!hidden);
   };
 
   if (props.appMode === 'Configuration') {
     return (
       <>
-        <AuthenticationMessage
-          setAuthCredentialsVisible={state.authCredentialsVisible.set}
-        />
+        <div className='container'>
+          <AuthenticationMessage
+            setAuthCredentialsVisible={setAuthCredentialsVisible}
+          />
+          <div className='small-pad resetBtn'>
+            <input type='button'
+              className='primary-btn'
+              onClick={reset}
+              value='Reset'
+            />
+          </div>
+        </div>
         <span className='header'>
           Recording data
         </span>
@@ -1462,14 +1446,14 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           {state.LORIScompliant.get &&
-            state.isAuthenticated.get &&
+            isAuthenticated &&
             <div className='small-pad'>
               <RadioInput id='participantEntryMode'
                 name='participantEntryMode'
                 label='Entry mode'
                 required={true}
                 onUserInput={onUserInput}
-                options={state.isAuthenticated.get === true ?
+                options={isAuthenticated === true ?
                   {
                     manual: 'Manual',
                     new_loris: 'Create a LORIS candidate',
@@ -1690,7 +1674,7 @@ const Configuration = (props) => {
         </div>
         <AuthenticationCredentials
           title='Login to LORIS'
-          show={state.authCredentialsVisible.get}
+          show={authCredentialsVisible}
           close={hideAuthCredentials}
           width='500px'
         />
@@ -1700,7 +1684,7 @@ const Configuration = (props) => {
     return (
       <>
         <span className='header'>
-          EDF to BIDS format
+          EDF to BIDS
         </span>
         <div className='info report'>
           <div className='small-pad'>
