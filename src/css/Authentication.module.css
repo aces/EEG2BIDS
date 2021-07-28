@@ -6,6 +6,7 @@
     cursor: default;
     font-size: 12px;
     background-color: #e9eaee;
+    width: 50%;
 }
 .loginMessage {
     font-size: 14px;

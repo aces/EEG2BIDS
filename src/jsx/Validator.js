@@ -8,6 +8,7 @@ import Modal from './elements/modal';
 
 // Socket.io
 import {Event, SocketContext} from './socket.io';
+import {DirectoryInput, RadioInput} from './elements/inputs';
 
 /**
  * Validator - the Validation confirmation component.
@@ -22,6 +23,8 @@ const Validator = (props) => {
   // React State
   const [validator, setValidator] = useState({});
   const [validPath, setValidPaths] = useState(null);
+  const [validationMode, setValidationMode] = useState('lastRun');
+  const [bidsDirectory, setBidsDirectory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalText, setModalText] = useState({
     mode: 'loading',
@@ -55,15 +58,44 @@ const Validator = (props) => {
   };
 
   /**
+   * getBIDSDir - get BIDS directory.
+   *
+   * @return {string}
+   */
+  const getBIDSDir = () => {
+    if (validationMode == 'lastRun') {
+      if (!appContext.getFromTask('bidsDirectory') ||
+          !appContext.getFromTask('output_time')
+      ) {
+        console.error('No bidsDirectory or output_time.');
+        return null;
+      } else {
+        return [
+          appContext.getFromTask('bidsDirectory') ?? '',
+          appContext.getFromTask('output_time') ?? '',
+        ].filter(Boolean).join('/');
+      }
+    } else {
+      if (!bidsDirectory) {
+        console.error('No bidsDirectory.');
+        return null;
+      } else {
+        return bidsDirectory;
+      }
+    }
+  };
+
+  /**
    * validateBIDS - get validated BIDS format.
    *   Sent by socket to python: validate_bids.
    */
   const validateBIDS = () => {
     console.info('validateBIDS();');
-    socketContext.emit('validate_bids', {
-      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      output_time: appContext.getFromTask('output_time') ?? '',
-    });
+
+    const bidsDirectory = getBIDSDir();
+    if (bidsDirectory) {
+      socketContext.emit('validate_bids', bidsDirectory);
+    }
   };
 
   /**
@@ -72,14 +104,16 @@ const Validator = (props) => {
    */
   const packageBIDS = () => {
     console.info('packageBIDS();');
-    setModalText((prevState) => {
-      return {...prevState, ['mode']: 'loading'};
-    });
-    setModalVisible(true);
-    socketContext.emit('tarfile_bids', {
-      bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-      output_time: appContext.getFromTask('output_time') ?? '',
-    });
+
+    const bidsDirectory = getBIDSDir();
+    if (bidsDirectory) {
+      setModalText((prevState) => {
+        return {...prevState, ['mode']: 'loading'};
+      });
+      setModalVisible(true);
+
+      socketContext.emit('tarfile_bids', bidsDirectory);
+    }
   };
 
   /**
@@ -87,7 +121,6 @@ const Validator = (props) => {
    */
   useEffect(() => {
     const renderFields = [];
-    const renderPackageBIDS = [];
     if (validator['file_paths']) {
       validator['file_paths'].forEach((value, index) => {
         if (validator['result'][index]) {
@@ -104,26 +137,29 @@ const Validator = (props) => {
           );
         }
       });
-      renderPackageBIDS.push(
-          <div key='compressed-bids' className='info'>
-            <div className='small-pad'>
-              <b style={{cursor: 'default'}}>
-                Package BIDS output folder into a compressed file:&nbsp;
-              </b>
-              <input onClick={packageBIDS}
-                type='button'
-                value='Compress BIDS'/>
-            </div>
-          </div>,
-      );
     }
-    setValidPaths(<>
-      <div className='terminal'>
-        {renderFields}
-      </div>
-      {renderPackageBIDS}
-    </>);
+    setValidPaths(
+        <>
+          <div className='terminal'>
+            {renderFields}
+          </div>
+        </>,
+    );
   }, [validator]);
+
+  useEffect(() => {
+    setValidator({});
+  }, [validationMode, bidsDirectory]);
+
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('bids', (message) => {
+        if (message['output_time']) {
+          setValidator({});
+        }
+      });
+    }
+  }, [socketContext]);
 
   /**
    * onMessage - received message from python.
@@ -140,23 +176,61 @@ const Validator = (props) => {
     }
   };
 
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return props.visible ? (
     <>
       <span className='header'>
-        Validation confirmation
+        Validate and package
       </span>
       <div className='info'>
         <div className='small-pad'>
-          <b style={{cursor: 'default'}}>
-            Run BIDS Validator:&nbsp;
-          </b>
+          <RadioInput id='validationMode'
+            name='validationMode'
+            label='BIDS files to validate:'
+            onUserInput={(_, value) => setValidationMode(value)}
+            options={{
+              folder: 'Select a folder',
+              lastRun: 'Last run',
+            }}
+            checked={validationMode}
+          />
+        </div>
+        {validationMode == 'folder' &&
+          <div className='small-pad'>
+            <DirectoryInput id='bidsDirectory'
+              name='bidsDirectory'
+              required={validationMode == 'folder'}
+              label='BIDS input folder'
+              placeholder={bidsDirectory}
+              onUserInput={(_, value) => setBidsDirectory(value)}
+            />
+          </div>
+        }
+        <div className='small-pad'>
           <input onClick={validateBIDS}
             type='button'
-            value='Validate BIDS'/>
+            value='Validate BIDS'
+            className='primary-btn'
+            style={{marginRight: '10px'}}
+            disabled={
+              (
+                validationMode == 'lastRun' &&
+                !appContext.getFromTask('output_time')
+              ) ||
+              (validationMode == 'folder' && !bidsDirectory)
+            }
+          />
+          <input onClick={packageBIDS}
+            type='button'
+            value='Package BIDS'
+            className='primary-btn'
+            disabled={
+              (
+                validationMode == 'lastRun' &&
+                !appContext.getFromTask('output_time')
+              ) ||
+              (validationMode == 'folder' && !bidsDirectory)
+            }
+          />
         </div>
       </div>
       {validPath}

@@ -91,23 +91,20 @@ metadata = {
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
-    # data = { bids_directory: '../path/to/bids/output', output_time: 'bids output time' }
-    def __init__(self, data):
+    def __init__(self, bids_directory):
         import tarfile
-        import os.path
-        sep = os.path.sep
-        source_dir = data['bids_directory'] + sep + data['output_time']  # current directory
-        output_filename = data['bids_directory'] + sep + data['output_time'] + '.tar.gz'
+        output_filename = bids_directory + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(source_dir, arcname=os.path.basename(source_dir))
-        import platform
-        import subprocess
-        if platform.system() == 'Windows':
-            os.startfile(data['bids_directory'])
-        elif platform.system() == 'Darwin':
-            subprocess.Popen(['open', data['bids_directory']])
-        else:
-            subprocess.Popen(['xdg-open', data['bids_directory']])
+            tar.add(bids_directory, arcname=os.path.basename(bids_directory))
+
+        #import platform
+        #import subprocess
+        #if platform.system() == 'Windows':
+        #    os.startfile(data['bids_directory'])
+        #elif platform.system() == 'Darwin':
+        #    subprocess.Popen(['open', data['bids_directory']])
+        #else:
+        #    subprocess.Popen(['xdg-open', data['bids_directory']])
 
 
 # Anonymize - scrubs edf header data.
@@ -257,7 +254,7 @@ class Converter:
                 bids_basename.update(session=session)
 
                 try:
-                    write_raw_bids(raw, bids_basename, anonymize=dict(daysback=33630), overwrite=False, verbose=False)
+                    write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
                     with open(bids_basename, 'r+b') as f:
                         f.seek(8)  # id_info field starts 8 bytes in
                         f.write(bytes("X X X X".ljust(80), 'ascii'))
