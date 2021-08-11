@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import '../css/Configuration.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
+import Papa from 'papaparse';
 
 // Components
 import {
@@ -47,8 +48,11 @@ const Configuration = (props) => {
     edfFiles: [],
     modality: 'ieeg',
     eventFiles: [],
+    invalidEventFiles: [],
     annotationsTSV: [],
+    invalidAnnotationsTSV: [],
     annotationsJSON: [],
+    invalidAnnotationsJSON: [],
     bidsDirectory: null,
     LORIScompliant: true,
     siteID: 'n/a',
@@ -64,6 +68,7 @@ const Configuration = (props) => {
     sessionOptions: [],
     sessionUseAPI: false,
     bidsMetadataFile: [],
+    invalidBidsMetadataFile: [],
     bidsMetadata: null,
     lineFreq: 'n/a',
     taskName: '',
@@ -201,6 +206,48 @@ const Configuration = (props) => {
     setModalVisible(!hidden);
   };
 
+  const validateJSON = (jsons) => {
+    const promisesArray = [];
+    for (let i = 0; i < jsons?.length; i++) {
+      const json = jsons[i];
+      promisesArray.push(new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.readAsText(json, 'UTF-8');
+        fileReader.onload = (e) => {
+          try {
+            JSON.parse(e.target.result);
+            resolve(null);
+          } catch (e) {
+            console.log(e);
+            resolve(json.name);
+          }
+        };
+      }));
+    }
+    return Promise.all(promisesArray);
+  };
+
+  const validateTSV = (tsvs) => {
+    const promisesArray = [];
+    for (let i = 0; i < tsvs?.length; i++) {
+      const tsv = tsvs[i];
+      promisesArray.push(new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.readAsText(tsv, 'UTF-8');
+        fileReader.onload = (e) => {
+          Papa.parse(e.target.result, {complete: (results, file) => {
+            if (results.errors.length > 0) {
+              resolve(tsv.name);
+            } else {
+              resolve(null);
+            }
+          }});
+        };
+      }));
+    }
+    return Promise.all(promisesArray);
+  };
+
   useEffect(() => {
     if (socketContext) {
       socketContext.emit('get_participant_data', {
@@ -208,6 +255,34 @@ const Configuration = (props) => {
       });
     }
   }, [state.participantCandID.get]);
+
+  useEffect(() => {
+    validateJSON(state.bidsMetadataFile.get)
+        .then((result) => {
+          state.invalidBidsMetadataFile.set(result.filter((el) => el != null));
+        });
+  }, [state.bidsMetadataFile.get]);
+
+  useEffect(() => {
+    validateTSV(state.eventFiles.get)
+        .then((result) => {
+          state.invalidEventFiles.set(result.filter((el) => el != null));
+        });
+  }, [state.eventFiles.get]);
+
+  useEffect(() => {
+    validateJSON(state.annotationsJSON.get)
+        .then((result) => {
+          state.invalidAnnotationsJSON.set(result.filter((el) => el != null));
+        });
+  }, [state.annotationsJSON.get]);
+
+  useEffect(() => {
+    validateTSV(state.annotationsTSV.get)
+        .then((result) => {
+          state.invalidAnnotationsTSV.set(result.filter((el) => el != null));
+        });
+  }, [state.annotationsTSV.get]);
 
   useEffect(() => {
     if (props.appMode === 'Converter') {
@@ -287,6 +362,7 @@ const Configuration = (props) => {
     }
     result.push(<div key='edfDataStatus'>{edfDataStatus}</div>);
 
+
     // Data modality
     let modalityStatus = '';
     if (appContext.getFromTask('modality')) {
@@ -306,39 +382,48 @@ const Configuration = (props) => {
       eventsStatus = formatWarning('No events.tsv selected ' +
       '(for additional events)');
     } else {
-      let match = true;
-
-      // If we have more than 1 edf files,
-      // check that the events files are appropriatly named
-      if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
-        appContext.getFromTask('eventFiles').map((eventFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
-                const eventFileName = eventFile['name'].toLowerCase()
-                    .replace('_events.tsv', '').replace('.tsv', '');
-                return edfFileName === eventFileName;
-              },
-          )) {
-            match = false;
-            eventsStatus = formatError(
-                `Event file ${eventFile['name']}
-                is not matching any edf file names.`,
-            );
-          }
-        });
-      }
-
-      if (match) {
-        eventsStatus = formatPass('Event file(s): ' +
-          appContext.getFromTask('eventFiles').map(
-              (eventFile) => eventFile['name'],
-          ).join(', '),
+      // check if any TSV file is invalid
+      if (state.invalidEventFiles.get?.length > 0) {
+        eventsStatus = formatError(
+            `Event file(s) ${state.invalidEventFiles.get.join(', ')}
+            are not valid TSV file(s).`,
         );
+      } else {
+        let match = true;
+
+        // If we have more than 1 edf files,
+        // check that the events files are appropriatly named
+        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
+          appContext.getFromTask('eventFiles').map((eventFile) => {
+            if (!appContext.getFromTask('edfData')['files'].find(
+                (edfFile) => {
+                  const edfFileName = edfFile['name'].toLowerCase()
+                      .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                  const eventFileName = eventFile['name'].toLowerCase()
+                      .replace('_events.tsv', '').replace('.tsv', '');
+                  return edfFileName === eventFileName;
+                },
+            )) {
+              match = false;
+              eventsStatus = formatError(
+                  `Event file ${eventFile['name']}
+                  is not matching any edf file names.`,
+              );
+            }
+          });
+        }
+
+        if (match) {
+          eventsStatus = formatPass('Event file(s): ' +
+              appContext.getFromTask('eventFiles').map(
+                  (eventFile) => eventFile['name'],
+              ).join(', '),
+          );
+        }
       }
     }
     result.push(<div key='eventsStatus'>{eventsStatus}</div>);
+
 
     // annotations TSV
     let annotationsTSVStatus = '';
@@ -347,53 +432,68 @@ const Configuration = (props) => {
     ) {
       annotationsTSVStatus = formatWarning('No annotations.tsv selected');
     } else {
-      let match = true;
-
-      // If we have more than 1 edf files,
-      // check that the events files are appropriatly named
-      if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
-        appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
-                const annotationsTSVFileName = annotationsTSVFile['name']
-                    .toLowerCase()
-                    .replace('_annotations.tsv', '').replace('.tsv', '');
-                return edfFileName === annotationsTSVFileName;
-              },
-          )) {
-            match = false;
-            annotationsTSVStatus = formatError(
-                `Annotation file ${annotationsTSVFile['name']}
-                is not matching any edf file names.`,
-            );
-          }
-        });
-      }
-
-      if (match) {
-        annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
-          appContext.getFromTask('annotationsTSV').map(
-              (annotationsTSVFile) => annotationsTSVFile['name'],
-          ).join(', '),
+      // check if any TSV file is invalid
+      if (state.invalidAnnotationsTSV.get?.length > 0) {
+        annotationsTSVStatus = formatError(
+            `Annotation file(s) ${state.invalidAnnotationsTSV.get.join(', ')}
+            are not valid TSV file(s).`,
         );
+      } else {
+        let match = true;
+
+        // If we have more than 1 edf files,
+        // check that the events files are appropriatly named
+        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
+          appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
+            if (!appContext.getFromTask('edfData')['files'].find(
+                (edfFile) => {
+                  const edfFileName = edfFile['name'].toLowerCase()
+                      .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                  const annotationsTSVFileName = annotationsTSVFile['name']
+                      .toLowerCase()
+                      .replace('_annotations.tsv', '').replace('.tsv', '');
+                  return edfFileName === annotationsTSVFileName;
+                },
+            )) {
+              match = false;
+              annotationsTSVStatus = formatError(
+                  `Annotation file ${annotationsTSVFile['name']}
+                  is not matching any edf file names.`,
+              );
+            }
+          });
+        }
+
+        if (match) {
+          annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
+              appContext.getFromTask('annotationsTSV').map(
+                  (annotationsTSVFile) => annotationsTSVFile['name'],
+              ).join(', '),
+          );
+        }
       }
     }
     result.push(<div key='annotationsTSVStatus'>{annotationsTSVStatus}</div>);
 
     // annotations JSON
     let annotationsJSONStatus = '';
-    if (appContext.getFromTask('annotationsTSV') &&
-      Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
+
+    //if (appContext.getFromTask('annotationsTSV') &&
+    //  Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
+    //) {
+    if (!appContext.getFromTask('annotationsJSON') ||
+      Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
     ) {
-      if (!appContext.getFromTask('annotationsJSON') ||
-        Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
-      ) {
-        annotationsJSONStatus = formatWarning('No annotations.json selected');
+      annotationsJSONStatus = formatWarning('No annotations.json selected');
+    } else {
+      // check if any JSON file is invalid
+      if (state.invalidAnnotationsJSON.get?.length > 0) {
+        annotationsJSONStatus = formatError(
+            `Annotation file(s) ${state.invalidAnnotationsJSON.get.join(', ')}
+            are not valid JSON file(s).`,
+        );
       } else {
         let match = true;
-
         // If we have more than 1 edf files,
         // check that the events files are appropriatly named
         if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
@@ -402,7 +502,8 @@ const Configuration = (props) => {
                 if (!appContext.getFromTask('edfData')['files'].find(
                     (edfFile) => {
                       const edfFileName = edfFile['name'].toLowerCase()
-                          .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                          .replace(/_i?eeg\.edf/i, '')
+                          .replace('.edf', '');
                       const annotationsJSONFileName =
                           annotationsJSONFile['name'].toLowerCase()
                               .replace('_annotations.json', '')
@@ -413,24 +514,29 @@ const Configuration = (props) => {
                   match = false;
                   annotationsJSONStatus = formatError(
                       `Annotation file ${annotationsJSONFile['name']}
-                      is not matching any edf file names.`,
+                    is not matching any edf file names.`,
                   );
                 }
               });
         }
 
         if (match) {
-          annotationsJSONStatus = formatPass('Annotations JSON file(s): ' +
-            appContext.getFromTask('annotationsJSON').map(
-                (annotationsJSONFile) => annotationsJSONFile['name'],
-            ).join(', '),
+          annotationsJSONStatus = formatPass(
+              'Annotations JSON file(s): ' +
+              appContext.getFromTask('annotationsJSON').map(
+                  (annotationsJSONFile) => annotationsJSONFile['name'],
+              ).join(', '),
           );
         }
       }
-      result.push(
-          <div key='annotationsJSONStatus'>{annotationsJSONStatus}</div>,
-      );
     }
+    result.push(
+        <div key='annotationsJSONStatus'>
+          {annotationsJSONStatus}
+        </div>,
+    );
+    //}
+
 
     // bidsDirectory
     let bidsDirectoryStatus = '';
@@ -465,6 +571,14 @@ const Configuration = (props) => {
 
     if (!appContext.getFromTask('bidsMetadata')) {
       return formatWarning('No EEG Parameter metadata file selected');
+    }
+
+    if (state.invalidBidsMetadataFile.get?.length > 0) {
+      return formatError(
+          `EEG Parameter metadata file(s) 
+            ${state.invalidBidsMetadataFile.get.join(', ')}
+            are not valid JSON file(s).`,
+      );
     }
 
     if ('error' in appContext.getFromTask('bidsMetadata')) {
@@ -617,9 +731,7 @@ const Configuration = (props) => {
       );
     } else if (appContext.getFromTask('participantCandID')) {
       participantCandIDStatus = formatPass(
-          `LORIS CandID: ${appContext.getFromTask('participantCandID')}`,
-      ) + formatPass(
-          `LORIS CandID: ${appContext.getFromTask('participantCandID')}`,
+          `LORIS CandID: ${state.participantCandID.get}`,
       );
     }
     result.push(
@@ -962,8 +1074,6 @@ const Configuration = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
-    console.log(name);
-    console.log(value);
     // Update the state of Configuration.
     switch (name) {
       case 'recordingID':
