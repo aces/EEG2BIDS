@@ -15,9 +15,9 @@ input[type="button"].primary-btn {
     padding: .375rem .75rem;
 }
 input[type="button"].primary-btn:disabled {
-    color: #000;
-    background-color: #ddd;
-    border: 1px solid #333;
+    color: #ddd;
+    background-color: #858b97;
+    border: 1px solid #ddd;
 }
 textarea {
     vertical-align: top;

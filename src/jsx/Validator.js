@@ -187,10 +187,19 @@ const Validator = (props) => {
             name='validationMode'
             label='BIDS files to validate:'
             onUserInput={(_, value) => setValidationMode(value)}
-            options={{
-              folder: 'Select a folder',
-              lastRun: 'Last run',
-            }}
+            options={
+              appContext.getFromTask('output_time') ?
+              {
+                folder: 'Select a folder',
+                lastRun: `Current recording:
+                  ${appContext.getFromTask('participantID')}
+                  ${appContext.getFromTask('session')}
+                  ${appContext.getFromTask('taskName')}`,
+              } :
+              {
+                folder: 'Select a folder',
+              }
+            }
             checked={validationMode}
           />
         </div>
