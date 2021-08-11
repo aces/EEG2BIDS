@@ -1250,7 +1250,7 @@ const Configuration = (props) => {
             <input type='button'
               className='primary-btn'
               onClick={reset}
-              value='Reset'
+              value='Clear all fields below'
             />
           </div>
         </div>
