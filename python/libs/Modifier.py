@@ -27,8 +27,15 @@ class Modifier:
             self.data['output_time']
         )
 
-    def get_eeg_path(self):
+    def get_eeg_path(self, relative=False):
         directory_path = 'sub-' + self.data['participantID'].replace('_', '').replace('-', '').replace(' ', '')
+
+        if relative:
+            return os.path.join(
+                directory_path,
+                'ses-' + self.data['session'],
+                self.data['modality']
+            )
 
         return os.path.join(
             self.get_bids_root_path(),
@@ -68,7 +75,10 @@ class Modifier:
 
         # remove the mne citations README
         filename = os.path.join(self.get_bids_root_path(), 'README')
-        os.remove(filename)
+        try:
+            os.remove(filename)
+        except FileNotFoundError:
+            print("No README file found")
 
 
     def modify_dataset_description_json(self):
@@ -192,6 +202,20 @@ class Modifier:
                 )
 
             if eegRun['annotationsJSON']:
+                # Overrides the IntendedFor field
+                print(eegRun['annotationsJSON'])
+
+                try:
+                    with open(eegRun['annotationsJSON'], "r") as fp:
+                        file_data = json.load(fp)
+                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), edf_file + '.edf')
+
+                        with open(eegRun['annotationsJSON'], "w") as fp:
+                            json.dump(file_data, fp, indent=4)
+                except IOError as e:
+                    print(e)
+                    print("Could not read or write " + eegRun['annotationsJSON'])
+
                 shutil.copyfile(
                     eegRun['annotationsJSON'],
                     os.path.join(self.get_eeg_path(), filename + '.json')

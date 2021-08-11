@@ -235,13 +235,20 @@ const Configuration = (props) => {
         const fileReader = new FileReader();
         fileReader.readAsText(tsv, 'UTF-8');
         fileReader.onload = (e) => {
-          Papa.parse(e.target.result, {complete: (results, file) => {
-            if (results.errors.length > 0) {
-              resolve(tsv.name);
-            } else {
-              resolve(null);
-            }
-          }});
+          Papa.parse(
+              e.target.result,
+              {
+                quoteChar: '',
+                complete: (results, file) => {
+                  console.log(results.errors);
+                  if (results.errors.length > 0) {
+                    resolve(tsv.name);
+                  } else {
+                    resolve(null);
+                  }
+                },
+              },
+          );
         };
       }));
     }
@@ -391,27 +398,32 @@ const Configuration = (props) => {
       } else {
         let match = true;
 
-        // If we have more than 1 edf files,
-        // check that the events files are appropriatly named
-        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
-          appContext.getFromTask('eventFiles').map((eventFile) => {
-            if (!appContext.getFromTask('edfData')['files'].find(
-                (edfFile) => {
-                  const edfFileName = edfFile['name'].toLowerCase()
-                      .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
-                  const eventFileName = eventFile['name'].toLowerCase()
-                      .replace('_events.tsv', '').replace('.tsv', '');
-                  return edfFileName === eventFileName;
-                },
-            )) {
-              match = false;
-              eventsStatus = formatError(
-                  `Event file ${eventFile['name']}
-                  is not matching any edf file names.`,
-              );
-            }
-          });
-        }
+        // Check that the events files are appropriatly named
+        appContext.getFromTask('eventFiles').map((eventFile) => {
+          if (!appContext.getFromTask('edfData')['files'].find(
+              (edfFile) => {
+                const edfFileName = edfFile['name'].toLowerCase()
+                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+
+                const edfFileNameAlt = edfFile['name'].toLowerCase()
+                    .replace('.edf', '');
+
+                const eventFileName = eventFile['name'].toLowerCase()
+                    .replace('_events.tsv', '').replace('.tsv', '');
+
+                return (
+                  edfFileName === eventFileName ||
+                  edfFileNameAlt === eventFileName
+                );
+              },
+          )) {
+            match = false;
+            eventsStatus = formatError(
+                `Event file ${eventFile['name']}
+                is not matching any edf file names.`,
+            );
+          }
+        });
 
         if (match) {
           eventsStatus = formatPass('Event file(s): ' +
@@ -441,28 +453,33 @@ const Configuration = (props) => {
       } else {
         let match = true;
 
-        // If we have more than 1 edf files,
-        // check that the events files are appropriatly named
-        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
-          appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-            if (!appContext.getFromTask('edfData')['files'].find(
-                (edfFile) => {
-                  const edfFileName = edfFile['name'].toLowerCase()
-                      .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
-                  const annotationsTSVFileName = annotationsTSVFile['name']
-                      .toLowerCase()
-                      .replace('_annotations.tsv', '').replace('.tsv', '');
-                  return edfFileName === annotationsTSVFileName;
-                },
-            )) {
-              match = false;
-              annotationsTSVStatus = formatError(
-                  `Annotation file ${annotationsTSVFile['name']}
-                  is not matching any edf file names.`,
-              );
-            }
-          });
-        }
+        // Check that the events files are appropriatly named
+        appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
+          if (!appContext.getFromTask('edfData')['files'].find(
+              (edfFile) => {
+                const edfFileName = edfFile['name'].toLowerCase()
+                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+
+                const edfFileNameAlt = edfFile['name'].toLowerCase()
+                    .replace('.edf', '');
+
+                const annotationsTSVFileName = annotationsTSVFile['name']
+                    .toLowerCase()
+                    .replace('_annotations.tsv', '').replace('.tsv', '');
+
+                return (
+                  edfFileName === annotationsTSVFileName ||
+                  edfFileNameAlt === annotationsTSVFileName
+                );
+              },
+          )) {
+            match = false;
+            annotationsTSVStatus = formatError(
+                `Annotation file ${annotationsTSVFile['name']}
+                is not matching any edf file names.`,
+            );
+          }
+        });
 
         if (match) {
           annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
@@ -494,31 +511,35 @@ const Configuration = (props) => {
         );
       } else {
         let match = true;
-        // If we have more than 1 edf files,
-        // check that the events files are appropriatly named
-        if (appContext.getFromTask('edfData')?.['files']?.length > 1) {
-          appContext.getFromTask('annotationsJSON')
-              .map((annotationsJSONFile) => {
-                if (!appContext.getFromTask('edfData')['files'].find(
-                    (edfFile) => {
-                      const edfFileName = edfFile['name'].toLowerCase()
-                          .replace(/_i?eeg\.edf/i, '')
-                          .replace('.edf', '');
-                      const annotationsJSONFileName =
-                          annotationsJSONFile['name'].toLowerCase()
-                              .replace('_annotations.json', '')
-                              .replace('.json', '');
-                      return edfFileName === annotationsJSONFileName;
-                    },
-                )) {
-                  match = false;
-                  annotationsJSONStatus = formatError(
-                      `Annotation file ${annotationsJSONFile['name']}
-                    is not matching any edf file names.`,
-                  );
-                }
-              });
-        }
+        // Check that the events files are appropriatly named
+        appContext.getFromTask('annotationsJSON')
+            .map((annotationsJSONFile) => {
+              if (!appContext.getFromTask('edfData')['files'].find(
+                  (edfFile) => {
+                    const edfFileName = edfFile['name'].toLowerCase()
+                        .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+
+                    const edfFileNameAlt = edfFile['name'].toLowerCase()
+                        .replace('.edf', '');
+
+                    const annotationsJSONFileName =
+                        annotationsJSONFile['name'].toLowerCase()
+                            .replace('_annotations.json', '')
+                            .replace('.json', '');
+
+                    return (
+                      edfFileName === annotationsJSONFileName ||
+                      edfFileNameAlt === annotationsJSONFileName
+                    );
+                  },
+              )) {
+                match = false;
+                annotationsJSONStatus = formatError(
+                    `Annotation file ${annotationsJSONFile['name']}
+                  is not matching any edf file names.`,
+                );
+              }
+            });
 
         if (match) {
           annotationsJSONStatus = formatPass(
@@ -828,53 +849,63 @@ const Configuration = (props) => {
               const edfFileName = edfFile['name'].toLowerCase()
                   .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-              if (state.edfData.get.files.length > 1) {
-                // Check if we do have a matching event file
-                const eventFileIndex = eventFiles.findIndex((eventFile) => {
-                  const eventFileName = eventFile['name'].toLowerCase()
-                      .replace('_events.tsv', '').replace('.tsv', '');
-                  return edfFileName === eventFileName;
-                });
+              const edfFileNameAlt = edfFile['name'].toLowerCase()
+                  .replace('.edf', '');
 
-                if (eventFileIndex > -1) {
-                  eegRun.eventFile = eventFiles[eventFileIndex]['path'];
-                  eventFiles.splice(eventFileIndex, 1);
-                }
-
-                // Check if we do have a matching annotations TSV file
-                const annotationsTSVIndex = annotationsTSVs.findIndex(
-                    (annotationsTSV) => {
-                      const annotationsTSVName = annotationsTSV['name']
-                          .toLowerCase()
-                          .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                      return edfFileName === annotationsTSVName;
-                    },
+              // Check if we do have a matching event file
+              const eventFileIndex = eventFiles.findIndex((eventFile) => {
+                const eventFileName = eventFile['name'].toLowerCase()
+                    .replace('_events.tsv', '').replace('.tsv', '');
+                return (
+                  edfFileName === eventFileName ||
+                  edfFileNameAlt === eventFileName
                 );
+              });
 
-                if (annotationsTSVIndex > -1) {
-                  eegRun.annotationsTSV =
-                    annotationsTSVs[annotationsTSVIndex]['path'];
-                  annotationsTSVs.splice(annotationsTSVIndex, 1);
-                }
+              if (eventFileIndex > -1) {
+                eegRun.eventFile = eventFiles[eventFileIndex]['path'];
+                eventFiles.splice(eventFileIndex, 1);
+              }
 
-                // Check if we do have a matching annotations JSON file
-                const annotationsJSONIndex = annotationsJSONs.findIndex(
-                    (annotationsJSON) => {
-                      const annotationsJSONName = annotationsJSON['name']
-                          .toLowerCase()
-                          .replace('_annotations.json', '')
-                          .replace('.json', '');
+              // Check if we do have a matching annotations TSV file
+              const annotationsTSVIndex = annotationsTSVs.findIndex(
+                  (annotationsTSV) => {
+                    const annotationsTSVName = annotationsTSV['name']
+                        .toLowerCase()
+                        .replace('_annotations.tsv', '').replace('.tsv', '');
 
-                      return edfFileName === annotationsJSONName;
-                    },
-                );
+                    return (
+                      edfFileName === annotationsTSVName ||
+                      edfFileNameAlt === annotationsTSVName
+                    );
+                  },
+              );
 
-                if (annotationsJSONIndex > -1) {
-                  eegRun.annotationsJSON =
-                    annotationsJSONs[annotationsJSONIndex]['path'];
-                  annotationsJSONs.splice(annotationsJSONIndex, 1);
-                }
+              if (annotationsTSVIndex > -1) {
+                eegRun.annotationsTSV =
+                  annotationsTSVs[annotationsTSVIndex]['path'];
+                annotationsTSVs.splice(annotationsTSVIndex, 1);
+              }
+
+              // Check if we do have a matching annotations JSON file
+              const annotationsJSONIndex = annotationsJSONs.findIndex(
+                  (annotationsJSON) => {
+                    const annotationsJSONName = annotationsJSON['name']
+                        .toLowerCase()
+                        .replace('_annotations.json', '')
+                        .replace('.json', '');
+
+                    return (
+                      edfFileName === annotationsJSONName ||
+                      edfFileNameAlt === annotationsJSONName
+                    );
+                  },
+              );
+
+              if (annotationsJSONIndex > -1) {
+                eegRun.annotationsJSON =
+                  annotationsJSONs[annotationsJSONIndex]['path'];
+                annotationsJSONs.splice(annotationsJSONIndex, 1);
               }
 
               eegRuns.push(eegRun);
@@ -936,7 +967,6 @@ const Configuration = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log(state.edfFiles.get);
     if (socketContext) {
       socketContext.emit('get_edf_data', {
         files: state.edfFiles.get.map((edfFile) =>
