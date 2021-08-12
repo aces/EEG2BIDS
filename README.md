@@ -46,6 +46,3 @@ EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (
  * bids-validator~=1.6.0
  * pybv >= 0.4
  * requests >= 2.25.0
-
-## App icon attribute
-[Graphics creator: Dmitriy Shirinkin](https://www.iconfinder.com/icons/7066786/night_pumpkin_witch_kitty_horror_halloween_bat_icon)
