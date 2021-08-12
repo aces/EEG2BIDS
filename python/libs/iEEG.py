@@ -220,9 +220,9 @@ class Converter:
                     ch_types[ch] = 'eog'
                 elif 'ecg' in ch_name or 'ekg' in ch_name:
                     ch_types[ch] = 'ecg'
-                elif 'lflex' in ch or 'rflex' in ch or 'chin' in ch:
+                elif 'lflex' in ch_name or 'rflex' in ch_name or 'chin' in ch_name:
                     ch_types[ch] = 'emg'
-                elif 'trigger' in ch:
+                elif 'trigger' in ch_name:
                     ch_types[ch] = 'stim'
 
                 else:
