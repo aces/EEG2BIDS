@@ -36,13 +36,13 @@ EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (
 #### Python Dependencies Requirements
 
  * PyInstaller >= 4.2
- * eventlet >= 0.31.0
- * mne >= 0.23.0
- * mne-bids >= 0.8
- * mne-features >= 0.1
- * numpy >= 1.19.5
- * python-socketio >= 5.0.4
- * python-engineio >= 4.0.0
- * bids-validator~=1.6.0
- * pybv >= 0.4
- * requests >= 2.25.0
+ * eventlet ~= 0.31.0
+ * mne ~= 0.23.0
+ * mne-bids ~= 0.8
+ * mne-features ~= 0.1
+ * numpy ~= 1.19.5
+ * python-socketio ~= 5.0.4
+ * python-engineio ~= 4.0.0
+ * bids-validator ~= 1.6.0
+ * pybv ~= 0.4
+ * requests ~= 2.25.0
