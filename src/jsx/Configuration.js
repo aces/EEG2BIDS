@@ -1,7 +1,9 @@
 import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import '../css/Configuration.css';
+import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
@@ -1395,6 +1397,8 @@ const Configuration = (props) => {
                 }
                 label='events.tsv (additional)'
                 onUserInput={onUserInput}
+                help='Additional event only. Events from
+                the EDF Annotations signal are automatically extracted.'
               />
             </div>
             <div className='small-pad'>
@@ -1818,6 +1822,7 @@ const Configuration = (props) => {
           close={hideAuthCredentials}
           width='500px'
         />
+        <ReactTooltip/>
       </>
     );
   } else if (props.appMode === 'Converter') {

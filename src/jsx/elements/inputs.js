@@ -33,6 +33,9 @@ export const FileInput = (props) => {
             <span className="red">*</span> :
             null
           }
+          {props.help &&
+            <i className='fas fa-question-circle' data-tip={props.help}></i>
+          }
         </b></label>
       <button>
         <label htmlFor={props.id}>
