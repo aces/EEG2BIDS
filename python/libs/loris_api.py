@@ -163,7 +163,12 @@ class LorisAPI:
                 "Site": site,
                 "Battery": subproject,
                 "Project": project,
-                "NextStageDate": date
+                "Stages": {
+                    "Visit": {
+                        "Date": date,
+                        "Status": "In Progress",
+                    }
+                }
             }),
             verify=False
         )
