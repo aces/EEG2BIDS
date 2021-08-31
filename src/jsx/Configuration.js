@@ -1397,7 +1397,7 @@ const Configuration = (props) => {
                 }
                 label='events.tsv (additional)'
                 onUserInput={onUserInput}
-                help='Additional event only. Events from
+                help='Additional events only. Events embedded in
                 the EDF Annotations signal are automatically extracted.'
               />
             </div>
