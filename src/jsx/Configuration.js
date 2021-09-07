@@ -77,6 +77,7 @@ const Configuration = (props) => {
     reference: 'n/a',
     recordingType: 'n/a',
     participantEntryMode: 'manual',
+    participantPSCID: '',
     participantCandID: '',
     participantID: '',
     participantDOB: null,
@@ -259,11 +260,21 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (socketContext) {
+      state.participantID.set('');
+
+      if (!state.participantCandID.get || !state.participantPSCID.get) {
+        appContext.setTask('participantCandID', {
+          error: 'The DDCID/PSCID pair you provided' +
+              ' does not match an existing candidate.',
+        });
+        return;
+      }
+
       socketContext.emit('get_participant_data', {
         candID: state.participantCandID.get,
       });
     }
-  }, [state.participantCandID.get]);
+  }, [state.participantCandID.get, state.participantPSCID.get]);
 
   useEffect(() => {
     validateJSON(state.bidsMetadataFile.get)
@@ -746,67 +757,88 @@ const Configuration = (props) => {
   const validateParticipantDetails = () => {
     const result = [];
 
-    // participantCandID
-    let participantCandIDStatus = '';
-    if (appContext.getFromTask('participantCandID')?.error) {
-      participantCandIDStatus = formatError(
-          appContext.getFromTask('participantCandID').error,
-      );
-    } else if (appContext.getFromTask('participantCandID')) {
-      participantCandIDStatus = formatPass(
-          `LORIS CandID: ${state.participantCandID.get}`,
-      );
-    }
-    result.push(
-        <div key='participantCandIDStatus'>
-          {participantCandIDStatus}
-        </div>,
-    );
+    if (state.participantEntryMode.get == 'existing_loris') {
+      // participantPSCID
+      let participantPSCIDStatus = '';
 
-    // participantID
-    let participantIDStatus = '';
-    if (state.participantID.get) {
-      participantIDStatus = formatPass(
-          `Participant ID: ${state.participantID.get}`,
+      // participantCandID
+      let participantCandIDStatus = '';
+
+      if (appContext.getFromTask('participantCandID')?.error) {
+        participantCandIDStatus = formatError(
+            appContext.getFromTask('participantCandID').error,
+        );
+      } else {
+        if (appContext.getFromTask('participantCandID')) {
+          participantCandIDStatus = formatPass(
+              `LORIS CandID: ${state.participantCandID.get}`,
+          );
+        }
+
+        if (appContext.getFromTask('participantPSCID')) {
+          participantPSCIDStatus = formatPass(
+              `LORIS PSCID: ${state.participantPSCID.get}`,
+          );
+        }
+      }
+
+      result.push(
+          <div key='participantPSCIDStatus'>
+            {participantPSCIDStatus}
+          </div>,
+      );
+
+      result.push(
+          <div key='participantCandIDStatus'>
+            {participantCandIDStatus}
+          </div>,
       );
     } else {
-      participantIDStatus = formatError(
-          'Participant ID is not specified',
+      // participantID
+      let participantIDStatus = '';
+      if (state.participantID.get) {
+        participantIDStatus = formatPass(
+            `Participant ID: ${state.participantID.get}`,
+        );
+      } else {
+        participantIDStatus = formatError(
+            'Participant ID is not specified',
+        );
+      }
+      // participantCandID
+      // let participantCandID;
+      // if (state.participantCandID.get) {
+      //   participantCandID = formatPass(
+      //       `DSCID: ${state.participantCandID.get}`,
+      //   );
+      // } else {
+      //   participantCandID = formatError(
+      //       'DSCID is unknown',
+      //   );
+      // }
+      result.push(
+          <div key='participantID'>{participantIDStatus}</div>,
+          // <div key='participantCandID'>{participantCandID}</div>,
       );
     }
-    // participantCandID
-    // let participantCandID;
-    // if (state.participantCandID.get) {
-    //   participantCandID = formatPass(
-    //       `DSCID: ${state.participantCandID.get}`,
-    //   );
-    // } else {
-    //   participantCandID = formatError(
-    //       'DSCID is unknown',
-    //   );
-    // }
-    result.push(
-        <div key='participantID'>{participantIDStatus}</div>,
-        // <div key='participantCandID'>{participantCandID}</div>,
-    );
 
     return result;
   };
 
   const validate = () => {
-    if (socketContext) {
+    /*if (socketContext) {
       if (state.session.get && state.siteID.get &&
           state.projectID.get && state.subprojectID.get &&
           state.edfData.get?.date && state.participantDOB.get &&
           state.participantSex.get
       ) {
-        const visitDate = state.edfData.get['date']
-            .toISOString().replace(/T.*/, '');
+        const visitDate = state.edfData.get['date'] */
+    //        .toISOString().replace(/T.*/, '');
 
-        const dob = state.participantDOB.get
-            .toISOString().replace(/T.*/, '');
+    //    const dob = state.participantDOB.get
+    //        .toISOString().replace(/T.*/, '');
 
-        console.info('start request for new candidate');
+    /*    console.info('start request for new candidate');
         socketContext.emit('create_candidate_and_visit', {
           project: state.projectID.get,
           dob: dob,
@@ -823,10 +855,10 @@ const Configuration = (props) => {
           state.subprojectID.get && state.edfData.get?.date
       ) {
         console.info('start request to create the visit');
-        const visitDate = state.edfData.get['date']
-            .toISOString().replace(/T.*/, '');
+        const visitDate = state.edfData.get['date'] */
+    //        .toISOString().replace(/T.*/, '');
 
-        socketContext.emit('create_visit', {
+    /*    socketContext.emit('create_visit', {
           candID: state.participantCandID.get,
           project: state.projectID.get,
           site: state.siteID.get,
@@ -834,110 +866,109 @@ const Configuration = (props) => {
           visit: state.session.get,
           date: visitDate,
         });
-      }
+    } */
 
-      if (state.edfData.get?.files?.length > 0) {
-        const eventFiles = [...state.eventFiles.get];
-        const annotationsTSVs = [...state.annotationsTSV.get];
-        const annotationsJSONs = [...state.annotationsJSON.get];
+    if (state.edfData.get?.files?.length > 0) {
+      const eventFiles = [...state.eventFiles.get];
+      const annotationsTSVs = [...state.annotationsTSV.get];
+      const annotationsJSONs = [...state.annotationsJSON.get];
 
-        const eegRuns = [];
+      const eegRuns = [];
 
-        state.edfData.get?.files.map(
-            (edfFile) => {
-              const eegRun = new EEGRun();
-              eegRun.edfFile = edfFile['path'];
+      state.edfData.get?.files.map(
+          (edfFile) => {
+            const eegRun = new EEGRun();
+            eegRun.edfFile = edfFile['path'];
 
-              const edfFileName = edfFile['name'].toLowerCase()
-                  .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+            const edfFileName = edfFile['name'].toLowerCase()
+                .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-              const edfFileNameAlt = edfFile['name'].toLowerCase()
-                  .replace('.edf', '');
+            const edfFileNameAlt = edfFile['name'].toLowerCase()
+                .replace('.edf', '');
 
-              // Check if we do have a matching event file
-              const eventFileIndex = eventFiles.findIndex((eventFile) => {
-                const eventFileName = eventFile['name'].toLowerCase()
-                    .replace('_events.tsv', '').replace('.tsv', '');
-                return (
-                  edfFileName === eventFileName ||
-                  edfFileNameAlt === eventFileName
-                );
-              });
-
-              if (eventFileIndex > -1) {
-                eegRun.eventFile = eventFiles[eventFileIndex]['path'];
-                eventFiles.splice(eventFileIndex, 1);
-              }
-
-              // Check if we do have a matching annotations TSV file
-              const annotationsTSVIndex = annotationsTSVs.findIndex(
-                  (annotationsTSV) => {
-                    const annotationsTSVName = annotationsTSV['name']
-                        .toLowerCase()
-                        .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                    return (
-                      edfFileName === annotationsTSVName ||
-                      edfFileNameAlt === annotationsTSVName
-                    );
-                  },
+            // Check if we do have a matching event file
+            const eventFileIndex = eventFiles.findIndex((eventFile) => {
+              const eventFileName = eventFile['name'].toLowerCase()
+                  .replace('_events.tsv', '').replace('.tsv', '');
+              return (
+                edfFileName === eventFileName ||
+                edfFileNameAlt === eventFileName
               );
+            });
 
-              if (annotationsTSVIndex > -1) {
-                eegRun.annotationsTSV =
-                  annotationsTSVs[annotationsTSVIndex]['path'];
-                annotationsTSVs.splice(annotationsTSVIndex, 1);
-              }
+            if (eventFileIndex > -1) {
+              eegRun.eventFile = eventFiles[eventFileIndex]['path'];
+              eventFiles.splice(eventFileIndex, 1);
+            }
 
-              // Check if we do have a matching annotations JSON file
-              const annotationsJSONIndex = annotationsJSONs.findIndex(
-                  (annotationsJSON) => {
-                    const annotationsJSONName = annotationsJSON['name']
-                        .toLowerCase()
-                        .replace('_annotations.json', '')
-                        .replace('.json', '');
+            // Check if we do have a matching annotations TSV file
+            const annotationsTSVIndex = annotationsTSVs.findIndex(
+                (annotationsTSV) => {
+                  const annotationsTSVName = annotationsTSV['name']
+                      .toLowerCase()
+                      .replace('_annotations.tsv', '').replace('.tsv', '');
 
-                    return (
-                      edfFileName === annotationsJSONName ||
-                      edfFileNameAlt === annotationsJSONName
-                    );
-                  },
-              );
+                  return (
+                    edfFileName === annotationsTSVName ||
+                    edfFileNameAlt === annotationsTSVName
+                  );
+                },
+            );
 
-              if (annotationsJSONIndex > -1) {
-                eegRun.annotationsJSON =
-                  annotationsJSONs[annotationsJSONIndex]['path'];
-                annotationsJSONs.splice(annotationsJSONIndex, 1);
-              }
+            if (annotationsTSVIndex > -1) {
+              eegRun.annotationsTSV =
+                annotationsTSVs[annotationsTSVIndex]['path'];
+              annotationsTSVs.splice(annotationsTSVIndex, 1);
+            }
 
-              eegRuns.push(eegRun);
-            },
+            // Check if we do have a matching annotations JSON file
+            const annotationsJSONIndex = annotationsJSONs.findIndex(
+                (annotationsJSON) => {
+                  const annotationsJSONName = annotationsJSON['name']
+                      .toLowerCase()
+                      .replace('_annotations.json', '')
+                      .replace('.json', '');
+
+                  return (
+                    edfFileName === annotationsJSONName ||
+                    edfFileNameAlt === annotationsJSONName
+                  );
+                },
+            );
+
+            if (annotationsJSONIndex > -1) {
+              eegRun.annotationsJSON =
+                annotationsJSONs[annotationsJSONIndex]['path'];
+              annotationsJSONs.splice(annotationsJSONIndex, 1);
+            }
+
+            eegRuns.push(eegRun);
+          },
+      );
+
+      eegRuns.eventErrors = [];
+      eventFiles.map((eventFile) => {
+        eegRuns.eventErrors.push(`Event file ${eventFile['name']}
+          is not matching any edf file names.`);
+      });
+
+      eegRuns.annotationsTSVErrors = [];
+      annotationsTSVs.map((annotationsTSV) => {
+        eegRuns.annotationsTSVErrors.push(
+            `Annotation file ${annotationsTSV['name']}
+            is not matching any edf file names.`,
         );
+      });
 
-        eegRuns.eventErrors = [];
-        eventFiles.map((eventFile) => {
-          eegRuns.eventErrors.push(`Event file ${eventFile['name']}
-            is not matching any edf file names.`);
-        });
+      eegRuns.annotationsJSONErrors = [];
+      annotationsJSONs.map((annotationsJSON) => {
+        eegRuns.annotationsJSONErrors.push(
+            `Annotation file  ${annotationsJSON['name']}
+            is not matching any edf file names.`,
+        );
+      });
 
-        eegRuns.annotationsTSVErrors = [];
-        annotationsTSVs.map((annotationsTSV) => {
-          eegRuns.annotationsTSVErrors.push(
-              `Annotation file ${annotationsTSV['name']}
-              is not matching any edf file names.`,
-          );
-        });
-
-        eegRuns.annotationsJSONErrors = [];
-        annotationsJSONs.map((annotationsJSON) => {
-          eegRuns.annotationsJSONErrors.push(
-              `Annotation file  ${annotationsJSON['name']}
-              is not matching any edf file names.`,
-          );
-        });
-
-        state.eegRuns.set(eegRuns);
-      }
+      state.eegRuns.set(eegRuns);
     }
   };
 
@@ -1061,7 +1092,6 @@ const Configuration = (props) => {
 
       socketContext.on('new_candidate_created', (data) => {
         console.info('candidate created !!!');
-        console.info(data);
 
         state.participantID.set(data['PSCID']);
         state.participantCandID.set(data['CandID']);
@@ -1079,13 +1109,19 @@ const Configuration = (props) => {
           //state.participantEntryMode.set('new_loris');
         }
       });
+    }
+  }, [socketContext]);
 
+  useEffect(() => {
+    if (socketContext) {
       socketContext.on('participant_data', (data) => {
-        console.info(data);
         if (data?.error) {
-          console.info(data);
           appContext.setTask('participantCandID', {error: data.error});
-        } else {
+          state.participantID.set('');
+          appContext.setTask('participantID', '');
+        } else if (state.participantPSCID.get == data.PSCID) {
+          appContext.setTask('participantCandID', state.participantCandID.get);
+
           state.participantID.set(data.PSCID);
           appContext.setTask('participantID', data.PSCID);
 
@@ -1094,11 +1130,17 @@ const Configuration = (props) => {
 
           state.participantSex.set(data.Sex);
           appContext.setTask('participantSex', data.Sex);
+        } else {
+          state.participantID.set('');
+          appContext.setTask('participantID', '');
+          appContext.setTask('participantCandID', {
+            error: 'The DDCID/PSCID pair you provided' +
+                ' does not match an existing candidate.',
+          });
         }
       });
     }
-  }, [socketContext]);
-
+  }, [socketContext, state.participantPSCID.get]);
 
   /**
    * onUserInput - input change by user.
@@ -1234,8 +1276,6 @@ const Configuration = (props) => {
    * @return {Number}
    */
   const getAge = (birthDate, visitDate) => {
-    console.info(birthDate);
-    console.info(visitDate);
     if (!birthDate || !visitDate) return;
 
     let age = visitDate.getFullYear() - birthDate.getFullYear();
@@ -1600,7 +1640,7 @@ const Configuration = (props) => {
                 options={isAuthenticated === true ?
                   {
                     manual: 'Manual',
-                    new_loris: 'Create a LORIS candidate',
+                    //new_loris: '(beta) Create a LORIS candidate',
                     existing_loris: 'Use an existing LORIS candidate',
                   } :
                   {
@@ -1659,9 +1699,18 @@ const Configuration = (props) => {
           {state.participantEntryMode.get === 'existing_loris' &&
             <>
               <div className='small-pad'>
+                <TextInput id='participantPSCID'
+                  name='participantPSCID'
+                  label='LORIS PSCID'
+                  required={true}
+                  value={state.participantPSCID.get}
+                  onUserInput={onUserInput}
+                />
+              </div>
+              <div className='small-pad'>
                 <TextInput id='participantCandID'
                   name='participantCandID'
-                  label='LORIS DCCID (CandID)'
+                  label='LORIS DCCID'
                   required={true}
                   value={state.participantCandID.get}
                   onUserInput={onUserInput}

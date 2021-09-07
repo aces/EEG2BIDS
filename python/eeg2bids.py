@@ -113,7 +113,7 @@ def get_loris_visits(sid, subproject):
 @sio.event
 def create_visit(sid, data):
     loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
-    #loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
+    loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
 
 @sio.event
 def create_candidate_and_visit(sid, data):
@@ -130,9 +130,8 @@ def create_candidate_and_visit(sid, data):
         print('create_visit')
         loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
                                data['subproject'])
-        print('start_next_stage')
-        #loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
-        #                           data['project'], data['date'])
+        loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
+                                   data['project'], data['date'])
         print('new_candidate_created')
         sio.emit('new_candidate_created', new_candidate)
 
