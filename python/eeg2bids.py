@@ -14,7 +14,7 @@ import datetime
 import json
 
 # EEG2BIDS Wizard version
-appVersion = '1.0.1'
+appVersion = '1.0.4'
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -124,8 +124,6 @@ def create_candidate_and_visit(sid, data):
         data['site'],
     )
 
-    print(new_candidate)
-
     if new_candidate['CandID']:
         print('create_visit')
         loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
@@ -216,10 +214,13 @@ def get_bids_metadata(sid, data):
             with open(data['file_path']) as fd:
                 try:
                     metadata = json.load(fd)
-                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]))
+                    empty_values = [k for k in metadata if metadata[k].strip() == '']
+                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]) - set(empty_values))
+                    ignored_keys = empty_values + diff
+
                     response = {
                         'metadata': metadata,
-                        'invalid_keys': diff,
+                        'ignored_keys': ignored_keys,
                     }
                 except ValueError as e:
                     print(e)

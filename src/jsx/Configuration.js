@@ -590,7 +590,7 @@ const Configuration = (props) => {
 
   const validateRecordingParameters = () => {
     const result = [];
-    let invalidKeyFound = false;
+    let ignoredKeyFound = false;
 
     if (!appContext.getFromTask('bidsMetadata')) {
       return formatWarning('No EEG Parameter metadata file selected');
@@ -609,9 +609,9 @@ const Configuration = (props) => {
     }
 
     const metadata = appContext.getFromTask('bidsMetadata')?.metadata;
-    const invalidKeys = appContext.getFromTask('bidsMetadata')?.invalid_keys;
+    const ignoredKeys = appContext.getFromTask('bidsMetadata')?.ignored_keys;
 
-    if (!metadata || !invalidKeys || metadata.length < 1) {
+    if (!metadata || !ignoredKeys || metadata.length < 1) {
       return formatWarning(
           'An error occured while processing ' +
           'the recording parameters file selected.',
@@ -619,8 +619,8 @@ const Configuration = (props) => {
     }
 
     Object.keys(metadata).map((key) => {
-      if (invalidKeys.indexOf(key) > -1) {
-        invalidKeyFound = true;
+      if (ignoredKeys.indexOf(key) > -1) {
+        ignoredKeyFound = true;
         result.push(
             <div key={key}>
               {formatWarning(`${key}: ${metadata[key]}`)}
@@ -638,12 +638,12 @@ const Configuration = (props) => {
       }
     });
 
-    if (invalidKeyFound) {
+    if (ignoredKeyFound) {
       result.push(
           <p key="message">
             <span className='warning'>&#x26A0;</span>
-            Note: if invalid or extra parameters are found
-            in the .json file, they are ignored.
+            Note: invalid or extra parameters, as well as
+            parameters with empty values are ignored.
           </p>,
       );
     }
