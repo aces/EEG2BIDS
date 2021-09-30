@@ -1,0 +1,19 @@
+{
+  "InstitutionName": "",
+  "InstitutionAddress": "",
+  "Manufacturer": "",
+  "ManufacturersModelName": "",
+  "SoftwareVersions": "",
+  "TaskDescription": "",
+  "Instructions": "",
+  "CogAtlasID": "",
+  "CogPOID": "",
+  "DeviceSerialNumber": "",
+  "HardwareFilters": "n/a",
+  "CapManufacturer": "",
+  "CapManufacturersModelName": "",
+  "EEGGround": "",
+  "HeadCircumference": "",
+  "EEGPlacementScheme": "",
+  "SubjectArtefactDescription": ""
+}
