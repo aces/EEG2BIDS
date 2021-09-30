@@ -1,0 +1,22 @@
+{
+  "InstitutionName": "",
+  "InstitutionAddress": "",
+  "Manufacturer": "",
+  "ManufacturersModelName": "",
+  "SoftwareVersions": "",
+  "TaskDescription": "",
+  "Instructions": "",
+  "CogAtlasID": "",
+  "CogPOID": "",
+  "DeviceSerialNumber": "",
+  "DCOffsetCorrection": "",
+  "HardwareFilters": "n/a",
+  "ElectrodeManufacturer": "",
+  "ElectrodeManufacturersModelName": "",
+  "iEEGGround": "",
+  "iEEGPlacementScheme": "",
+  "iEEGElectrodeGroups": "",
+  "SubjectArtefactDescription": "",
+  "ElectricalStimulation": false,
+  "ElectricalStimulationParameters": ""
+}
