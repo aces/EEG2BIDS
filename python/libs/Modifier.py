@@ -79,6 +79,7 @@ class Modifier:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
                 file_data['PreparedBy'] = self.data['preparedBy']
+                file_data['Eeg2bidsVersion'] = self.data['appVersion']
 
                 with open(file_path, "w") as fp:
                     json.dump(file_data, fp, indent=4)
@@ -157,9 +158,6 @@ class Modifier:
                 },
                 'project': {
                     'Description': "Project of the participant"
-                },
-                'debug': {
-                    'Version': self.data['appVersion']
                 }
             }
             json_data.update(user_data)
@@ -300,11 +298,11 @@ class Modifier:
                     else:
                         referenceField = 'EGGReference'
 
-                    file_data[referenceField] = self.data['reference']
+                    file_data[referenceField] = " ".join(self.data['reference'].split())
 
-                    if 'metadata' in self.data['bidsMetadata'] and 'invalid_keys' in self.data['bidsMetadata']:
+                    if 'metadata' in self.data['bidsMetadata'] and 'ignored_keys' in self.data['bidsMetadata']:
                         for key in self.data['bidsMetadata']['metadata']:
-                            if key not in self.data['bidsMetadata']['invalid_keys']:
+                            if key not in self.data['bidsMetadata']['ignored_keys']:
                                 file_data[key] = self.data['bidsMetadata']['metadata'][key]
 
                     with open(file_path, "w") as fp:
