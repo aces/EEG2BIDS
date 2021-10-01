@@ -213,7 +213,7 @@ def get_bids_metadata(sid, data):
             with open(data['file_path']) as fd:
                 try:
                     metadata = json.load(fd)
-                    empty_values = [k for k in metadata if metadata[k].strip() == '']
+                    empty_values = [k for k in metadata if isinstance(metadata[k], str) and metadata[k].strip() == '']
                     diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]) - set(empty_values))
                     ignored_keys = empty_values + diff
 
