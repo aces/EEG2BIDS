@@ -639,7 +639,10 @@ const Configuration = (props) => {
         );
       } else {
         result.push(
-            <div key={key}>
+            <div
+              key={key}
+              style={{paddingLeft: '32px'}}
+            >
               {key}: {typeof metadata[key] == 'object' ?
                 JSON.stringify(metadata[key]) :
                 metadata[key]
