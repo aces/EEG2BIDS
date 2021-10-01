@@ -161,6 +161,13 @@ const Validator = (props) => {
     }
   }, [socketContext]);
 
+  useEffect(() => {
+    if (!appContext.getFromTask('output_time')) {
+      setValidationMode('folder');
+    } else {
+      setValidationMode('lastRun');
+    }
+  }, [props.visible]);
   /**
    * onMessage - received message from python.
    * @param {object} message - response
@@ -208,7 +215,7 @@ const Validator = (props) => {
             <DirectoryInput id='bidsDirectory'
               name='bidsDirectory'
               required={validationMode == 'folder'}
-              label='BIDS input folder'
+              label='BIDS folder'
               placeholder={bidsDirectory}
               onUserInput={(_, value) => setBidsDirectory(value)}
             />

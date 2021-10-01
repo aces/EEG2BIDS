@@ -56,7 +56,7 @@ body {
     max-width: 175px;
 }
 .label {
-    width: 210px;
+    width: 240px;
     display: inline-block;
     max-width: 100%;
     padding-right: 20px;
@@ -73,7 +73,7 @@ input {
 }
 .comboField {
     display: inline-block;
-    max-width: calc(100% - 230px);
+    max-width: calc(100% - 260px);
     vertical-align: top;
 }
 .alert {
