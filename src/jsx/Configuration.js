@@ -667,10 +667,19 @@ const Configuration = (props) => {
 
     // taskName
     let taskNameStatus = '';
-    if (appContext.getFromTask('taskName')) {
-      taskNameStatus = formatPass(
-          `Task name: ${appContext.getFromTask('taskName')}`,
-      );
+    const taskName = appContext.getFromTask('taskName');
+    if (taskName) {
+      if (taskName.indexOf('-') > -1 ||
+          taskName.indexOf('_') > -1 ||
+          taskName.indexOf('/') > -1) {
+        taskNameStatus = formatError(
+            'Task name has invalid characters (-, /, _)',
+        );
+      } else {
+        taskNameStatus = formatPass(
+            `Task name: ${appContext.getFromTask('taskName')}`,
+        );
+      }
     } else {
       taskNameStatus = formatError('Task name is not specified');
     }
