@@ -66,9 +66,9 @@ const createMainWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
       nativeWindowOpen: true,
     },
-    width: 1000,
+    width: 1050,
     height: 880,
-    minWidth: 1000,
+    minWidth: 1050,
     minHeight: 880,
     backgroundColor: '#094580',
   });

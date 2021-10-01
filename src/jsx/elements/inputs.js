@@ -36,7 +36,8 @@ export const FileInput = (props) => {
           {props.help &&
             <i className='fas fa-question-circle' data-tip={props.help}></i>
           }
-        </b></label>
+        </b>
+      </label>
       <button>
         <label htmlFor={props.id}>
           {
@@ -71,6 +72,7 @@ FileInput.propTypes = {
   accept: PropTypes.string,
   onUserInput: PropTypes.func,
   placeholder: PropTypes.string,
+  help: PropTypes.string,
 };
 
 /**
@@ -103,17 +105,20 @@ export const DirectoryInput = (props) => {
             <span className="red">*</span> :
             null
           }
+          {props.help &&
+            <i className='fas fa-question-circle' data-tip={props.help}></i>
+          }
         </b>
       </label>
       <input
         type='button'
         id={props.id}
         name={props.name}
-        value='Choose directory'
+        value='Choose folder'
         onClick={handleClick}
       />
       <a style={{fontSize: '14px', cursor: 'default'}}>
-        &nbsp;{props.placeholder ?? 'No directory chosen'}
+        &nbsp;{props.placeholder ?? 'No folder chosen'}
       </a>
     </>
   );
@@ -124,6 +129,7 @@ DirectoryInput.propTypes = {
   label: PropTypes.string,
   onUserInput: PropTypes.func,
   placeholder: PropTypes.string,
+  help: PropTypes.string,
 };
 
 /**
@@ -159,6 +165,9 @@ export const TextInput = (props) => {
             {props.label} {props.required ?
               <span className="red">*</span> :
               null
+            }
+            {props.help &&
+              <i className='fas fa-question-circle' data-tip={props.help}></i>
             }
           </b>
         </label>
@@ -196,6 +205,7 @@ TextInput.propTypes = {
   ]),
   bannedCharacters: PropTypes.array,
   readonly: PropTypes.bool,
+  help: PropTypes.string,
 };
 
 /**
@@ -267,10 +277,15 @@ export const RadioInput = (props) => {
     }
     return <div key={props.name + '_key'} style={styleRow}>
       <label className="label" htmlFor={props.id}>
-        <b>{props.label} {props.required ?
+        <b>
+          {props.label} {props.required ?
             <span className="red">*</span> :
             null
-        }</b>
+          }
+          {props.help &&
+            <i className='fas fa-question-circle' data-tip={props.help}></i>
+          }
+        </b>
       </label>
       {content}
     </div>;
@@ -296,6 +311,7 @@ RadioInput.propTypes = {
   options: PropTypes.object,
   checked: PropTypes.string,
   onUserInput: PropTypes.func,
+  help: PropTypes.string,
 };
 
 /**
@@ -360,6 +376,9 @@ export const SelectInput = (props) => {
                 <span className="red">*</span> :
                 null
               }
+              {props.help &&
+                <i className='fas fa-question-circle' data-tip={props.help}></i>
+              }
             </b>
           </label>
         }
@@ -394,6 +413,7 @@ SelectInput.propTypes = {
   emptyOption: PropTypes.string,
   options: PropTypes.object,
   onUserInput: PropTypes.func,
+  help: PropTypes.string,
 };
 
 /**
@@ -420,6 +440,9 @@ export const NumberInput = (props) => {
     <>
       <label className="label" htmlFor={props.id}>
         <b>{props.label}</b>
+        {props.help &&
+          <i className='fas fa-question-circle' data-tip={props.help}></i>
+        }
       </label>
       <input
         type='number'
@@ -439,6 +462,7 @@ NumberInput.propTypes = {
   value: PropTypes.string,
   onUserInput: PropTypes.func,
   placeholder: PropTypes.string,
+  help: PropTypes.string,
 };
 
 /**
@@ -470,6 +494,9 @@ export const TextareaInput = (props) => {
             <span className="red">*</span> :
             null
           }
+          {props.help &&
+            <i className='fas fa-question-circle' data-tip={props.help}></i>
+          }
         </b>
       </label>
       <textarea
@@ -495,6 +522,7 @@ TextareaInput.propTypes = {
   rows: PropTypes.number,
   cols: PropTypes.number,
   onUserInput: PropTypes.func,
+  help: PropTypes.string,
 };
 
 TextareaInput.defaultProps = {

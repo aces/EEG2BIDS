@@ -568,7 +568,7 @@ const Configuration = (props) => {
         appContext.getFromTask('bidsDirectory'),
       );
     } else {
-      bidsDirectoryStatus = formatError('No BIDS output directory selected');
+      bidsDirectoryStatus = formatError('No BIDS output folder selected');
     }
     result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
 
@@ -1301,6 +1301,8 @@ const Configuration = (props) => {
               label='EDF Recording to convert'
               required={true}
               onUserInput={onUserInput}
+              help='Filename(s) must be formatted correctly:
+              e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.edf'
             />
             <div>
               <small>
@@ -1315,6 +1317,7 @@ const Configuration = (props) => {
               label='BIDS output folder'
               placeholder={state.bidsDirectory.get}
               onUserInput={onUserInput}
+              help='Where the BIDS-compliant folder will be created'
             />
           </div>
           <div className='small-pad'>
@@ -1328,6 +1331,7 @@ const Configuration = (props) => {
                 eeg: 'EEG',
               }}
               checked={state.modality.get}
+              help='If any intracranial (stereo) channels, select Stereo iEEG'
             />
           </div>
           <div className='small-pad'>
@@ -1341,6 +1345,8 @@ const Configuration = (props) => {
                 no: 'No',
               }}
               checked={state.LORIScompliant.get ? 'yes' : 'no'}
+              help='Select Yes if research datasets will be stored
+              in a LORIS data platform'
             />
           </div>
         </div>
@@ -1367,6 +1373,9 @@ const Configuration = (props) => {
                 }
                 label='Recording parameters (json)'
                 onUserInput={onUserInput}
+                help='Used to contribute non-required fields to *.json BIDS
+                parameter file. See BIDS spec and template available with
+                this release. Blank fields ignored.'
               />
             </div>
             <div className='small-pad'>
@@ -1381,6 +1390,8 @@ const Configuration = (props) => {
                 }
                 label='annotations.json'
                 onUserInput={onUserInput}
+                help='Labels for Annotations, compliant with BIDS spec.
+                One file per task/run. Filename must be formatted correctly.'
               />
             </div>
           </div>
@@ -1413,6 +1424,9 @@ const Configuration = (props) => {
                 }
                 label='annotations.tsv'
                 onUserInput={onUserInput}
+                help='Annotation data: time, label, etc compliant
+                with BIDS spec. One file per task/run.
+                Filename must be formatted correctly.'
               />
             </div>
           </div>
@@ -1429,6 +1443,8 @@ const Configuration = (props) => {
                 label='Task name'
                 value={state.taskName.get}
                 onUserInput={onUserInput}
+                help='Task, stimulus, state or experimental context.
+                See BIDS specification for more information.'
               />
             </div>
             {state.LORIScompliant.get &&
@@ -1437,6 +1453,10 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#siteID_API'>
                     <b>
                       Site <span className="red">*</span>
+                      <i
+                        className='fas fa-question-circle'
+                        data-tip='Study Centre'
+                      ></i>
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1464,6 +1484,10 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#projectID_API'>
                     <b>
                       Project <span className="red">*</span>
+                      <i
+                        className='fas fa-question-circle'
+                        data-tip='Study'
+                      ></i>
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1491,6 +1515,10 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#subprojectID_API'>
                     <b>
                       Subproject <span className="red">*</span>
+                      <i
+                        className='fas fa-question-circle'
+                        data-tip='Subproject or population cohort'
+                      ></i>
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1520,6 +1548,10 @@ const Configuration = (props) => {
               <label className="label" htmlFor='#session_API'>
                 <b>
                   Session <span className="red">*</span>
+                  <i
+                    className='fas fa-question-circle'
+                    data-tip='Visit or TimePoint Label'
+                  ></i>
                 </b>
                 {state.LORIScompliant.get &&
                   <div><small>(LORIS Visit Label)</small></div>
@@ -1558,6 +1590,7 @@ const Configuration = (props) => {
                 label='Reference'
                 value={state.reference.get}
                 onUserInput={onUserInput}
+                help='See BIDS specification for more information'
               />
             </div>
             <div className='small-pad'>
@@ -1567,6 +1600,7 @@ const Configuration = (props) => {
                 value={state.lineFreq.get}
                 placeholder='n/a'
                 onUserInput={onUserInput}
+                help='See BIDS specification for more information'
               />
             </div>
             <div className='small-pad'>
@@ -1581,6 +1615,7 @@ const Configuration = (props) => {
                   'epoched': 'Epoched',
                 }}
                 onUserInput={onUserInput}
+                help='See BIDS specification for more information'
               />
             </div>
           </div>
@@ -1608,6 +1643,8 @@ const Configuration = (props) => {
                   }
                 }
                 checked={state.participantEntryMode.get}
+                help='Specify participant details manually
+                or by lookup in LORIS'
               />
             </div>
           }
@@ -1638,6 +1675,7 @@ const Configuration = (props) => {
                     'other': 'Other',
                   }}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
               <div className='small-pad'>
@@ -1652,6 +1690,7 @@ const Configuration = (props) => {
                     'A': 'Ambidextrous',
                   }}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
             </>
@@ -1679,6 +1718,7 @@ const Configuration = (props) => {
                     'A': 'Ambidextrous',
                   }}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
             </>
@@ -1692,6 +1732,7 @@ const Configuration = (props) => {
                   required={true}
                   value={state.participantID.get}
                   onUserInput={onUserInput}
+                  help='Study ID (e.g. LORIS PSCID)'
                 />
                 {state.LORIScompliant.get &&
                   <div><small>Use the LORIS PSCID</small></div>
@@ -1704,6 +1745,7 @@ const Configuration = (props) => {
                   placeholder='n/a'
                   value={state.participantAge.get}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
               <div className='small-pad'>
@@ -1718,6 +1760,7 @@ const Configuration = (props) => {
                     'other': 'Other',
                   }}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
               <div className='small-pad'>
@@ -1732,6 +1775,7 @@ const Configuration = (props) => {
                     'A': 'Ambidextrous',
                   }}
                   onUserInput={onUserInput}
+                  help='Required; see BIDS specification for more information'
                 />
               </div>
             </>
@@ -1900,6 +1944,8 @@ const Configuration = (props) => {
               value={preparedBy}
               placeholder='Enter your name'
               onUserInput={(_, value) => setPreparedBy(value)}
+              help='Name of person performing data conversion
+              and validation is required.'
             />
             {!preparedBy && displayErrors &&
               <div>
@@ -1926,6 +1972,7 @@ const Configuration = (props) => {
         >
           {modalText.message[modalText.mode]}
         </Modal>
+        <ReactTooltip/>
       </>
     );
   } else {
