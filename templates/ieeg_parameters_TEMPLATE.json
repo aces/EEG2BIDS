@@ -10,7 +10,7 @@
   "CogPOID": "",
   "DeviceSerialNumber": "",
   "DCOffsetCorrection": "",
-  "HardwareFilters": "n/a",
+  "HardwareFilters": "",
   "ElectrodeManufacturer": "",
   "ElectrodeManufacturersModelName": "",
   "iEEGGround": "",
