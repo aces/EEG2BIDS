@@ -231,6 +231,6 @@ class LorisAPI:
 
         # validate candid
         if json_resp.get('error'):
-            return {'error': 'CandID is not valid.'}
+            return {'error': 'DCCID is not valid.'}
 
         return json_resp.get('Meta')

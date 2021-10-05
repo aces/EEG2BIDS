@@ -783,7 +783,7 @@ const Configuration = (props) => {
       } else {
         if (appContext.getFromTask('participantCandID')) {
           participantCandIDStatus = formatPass(
-              `LORIS CandID: ${state.participantCandID.get}`,
+              `LORIS DCCID: ${state.participantCandID.get}`,
           );
         }
 
@@ -1160,6 +1160,10 @@ const Configuration = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
+    if (typeof value === 'string') {
+      value = value.trim();
+    }
+
     // Update the state of Configuration.
     switch (name) {
       case 'recordingID':
@@ -1646,11 +1650,15 @@ const Configuration = (props) => {
               />
             </div>
             <div className='small-pad'>
-              <NumberInput id='lineFreq'
+              <SelectInput id='lineFreq'
                 name='lineFreq'
                 label='Powerline frequency'
                 value={state.lineFreq.get}
-                placeholder='n/a'
+                emptyOption='n/a'
+                options={{
+                  '50': '50',
+                  '60': '60',
+                }}
                 onUserInput={onUserInput}
                 help='See BIDS specification for more information'
               />

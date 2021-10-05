@@ -233,6 +233,8 @@ class Converter:
             m_info['subject_id'] = subject_id
             subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
 
+            if line_freq.isnumeric():
+                line_freq = int(line_freq)
             raw.info['line_freq'] = line_freq
 
             raw._init_kwargs = {
