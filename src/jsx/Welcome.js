@@ -110,7 +110,9 @@ const Welcome = (props) => {
           <li>Compress the BIDS output folder</li>
         </ul>
         <p>
-          - Important - Please back up your data before beginning.
+          - Important - Please back up your data before beginning. <br/>
+          You may wish to edit the dataset_description.json
+          after generating your BIDS dataset.
         </p>
       </div>
       <div>

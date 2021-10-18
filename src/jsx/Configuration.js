@@ -76,7 +76,7 @@ const Configuration = (props) => {
     taskName: '',
     reference: 'n/a',
     recordingType: 'n/a',
-    participantEntryMode: 'manual',
+    participantEntryMode: 'existing_loris',
     participantPSCID: '',
     participantCandID: '',
     participantID: '',
@@ -196,10 +196,12 @@ const Configuration = (props) => {
   }, [outputTime]);
 
   useEffect(() => {
-    if (isAuthenticated && state.LORIScompliant) {
-      state.participantEntryMode.set('new_loris');
+    if (isAuthenticated && state.LORIScompliant.get) {
+      state.participantEntryMode.set('existing_loris');
+    } else {
+      state.participantEntryMode.set('manual');
     }
-  }, [state.LORIScompliant.get]);
+  }, [state.LORIScompliant.get, isAuthenticated]);
 
   /**
    * hideModal - display Modal.
@@ -672,19 +674,22 @@ const Configuration = (props) => {
     let taskNameStatus = '';
     const taskName = appContext.getFromTask('taskName');
     if (taskName) {
-      if (taskName.indexOf('-') > -1 ||
+      /* if (taskName.indexOf('-') > -1 ||
           taskName.indexOf('_') > -1 ||
           taskName.indexOf('/') > -1) {
         taskNameStatus = formatError(
-            'Task name has invalid characters (-, /, _)',
+            'Task Name has invalid characters (-, /, _)',
         );
       } else {
         taskNameStatus = formatPass(
-            `Task name: ${appContext.getFromTask('taskName')}`,
+            `Task Name: ${appContext.getFromTask('taskName')}`,
         );
-      }
+      } */
+      taskNameStatus = formatPass(
+          `Task Name: ${appContext.getFromTask('taskName')}`,
+      );
     } else {
-      taskNameStatus = formatError('Task name is not specified');
+      taskNameStatus = formatError('Task Name is not specified');
     }
     result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
 
@@ -745,7 +750,7 @@ const Configuration = (props) => {
     let lineFreqStatus = '';
     if (appContext.getFromTask('lineFreq')) {
       lineFreqStatus = formatPass(
-          `Powerline frequency: ${appContext.getFromTask('lineFreq')}`,
+          `Powerline Frequency: ${appContext.getFromTask('lineFreq')}`,
       );
     } else {
       lineFreqStatus = formatWarning('Powerline frequency is not specified');
@@ -776,22 +781,28 @@ const Configuration = (props) => {
       // participantCandID
       let participantCandIDStatus = '';
 
-      if (appContext.getFromTask('participantCandID')?.error) {
+      if (!appContext.getFromTask('participantPSCID')) {
+        participantPSCIDStatus = formatError(
+            'LORIS PSCID is not specified',
+        );
+      } else {
+        participantPSCIDStatus = formatPass(
+            `LORIS PSCID: ${state.participantPSCID.get}`,
+        );
+      }
+
+      if (!appContext.getFromTask('participantCandID')) {
+        participantCandIDStatus = formatError(
+            'LORIS DCCID is not specified',
+        );
+      } else if (appContext.getFromTask('participantCandID')?.error) {
         participantCandIDStatus = formatError(
             appContext.getFromTask('participantCandID').error,
         );
       } else {
-        if (appContext.getFromTask('participantCandID')) {
-          participantCandIDStatus = formatPass(
-              `LORIS DCCID: ${state.participantCandID.get}`,
-          );
-        }
-
-        if (appContext.getFromTask('participantPSCID')) {
-          participantPSCIDStatus = formatPass(
-              `LORIS PSCID: ${state.participantPSCID.get}`,
-          );
-        }
+        participantCandIDStatus = formatPass(
+            `LORIS DCCID: ${state.participantCandID.get}`,
+        );
       }
 
       result.push(
@@ -1166,6 +1177,14 @@ const Configuration = (props) => {
 
     // Update the state of Configuration.
     switch (name) {
+      case 'LORIScompliant':
+        if (value === 'yes') {
+          value = true;
+        } else {
+          value = false;
+        }
+        state.LORIScompliant.set(value);
+        break;
       case 'recordingID':
         state.edfData.set((prevState) => {
           return {...prevState, [name]: value};
@@ -1178,27 +1197,6 @@ const Configuration = (props) => {
         });
         state.subjectID.set(value);
         appContext.setTask(name, value);
-        break;
-      case 'participantEntryMode':
-        if (isAuthenticated === false) {
-          state.participantEntryMode.set('new_loris');
-        } else {
-          state.participantEntryMode.set(value);
-        }
-        break;
-      case 'LORIScompliant':
-        if (value === 'yes') {
-          value = true;
-          if (isAuthenticated) {
-            state.participantEntryMode.set('new_loris');
-          } else {
-            state.participantEntryMode.set('manual');
-          }
-        } else {
-          value = false;
-          state.participantEntryMode.set('manual');
-        }
-        state.LORIScompliant.set(value);
         break;
       case 'siteID_API':
         if (value == 'Enter manually') {
@@ -1379,7 +1377,7 @@ const Configuration = (props) => {
           <div className='small-pad'>
             <RadioInput id='modality'
               name='modality'
-              label='Data modality'
+              label='Data Modality'
               required={true}
               onUserInput={onUserInput}
               options={{
@@ -1427,7 +1425,7 @@ const Configuration = (props) => {
                       (bidsMetadataFile) => bidsMetadataFile['name'],
                   ).join(', ')
                 }
-                label='Recording parameters (json)'
+                label='Recording Parameters (json)'
                 onUserInput={onUserInput}
                 help='Used to contribute non-required fields to *.json BIDS
                 parameter file. See BIDS spec and template available with
@@ -1496,9 +1494,10 @@ const Configuration = (props) => {
               <TextInput id='taskName'
                 name='taskName'
                 required={true}
-                label='Task name'
+                label='Task Name'
                 value={state.taskName.get}
                 onUserInput={onUserInput}
+                bannedCharacters={['-', '_', ' ', '/']}
                 help='Task, stimulus, state or experimental context.
                 See BIDS specification for more information.'
               />
@@ -1631,7 +1630,7 @@ const Configuration = (props) => {
                     label=''
                     required={!state.LORIScompliant.get}
                     value={state.session.get}
-                    bannedCharacters={['-', '_', ' ']}
+                    bannedCharacters={['-', '_', ' ', '/']}
                     onUserInput={onUserInput}
                   />
                 }
@@ -1652,7 +1651,7 @@ const Configuration = (props) => {
             <div className='small-pad'>
               <SelectInput id='lineFreq'
                 name='lineFreq'
-                label='Powerline frequency'
+                label='Powerline Frequency'
                 value={state.lineFreq.get}
                 emptyOption='n/a'
                 options={{
@@ -1801,6 +1800,7 @@ const Configuration = (props) => {
                   required={true}
                   value={state.participantID.get}
                   onUserInput={onUserInput}
+                  bannedCharacters={['-', '_', ' ', '/']}
                   help='Study ID (e.g. LORIS PSCID)'
                 />
                 {state.LORIScompliant.get &&

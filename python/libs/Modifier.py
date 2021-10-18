@@ -28,7 +28,7 @@ class Modifier:
         )
 
     def get_eeg_path(self, relative=False):
-        directory_path = 'sub-' + self.data['participantID'].replace('_', '').replace('-', '').replace(' ', '')
+        directory_path = 'sub-' + self.data['participantID']
 
         if relative:
             return os.path.join(
@@ -80,6 +80,7 @@ class Modifier:
                 file_data = json.load(fp)
                 file_data['PreparedBy'] = self.data['preparedBy']
                 file_data['Eeg2bidsVersion'] = self.data['appVersion']
+                file_data['Name'] = self.data['participantID'] + '_' + self.data['session']
 
                 with open(file_path, "w") as fp:
                     json.dump(file_data, fp, indent=4)

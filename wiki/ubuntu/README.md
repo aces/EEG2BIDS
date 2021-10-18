@@ -18,10 +18,7 @@ npm install
 npm run start
 # In another terminal inside project root type:
 sudo apt-get install python3-venv
-python3 -m venv .
-source bin/activate
-pip install -r requirements.txt
-python3 -m python.eeg2bids
+npm run start-server
 ```
 
 **Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
