@@ -225,6 +225,11 @@ export const AuthenticationCredentials = (props) => {
     setLorisURL('');
     setLorisUsername('');
     setLorisPassword('');
+    socketContext.emit('set_loris_credentials', {
+      lorisURL: '',
+      lorisUsername: '',
+      lorisPassword: '',
+    });
   };
 
   /**
