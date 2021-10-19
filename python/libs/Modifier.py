@@ -70,6 +70,17 @@ class Modifier:
 
 
     def modify_dataset_description_json(self):
+        # EEG2BIDS Wizard version
+        appVersion = 'unknown'
+        
+        try:
+            with open(os.path.join(os.path.dirname(__file__), '../../package.json'), "r") as fp:
+                file_data = json.load(fp)
+                appVersion = file_data['version']
+        except IOError as e:
+            print(e)
+            print("Could not read package.json file")
+
         file_path = os.path.join(
             self.get_bids_root_path(),
             'dataset_description.json'
@@ -79,7 +90,7 @@ class Modifier:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
                 file_data['PreparedBy'] = self.data['preparedBy']
-                file_data['Eeg2bidsVersion'] = self.data['appVersion']
+                file_data['Eeg2bidsVersion'] = appVersion
                 file_data['Name'] = self.data['participantID'] + '_' + self.data['session']
 
                 with open(file_path, "w") as fp:

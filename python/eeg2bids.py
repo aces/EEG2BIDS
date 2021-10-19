@@ -13,9 +13,6 @@ import csv
 import datetime
 import json
 
-# EEG2BIDS Wizard version
-appVersion = '1.0.4'
-
 # LORIS credentials of user
 lorisCredentials = {
     'lorisURL': '',
@@ -257,7 +254,6 @@ def edf_to_bids_thread(data):
 
             # store subject_id for Modifier
             data['subject_id'] = iEEG.Converter.m_info['subject_id']
-            data['appVersion'] = appVersion
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']
