@@ -105,31 +105,6 @@ class LorisAPI:
         json_resp = json.loads(resp.content.decode('ascii'))
         return json_resp
 
-    def save_instrument(self):
-        print('save_instrument has ran')
-        resp = requests.put(
-            url=self.url + '/candidates/661630/V1/instruments/pet_mri_scans',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data=json.dumps({
-                "Meta": {
-                    "Instrument": 'PET/MRI scans',
-                    "Visit": 'V1',
-                    "Candidate": 661630,
-                    "DDE": False
-                },
-                "PET/MRI scans": {
-                    "Date_taken": "2021-06-07",
-                    "Examiner": "Rida",
-                    "completion-date": "2021-06-07",
-                }
-            }),
-            verify=False
-        )
-
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        print(json_resp)
-
     def get_visit(self, candid, visit, site, subproject, project):
         print('get_visit has ran')
         resp = requests.get(
