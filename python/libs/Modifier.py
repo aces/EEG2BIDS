@@ -72,7 +72,7 @@ class Modifier:
     def modify_dataset_description_json(self):
         # EEG2BIDS Wizard version
         appVersion = 'unknown'
-        
+
         try:
             with open(os.path.join(os.path.dirname(__file__), '../../package.json'), "r") as fp:
                 file_data = json.load(fp)
@@ -238,16 +238,25 @@ class Modifier:
                     rows = list(reader)
                     tsv_file.close()
 
+                header_case = ''
+
                 for line in rows:
                     try:
+                        header_case = 1
                         onset, duration, trial_type, value, sample = line
                         output.append([onset, duration, trial_type, value, sample])
                     except ValueError:
                         try:
+                            header_case = 2
                             onset, duration, trial_type = line
                             output.append([onset, duration, trial_type, 'n/a', 'n/a'])
                         except ValueError:
-                            print('error: ValueError')
+                            try:
+                                header_case = 3
+                                onset, duration, trial_type, response_time, value, sample = line
+                                output.append([onset, duration, trial_type, response_time, value, sample])
+                            except ValueError:
+                                print('error: ValueError')
 
                 path_event_files = ''
                 # We search for the events.tsv file.
@@ -275,7 +284,11 @@ class Modifier:
                                     onset, duration, trial_type = line
                                     output.append([onset, duration, trial_type, 'n/a', 'n/a'])
                                 except ValueError:
-                                    print('error: ValueError')
+                                    try:
+                                        onset, duration, trial_type, response_time, value, sample = line
+                                        output.append([onset, duration, trial_type, response_time, value, sample])
+                                    except ValueError:
+                                        print('error: ValueError')
                     except:
                         print('No events.tsv found in the BIDS folder.')
                 else:
@@ -287,7 +300,10 @@ class Modifier:
 
                 # overwrite BIDS events.tsv with collected data.
                 with open(path_event_files, mode='a+', newline='') as tsv_file:
-                    headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
+                    if header_case == 3:
+                        headers = ['onset', 'duration', 'trial_type', 'response_time', 'value', 'sample']
+                    else:
+                        headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
                     writer = csv.writer(tsv_file, delimiter='\t')
                     writer.writerow(headers)
                     writer.writerows(output)
