@@ -12,6 +12,8 @@ from python.libs.loris_api import LorisAPI
 import csv
 import datetime
 import json
+import paramiko
+import subprocess
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -193,6 +195,70 @@ def get_edf_data(sid, data):
 
 
 @sio.event
+def get_set_data(sid, data):
+    # data = { files: 'SET files (array of {path, name})' }
+    print('get_set_data:', data)
+
+    if 'files' not in data or not data['files']:
+        msg = 'No SET file selected.'
+        print(msg)
+        response = {'error': msg}
+        sio.emit('set_data', response)
+        return
+
+    headers = []
+    try:
+        for file in data['files']:
+            headers.append({
+                'file': file,
+            })
+
+        # return the first split metadata and date
+        response = {
+            'files': [header['file'] for header in headers],
+            'subjectID': '',
+            'recordingID': '',
+            'date': ''
+        }
+
+    except Exception as e:
+        print(e)
+        response = {
+            'error': 'Failed to retrieve SET file information',
+        }
+
+    sio.emit('set_data', response)
+
+@sio.event
+def mff_to_set(sid, data):
+    print('mff_to_set:', data)
+
+    if 'files' not in data or not data['files']:
+        msg = 'No MFF file selected.'
+        print(msg)
+        response = {'error': msg}
+        sio.emit('mff_data', response)
+        return
+
+    mcr_path = '/usr/local/MATLAB/MATLAB_Runtime/v93'
+    if not os.path.exists(mcr_path):
+        msg = 'Environment not configured for processing MFF files'
+        print(msg)
+        response = {'error': msg}
+        sio.emit('mff_data', response)
+        return
+    
+    for file in data['files']:
+        try:
+            subprocess.check_call(['../tools/mff_to_set/run_mff_to_set.sh', mcr_path, file.path])
+        except subprocess.CalledProcessError as e:
+            print(e)
+            response = {'error': 'Could not process MFF file'}
+    
+    sio.emit('mff_data', response)
+
+
+@sio.event
 def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('data:', data)
@@ -238,8 +304,8 @@ def edf_to_bids_thread(data):
     print('data is ')
     print(data)
     error_messages = []
-    if 'edfData' not in data or 'files' not in data['edfData'] or not data['edfData']['files']:
-        error_messages.append('No .edf file(s) to convert.')
+    if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
+        error_messages.append('No eeg file(s) to convert.')
     if 'bids_directory' not in data or not data['bids_directory']:
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:

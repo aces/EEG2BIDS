@@ -46,8 +46,9 @@ const Configuration = (props) => {
   // React State
   const initialState = {
     eegRuns: null,
-    edfData: [],
-    edfFiles: [],
+    fileFormat: 'edf',
+    eegData: [],
+    eegFiles: [],
     modality: 'ieeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -148,9 +149,10 @@ const Configuration = (props) => {
     });
     setModalVisible(true);
 
-    if (appContext.getFromTask('edfData')?.['files'].length > 0) {
+    if (appContext.getFromTask('eegData')?.['files'].length > 0) {
       socketContext.emit('edf_to_bids', {
-        edfData: appContext.getFromTask('edfData') ?? [],
+        eegData: appContext.getFromTask('eegData') ?? [],
+        fileFormat: state.fileFormat.get ?? '',
         eegRuns: state.eegRuns.get ?? [],
         modality: appContext.getFromTask('modality') ?? 'ieeg',
         bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
@@ -367,22 +369,22 @@ const Configuration = (props) => {
   const validateData = () => {
     const result = [];
 
-    // edfData
-    let edfDataStatus = '';
-    if (state.edfData.get?.error) {
-      edfDataStatus = formatError(state.edfData.get.error);
+    // eegData
+    let eegDataStatus = '';
+    if (state.eegData.get?.error) {
+      eegDataStatus = formatError(state.eegData.get.error);
     } else if (
-      state.edfData.get && state.edfData.get?.files?.length > 0
+      state.eegData.get && state.eegData.get?.files?.length > 0
     ) {
-      edfDataStatus = formatPass('EDF data file(s): ' +
-        state.edfData.get.files.map(
-            (edfFile) => edfFile['name'],
+      eegDataStatus = formatPass('EEG data file(s): ' +
+        state.eegData.get.files.map(
+            (eegFile) => eegFile['name'],
         ).join(', '),
       );
     } else {
-      edfDataStatus = formatError('No EDF file selected');
+      eegDataStatus = formatError('No EEG file selected');
     }
-    result.push(<div key='edfDataStatus'>{edfDataStatus}</div>);
+    result.push(<div key='eegDataStatus'>{eegDataStatus}</div>);
 
 
     // Data modality
@@ -415,27 +417,29 @@ const Configuration = (props) => {
 
         // Check that the events files are appropriatly named
         appContext.getFromTask('eventFiles').map((eventFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+          if (!appContext.getFromTask('eegData')['files'].find(
+              (eegFile) => {
+                const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
+                const eegFileName = eegFile['name'].toLowerCase()
+                    .replace(re, '')
+                    .replace('.' + state.fileFormat.get, '');
 
-                const edfFileNameAlt = edfFile['name'].toLowerCase()
-                    .replace('.edf', '');
+                const eegFileNameAlt = eegFile['name'].toLowerCase()
+                    .replace('.' + state.fileFormat.get, '');
 
                 const eventFileName = eventFile['name'].toLowerCase()
                     .replace('_events.tsv', '').replace('.tsv', '');
 
                 return (
-                  edfFileName === eventFileName ||
-                  edfFileNameAlt === eventFileName
+                  eegFileName === eventFileName ||
+                  eegFileNameAlt === eventFileName
                 );
               },
           )) {
             match = false;
             eventsStatus = formatError(
                 `Event file ${eventFile['name']}
-                is not matching any edf file names.`,
+                is not matching any eeg file names.`,
             );
           }
         });
@@ -470,28 +474,30 @@ const Configuration = (props) => {
 
         // Check that the events files are appropriatly named
         appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+          if (!appContext.getFromTask('eegData')['files'].find(
+              (eegFile) => {
+                const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
+                const eegFileName = eegFile['name'].toLowerCase()
+                    .replace(re, '')
+                    .replace('.' + state.fileFormat.get, '');
 
-                const edfFileNameAlt = edfFile['name'].toLowerCase()
-                    .replace('.edf', '');
+                const eegFileNameAlt = eegFile['name'].toLowerCase()
+                    .replace('.' + state.fileFormat.get, '');
 
                 const annotationsTSVFileName = annotationsTSVFile['name']
                     .toLowerCase()
                     .replace('_annotations.tsv', '').replace('.tsv', '');
 
                 return (
-                  edfFileName === annotationsTSVFileName ||
-                  edfFileNameAlt === annotationsTSVFileName
+                  eegFileName === annotationsTSVFileName ||
+                  eegFileNameAlt === annotationsTSVFileName
                 );
               },
           )) {
             match = false;
             annotationsTSVStatus = formatError(
                 `Annotation file ${annotationsTSVFile['name']}
-                is not matching any edf file names.`,
+                is not matching any eeg file names.`,
             );
           }
         });
@@ -529,13 +535,15 @@ const Configuration = (props) => {
         // Check that the events files are appropriatly named
         appContext.getFromTask('annotationsJSON')
             .map((annotationsJSONFile) => {
-              if (!appContext.getFromTask('edfData')['files'].find(
-                  (edfFile) => {
-                    const edfFileName = edfFile['name'].toLowerCase()
-                        .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+              if (!appContext.getFromTask('eegData')['files'].find(
+                  (eegFile) => {
+                    const re = new RegExp('_i?eeg.'+ state.fileFormat.get, 'i');
+                    const eegFileName = eegFile['name'].toLowerCase()
+                        .replace(re, '')
+                        .replace('.' + state.fileFormat.get, '');
 
-                    const edfFileNameAlt = edfFile['name'].toLowerCase()
-                        .replace('.edf', '');
+                    const eegFileNameAlt = eegFile['name'].toLowerCase()
+                        .replace('.' + state.fileFormat.get, '');
 
                     const annotationsJSONFileName =
                         annotationsJSONFile['name'].toLowerCase()
@@ -543,15 +551,15 @@ const Configuration = (props) => {
                             .replace('.json', '');
 
                     return (
-                      edfFileName === annotationsJSONFileName ||
-                      edfFileNameAlt === annotationsJSONFileName
+                      eegFileName === annotationsJSONFileName ||
+                      eegFileNameAlt === annotationsJSONFileName
                     );
                   },
               )) {
                 match = false;
                 annotationsJSONStatus = formatError(
                     `Annotation file ${annotationsJSONFile['name']}
-                  is not matching any edf file names.`,
+                  is not matching any eeg file names.`,
                 );
               }
             });
@@ -852,10 +860,10 @@ const Configuration = (props) => {
     /*if (socketContext) {
       if (state.session.get && state.siteID.get &&
           state.projectID.get && state.subprojectID.get &&
-          state.edfData.get?.date && state.participantDOB.get &&
+          state.eegData.get?.date && state.participantDOB.get &&
           state.participantSex.get
       ) {
-        const visitDate = state.edfData.get['date'] */
+        const visitDate = state.eegData.get['date'] */
     //        .toISOString().replace(/T.*/, '');
 
     //    const dob = state.participantDOB.get
@@ -875,10 +883,10 @@ const Configuration = (props) => {
 
       if (state.participantCandID.get && state.session.get &&
           state.siteID.get && state.projectID.get &&
-          state.subprojectID.get && state.edfData.get?.date
+          state.subprojectID.get && state.eegData.get?.date
       ) {
         console.info('start request to create the visit');
-        const visitDate = state.edfData.get['date'] */
+        const visitDate = state.eegData.get['date'] */
     //        .toISOString().replace(/T.*/, '');
 
     /*    socketContext.emit('create_visit', {
@@ -891,31 +899,33 @@ const Configuration = (props) => {
         });
     } */
 
-    if (state.edfData.get?.files?.length > 0) {
+    if (state.eegData.get?.files?.length > 0) {
       const eventFiles = [...state.eventFiles.get];
       const annotationsTSVs = [...state.annotationsTSV.get];
       const annotationsJSONs = [...state.annotationsJSON.get];
 
       const eegRuns = [];
 
-      state.edfData.get?.files.map(
-          (edfFile) => {
+      state.eegData.get?.files.map(
+          (eegFile) => {
             const eegRun = new EEGRun();
-            eegRun.edfFile = edfFile['path'];
+            eegRun.eegFile = eegFile['path'];
 
-            const edfFileName = edfFile['name'].toLowerCase()
-                .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+            const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
+            const eegFileName = eegFile['name'].toLowerCase()
+                .replace(re, '')
+                .replace('.' + state.fileFormat.get, '');
 
-            const edfFileNameAlt = edfFile['name'].toLowerCase()
-                .replace('.edf', '');
+            const eegFileNameAlt = eegFile['name'].toLowerCase()
+                .replace('.' + state.fileFormat.get, '');
 
             // Check if we do have a matching event file
             const eventFileIndex = eventFiles.findIndex((eventFile) => {
               const eventFileName = eventFile['name'].toLowerCase()
                   .replace('_events.tsv', '').replace('.tsv', '');
               return (
-                edfFileName === eventFileName ||
-                edfFileNameAlt === eventFileName
+                eegFileName === eventFileName ||
+                eegFileNameAlt === eventFileName
               );
             });
 
@@ -932,8 +942,8 @@ const Configuration = (props) => {
                       .replace('_annotations.tsv', '').replace('.tsv', '');
 
                   return (
-                    edfFileName === annotationsTSVName ||
-                    edfFileNameAlt === annotationsTSVName
+                    eegFileName === annotationsTSVName ||
+                    eegFileNameAlt === annotationsTSVName
                   );
                 },
             );
@@ -953,8 +963,8 @@ const Configuration = (props) => {
                       .replace('.json', '');
 
                   return (
-                    edfFileName === annotationsJSONName ||
-                    edfFileNameAlt === annotationsJSONName
+                    eegFileName === annotationsJSONName ||
+                    eegFileNameAlt === annotationsJSONName
                   );
                 },
             );
@@ -972,14 +982,14 @@ const Configuration = (props) => {
       eegRuns.eventErrors = [];
       eventFiles.map((eventFile) => {
         eegRuns.eventErrors.push(`Event file ${eventFile['name']}
-          is not matching any edf file names.`);
+          is not matching any eeg file names.`);
       });
 
       eegRuns.annotationsTSVErrors = [];
       annotationsTSVs.map((annotationsTSV) => {
         eegRuns.annotationsTSVErrors.push(
             `Annotation file ${annotationsTSV['name']}
-            is not matching any edf file names.`,
+            is not matching any eeg file names.`,
         );
       });
 
@@ -987,7 +997,7 @@ const Configuration = (props) => {
       annotationsJSONs.map((annotationsJSON) => {
         eegRuns.annotationsJSONErrors.push(
             `Annotation file  ${annotationsJSON['name']}
-            is not matching any edf file names.`,
+            is not matching any eeg file names.`,
         );
       });
 
@@ -1001,9 +1011,9 @@ const Configuration = (props) => {
   useEffect(() => {
     if (!state.participantCandID.get || !state.session.get ||
       !state.siteID.get || !state.projectID.get ||
-      !state.subprojectID.get || !state.edfData.get?.date) return;
+      !state.subprojectID.get || !state.eegData.get?.date) return;
 
-    const visitDate = state.edfData.get['date']
+    const visitDate = state.eegData.get['date']
         .toISOString().replace(/T.*/, '');
 
     socketContext.emit('create_visit', {
@@ -1016,23 +1026,36 @@ const Configuration = (props) => {
     });
   }, [state.participantCandID.get, state.session.get,
     state.siteID.get, state.projectID.get, state.subprojectID.get,
-    state.edfData.get]);
+    state.eegData.get]);
 
   useEffect(() => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
   }, []);
 
   useEffect(() => {
+    state.eegFiles.set([]);
+  }, [state.fileFormat.get]);
+
+  useEffect(() => {
     if (socketContext) {
-      socketContext.emit('get_edf_data', {
-        files: state.edfFiles.get.map((edfFile) =>
+      let emit = 'get_edf_data';
+      if (state.fileFormat.get === 'set') {
+        console.log('set file selected');
+        emit = 'get_set_data';
+      }
+      if (state.fileFormat.get === 'mff') {
+        console.log('mff file selected');
+        emit = 'mff_to_set';
+      }
+      socketContext.emit(emit, {
+        files: state.eegFiles.get.map((eegFile) =>
           ({
-            path: edfFile['path'],
-            name: edfFile['name'],
+            path: eegFile['path'],
+            name: eegFile['name'],
           })),
       });
     }
-  }, [state.edfFiles.get]);
+  }, [state.eegFiles.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1046,12 +1069,12 @@ const Configuration = (props) => {
   }, [state.bidsMetadataFile.get, state.modality.get]);
 
   useEffect(() => {
-    if (!state.edfData.get?.date || !state.participantDOB.get) return;
+    if (!state.eegData.get?.date || !state.participantDOB.get) return;
 
-    const age = getAge(state.participantDOB.get, state.edfData.get.date);
+    const age = getAge(state.participantDOB.get, state.eegData.get.date);
     state.participantAge.set(age);
     appContext.setTask('participantAge', age);
-  }, [state.participantDOB.get, state.edfData.get]);
+  }, [state.participantDOB.get, state.eegData.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1100,8 +1123,22 @@ const Configuration = (props) => {
         }
 
         state.subjectID.set(message?.['subjectID'] || '');
-        state.edfData.set(message);
-        appContext.setTask('edfData', message);
+        state.eegData.set(message);
+        appContext.setTask('eegData', message);
+      });
+
+      socketContext.on('set_data', (message) => {
+        if (message['error']) {
+          console.error(message['error']);
+        }
+
+        if (message['date']) {
+          message['date'] = new Date(message['date']);
+        }
+
+        state.subjectID.set(message?.['subjectID'] || '');
+        state.eegData.set(message);
+        appContext.setTask('eegData', message);
       });
 
       socketContext.on('bids_metadata', (message) => {
@@ -1186,13 +1223,13 @@ const Configuration = (props) => {
         state.LORIScompliant.set(value);
         break;
       case 'recordingID':
-        state.edfData.set((prevState) => {
+        state.eegData.set((prevState) => {
           return {...prevState, [name]: value};
         });
         appContext.setTask(name, value);
         break;
       case 'subjectID':
-        state.edfData.set((prevState) => {
+        state.eegData.set((prevState) => {
           return {...prevState, [name]: value};
         });
         state.subjectID.set(value);
@@ -1258,12 +1295,12 @@ const Configuration = (props) => {
         break;
       case 'anonymize':
         if (value) {
-          state.edfData.set((prevState) => {
+          state.eegData.set((prevState) => {
             return {...prevState, ['subjectID']: 'X X X X'};
           });
           appContext.setTask('subjectID', 'X X X X');
         } else {
-          state.edfData.set((prevState) => {
+          state.eegData.set((prevState) => {
             return {...prevState, ['subjectID']: state.subjectID.get};
           });
           appContext.setTask('subjectID', state.subjectID.get);
@@ -1279,6 +1316,9 @@ const Configuration = (props) => {
       // Update the 'task' of app context.
       appContext.setTask(name, value);
     }
+
+    console.log(state.eegData.get);
+    console.log(appContext);
   };
 
   /**
@@ -1325,6 +1365,9 @@ const Configuration = (props) => {
     setAuthCredentialsVisible(!hidden);
   };
 
+  const fileFormatAlt = state.fileFormat.get.toUpperCase();
+  const acceptedFileFormats = '.' + state.fileFormat.get + ',.' + fileFormatAlt;
+
   if (props.appMode === 'Configuration') {
     return (
       <>
@@ -1345,22 +1388,41 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           <div className='small-pad'>
-            <FileInput id='edfFiles'
-              name='edfFiles'
-              multiple={true}
-              accept='.edf,.EDF'
-              placeholder={
-                state.edfFiles.get.map((edfFile) => edfFile['name']).join(', ')
-              }
-              label='EDF Recording to convert'
+            <RadioInput id='fileFormat'
+              name='fileFormat'
+              label='File Format'
               required={true}
               onUserInput={onUserInput}
-              help='Filename(s) must be formatted correctly:
-              e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.edf'
+              options={{
+                edf: 'EDF',
+                set: 'SET',
+                mff: 'MFF',
+              }}
+              checked={state.fileFormat.get}
+              help='File format of the recording.'
+            />
+          </div>
+          <div className='small-pad'>
+            <FileInput id='eegFiles'
+              name='eegFiles'
+              multiple={true}
+              accept={acceptedFileFormats}
+              placeholder={
+                state.eegFiles.get.map((eegFile) =>
+                  eegFile['name']).join(', ')
+              }
+              label={fileFormatAlt + ' Recording to convert'}
+              required={true}
+              onUserInput={onUserInput}
+              help={'Filename(s) must be formatted correctly: ' +
+                'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.' +
+                state.fileFormat.get
+              }
             />
             <div>
               <small>
-                Multiple EDF files can be selected for a single recording
+                Multiple {fileFormatAlt} files can be selected for a single
+                recording
               </small>
             </div>
           </div>
@@ -1412,7 +1474,7 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           <small>Annotation and events file names
-          must match one of the EDF file names.</small>
+          must match one of the EEG file names.</small>
         </div>
         <div className='container'>
           <div className='info half'>
@@ -1463,7 +1525,7 @@ const Configuration = (props) => {
                 label='events.tsv (additional)'
                 onUserInput={onUserInput}
                 help='Additional events only. Events embedded in
-                the EDF Annotations signal are automatically extracted.'
+                the EEG Annotations signal are automatically extracted.'
               />
             </div>
             <div className='small-pad'>
@@ -1872,7 +1934,7 @@ const Configuration = (props) => {
               name='anonymize'
               onChange={(checked) => onUserInput('anonymize', checked)}
               checked={state.anonymize.get}
-              disabled={state.edfData.get?.files?.length > 0 ? false : true}
+              disabled={state.eegData.get?.files?.length > 0 ? false : true}
             />
             <span>Anonymize</span>
           </label>
@@ -1883,9 +1945,9 @@ const Configuration = (props) => {
               <TextInput id='subjectID'
                 name='subjectID'
                 label='Subject ID'
-                value={state.edfData?.get['subjectID'] || ''}
+                value={state.eegData?.get['subjectID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length > 0 ? false : true}
+                readonly={state.eegData.get?.files?.length > 0 ? false : true}
               />
               <div>
                 <small>Recommended EDF anonymization: "X X X X"<br/>
@@ -1897,9 +1959,9 @@ const Configuration = (props) => {
               <TextInput id='recordingID'
                 name='recordingID'
                 label='Recording ID'
-                value={state.edfData.get?.['recordingID'] || ''}
+                value={state.eegData.get?.['recordingID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length > 0 ? false : true}
+                readonly={state.eegData.get?.files?.length > 0 ? false : true}
               />
               <div>
                 <small>(EDF spec: Startdate dd-MMM-yyyy
@@ -1912,7 +1974,7 @@ const Configuration = (props) => {
                 name='recording_date'
                 label='Recording Date'
                 readonly={true}
-                value={state.edfData.get?.['date'] ?
+                value={state.eegData.get?.['date'] ?
                     new Intl.DateTimeFormat(
                         'en-US',
                         {
@@ -1922,7 +1984,7 @@ const Configuration = (props) => {
                           hour: 'numeric',
                           minute: 'numeric',
                         },
-                    ).format(state.edfData.get['date']) :
+                    ).format(state.eegData.get['date']) :
                     ''
                 }
               />
@@ -1977,7 +2039,7 @@ const Configuration = (props) => {
                 {appContext.getFromTask('recording_id')}
               </div>
             }
-            {appContext.getFromTask('edfData')?.['date'] &&
+            {appContext.getFromTask('eegData')?.['date'] &&
               <div>
                 Recording Date:&nbsp;
                 {new Intl.DateTimeFormat(
@@ -1989,7 +2051,7 @@ const Configuration = (props) => {
                       hour: 'numeric',
                       minute: 'numeric',
                     },
-                ).format(appContext.getFromTask('edfData')['date'])}
+                ).format(appContext.getFromTask('eegData')['date'])}
               </div>
             }
           </div>

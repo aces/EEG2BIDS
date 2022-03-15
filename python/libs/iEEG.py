@@ -159,14 +159,15 @@ class Converter:
             modality = 'eeg'
 
         for i, eegRun in enumerate(data['eegRuns']):
-            eegRun['edfBIDSBasename'] = self.to_bids(
+            eegRun['eegBIDSBasename'] = self.to_bids(
+                fileFormat=data['fileFormat'],
                 eeg_run=eegRun,
                 ch_type=modality,
                 task=data['taskName'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                run=((i + 1) if len(data['edfData']['files']) > 1 else None),
+                run=((i + 1) if len(data['eegData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq']
@@ -185,6 +186,7 @@ class Converter:
         cls.m_info = value
 
     def to_bids(self,
+                fileFormat,
                 eeg_run,
                 bids_directory,
                 subject_id,
@@ -195,18 +197,41 @@ class Converter:
                 ch_type='seeg',
                 read_only=False,
                 line_freq='n/a'):
-        file = eeg_run['edfFile']
+        file = eeg_run['eegFile']
 
+        raw = ''
         if self.validate(file):
-            try:
-                reader = EDF.EDFReader(fname=file)
-            except PermissionError as ex:
-                raise ReadError(ex)
+            if fileFormat == 'edf':
+                try:
+                    reader = EDF.EDFReader(fname=file)
+                except PermissionError as ex:
+                    raise ReadError(ex)
 
-            m_info, c_info = reader.open(fname=file)
-            self.set_m_info(m_info)
+                m_info, c_info = reader.open(fname=file)
+                self.set_m_info(m_info)
 
-            raw = mne.io.read_raw_edf(input_fname=file)
+                raw = mne.io.read_raw_edf(input_fname=file)
+
+                raw._init_kwargs = {
+                    'input_fname': file,
+                    'eog': None,
+                    'misc': None,
+                    'stim_channel': 'auto',
+                    'exclude': (),
+                    'preload': False,
+                    'verbose': None
+                }
+            
+            if fileFormat == 'set':
+                raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
+                m_info = {}
+                self.set_m_info(m_info)
+
+                raw._init_kwargs = {
+                    'input_fname': file,
+                    'preload': False,
+                    'verbose': None
+                }
 
             if read_only:
                 return True
@@ -237,16 +262,6 @@ class Converter:
                 line_freq = int(line_freq)
             raw.info['line_freq'] = line_freq
 
-            raw._init_kwargs = {
-                'input_fname': file,
-                'eog': None,
-                'misc': None,
-                'stim_channel': 'auto',
-                'exclude': (),
-                'preload': False,
-                'verbose': None
-            }
-
             try:
                 os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
                 bids_directory = bids_directory + os.path.sep + output_time
@@ -256,7 +271,7 @@ class Converter:
                 bids_basename.update(session=session)
 
                 try:
-                    write_raw_bids(raw, bids_basename, overwrite=False, verbose=False)
+                    write_raw_bids(raw, bids_basename, allow_preload=False, overwrite=False, verbose=False)
                     with open(bids_basename, 'r+b') as f:
                         f.seek(8)  # id_info field starts 8 bytes in
                         f.write(bytes("X X X X".ljust(80), 'ascii'))
