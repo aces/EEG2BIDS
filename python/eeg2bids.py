@@ -12,7 +12,6 @@ from python.libs.loris_api import LorisAPI
 import csv
 import datetime
 import json
-import paramiko
 import subprocess
 
 # LORIS credentials of user
@@ -231,16 +230,18 @@ def get_set_data(sid, data):
 
 @sio.event
 def mff_to_set(sid, data):
+    # data = { mffDir: 'MFF dir Info of {path, basename, name})' }
     print('mff_to_set:', data)
 
-    if 'files' not in data or not data['files']:
+    if 'mffDir' not in data or not data['mffDir']:
         msg = 'No MFF file selected.'
         print(msg)
         response = {'error': msg}
         sio.emit('mff_data', response)
         return
 
-    mcr_path = '/usr/local/MATLAB/MATLAB_Runtime/v93'
+    mcr_path = os.getcwd()+'/MATLAB/Runtime/v93'
+    print(mcr_path)
     if not os.path.exists(mcr_path):
         msg = 'Environment not configured for processing MFF files'
         print(msg)
@@ -248,14 +249,32 @@ def mff_to_set(sid, data):
         sio.emit('mff_data', response)
         return
     
-    for file in data['files']:
-        try:
-            subprocess.check_call(['../tools/mff_to_set/run_mff_to_set.sh', mcr_path, file.path])
-        except subprocess.CalledProcessError as e:
-            print(e)
-            response = {'error': 'Could not process MFF file'}
+    mffDir = data['mffDir']
+    #try:
+        # Run executable to convert from .mff to .set
+     #   subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, mffDir['path']])
+    #except subprocess.CalledProcessError as e:
+    #    print(e)
+    #    response = {'error': 'Could not process MFF file'}
     
-    sio.emit('mff_data', response)
+    # return generated .set file
+    set_file_path = mffDir['name'] + '.set'
+    if (os.path.exists(set_file_path)):
+        print('SET file exists!')
+        setData = {
+            'files': [
+                {
+                    'path': set_file_path,
+                    'name': os.path.basename(set_file_path),
+                }
+            ]
+        }
+        response = setData
+    else:
+        print('SET file DNE')
+        response = {'error' : 'Could not convert MFF file'}
+
+    sio.emit('mff_to_set_data', response)
 
 
 @sio.event

@@ -49,6 +49,7 @@ const Configuration = (props) => {
     fileFormat: 'edf',
     eegData: [],
     eegFiles: [],
+    mffDirectory: null,
     modality: 'ieeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -1034,18 +1035,19 @@ const Configuration = (props) => {
 
   useEffect(() => {
     state.eegFiles.set([]);
+    state.mffDirectory.set(null);
   }, [state.fileFormat.get]);
 
   useEffect(() => {
     if (socketContext) {
-      let emit = 'get_edf_data';
+      let emit = '';
+      if (state.fileFormat.get === 'edf') {
+        console.log('edf file selected');
+        emit = 'get_edf_data';
+      }
       if (state.fileFormat.get === 'set') {
         console.log('set file selected');
         emit = 'get_set_data';
-      }
-      if (state.fileFormat.get === 'mff') {
-        console.log('mff file selected');
-        emit = 'mff_to_set';
       }
       socketContext.emit(emit, {
         files: state.eegFiles.get.map((eegFile) =>
@@ -1056,6 +1058,22 @@ const Configuration = (props) => {
       });
     }
   }, [state.eegFiles.get]);
+
+  useEffect(() => {
+    if (socketContext && state.mffDirectory.get != null) {
+      console.log('mff directory selected');
+      const emit = 'mff_to_set';
+      const mffInfo = {
+        path: state.mffDirectory.get,
+        basename: state.mffDirectory.get.split('/').reverse()[0],
+        name: state.mffDirectory.get.split('.').slice(0, -1).join('.'),
+      };
+      console.log(mffInfo);
+      socketContext.emit(emit, {
+        mffDir: mffInfo,
+      });
+    }
+  }, [state.mffDirectory.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1141,6 +1159,15 @@ const Configuration = (props) => {
         appContext.setTask('eegData', message);
       });
 
+      socketContext.on('mff_to_set_data', (message) => {
+        if (message['error']) {
+          console.error(message['error']);
+        }
+
+        console.log(message);
+        socketContext.emit('get_set_data', message);
+      });
+
       socketContext.on('bids_metadata', (message) => {
         if (message['error']) {
           console.error(message['error']);
@@ -1211,6 +1238,8 @@ const Configuration = (props) => {
     if (typeof value === 'string') {
       value = value.trim();
     }
+    console.log(name);
+    console.log(value);
 
     // Update the state of Configuration.
     switch (name) {
@@ -1403,6 +1432,7 @@ const Configuration = (props) => {
             />
           </div>
           <div className='small-pad'>
+            {state.fileFormat.get != 'mff' ?
             <FileInput id='eegFiles'
               name='eegFiles'
               multiple={true}
@@ -1418,7 +1448,18 @@ const Configuration = (props) => {
                 'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.' +
                 state.fileFormat.get
               }
+            /> :
+            <DirectoryInput id='mffDirectory'
+              name='mffDirectory'
+              multiple={true}
+              required={true}
+              label='MFF Recording to convert'
+              placeholder={state.mffDirectory.get}
+              onUserInput={onUserInput}
+              help={'Folder name(s) must be formatted correctly: ' +
+              'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
             />
+            }
             <div>
               <small>
                 Multiple {fileFormatAlt} files can be selected for a single
