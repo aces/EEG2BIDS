@@ -212,12 +212,15 @@ def get_set_data(sid, data):
                 'file': file,
             })
 
+        # date will be anonymized to this value during bids step
+        date = datetime.datetime(2000, 1, 1, 0, 0)
+
         # return the first split metadata and date
         response = {
             'files': [header['file'] for header in headers],
             'subjectID': '',
             'recordingID': '',
-            'date': ''
+            'date': str(date)
         }
 
     except Exception as e:
@@ -230,14 +233,14 @@ def get_set_data(sid, data):
 
 @sio.event
 def mff_to_set(sid, data):
-    # data = { mffDir: 'MFF dir Info of {path, basename, name})' }
+    # data = {MFF dir info of path, name}
     print('mff_to_set:', data)
 
-    if 'mffDir' not in data or not data['mffDir']:
+    if not data:
         msg = 'No MFF file selected.'
         print(msg)
         response = {'error': msg}
-        sio.emit('mff_data', response)
+        sio.emit('mff_to_set_data', response)
         return
 
     mcr_path = os.getcwd()+'/MATLAB/Runtime/v93'
@@ -246,19 +249,18 @@ def mff_to_set(sid, data):
         msg = 'Environment not configured for processing MFF files'
         print(msg)
         response = {'error': msg}
-        sio.emit('mff_data', response)
+        sio.emit('mff_to_set_data', response)
         return
     
-    mffDir = data['mffDir']
     #try:
-        # Run executable to convert from .mff to .set
-     #   subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, mffDir['path']])
+     # Run executable to convert from .mff to .set
+     #   subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, data['path']])
     #except subprocess.CalledProcessError as e:
     #    print(e)
     #    response = {'error': 'Could not process MFF file'}
     
     # return generated .set file
-    set_file_path = mffDir['name'] + '.set'
+    set_file_path = data['name'] + '.set'
     if (os.path.exists(set_file_path)):
         print('SET file exists!')
         setData = {
@@ -271,7 +273,7 @@ def mff_to_set(sid, data):
         }
         response = setData
     else:
-        print('SET file DNE')
+        print('SET file does not exist')
         response = {'error' : 'Could not convert MFF file'}
 
     sio.emit('mff_to_set_data', response)
@@ -319,7 +321,7 @@ def get_bids_metadata(sid, data):
     sio.emit('bids_metadata', response)
 
 
-def edf_to_bids_thread(data):
+def eeg_to_bids_thread(data):
     print('data is ')
     print(data)
     error_messages = []
@@ -356,12 +358,12 @@ def edf_to_bids_thread(data):
 
 
 @sio.event
-def edf_to_bids(sid, data):
+def eeg_to_bids(sid, data):
     # data = { file_paths: [], bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
-    print('edf_to_bids: ', data)
-    response = eventlet.tpool.execute(edf_to_bids_thread, data)
+    print('eeg_to_bids: ', data)
+    response = eventlet.tpool.execute(eeg_to_bids_thread, data)
     print(response)
     print('Response received!')
     sio.emit('bids', response.copy())

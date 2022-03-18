@@ -46,10 +46,11 @@ const Configuration = (props) => {
   // React State
   const initialState = {
     eegRuns: null,
+    fileFormatUploaded: 'edf',
     fileFormat: 'edf',
     eegData: [],
     eegFiles: [],
-    mffDirectory: null,
+    mffDirectory: {},
     modality: 'ieeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -137,7 +138,7 @@ const Configuration = (props) => {
 
   /**
    * beginBidsCreation - create BIDS format.
-   *   Sent by socket to python: edf_to_bids.
+   *   Sent by socket to python: eeg_to_bids.
    */
   const beginBidsCreation = () => {
     if (!preparedBy) {
@@ -151,7 +152,7 @@ const Configuration = (props) => {
     setModalVisible(true);
 
     if (appContext.getFromTask('eegData')?.['files'].length > 0) {
-      socketContext.emit('edf_to_bids', {
+      socketContext.emit('eeg_to_bids', {
         eegData: appContext.getFromTask('eegData') ?? [],
         fileFormat: state.fileFormat.get ?? '',
         eegRuns: state.eegRuns.get ?? [],
@@ -1034,18 +1035,18 @@ const Configuration = (props) => {
   }, []);
 
   useEffect(() => {
+    state.mffDirectory.set({});
     state.eegFiles.set([]);
-    state.mffDirectory.set(null);
-  }, [state.fileFormat.get]);
+  }, [state.fileFormatUploaded.get]);
 
   useEffect(() => {
     if (socketContext) {
       let emit = '';
-      if (state.fileFormat.get === 'edf') {
+      if (state.fileFormatUploaded.get === 'edf') {
         console.log('edf file selected');
         emit = 'get_edf_data';
       }
-      if (state.fileFormat.get === 'set') {
+      if (state.fileFormatUploaded.get === 'set') {
         console.log('set file selected');
         emit = 'get_set_data';
       }
@@ -1060,18 +1061,9 @@ const Configuration = (props) => {
   }, [state.eegFiles.get]);
 
   useEffect(() => {
-    if (socketContext && state.mffDirectory.get != null) {
-      console.log('mff directory selected');
+    if (socketContext) {
       const emit = 'mff_to_set';
-      const mffInfo = {
-        path: state.mffDirectory.get,
-        basename: state.mffDirectory.get.split('/').reverse()[0],
-        name: state.mffDirectory.get.split('.').slice(0, -1).join('.'),
-      };
-      console.log(mffInfo);
-      socketContext.emit(emit, {
-        mffDir: mffInfo,
-      });
+      socketContext.emit(emit, state.mffDirectory.get);
     }
   }, [state.mffDirectory.get]);
 
@@ -1142,6 +1134,7 @@ const Configuration = (props) => {
 
         state.subjectID.set(message?.['subjectID'] || '');
         state.eegData.set(message);
+        state.fileFormat.set('edf');
         appContext.setTask('eegData', message);
       });
 
@@ -1156,16 +1149,17 @@ const Configuration = (props) => {
 
         state.subjectID.set(message?.['subjectID'] || '');
         state.eegData.set(message);
+        state.fileFormat.set('set');
         appContext.setTask('eegData', message);
       });
 
       socketContext.on('mff_to_set_data', (message) => {
         if (message['error']) {
           console.error(message['error']);
+        } else {
+          socketContext.emit('get_set_data', message);
         }
-
-        console.log(message);
-        socketContext.emit('get_set_data', message);
+        state.eegData.set(message);
       });
 
       socketContext.on('bids_metadata', (message) => {
@@ -1238,11 +1232,17 @@ const Configuration = (props) => {
     if (typeof value === 'string') {
       value = value.trim();
     }
-    console.log(name);
-    console.log(value);
 
     // Update the state of Configuration.
     switch (name) {
+      case 'mffDirectory':
+        if (value) {
+          state.mffDirectory.set({
+            path: value,
+            name: value.replace(/\.[^/.]+$/, ''),
+          });
+        }
+        break;
       case 'LORIScompliant':
         if (value === 'yes') {
           value = true;
@@ -1345,9 +1345,6 @@ const Configuration = (props) => {
       // Update the 'task' of app context.
       appContext.setTask(name, value);
     }
-
-    console.log(state.eegData.get);
-    console.log(appContext);
   };
 
   /**
@@ -1394,8 +1391,9 @@ const Configuration = (props) => {
     setAuthCredentialsVisible(!hidden);
   };
 
-  const fileFormatAlt = state.fileFormat.get.toUpperCase();
-  const acceptedFileFormats = '.' + state.fileFormat.get + ',.' + fileFormatAlt;
+  const fileFormatAlt = state.fileFormatUploaded.get.toUpperCase();
+  const acceptedFileFormats = '.' + state.fileFormatUploaded.get +
+    ',.' + fileFormatAlt;
 
   if (props.appMode === 'Configuration') {
     return (
@@ -1417,8 +1415,8 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           <div className='small-pad'>
-            <RadioInput id='fileFormat'
-              name='fileFormat'
+            <RadioInput id='fileFormatUploaded'
+              name='fileFormatUploaded'
               label='File Format'
               required={true}
               onUserInput={onUserInput}
@@ -1427,43 +1425,46 @@ const Configuration = (props) => {
                 set: 'SET',
                 mff: 'MFF',
               }}
-              checked={state.fileFormat.get}
+              checked={state.fileFormatUploaded.get}
               help='File format of the recording.'
             />
           </div>
           <div className='small-pad'>
-            {state.fileFormat.get != 'mff' ?
-            <FileInput id='eegFiles'
-              name='eegFiles'
-              multiple={true}
-              accept={acceptedFileFormats}
-              placeholder={
-                state.eegFiles.get.map((eegFile) =>
-                  eegFile['name']).join(', ')
-              }
-              label={fileFormatAlt + ' Recording to convert'}
-              required={true}
-              onUserInput={onUserInput}
-              help={'Filename(s) must be formatted correctly: ' +
-                'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.' +
-                state.fileFormat.get
-              }
-            /> :
-            <DirectoryInput id='mffDirectory'
-              name='mffDirectory'
-              multiple={true}
-              required={true}
-              label='MFF Recording to convert'
-              placeholder={state.mffDirectory.get}
-              onUserInput={onUserInput}
-              help={'Folder name(s) must be formatted correctly: ' +
-              'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
-            />
+            {state.fileFormatUploaded.get != 'mff' ?
+              <FileInput id='eegFiles'
+                name='eegFiles'
+                multiple={true}
+                accept={acceptedFileFormats}
+                placeholder={
+                  state.eegFiles.get.map((eegFile) =>
+                    eegFile['name']).join(', ')
+                }
+                label={fileFormatAlt + ' Recording to convert'}
+                required={true}
+                onUserInput={onUserInput}
+                help={'Filename(s) must be formatted correctly: ' +
+                  'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.' +
+                  state.fileFormatUploaded.get
+                }
+              /> :
+              <DirectoryInput id='mffDirectory'
+                name='mffDirectory'
+                multiple={true}
+                required={true}
+                label='MFF Recording to convert'
+                placeholder={state.mffDirectory.get.path}
+                onUserInput={onUserInput}
+                help={'Folder name(s) must be formatted correctly: ' +
+                'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
+              />
             }
             <div>
               <small>
-                Multiple {fileFormatAlt} files can be selected for a single
-                recording
+                {state.fileFormatUploaded.get === 'mff' ?
+                  `An MFF folder can be selected for a single recording` :
+                  `Multiple ${fileFormatAlt} files can be selected for a single
+                  recording`
+                }
               </small>
             </div>
           </div>

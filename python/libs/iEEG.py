@@ -224,7 +224,13 @@ class Converter:
             
             if fileFormat == 'set':
                 raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
-                m_info = {}
+                # anonymize -- 
+                # info['meas_date'], will be set to January 1ˢᵗ, 2000
+                # birthday will be updated to match age
+                # refer to documentation on mne.io.anonymize_info
+                raw = raw.anonymize()
+
+                m_info = raw.info
                 self.set_m_info(m_info)
 
                 raw._init_kwargs = {
@@ -278,8 +284,6 @@ class Converter:
                 except Exception as ex:
                     print('Exception ex:')
                     print(ex)
-
-                print('finished')
 
                 return bids_basename.basename
 
