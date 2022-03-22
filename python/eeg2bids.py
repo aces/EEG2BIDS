@@ -13,6 +13,7 @@ import csv
 import datetime
 import json
 import subprocess
+import sys
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -233,10 +234,10 @@ def get_set_data(sid, data):
 
 @sio.event
 def mff_to_set(sid, data):
-    # data = {MFF dir info of path, name}
+    # data = {MFF dir info (array of {path, name})}
     print('mff_to_set:', data)
 
-    if not data:
+    if 'directories' not in data or not data['directories']:
         msg = 'No MFF file selected.'
         print(msg)
         response = {'error': msg}
@@ -245,6 +246,9 @@ def mff_to_set(sid, data):
 
     mcr_path = os.getcwd()+'/MATLAB/Runtime/v93'
     print(mcr_path)
+    print(sys.platform)
+    # uncomment this and switch logic once tim sends windows build
+    # if sys.platform != 'win32':
     if not os.path.exists(mcr_path):
         msg = 'Environment not configured for processing MFF files'
         print(msg)
@@ -252,30 +256,30 @@ def mff_to_set(sid, data):
         sio.emit('mff_to_set_data', response)
         return
     
-    #try:
-     # Run executable to convert from .mff to .set
-     #   subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, data['path']])
-    #except subprocess.CalledProcessError as e:
-    #    print(e)
-    #    response = {'error': 'Could not process MFF file'}
-    
-    # return generated .set file
-    set_file_path = data['name'] + '.set'
-    if (os.path.exists(set_file_path)):
-        print('SET file exists!')
-        setData = {
-            'files': [
-                {
+    setFiles = []
+    try:
+        for dir in data['directories']:
+            # Run executable to convert from .mff to .set
+            subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, dir['path']])
+
+            # return generated .set file
+            set_file_path = dir['name'] + '.set'
+            if (os.path.exists(set_file_path)):
+                print('SET file exists!')
+                setFiles.append({
                     'path': set_file_path,
                     'name': os.path.basename(set_file_path),
-                }
-            ]
-        }
-        response = setData
-    else:
-        print('SET file does not exist')
-        response = {'error' : 'Could not convert MFF file'}
+                })
+            else:
+                print('SET file does not exist')
+                response = {'error' : 'Could not convert MFF file'}
+                sio.emit('mff_to_set_data', response)
+                return
+    except subprocess.CalledProcessError as e:
+        print(e)
+        response = {'error': 'Could not process MFF file'}
 
+    response = {'files' : setFiles}
     sio.emit('mff_to_set_data', response)
 
 

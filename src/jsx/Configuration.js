@@ -17,6 +17,7 @@ import {
   TextInput,
   SelectInput,
   TextareaInput,
+  MultiDirectoryInput,
 } from './elements/inputs';
 import {
   AuthenticationMessage,
@@ -50,7 +51,7 @@ const Configuration = (props) => {
     fileFormat: 'edf',
     eegData: [],
     eegFiles: [],
-    mffDirectory: {},
+    mffDirectories: [{path: '', name: ''}],
     modality: 'ieeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -1035,7 +1036,7 @@ const Configuration = (props) => {
   }, []);
 
   useEffect(() => {
-    state.mffDirectory.set({});
+    state.mffDirectories.set([{path: '', name: ''}]);
     state.eegFiles.set([]);
   }, [state.fileFormatUploaded.get]);
 
@@ -1061,11 +1062,14 @@ const Configuration = (props) => {
   }, [state.eegFiles.get]);
 
   useEffect(() => {
-    if (socketContext) {
+    if (socketContext && state.fileFormatUploaded.get === 'mff') {
       const emit = 'mff_to_set';
-      socketContext.emit(emit, state.mffDirectory.get);
+      socketContext.emit(emit, {
+        directories: state.mffDirectories.get.filter(
+            (dir) => dir['path'] != ''),
+      });
     }
-  }, [state.mffDirectory.get]);
+  }, [state.mffDirectories.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1160,6 +1164,7 @@ const Configuration = (props) => {
           socketContext.emit('get_set_data', message);
         }
         state.eegData.set(message);
+        appContext.setTask('eegData', message);
       });
 
       socketContext.on('bids_metadata', (message) => {
@@ -1235,14 +1240,6 @@ const Configuration = (props) => {
 
     // Update the state of Configuration.
     switch (name) {
-      case 'mffDirectory':
-        if (value) {
-          state.mffDirectory.set({
-            path: value,
-            name: value.replace(/\.[^/.]+$/, ''),
-          });
-        }
-        break;
       case 'LORIScompliant':
         if (value === 'yes') {
           value = true;
@@ -1391,6 +1388,54 @@ const Configuration = (props) => {
     setAuthCredentialsVisible(!hidden);
   };
 
+  /**
+   * Remove an MFF directory entry from the form
+   *
+   * @param {Number} index - index of the directory to delete
+   *
+   * @return {function}
+   */
+  const removeMFFDirectory = (index) => {
+    return () => {
+      state.mffDirectories.set(
+          state.mffDirectories.get.filter((dir, idx) => idx !== index),
+      );
+    };
+  };
+
+  /**
+   * Add an MFF directory entry to the form
+   */
+  const addMFFDirectory = () => {
+    state.mffDirectories.set(
+        [
+          ...state.mffDirectories.get,
+          {path: '', name: ''},
+        ],
+    );
+  };
+
+  /**
+   * Update an investigator entry
+   *
+   * @param {id} id - the element's id
+   * @param {Number} index - index of the dir to update
+   * @param {string} value - the value to update
+   *
+   */
+  const updateMFFDirectory = (id, index, value) => {
+    if (value) {
+      state.mffDirectories.set(state.mffDirectories.get.map((dir, idx) => {
+        if (idx === index) {
+          return {
+            path: value,
+            name: value.replace(/\.[^/.]+$/, ''),
+          };
+        } else return dir;
+      }));
+    }
+  };
+
   const fileFormatAlt = state.fileFormatUploaded.get.toUpperCase();
   const acceptedFileFormats = '.' + state.fileFormatUploaded.get +
     ',.' + fileFormatAlt;
@@ -1447,15 +1492,18 @@ const Configuration = (props) => {
                   state.fileFormatUploaded.get
                 }
               /> :
-              <DirectoryInput id='mffDirectory'
-                name='mffDirectory'
+              <MultiDirectoryInput
+                id='mffDirectories'
+                name='mffDirectories'
                 multiple={true}
                 required={true}
                 label='MFF Recording to convert'
-                placeholder={state.mffDirectory.get.path}
-                onUserInput={onUserInput}
+                updateDirEntry={updateMFFDirectory}
+                removeDirEntry={removeMFFDirectory}
+                addDirEntry={addMFFDirectory}
+                value={state.mffDirectories.get}
                 help={'Folder name(s) must be formatted correctly: ' +
-                'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
+                  'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
               />
             }
             <div>

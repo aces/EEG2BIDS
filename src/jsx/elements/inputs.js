@@ -132,6 +132,84 @@ DirectoryInput.propTypes = {
   help: PropTypes.string,
 };
 
+
+/**
+ * DirectoryInput - the directory select component.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+export const MultiDirectoryInput = (props) => {
+  const myAPI = window['myAPI']; // from public/preload.js
+  /**
+   * handleClick - button by user.
+   * @param {number} index
+   */
+  const handleClick = async (index) => {
+    // Send directory to parent component
+    const dialog = await myAPI.dialog();
+    const path = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+    });
+    props.updateDirEntry(props.id, index, path.filePaths[0]);
+  };
+
+  /**
+   * Renders the React component.
+   * @return {JSX.Element} - React markup for component.
+   */
+  return props.value.map((dir, index) => (
+    <div key={index}>
+      <label className="label" htmlFor={props.id}>
+        <b>
+          {props.label} {props.required ?
+            <span className="red">*</span> :
+            null
+          }
+          {props.help &&
+            <i className='fas fa-question-circle' data-tip={props.help}></i>
+          }
+        </b>
+      </label>
+      <input
+        type='button'
+        id={props.id}
+        name={props.name}
+        value='Choose folder'
+        onClick={() => handleClick(index)}
+        style={{marginRight: '10px'}}
+      />
+      {(props.value.length > 1) &&
+        (<button
+          type="button"
+          onClick={props.removeDirEntry(index)}
+        >
+          -
+        </button>)
+      }
+      {(index == props.value.length - 1) &&
+        (<button
+          type="button"
+          onClick={props.addDirEntry}
+        >
+          +
+        </button>)
+      }
+      <a style={{fontSize: '14px', cursor: 'default'}}>
+        &nbsp;{dir.path ?? 'No folder chosen'}
+      </a>
+    </div>
+  ));
+};
+MultiDirectoryInput.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  label: PropTypes.string,
+  updateDirEntry: PropTypes.func,
+  removeDirEntry: PropTypes.func,
+  addDirEntry: PropTypes.func,
+  help: PropTypes.string,
+};
+
 /**
  * TextInput - the input type='text' component.
  * @param {object} props

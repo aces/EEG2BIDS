@@ -284,7 +284,9 @@ class Converter:
                 except Exception as ex:
                     print('Exception ex:')
                     print(ex)
-
+                
+                print('finished')
+                
                 return bids_basename.basename
 
             except PermissionError as ex:
