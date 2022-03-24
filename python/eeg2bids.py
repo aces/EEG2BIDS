@@ -244,12 +244,10 @@ def mff_to_set(sid, data):
         sio.emit('mff_to_set_data', response)
         return
 
-    mcr_path = os.getcwd()+'/MATLAB/Runtime/v93'
-    print(mcr_path)
-    print(sys.platform)
-    # uncomment this and switch logic once tim sends windows build
-    # if sys.platform != 'win32':
-    if not os.path.exists(mcr_path):
+    # Don't launch EXE if user is 
+    # -> not running windows and 
+    # -> matlab v93 is not set as an environement variable
+    if sys.platform != 'win32' and not 'v93' in os.environ['PATH']:
         msg = 'Environment not configured for processing MFF files'
         print(msg)
         response = {'error': msg}
@@ -259,13 +257,24 @@ def mff_to_set(sid, data):
     setFiles = []
     try:
         for dir in data['directories']:
+            set_file_path = dir['name'] + '.set'
+
+            # if set file already exists, go to next file
+            if (os.path.exists(set_file_path)):
+                print('SET file already exists!')
+                setFiles.append({
+                    'path': set_file_path,
+                    'name': os.path.basename(set_file_path),
+                })
+                continue
+
             # Run executable to convert from .mff to .set
-            subprocess.check_call([os.getcwd()+'/tools/mff_to_set/run_mff_to_set.sh', mcr_path, dir['path']])
+            print('Starting MFF to SET conversion')
+            subprocess.check_call([os.getcwd()+'/tools/mff_to_set.exe', dir['path']])
 
             # return generated .set file
-            set_file_path = dir['name'] + '.set'
             if (os.path.exists(set_file_path)):
-                print('SET file exists!')
+                print('SET file was created!')
                 setFiles.append({
                     'path': set_file_path,
                     'name': os.path.basename(set_file_path),
