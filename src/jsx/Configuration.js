@@ -1509,11 +1509,8 @@ const Configuration = (props) => {
             }
             <div>
               <small>
-                {state.fileFormatUploaded.get === 'mff' ?
-                  `An MFF folder can be selected for a single recording` :
-                  `Multiple ${fileFormatAlt} files can be selected for a single
-                  recording`
-                }
+                  Multiple {fileFormatAlt} files can be selected for a single
+                  recording
               </small>
             </div>
           </div>

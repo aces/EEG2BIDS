@@ -19,6 +19,12 @@
  * The GUI stores a user's LORIS credentials securely using [keytar](https://www.npmjs.com/package/keytar).
  * The frontend passes the credentials to python and where they can be reused for refreshing the user's auth token before making LORIS API requests.
 
+## MFF to SET Conversion
+
+* This feature is only supported on a Windows machine and requires some extra dependencies to be installed. 
+* The conversion launches a MATLAB execuatble that is OS-specific. The executable (`./tools/mff_to_set.exe`) is committed to this repo using [Git LFS](https://git-lfs.github.com/).
+* Dependency: [Matlab Runtime Compiler R2017b (9.3)](https://www.mathworks.com/products/compiler/matlab-runtime.html) for Windows machine
+
 ## Things to remember:
 
  * The development goal is to maintain simple code for new developers to understand and be able to contribute as well.

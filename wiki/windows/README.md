@@ -9,6 +9,7 @@
  * [Node.js](https://nodejs.org/en/download/current) == 14.16.1 LTS
  * NPM >= 7.10.0 (included with Node.js)
  * [Python](https://www.python.org/downloads/) == 3.8.5
+ * [MATLAB Runtime Compiler](https://www.mathworks.com/products/compiler/matlab-runtime.html) == Windows R2017b (9.3)
 
 #### Development Build guide:
 
