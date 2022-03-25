@@ -156,6 +156,7 @@
       "node_modules/**/*",
       "utils/**/*",
       "python/**/*",
+      "python/tools/mff_to_set.exe",
       "dist",
       "dist/eeg2bids-service.app",
       "public/*",

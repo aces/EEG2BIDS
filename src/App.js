@@ -76,7 +76,7 @@ const App = () => {
                 },
               },
               {
-                title: '3) EDF to BIDS',
+                title: '3) EEG to BIDS',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(2);

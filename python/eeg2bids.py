@@ -278,9 +278,14 @@ def mff_to_set_thread(data):
                 })
                 continue
 
+            # Path to executable - DEV vs PROD
+            devPathToExe = os.path.join(os.getcwd(), 'python\\tools\\mff_to_set.exe')
+            prodPathToExe = os.path.join(os.getcwd(), '..\\python\\tools\\mff_to_set.exe')
+            pathToExe = devPathToExe if os.path.exists(devPathToExe) else prodPathToExe
+
             # Run executable to convert from .mff to .set
             print('Starting MFF to SET conversion')
-            subprocess.check_call([os.getcwd()+'/tools/mff_to_set.exe', dir['path']])
+            subprocess.check_call([pathToExe, dir['path']])
 
             # return generated .set file
             if (os.path.exists(set_file_path)):
