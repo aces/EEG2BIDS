@@ -254,6 +254,16 @@ def mff_to_set(sid, data):
         sio.emit('mff_to_set_data', response)
         return
     
+    # start conversion thread
+    response = {'error': 'Working on converting files...'}
+    sio.emit('mff_to_set_data', response)
+
+    response = eventlet.tpool.execute(mff_to_set_thread, data)
+    print(response)
+    print('Conversion response received!')
+    sio.emit('mff_to_set_data', response.copy())
+
+def mff_to_set_thread(data):
     setFiles = []
     try:
         for dir in data['directories']:
@@ -282,14 +292,14 @@ def mff_to_set(sid, data):
             else:
                 print('SET file does not exist')
                 response = {'error' : 'Could not convert MFF file'}
-                sio.emit('mff_to_set_data', response)
-                return
+                return eventlet.tpool.Proxy(response)
+        
+        response = {'files' : setFiles}
+        return eventlet.tpool.Proxy(response)
     except subprocess.CalledProcessError as e:
         print(e)
         response = {'error': 'Could not process MFF file'}
-
-    response = {'files' : setFiles}
-    sio.emit('mff_to_set_data', response)
+        return eventlet.tpool.Proxy(response)
 
 
 @sio.event

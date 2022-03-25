@@ -420,7 +420,8 @@ const Configuration = (props) => {
 
         // Check that the events files are appropriatly named
         appContext.getFromTask('eventFiles').map((eventFile) => {
-          if (!appContext.getFromTask('eegData')['files'].find(
+          if ('files' in appContext.getFromTask('eegData') &&
+          !appContext.getFromTask('eegData')?.files.find(
               (eegFile) => {
                 const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
                 const eegFileName = eegFile['name'].toLowerCase()
