@@ -368,7 +368,7 @@ def eeg_to_bids_thread(data):
             iEEG.Converter(data)  # EDF to BIDS format.
 
             # store subject_id for Modifier
-            data['subject_id'] = iEEG.Converter.m_info['subject_id']
+            data['subject_id'] = iEEG.Converter.m_info['subject_info']['his_id']
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']

@@ -242,6 +242,7 @@ class Converter:
             if read_only:
                 return True
 
+            print(raw.ch_names)
             ch_types = {}
             for ch in raw.ch_names:
                 ch_name = ch.lower()
@@ -261,11 +262,23 @@ class Converter:
 
             raw.set_channel_types(ch_types)
 
-            m_info['subject_id'] = subject_id
-            subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            print(raw.get_channel_types())
+
+            montage = raw.get_montage()
+            pos = montage.get_positions()
+
+            print(montage)
+            print(pos)
+
+            m_info['subject_info'] = {
+                'his_id': subject_id
+            }
+            subject = m_info['subject_info']['his_id'].replace('_', '').replace('-', '').replace(' ', '')
 
             if line_freq.isnumeric():
                 line_freq = int(line_freq)
+            else:
+                line_freq = None
             raw.info['line_freq'] = line_freq
 
             try:
