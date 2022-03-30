@@ -298,6 +298,8 @@ class Converter:
                         # the export function of the mne library.
                         # For more information, see https://github.com/mne-tools/mne-bids/issues/991
                         mne.export.export_raw(fname=bids_basename.fpath, raw=raw, fmt='eeglab', overwrite=True)
+                        fdt_path = os.path.splitext(bids_basename.fpath)[0] + '.fdt'
+                        os.remove(fdt_path)
                 except Exception as ex:
                     print('Exception ex:')
                     print(ex)
@@ -331,6 +333,10 @@ class Converter:
 
         # read the EEG matlab structure to get the nasion, lpa and rpa locations
         eeg_mat = pymatreader.read_mat(file)
+        if 'EEG' not in eeg_mat.keys():
+            # if there is no EEG key in the eeg_mat dictionary, return as there are no
+            # coordinates in the dataset
+            return
 
         # get the indices that should be used to fetch the coordinates of the different landmarks
         nasion_index = eeg_mat['EEG']['urchanlocs']['description'].index('Nasion')
