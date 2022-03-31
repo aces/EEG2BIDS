@@ -34,6 +34,7 @@ pyinstaller --paths=python python/eeg2bids.py -F `
 --add-data 'python/libs/mne/channels/data/montages/standard_postfixed.elc;./mne/channels/data/montages' `
 --add-data 'python/libs/mne/channels/data/montages/standard_prefixed.elc;./mne/channels/data/montages' `
 --add-data 'python/libs/mne/channels/data/montages/standard_primed.elc;./mne/channels/data/montages' `
+--add-data 'Lib/site-packages/mne;mne' `
 --hidden-import=eventlet.hubs.epolls `
 --hidden-import=eventlet.hubs.kqueue `
 --hidden-import=eventlet.hubs.selects `

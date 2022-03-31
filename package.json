@@ -1,7 +1,7 @@
 {
   "name": "eeg2bids",
   "description": "EEG/iEEG to BIDS format Wizard",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "dependencies": {
     "@electron/remote": "^1.1.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
@@ -78,7 +78,8 @@
     "Cécile Madjar",
     "Christine Rogers",
     "Derek Lo",
-    "Laëtitia Fesselier"
+    "Laëtitia Fesselier",
+    "Jessica Callegaro"
   ],
   "author": {
     "name": "Loris Team",
