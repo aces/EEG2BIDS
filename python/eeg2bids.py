@@ -136,7 +136,6 @@ def create_candidate_and_visit(sid, data):
 @sio.event
 def get_edf_data(sid, data):
     # data = { files: 'EDF files (array of {path, name})' }
-    print('get_edf_data:', data)
 
     if 'files' not in data or not data['files']:
         msg = 'No EDF file selected.'
@@ -235,7 +234,6 @@ def get_set_data(sid, data):
 @sio.event
 def mff_to_set(sid, data):
     # data = {MFF dir info (array of {path, name})}
-    print('mff_to_set:', data)
 
     if 'directories' not in data or not data['directories']:
         msg = 'No MFF file selected.'
@@ -368,7 +366,7 @@ def eeg_to_bids_thread(data):
             iEEG.Converter(data)  # EDF to BIDS format.
 
             # store subject_id for Modifier
-            data['subject_id'] = iEEG.Converter.m_info['subject_id']
+            data['subject_id'] = iEEG.Converter.m_info['subject_info']['his_id']
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']
