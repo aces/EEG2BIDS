@@ -226,7 +226,7 @@ class Modifier:
     def copy_event_files(self):
         for eegRun in self.data.get('eegRuns'):
             eeg_file = eegRun['eegBIDSBasename']
-            filename = os.path.join(self.get_eeg_path(), eeg_file + '_annotations')
+            filename = os.path.join(self.get_eeg_path(), eeg_file + '_events')
 
             if eegRun['eventFile']:
                 # events.tsv data collected:

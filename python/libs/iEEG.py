@@ -333,31 +333,32 @@ class Converter:
 
         # read the EEG matlab structure to get the nasion, lpa and rpa locations
         eeg_mat = pymatreader.read_mat(file)
-        if 'EEG' not in eeg_mat.keys():
-            # if there is no EEG key in the eeg_mat dictionary, return as there are no
-            # coordinates in the dataset
-            return
+        urchanlocs_dict = None
+        if 'EEG' in eeg_mat.keys() and 'urchanlocs' in eeg_mat['EEG'].keys():
+            urchanlocs_dict = eeg_mat['EEG']['urchanlocs']
+        elif 'urchanlocs' in eeg_mat.keys():
+            urchanlocs_dict = eeg_mat['urchanlocs']
 
         # get the indices that should be used to fetch the coordinates of the different landmarks
-        nasion_index = eeg_mat['EEG']['urchanlocs']['description'].index('Nasion')
-        lpa_index = eeg_mat['EEG']['urchanlocs']['description'].index('Left periauricular point')
-        rpa_index = eeg_mat['EEG']['urchanlocs']['description'].index('Right periauricular point')
+        nasion_index = urchanlocs_dict['description'].index('Nasion')
+        lpa_index = urchanlocs_dict['description'].index('Left periauricular point')
+        rpa_index = urchanlocs_dict['description'].index('Right periauricular point')
 
         # fetch the coordinates of the different landmarks
         nasion_coord = [
-            eeg_mat['EEG']['urchanlocs']['X'][nasion_index],
-            eeg_mat['EEG']['urchanlocs']['Y'][nasion_index],
-            eeg_mat['EEG']['urchanlocs']['Z'][nasion_index]
+            urchanlocs_dict['X'][nasion_index],
+            urchanlocs_dict['Y'][nasion_index],
+            urchanlocs_dict['Z'][nasion_index]
         ]
         lpa_coord = [
-            eeg_mat['EEG']['urchanlocs']['X'][lpa_index],
-            eeg_mat['EEG']['urchanlocs']['Y'][lpa_index],
-            eeg_mat['EEG']['urchanlocs']['Z'][lpa_index]
+            urchanlocs_dict['X'][lpa_index],
+            urchanlocs_dict['Y'][lpa_index],
+            urchanlocs_dict['Z'][lpa_index]
         ]
         rpa_coord = [
-            eeg_mat['EEG']['urchanlocs']['X'][rpa_index],
-            eeg_mat['EEG']['urchanlocs']['Y'][rpa_index],
-            eeg_mat['EEG']['urchanlocs']['Z'][rpa_index]
+            urchanlocs_dict['X'][rpa_index],
+            urchanlocs_dict['Y'][rpa_index],
+            urchanlocs_dict['Z'][rpa_index]
         ]
 
         # create the new montage with the channels positions and the landmark coordinates
