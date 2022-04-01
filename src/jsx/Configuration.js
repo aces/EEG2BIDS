@@ -1062,13 +1062,42 @@ const Configuration = (props) => {
     }
   }, [state.eegFiles.get]);
 
-  useEffect(() => {
+  useEffect(async () => {
     if (socketContext && state.fileFormatUploaded.get === 'mff') {
-      const emit = 'mff_to_set';
-      socketContext.emit(emit, {
-        directories: state.mffDirectories.get.filter(
-            (dir) => dir['path'] != ''),
-      });
+      const updateMessage = (msg) => {
+        console.log(msg);
+        state.eegData.set(msg);
+        appContext.setTask('eegData', msg);
+      };
+
+      // if no MFF files, do nothing.
+      const dirs = state.mffDirectories.get.filter((dir) => dir['path'] != '');
+      if (dirs.length == 0) {
+        updateMessage({'error': 'No MFF file selected.'});
+        return;
+      }
+
+      // Start working on file conversion-
+      updateMessage({'error': 'Working on converting files...'});
+
+      const setFiles = [];
+      const callback = (success, message, file) => {
+        if (success) {
+          console.log(message);
+          setFiles.push(file);
+
+          if (setFiles.length === dirs.length) {
+            socketContext.emit('get_set_data', {files: setFiles});
+          }
+        } else {
+          updateMessage({'error': message});
+        }
+      };
+
+      const myAPI = window['myAPI']; // from public/preload.js
+      for (const dir of dirs) {
+        await myAPI.convertMFFToSET(dir, callback);
+      }
     }
   }, [state.mffDirectories.get]);
 
@@ -1158,7 +1187,7 @@ const Configuration = (props) => {
         appContext.setTask('eegData', message);
       });
 
-      socketContext.on('mff_to_set_data', (message) => {
+      /*socketContext.on('mff_to_set_data', (message) => {
         if (message['error']) {
           console.error(message['error']);
         } else {
@@ -1166,7 +1195,7 @@ const Configuration = (props) => {
         }
         state.eegData.set(message);
         appContext.setTask('eegData', message);
-      });
+      });*/
 
       socketContext.on('bids_metadata', (message) => {
         if (message['error']) {
