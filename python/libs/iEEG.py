@@ -309,7 +309,6 @@ class Converter:
                     raise WriteError(ex)
                 
                 print('finished')
-                print(bids_basename.basename)
                 
                 return bids_basename.basename
 
