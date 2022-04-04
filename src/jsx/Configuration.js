@@ -1121,6 +1121,12 @@ const Configuration = (props) => {
   }, [state.participantDOB.get, state.eegData.get]);
 
   useEffect(() => {
+    if (!state.eegData.get?.files) return;
+
+    validate();
+  }, [state.eegData.get]);
+
+  useEffect(() => {
     if (socketContext) {
       socketContext.on('loris_sites', (sites) => {
         if (!sites) return;
