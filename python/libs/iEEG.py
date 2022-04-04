@@ -225,7 +225,11 @@ class Converter:
                 }
             
             if fileFormat == 'set':
-                raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
+                try:
+                    raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
+                except Exception as ex:
+                    raise ReadError(ex)
+
                 # anonymize -- 
                 # info['meas_date'], will be set to January 1ˢᵗ, 2000
                 # birthday will be updated to match age
@@ -248,7 +252,6 @@ class Converter:
             if read_only:
                 return True
 
-            print(raw.ch_names)
             ch_types = {}
             for ch in raw.ch_names:
                 ch_name = ch.lower()
@@ -303,8 +306,10 @@ class Converter:
                 except Exception as ex:
                     print('Exception ex:')
                     print(ex)
+                    raise WriteError(ex)
                 
                 print('finished')
+                print(bids_basename.basename)
                 
                 return bids_basename.basename
 

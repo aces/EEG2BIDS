@@ -1187,16 +1187,6 @@ const Configuration = (props) => {
         appContext.setTask('eegData', message);
       });
 
-      /*socketContext.on('mff_to_set_data', (message) => {
-        if (message['error']) {
-          console.error(message['error']);
-        } else {
-          socketContext.emit('get_set_data', message);
-        }
-        state.eegData.set(message);
-        appContext.setTask('eegData', message);
-      });*/
-
       socketContext.on('bids_metadata', (message) => {
         if (message['error']) {
           console.error(message['error']);

@@ -231,79 +231,6 @@ def get_set_data(sid, data):
 
     sio.emit('set_data', response)
 
-# @sio.event
-# def mff_to_set(sid, data):
-#     # data = {MFF dir info (array of {path, name})}
-
-#     if 'directories' not in data or not data['directories']:
-#         msg = 'No MFF file selected.'
-#         print(msg)
-#         response = {'error': msg}
-#         sio.emit('mff_to_set_data', response)
-#         return
-
-#     # Don't launch EXE if user is 
-#     # -> not running windows and 
-#     # -> matlab v93 is not set as an environement variable
-#     if sys.platform != 'win32' and not 'v93' in os.environ['PATH']:
-#         msg = 'Environment not configured for processing MFF files'
-#         print(msg)
-#         response = {'error': msg}
-#         sio.emit('mff_to_set_data', response)
-#         return
-    
-#     # start conversion thread
-#     response = {'error': 'Working on converting files...'}
-#     sio.emit('mff_to_set_data', response)
-
-#     response = eventlet.tpool.execute(mff_to_set_thread, data)
-#     print(response)
-#     print('Conversion response received!')
-#     sio.emit('mff_to_set_data', response.copy())
-
-# def mff_to_set_thread(data):
-#     setFiles = []
-#     try:
-#         for dir in data['directories']:
-#             set_file_path = dir['name'] + '.set'
-
-#             # if set file already exists, go to next file
-#             if (os.path.exists(set_file_path)):
-#                 print('SET file already exists!')
-#                 setFiles.append({
-#                     'path': set_file_path,
-#                     'name': os.path.basename(set_file_path),
-#                 })
-#                 continue
-
-#             # Path to executable - DEV vs PROD
-#             devPathToExe = os.path.join(os.getcwd(), 'python\\tools\\mff_to_set.exe')
-#             prodPathToExe = os.path.join(os.getcwd(), '..\\python\\tools\\mff_to_set.exe')
-#             pathToExe = devPathToExe if os.path.exists(devPathToExe) else prodPathToExe
-
-#             # Run executable to convert from .mff to .set
-#             print('Starting MFF to SET conversion')
-#             subprocess.check_call([pathToExe, dir['path']])
-
-#             # return generated .set file
-#             if (os.path.exists(set_file_path)):
-#                 print('SET file was created!')
-#                 setFiles.append({
-#                     'path': set_file_path,
-#                     'name': os.path.basename(set_file_path),
-#                 })
-#             else:
-#                 print('SET file does not exist')
-#                 response = {'error' : 'Could not convert MFF file'}
-#                 return eventlet.tpool.Proxy(response)
-        
-#         response = {'files' : setFiles}
-#         return eventlet.tpool.Proxy(response)
-#     except subprocess.CalledProcessError as e:
-#         print(e)
-#         response = {'error': 'Could not process MFF file'}
-#         return eventlet.tpool.Proxy(response)
-
 
 @sio.event
 def get_bids_metadata(sid, data):
@@ -373,9 +300,13 @@ def eeg_to_bids_thread(data):
             }
             return eventlet.tpool.Proxy(response)
         except ReadError as e:
-            error_messages.append('Cannot read file - ' + str(e))
+            response = {
+                'error': 'Cannot read file - ' + str(e)
+            }
         except WriteError as e:
-            error_messages.append('Cannot write file - ' + str(e))
+            response = {
+                'error': 'Cannot write file - ' + str(e)
+            }
     else:
         response = {
             'error': error_messages
