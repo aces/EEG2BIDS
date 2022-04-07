@@ -12,6 +12,8 @@ from python.libs.loris_api import LorisAPI
 import csv
 import datetime
 import json
+import subprocess
+import sys
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -134,7 +136,6 @@ def create_candidate_and_visit(sid, data):
 @sio.event
 def get_edf_data(sid, data):
     # data = { files: 'EDF files (array of {path, name})' }
-    print('get_edf_data:', data)
 
     if 'files' not in data or not data['files']:
         msg = 'No EDF file selected.'
@@ -193,6 +194,45 @@ def get_edf_data(sid, data):
 
 
 @sio.event
+def get_set_data(sid, data):
+    # data = { files: 'SET files (array of {path, name})' }
+    print('get_set_data:', data)
+
+    if 'files' not in data or not data['files']:
+        msg = 'No SET file selected.'
+        print(msg)
+        response = {'error': msg}
+        sio.emit('set_data', response)
+        return
+
+    headers = []
+    try:
+        for file in data['files']:
+            headers.append({
+                'file': file,
+            })
+
+        # date will be anonymized to this value during bids step
+        date = datetime.datetime(2000, 1, 1, 0, 0)
+
+        # return the first split metadata and date
+        response = {
+            'files': [header['file'] for header in headers],
+            'subjectID': '',
+            'recordingID': '',
+            'date': str(date)
+        }
+
+    except Exception as e:
+        print(e)
+        response = {
+            'error': 'Failed to retrieve SET file information',
+        }
+
+    sio.emit('set_data', response)
+
+
+@sio.event
 def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('data:', data)
@@ -234,12 +274,12 @@ def get_bids_metadata(sid, data):
     sio.emit('bids_metadata', response)
 
 
-def edf_to_bids_thread(data):
+def eeg_to_bids_thread(data):
     print('data is ')
     print(data)
     error_messages = []
-    if 'edfData' not in data or 'files' not in data['edfData'] or not data['edfData']['files']:
-        error_messages.append('No .edf file(s) to convert.')
+    if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
+        error_messages.append('No eeg file(s) to convert.')
     if 'bids_directory' not in data or not data['bids_directory']:
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:
@@ -253,16 +293,20 @@ def edf_to_bids_thread(data):
             iEEG.Converter(data)  # EDF to BIDS format.
 
             # store subject_id for Modifier
-            data['subject_id'] = iEEG.Converter.m_info['subject_id']
+            data['subject_id'] = iEEG.Converter.m_info['subject_info']['his_id']
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']
             }
             return eventlet.tpool.Proxy(response)
         except ReadError as e:
-            error_messages.append('Cannot read file - ' + str(e))
+            response = {
+                'error': 'Cannot read file - ' + str(e)
+            }
         except WriteError as e:
-            error_messages.append('Cannot write file - ' + str(e))
+            response = {
+                'error': 'Cannot write file - ' + str(e)
+            }
     else:
         response = {
             'error': error_messages
@@ -271,12 +315,12 @@ def edf_to_bids_thread(data):
 
 
 @sio.event
-def edf_to_bids(sid, data):
+def eeg_to_bids(sid, data):
     # data = { file_paths: [], bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
-    print('edf_to_bids: ', data)
-    response = eventlet.tpool.execute(edf_to_bids_thread, data)
+    print('eeg_to_bids: ', data)
+    response = eventlet.tpool.execute(eeg_to_bids_thread, data)
     print(response)
     print('Response received!')
     sio.emit('bids', response.copy())

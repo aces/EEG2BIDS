@@ -2,8 +2,8 @@
  * EEGRun - the EEG Run type
  */
 class EEGRun {
-  edfFile = null;
-  edfBIDSBasename = null;
+  eegFile = null;
+  eegBIDSBasename = null;
 
   eventFile = null;
   annotationsTSV = null;

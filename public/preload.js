@@ -48,4 +48,21 @@ contextBridge.exposeInMainWorld('myAPI', {
     const ipcRenderer = require('electron').ipcRenderer;
     ipcRenderer.send('openSettingsWindow', null);
   },
+  convertMFFToSET: async (mffDirectory, callback) => {
+    const path = require('path');
+    const MFFToSETService = process.env.DEV ?
+    require('./mffToSetService') :
+    require(path.join(__dirname, '../build/mffToSetService'));
+
+    // Launch conversion service.
+    const mffToSetService = new MFFToSETService();
+    await mffToSetService.startup(mffDirectory, callback).then((error) => {
+      if (error) {
+        console.info('[SERVICE] mffToSet-service failed');
+      } else {
+        console.info('[SERVICE] mffToSet-service success');
+      }
+    });
+    //return setFile;
+  }
 });
