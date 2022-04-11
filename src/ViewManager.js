@@ -1,5 +1,9 @@
 import React from 'react';
-import {BrowserRouter as Router, Route} from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from 'react-router-dom';
 
 // Components
 import App from './App';
@@ -16,17 +20,21 @@ const ViewManager = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <Router>
+    <BrowserRouter>
       <div>
-        <Route path='/' component={ViewManager.View}/>
+        <Routes>
+          {/*<Route path='/' element={ViewManager.View}/>*/}
+          <Route path='/app' exact element={<App/>}/>
+          <Route path='/settings' element={<Settings/>}/>
+        </Routes>
       </div>
-    </Router>
+    </BrowserRouter>
   );
 };
 ViewManager.views = () => {
   return {
-    app: <App/>,
-    settings: <Settings/>,
+    app: <App />,
+    settings: <Settings />,
   };
 };
 ViewManager.View = (props) => {

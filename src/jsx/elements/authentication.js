@@ -141,25 +141,31 @@ export const AuthenticationMessage = (props) => {
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
-  useEffect(async () => {
-    const myAPI = window['myAPI'];
-    const credentials = await myAPI.getLorisAuthenticationCredentials();
-    if (credentials &&
-      credentials.lorisURL &&
-      credentials.lorisUsername &&
-      credentials.lorisPassword
-    ) {
-      appContext.setTask('lorisURL', credentials.lorisURL);
-      appContext.setTask('lorisUsername', credentials.lorisUsername);
-      appContext.setTask('lorisPassword', credentials.lorisPassword);
-      socketContext.emit('set_loris_credentials', credentials);
+  useEffect( () => {
+    /**
+     * getLorisCredentials - gets the LORIS credentials securely.
+     */
+    async function getLorisCredentials() {
+      const myAPI = window['myAPI'];
+      const credentials = await myAPI.getLorisAuthenticationCredentials();
+      if (credentials &&
+        credentials.lorisURL &&
+        credentials.lorisUsername &&
+        credentials.lorisPassword
+      ) {
+        appContext.setTask('lorisURL', credentials.lorisURL);
+        appContext.setTask('lorisUsername', credentials.lorisUsername);
+        appContext.setTask('lorisPassword', credentials.lorisPassword);
+        socketContext.emit('set_loris_credentials', credentials);
+      }
     }
+    getLorisCredentials();
   }, []);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
-  useEffect(async () => {
+  useEffect( () => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
         if (data.error) {
@@ -174,7 +180,7 @@ export const AuthenticationMessage = (props) => {
   }, [socketContext]);
 
   /**
-   * User clicked sign in..
+   * User clicked sign in.
    */
   const handleClick = () => {
     props.setAuthCredentialsVisible(true);
@@ -207,12 +213,18 @@ export const AuthenticationCredentials = (props) => {
   /**
    * Similar to componentDidMount and componentDidUpdate.
    */
-  useEffect(async () => {
-    const myAPI = window['myAPI'];
-    const credentials = await myAPI.getLorisAuthenticationCredentials();
-    setLorisURL(credentials.lorisURL);
-    setLorisUsername(credentials.lorisUsername);
-    setLorisPassword(credentials.lorisPassword);
+  useEffect(() => {
+    /**
+     * getLorisCredentials - gets the LORIS credentials securely.
+     */
+    async function getLorisCredentials() {
+      const myAPI = window['myAPI'];
+      const credentials = await myAPI.getLorisAuthenticationCredentials();
+      setLorisURL(credentials.lorisURL);
+      setLorisUsername(credentials.lorisUsername);
+      setLorisPassword(credentials.lorisPassword);
+    }
+    getLorisCredentials();
   }, []);
 
   /**
