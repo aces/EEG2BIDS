@@ -212,7 +212,7 @@ const Configuration = (props) => {
     setModalVisible(!hidden);
   };
 
-  const validateJSON = async (jsons) => {
+  const validateJSON = (jsons) => {
     const promisesArray = [];
     for (let i = 0; i < jsons?.length; i++) {
       const json = jsons[i];

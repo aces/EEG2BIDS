@@ -33,8 +33,8 @@ const ViewManager = (props) => {
 };
 ViewManager.views = () => {
   return {
-    app: <App />,
-    settings: <Settings />,
+    app: <App/>,
+    settings: <Settings/>,
   };
 };
 ViewManager.View = (props) => {
