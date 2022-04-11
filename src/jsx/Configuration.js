@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
-import 'react-datepicker/dist/react-datepicker.css';
+// import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
 
@@ -12,7 +12,6 @@ import Papa from 'papaparse';
 import {
   DirectoryInput,
   FileInput,
-  NumberInput,
   RadioInput,
   TextInput,
   SelectInput,
@@ -22,8 +21,10 @@ import {
   AuthenticationMessage,
   AuthenticationCredentials,
 } from './elements/authentication';
-import Switch from 'react-switch';
-import DatePicker from 'react-datepicker';
+
+// todo remove Switch and DatePicker
+// import Switch from 'react-switch';
+// import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -211,7 +212,7 @@ const Configuration = (props) => {
     setModalVisible(!hidden);
   };
 
-  const validateJSON = (jsons) => {
+  const validateJSON = async (jsons) => {
     const promisesArray = [];
     for (let i = 0; i < jsons?.length; i++) {
       const json = jsons[i];
@@ -223,7 +224,7 @@ const Configuration = (props) => {
             JSON.parse(e.target.result);
             resolve(null);
           } catch (e) {
-            console.log(e);
+            console.info(e);
             resolve(json.name);
           }
         };
@@ -245,7 +246,7 @@ const Configuration = (props) => {
               {
                 quoteChar: '',
                 complete: (results, file) => {
-                  console.log(results.errors);
+                  console.info(results.errors);
                   if (results.errors.length > 0) {
                     resolve(tsv.name);
                   } else {
@@ -368,7 +369,7 @@ const Configuration = (props) => {
     const result = [];
 
     // edfData
-    let edfDataStatus = '';
+    let edfDataStatus;
     if (state.edfData.get?.error) {
       edfDataStatus = formatError(state.edfData.get.error);
     } else if (
@@ -386,7 +387,7 @@ const Configuration = (props) => {
 
 
     // Data modality
-    let modalityStatus = '';
+    let modalityStatus;
     if (appContext.getFromTask('modality')) {
       modalityStatus = formatPass(
           `Modality: ${appContext.getFromTask('modality')}`,
@@ -413,7 +414,7 @@ const Configuration = (props) => {
       } else {
         let match = true;
 
-        // Check that the events files are appropriatly named
+        // Check that the events files are appropriately named
         appContext.getFromTask('eventFiles').map((eventFile) => {
           if (!appContext.getFromTask('edfData')['files'].find(
               (edfFile) => {
@@ -468,7 +469,7 @@ const Configuration = (props) => {
       } else {
         let match = true;
 
-        // Check that the events files are appropriatly named
+        // Check that the events files are appropriately named
         appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
           if (!appContext.getFromTask('edfData')['files'].find(
               (edfFile) => {
@@ -526,7 +527,7 @@ const Configuration = (props) => {
         );
       } else {
         let match = true;
-        // Check that the events files are appropriatly named
+        // Check that the events files are appropriately named
         appContext.getFromTask('annotationsJSON')
             .map((annotationsJSONFile) => {
               if (!appContext.getFromTask('edfData')['files'].find(
@@ -575,7 +576,7 @@ const Configuration = (props) => {
 
 
     // bidsDirectory
-    let bidsDirectoryStatus = '';
+    let bidsDirectoryStatus;
     if (appContext.getFromTask('bidsDirectory')) {
       bidsDirectoryStatus = formatPass('BIDS output directory: ' +
         appContext.getFromTask('bidsDirectory'),
@@ -586,7 +587,7 @@ const Configuration = (props) => {
     result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
 
     // LORIS compliant
-    let LORIScompliantStatus = '';
+    let LORIScompliantStatus;
     if (typeof appContext.getFromTask('LORIScompliant') == 'boolean') {
       LORIScompliantStatus = formatPass(
           `Data loaded in LORIS: ${appContext.getFromTask('LORIScompliant')}`,
@@ -671,7 +672,7 @@ const Configuration = (props) => {
     const result = [];
 
     // taskName
-    let taskNameStatus = '';
+    let taskNameStatus;
     const taskName = appContext.getFromTask('taskName');
     if (taskName) {
       /* if (taskName.indexOf('-') > -1 ||
@@ -695,7 +696,7 @@ const Configuration = (props) => {
 
     if (appContext.getFromTask('LORIScompliant')) {
       // siteID
-      let siteIDStatus = '';
+      let siteIDStatus;
       if (appContext.getFromTask('siteID')) {
         siteIDStatus = formatPass(
             `Site: ${appContext.getFromTask('siteID')}`,
@@ -706,7 +707,7 @@ const Configuration = (props) => {
       result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
 
       // projectID
-      let projectIDStatus = '';
+      let projectIDStatus;
       if (appContext.getFromTask('projectID')) {
         projectIDStatus = formatPass(
             `Project: ${appContext.getFromTask('projectID')}`,
@@ -717,19 +718,19 @@ const Configuration = (props) => {
       result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
 
       // subprojectID
-      let subprojectIDStatus = '';
+      let subprojectIDStatus;
       if (appContext.getFromTask('subprojectID')) {
         subprojectIDStatus = formatPass(
             `Subproject: ${appContext.getFromTask('subprojectID')}`,
         );
       } else {
-        projectIDStatus = formatError('Subproject is not specified');
+        subprojectIDStatus = formatError('Subproject is not specified');
       }
       result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
     }
 
     // session
-    let sessionStatus = '';
+    let sessionStatus;
     if (appContext.getFromTask('session')) {
       if (
         appContext.getFromTask('session').indexOf(' ') >= 0 ||
@@ -747,7 +748,7 @@ const Configuration = (props) => {
     result.push(<div key='sessionStatus'>{sessionStatus}</div>);
 
     // lineFreq
-    let lineFreqStatus = '';
+    let lineFreqStatus;
     if (appContext.getFromTask('lineFreq')) {
       lineFreqStatus = formatPass(
           `Powerline Frequency: ${appContext.getFromTask('lineFreq')}`,
@@ -758,7 +759,7 @@ const Configuration = (props) => {
     result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
 
     // reference
-    let referenceStatus = '';
+    let referenceStatus;
     if (appContext.getFromTask('reference')) {
       referenceStatus = formatPass(
           `Reference: ${appContext.getFromTask('reference')}`,
@@ -774,12 +775,12 @@ const Configuration = (props) => {
   const validateParticipantDetails = () => {
     const result = [];
 
-    if (state.participantEntryMode.get == 'existing_loris') {
+    if (state.participantEntryMode.get === 'existing_loris') {
       // participantPSCID
-      let participantPSCIDStatus = '';
+      let participantPSCIDStatus;
 
       // participantCandID
-      let participantCandIDStatus = '';
+      let participantCandIDStatus;
 
       if (!appContext.getFromTask('participantPSCID')) {
         participantPSCIDStatus = formatError(
@@ -818,7 +819,7 @@ const Configuration = (props) => {
       );
     } else {
       // participantID
-      let participantIDStatus = '';
+      let participantIDStatus;
       if (state.participantID.get) {
         participantIDStatus = formatPass(
             `Participant ID: ${state.participantID.get}`,
@@ -1142,7 +1143,7 @@ const Configuration = (props) => {
           appContext.setTask('participantCandID', {error: data.error});
           state.participantID.set('');
           appContext.setTask('participantID', '');
-        } else if (state.participantPSCID.get == data.PSCID) {
+        } else if (state.participantPSCID.get === data.PSCID) {
           appContext.setTask('participantCandID', state.participantCandID.get);
 
           state.participantID.set(data.PSCID);
@@ -1178,11 +1179,7 @@ const Configuration = (props) => {
     // Update the state of Configuration.
     switch (name) {
       case 'LORIScompliant':
-        if (value === 'yes') {
-          value = true;
-        } else {
-          value = false;
-        }
+        value = value === 'yes';
         state.LORIScompliant.set(value);
         break;
       case 'recordingID':
@@ -1199,7 +1196,7 @@ const Configuration = (props) => {
         appContext.setTask(name, value);
         break;
       case 'siteID_API':
-        if (value == 'Enter manually') {
+        if (value === 'Enter manually') {
           value = '';
           state.siteUseAPI.set(false);
         } else {
@@ -1213,7 +1210,7 @@ const Configuration = (props) => {
         name = 'siteID';
         break;
       case 'projectID_API':
-        if (value == 'Enter manually') {
+        if (value === 'Enter manually') {
           state.projectUseAPI.set(false);
           value = '';
         } else {
@@ -1228,7 +1225,7 @@ const Configuration = (props) => {
         name = 'projectID';
         break;
       case 'subprojectID_API':
-        if (value == 'Enter manually') {
+        if (value === 'Enter manually') {
           state.subprojectUseAPI.set(false);
           value = '';
         } else {
@@ -1243,7 +1240,7 @@ const Configuration = (props) => {
         name = 'subprojectID';
         break;
       case 'session_API':
-        if (value == 'Enter manually') {
+        if (value === 'Enter manually') {
           state.sessionUseAPI.set(false);
           value = '';
         } else {
@@ -1287,7 +1284,7 @@ const Configuration = (props) => {
    * @param {Date} birthDate
    * @param {Date} visitDate
    *
-   * @return {Number}
+   * @return {Number|void}
    */
   const getAge = (birthDate, visitDate) => {
     if (!birthDate || !visitDate) return;
@@ -1508,10 +1505,9 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#siteID_API'>
                     <b>
                       Site <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
+                      <i className='fas fa-question-circle'
                         data-tip='Study Centre'
-                      ></i>
+                      />
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1539,10 +1535,9 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#projectID_API'>
                     <b>
                       Project <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
+                      <i className='fas fa-question-circle'
                         data-tip='Study'
-                      ></i>
+                      />
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1570,10 +1565,9 @@ const Configuration = (props) => {
                   <label className="label" htmlFor='#subprojectID_API'>
                     <b>
                       Subproject <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
-                        data-tip='Subproject or population cohort'
-                      ></i>
+                      <i className="fas fa-question-circle"
+                        data-tip="Subproject or population cohort"
+                      />
                     </b>
                   </label>
                   <div className='comboField'>
@@ -1603,10 +1597,9 @@ const Configuration = (props) => {
               <label className="label" htmlFor='#session_API'>
                 <b>
                   Session <span className="red">*</span>
-                  <i
-                    className='fas fa-question-circle'
+                  <i className='fas fa-question-circle'
                     data-tip='Visit or TimePoint Label'
-                  ></i>
+                  />
                 </b>
                 {state.LORIScompliant.get &&
                   <div><small>(LORIS Visit Label)</small></div>
@@ -1713,13 +1706,13 @@ const Configuration = (props) => {
                 <label className="label" htmlFor={props.id}>
                   <b>Date of Birth <span className="red">*</span></b>
                 </label>
-                <DatePicker id='participantDOB'
-                  name='participantDOB'
-                  required={true}
-                  selected={state.participantDOB.get}
-                  dateFormat="yyyy-MM-dd"
-                  onChange={(date) => onUserInput('participantDOB', date)}
-                />
+                {/*<DatePicker id='participantDOB'*/}
+                {/*  name='participantDOB'*/}
+                {/*  required={true}*/}
+                {/*  selected={state.participantDOB.get}*/}
+                {/*  dateFormat="yyyy-MM-dd"*/}
+                {/*  onChange={(date) => onUserInput('participantDOB', date)}*/}
+                {/*/>*/}
               </div>
               <div className='small-pad'>
                 <SelectInput id='participantSex'
@@ -1858,22 +1851,22 @@ const Configuration = (props) => {
             fontSize: '16px',
             verticalAlign: 'middle',
           }}>
-            <Switch
-              className='react-switch'
-              onColor="#86d3ff"
-              onHandleColor="#2693e6"
-              handleDiameter={20}
-              uncheckedIcon={false}
-              checkedIcon={false}
-              boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-              activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-              height={15}
-              width={40}
-              name='anonymize'
-              onChange={(checked) => onUserInput('anonymize', checked)}
-              checked={state.anonymize.get}
-              disabled={state.edfData.get?.files?.length > 0 ? false : true}
-            />
+            {/*<Switch*/}
+            {/*  className='react-switch'*/}
+            {/*  onColor="#86d3ff"*/}
+            {/*  onHandleColor="#2693e6"*/}
+            {/*  handleDiameter={20}*/}
+            {/*  uncheckedIcon={false}*/}
+            {/*  checkedIcon={false}*/}
+            {/*  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"*/}
+            {/*  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"*/}
+            {/*  height={15}*/}
+            {/*  width={40}*/}
+            {/*  name='anonymize'*/}
+            {/*  onChange={(checked) => onUserInput('anonymize', checked)}*/}
+            {/*  checked={state.anonymize.get}*/}
+            {/*  disabled={state.edfData.get?.files?.length > 0 ? false : true}*/}
+            {/*/>*/}
             <span>Anonymize</span>
           </label>
         </span>
@@ -1885,7 +1878,7 @@ const Configuration = (props) => {
                 label='Subject ID'
                 value={state.edfData?.get['subjectID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length > 0 ? false : true}
+                readonly={state.edfData.get?.files?.length <= 0}
               />
               <div>
                 <small>Recommended EDF anonymization: "X X X X"<br/>
@@ -1899,7 +1892,7 @@ const Configuration = (props) => {
                 label='Recording ID'
                 value={state.edfData.get?.['recordingID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length > 0 ? false : true}
+                readonly={state.edfData.get?.files?.length <= 0}
               />
               <div>
                 <small>(EDF spec: Startdate dd-MMM-yyyy

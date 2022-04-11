@@ -52,9 +52,9 @@ let mainWindow;
  */
 const createMainWindow = () => {
   const startUrl = process.env.DEV ?
-    'http://localhost:3000?app' :
+    'http://localhost:3000/app' :
     `${url.pathToFileURL(path.join(
-        __dirname, '/../build/index.html')).href}?app`;
+        __dirname, '/../build/index.html')).href}/app`;
   mainWindow = new BrowserWindow({
     show: false,
     icon,
