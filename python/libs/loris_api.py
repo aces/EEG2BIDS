@@ -1,13 +1,15 @@
 import json
 import requests
 import urllib
-
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 class LorisAPI:
     url = ''
+    uploadURL = ''
     username = ''
     password = ''
     token = ''
+    upload_progress = 0
 
     def login(self):
         resp = requests.post(
@@ -209,3 +211,23 @@ class LorisAPI:
             return {'error': 'DCCID is not valid.'}
 
         return json_resp.get('Meta')
+
+    def upload_callback(self, monitor):
+        # Update the upload progress
+        self.upload_progress = monitor.bytes_read / monitor.len
+
+    def upload_eeg(self, filename):
+        print('upload eeg has ran')
+        self.upload_progress = 0
+        e = MultipartEncoder(
+            fields={'field0': 'value', 'field1': 'value',
+                    'eegFile': (filename, open(filename, 'rb'), 'application/x-tar')}
+        )
+        m = MultipartEncoderMonitor(e, self.upload_callback)
+
+        resp = requests.post(self.uploadURL, data=m,
+                          headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token}, verify=False)
+
+        return resp
+
+

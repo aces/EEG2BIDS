@@ -10,3 +10,4 @@ pybv~=0.4
 requests~=2.25.0
 pymatreader~=0.0.30
 eeglabio~=0.0.1.post6
+requests-toolbelt~=0.9.1

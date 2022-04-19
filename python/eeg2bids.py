@@ -28,6 +28,7 @@ app = socketio.WSGIApp(sio)
 
 # Create Loris API handler.
 loris_api = LorisAPI()
+tar_handler = iEEG.TarFile()
 
 
 @sio.event
@@ -36,14 +37,30 @@ def connect(sid, environ):
     if environ['REMOTE_ADDR'] != '127.0.0.1':
         return False  # extra precaution.
 
-
 def tarfile_bids_thread(bids_directory):
-    iEEG.TarFile(bids_directory)
+    tar_handler.set_stage('compressing')
+    tar_handler.package(bids_directory)
+    output_filename = bids_directory + '.tar.gz'
+    tar_handler.set_stage('loris_upload')
+    loris_api.upload_eeg(output_filename)
     response = {
         'compression_time': 'example_5mins'
     }
     return eventlet.tpool.Proxy(response)
 
+@sio.event
+def get_progress(sid):
+    progress_info = {
+        'stage': tar_handler.stage,
+        'progress': 0
+    }
+    if tar_handler.stage == 'loris_upload':
+        progress_info['progress'] = int(loris_api.upload_progress * 100)
+    elif tar_handler.stage == 'compressing':
+        print('eeg ', tar_handler.progress)
+        progress_info['progress'] = int(tar_handler.progress)
+
+    sio.emit('progress', progress_info)
 
 @sio.event
 def tarfile_bids(sid, bids_directory):
@@ -51,6 +68,7 @@ def tarfile_bids(sid, bids_directory):
     send = {
         'compression_time': response['compression_time']
     }
+
     sio.emit('response', send)
 
 
@@ -75,6 +93,7 @@ def set_loris_credentials(sid, data):
     if lorisCredentials['lorisURL'].endswith('/'):
         lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
     loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
+    loris_api.uploadURL = lorisCredentials['lorisURL'] + '/electrophysiology_uploader/upload/'
     loris_api.username = lorisCredentials['lorisUsername']
     loris_api.password = lorisCredentials['lorisPassword']
     resp = loris_api.login()

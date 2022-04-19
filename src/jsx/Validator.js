@@ -9,6 +9,7 @@ import Modal from './elements/modal';
 // Socket.io
 import {Event, SocketContext} from './socket.io';
 import {DirectoryInput, RadioInput} from './elements/inputs';
+import {debug} from './socket.io/utils';
 
 /**
  * Validator - the Validation confirmation component.
@@ -24,6 +25,7 @@ const Validator = (props) => {
   const [validator, setValidator] = useState({});
   const [validPath, setValidPaths] = useState(null);
   const [validationMode, setValidationMode] = useState('lastRun');
+  const [progress, setProgress] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalText, setModalText] = useState({
@@ -36,12 +38,12 @@ const Validator = (props) => {
     message: {
       loading: <span style={{padding: '40px'}}>
         <span className='bids-loading'>
-            BIDS compression in progress
+          BIDS {progress['stage']} in progress {progress['progress']}%
           <span>.</span><span>.</span><span>.</span>
-            😴
+          😴
         </span>
       </span>,
-      success: <span style={{padding: '40px'}}>
+      success: <span>
         <span className='bids-success'>
           Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
         </span></span>,
@@ -98,6 +100,12 @@ const Validator = (props) => {
     }
   };
 
+  const monitorProgress = () => {
+    setTimeout(() => {
+      socketContext.emit('get_progress');
+    }, 1000);
+  };
+
   /**
    * packageBIDS - package BIDS format to tarfile.
    *   Sent by socket to python: tarfile_bids.
@@ -113,6 +121,7 @@ const Validator = (props) => {
       setModalVisible(true);
 
       socketContext.emit('tarfile_bids', bidsDirectory);
+      monitorProgress();
     }
   };
 
@@ -156,6 +165,15 @@ const Validator = (props) => {
       socketContext.on('bids', (message) => {
         if (message['output_time']) {
           setValidator({});
+        }
+      });
+      socketContext.on('loris_upload', (message) =>{
+        debug('PERCENT ', message);
+      });
+      socketContext.on('progress', (message) => {
+        setProgress(message);
+        if (message.progress < 100 && progress.stage !== 'loris_upload') {
+          monitorProgress();
         }
       });
     }
@@ -256,7 +274,23 @@ const Validator = (props) => {
         close={hideModal}
         width='500px'
       >
-        {modalText.message[modalText.mode]}
+        {modalText.mode === 'loading' && (
+          <div>
+            <div className='bids-loading'>
+                BIDS {progress['stage']} in progress:
+              <div className='progress-wrapper'>
+                <div className="pull-right">{progress.progress}%</div>
+                <div className="progress">
+                  <div
+                    className="progress-bar"
+                    style={{width: `${progress.progress}%`}}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {modalText.mode !== 'loading' && modalText.message[modalText.mode]}
       </Modal>
       <Event event='response' handler={onMessage} />
     </>

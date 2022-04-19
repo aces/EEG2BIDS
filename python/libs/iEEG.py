@@ -4,9 +4,12 @@ import os
 import math
 import mne
 import numpy
+import datetime
 import pymatreader
 from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
+from python.libs import tarfile_progress as tarfile
+
 
 
 class ReadError(PermissionError):
@@ -96,11 +99,13 @@ metadata = {
 
 # TarFile - tarfile the BIDS data.
 class TarFile:
-    def __init__(self, bids_directory):
-        import tarfile
+    progress = 0
+    stage = ''
+
+    def package(self, bids_directory):
         output_filename = bids_directory + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(bids_directory, arcname=os.path.basename(bids_directory))
+            tar.add(bids_directory, arcname=os.path.basename(bids_directory), progress = self.update_progress)
 
         #import platform
         #import subprocess
@@ -110,6 +115,12 @@ class TarFile:
         #    subprocess.Popen(['open', data['bids_directory']])
         #else:
         #    subprocess.Popen(['xdg-open', data['bids_directory']])
+
+    def update_progress(self, new_progress):
+        self.progress = new_progress
+
+    def set_stage(self, new_stage):
+        self.stage = new_stage
 
 
 # Anonymize - scrubs edf header data.
