@@ -46,6 +46,10 @@ const Socket = (props) => {
         debug('connected');
       });
 
+      socket.onAny((eventName, ...args) => {
+        console.info(`EVENT: ${eventName}`);
+      });
+
       socket.on('disconnect', () => {
         console.info('[Socket] disconnect');
         socket.status = 'disconnected';

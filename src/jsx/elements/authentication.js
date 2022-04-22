@@ -203,6 +203,8 @@ export const AuthenticationCredentials = (props) => {
   const [lorisURL, setLorisURL] = useState('');
   const [lorisUsername, setLorisUsername] = useState('');
   const [lorisPassword, setLorisPassword] = useState('');
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -214,6 +216,21 @@ export const AuthenticationCredentials = (props) => {
     setLorisUsername(credentials.lorisUsername);
     setLorisPassword(credentials.lorisPassword);
   }, []);
+
+  useEffect(async () => {
+    if (socketContext) {
+      socketContext.on('loris_login_response', (data) => {
+        if (data.error) {
+          setError(true);
+          setErrorMessage(data.error);
+        } else {
+          setError(false);
+          setErrorMessage('');
+          props.close(true);
+        }
+      });
+    }
+  }, [socketContext]);
 
   /**
    * handleClear - Close the Authentication Credentials
@@ -246,7 +263,6 @@ export const AuthenticationCredentials = (props) => {
       myAPI.setLorisAuthenticationCredentials(credentials);
       socketContext.emit('set_loris_credentials', credentials);
     }
-    props.close(true);
   };
 
   /**
@@ -270,66 +286,43 @@ export const AuthenticationCredentials = (props) => {
     appContext.setTask(name, value);
   };
 
-  // Styling for rendering
-  const styleVisible = {visibility: props.show ? 'visible' : 'hidden'};
-  const styleAnimation = {width: props.width ? props.width : 'auto'};
-  const styleContainer = {
-    opacity: props.show ? 1 : 0,
-    transform: props.show ? 'translateY(0)' : 'translateY(-25%)',
-  };
   return (
-    <div className={styles.authCredentialsOverlay}
-      style={styleVisible}>
-      <div className={styles.authCredentialsContainer}
-        style={styleVisible}>
-        <div className={styles.authCredentialsAnimation}
-          style={styleAnimation}>
-          <div className={styles.authCredentialsDialog}
-            style={styleContainer}>
-            <span className={styles.authCredentialsHeader}>
-              {props.title}
-              <span className={styles.authCredentialsHeaderClose}
-                onClick={handleClose}>
-                ×
-              </span>
-            </span>
-            <div className={styles.authCredentialsContent}>
-              <AuthInput id='lorisURL'
-                name='lorisURL'
-                label='LORIS URL: (Example: https://demo.loris.ca)'
-                placeholder='Example: https://demo.loris.ca'
-                value={lorisURL}
-                onUserInput={onUserInput}
-              />
-              <AuthInput id='lorisUsername'
-                name='lorisUsername'
-                label='Username'
-                placeholder='Username'
-                value={lorisUsername}
-                onUserInput={onUserInput}
-              />
-              <PasswordInput id='lorisPassword'
-                name='lorisPassword'
-                label='Password'
-                placeholder=' '
-                value={lorisPassword}
-                onUserInput={onUserInput}
-              />
-              <div className={styles.authSubmitContainer}>
-                <input
-                  type='button'
-                  value='Clear'
-                  onClick={handleClear}
-                  className={styles.authClearButton}/>
-                <input
-                  type='button'
-                  value='Submit'
-                  onClick={handleClose}
-                  className={styles.authSubmitButton}/>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className={styles.authCredentialsContent}>
+      {error && (<div className={styles.authError}>
+        {errorMessage}
+      </div>)}
+      <AuthInput id='lorisURL'
+        name='lorisURL'
+        label='LORIS URL: (Example: https://demo.loris.ca)'
+        placeholder='Example: https://demo.loris.ca'
+        value={lorisURL}
+        onUserInput={onUserInput}
+      />
+      <AuthInput id='lorisUsername'
+        name='lorisUsername'
+        label='Username'
+        placeholder='Username'
+        value={lorisUsername}
+        onUserInput={onUserInput}
+      />
+      <PasswordInput id='lorisPassword'
+        name='lorisPassword'
+        label='Password'
+        placeholder=' '
+        value={lorisPassword}
+        onUserInput={onUserInput}
+      />
+      <div className={styles.authSubmitContainer}>
+        <input
+          type='button'
+          value='Clear'
+          onClick={handleClear}
+          className={styles.authClearButton}/>
+        <input
+          type='button'
+          value='Submit'
+          onClick={handleClose}
+          className={styles.authSubmitButton}/>
       </div>
     </div>
   );

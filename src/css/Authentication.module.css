@@ -92,6 +92,13 @@
     min-height: 80px;
     padding: 30px;
     -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.authError {
+    margin-bottom: 20px;
+    color: red;
 }
 
 /* Authentication "Submit" button CSS */

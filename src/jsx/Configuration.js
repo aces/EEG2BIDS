@@ -47,12 +47,12 @@ const Configuration = (props) => {
   // React State
   const initialState = {
     eegRuns: null,
-    fileFormatUploaded: 'edf',
-    fileFormat: 'edf',
+    fileFormatUploaded: 'mff',
+    fileFormat: 'mff',
     eegData: [],
     eegFiles: [],
     mffDirectories: [{path: '', name: ''}],
-    modality: 'ieeg',
+    modality: 'eeg',
     eventFiles: [],
     invalidEventFiles: [],
     annotationsTSV: [],
@@ -99,7 +99,6 @@ const Configuration = (props) => {
   }
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
 
   const [preparedBy, setPreparedBy] = useState('');
   const [displayErrors, setDisplayErrors] = useState(false);
@@ -583,8 +582,6 @@ const Configuration = (props) => {
           {annotationsJSONStatus}
         </div>,
     );
-    //}
-
 
     // bidsDirectory
     let bidsDirectoryStatus = '';
@@ -1231,17 +1228,26 @@ const Configuration = (props) => {
           appContext.setTask('participantCandID', {error: data.error});
           state.participantID.set('');
           appContext.setTask('participantID', '');
-        } else if (state.participantPSCID.get == data.PSCID) {
+        } else if (state.participantPSCID.get == data.Meta.PSCID) {
           appContext.setTask('participantCandID', state.participantCandID.get);
 
-          state.participantID.set(data.PSCID);
-          appContext.setTask('participantID', data.PSCID);
+          console.log(data);
+          state.participantID.set(data.Meta.PSCID);
+          appContext.setTask('participantID', data.Meta.PSCID);
 
-          state.participantDOB.set(new Date(data.DoB));
-          appContext.setTask('participantDoB', data.DoB);
+          state.participantDOB.set(new Date(data.Meta.DoB));
+          appContext.setTask('participantDoB', data.Meta.DoB);
 
-          state.participantSex.set(data.Sex);
-          appContext.setTask('participantSex', data.Sex);
+          state.participantSex.set(data.Meta.Sex);
+          appContext.setTask('participantSex', data.Meta.Sex);
+
+          state.projectID.set(data.Meta.Project);
+          state.siteID.set(data.Meta.Site);
+
+          const visits = data.Visits.filter((visit) => {
+            return ['V03Y00M09', 'V05Y01M03', 'V07Y04M00'].includes(visit);
+          });
+          state.sessionOptions.set(visits);
         } else {
           state.participantID.set('');
           appContext.setTask('participantID', '');
@@ -1407,14 +1413,6 @@ const Configuration = (props) => {
   };
 
   /**
-   * hideAuthCredentials - display AuthCredentials.
-   * @param {boolean} hidden
-   */
-  const hideAuthCredentials = (hidden) => {
-    setAuthCredentialsVisible(!hidden);
-  };
-
-  /**
    * Remove an MFF directory entry from the form
    *
    * @param {Number} index - index of the directory to delete
@@ -1469,72 +1467,27 @@ const Configuration = (props) => {
   if (props.appMode === 'Configuration') {
     return (
       <>
-        <div className='container'>
-          <AuthenticationMessage
-            setAuthCredentialsVisible={setAuthCredentialsVisible}
-          />
-          <div className='small-pad resetBtn'>
-            <input type='button'
-              className='primary-btn'
-              onClick={reset}
-              value='Clear all fields below'
-            />
-          </div>
-        </div>
         <span className='header'>
           Recording data
         </span>
         <div className='info'>
           <div className='small-pad'>
-            <RadioInput id='fileFormatUploaded'
-              name='fileFormatUploaded'
-              label='File Format'
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
               required={true}
-              onUserInput={onUserInput}
-              options={{
-                edf: 'EDF',
-                set: 'SET',
-                mff: 'MFF',
-              }}
-              checked={state.fileFormatUploaded.get}
-              help='File format of the recording.'
-            />
-          </div>
-          <div className='small-pad'>
-            {state.fileFormatUploaded.get != 'mff' ?
-              <FileInput id='eegFiles'
-                name='eegFiles'
-                multiple={true}
-                accept={acceptedFileFormats}
-                placeholder={
-                  state.eegFiles.get.map((eegFile) =>
-                    eegFile['name']).join(', ')
-                }
-                label={fileFormatAlt + ' Recording to convert'}
-                required={true}
-                onUserInput={onUserInput}
-                help={'Filename(s) must be formatted correctly: ' +
-                  'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.' +
-                  state.fileFormatUploaded.get
-                }
-              /> :
-              <MultiDirectoryInput
-                id='mffDirectories'
-                name='mffDirectories'
-                multiple={true}
-                required={true}
-                label='MFF Recording to convert'
-                updateDirEntry={updateMFFDirectory}
-                removeDirEntry={removeMFFDirectory}
-                addDirEntry={addMFFDirectory}
-                value={state.mffDirectories.get}
-                help={'Folder name(s) must be formatted correctly: ' +
+              label='MFF Recording to convert'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              value={state.mffDirectories.get}
+              help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
-              />
-            }
+            />
             <div>
               <small>
-                  Multiple {fileFormatAlt} files can be selected for a single
+                  Multiple MFF files can be selected for a single
                   recording
               </small>
             </div>
@@ -1549,116 +1502,50 @@ const Configuration = (props) => {
               help='Where the BIDS-compliant folder will be created'
             />
           </div>
-          <div className='small-pad'>
-            <RadioInput id='modality'
-              name='modality'
-              label='Data Modality'
-              required={true}
-              onUserInput={onUserInput}
-              options={{
-                ieeg: 'Stereo iEEG',
-                eeg: 'EEG',
-              }}
-              checked={state.modality.get}
-              help='If any intracranial (stereo) channels, select Stereo iEEG'
-            />
-          </div>
-          <div className='small-pad'>
-            <RadioInput id='LORIScompliant'
-              name='LORIScompliant'
-              label='Will this data be loaded in LORIS?'
-              required={true}
-              onUserInput={onUserInput}
-              options={{
-                yes: 'Yes',
-                no: 'No',
-              }}
-              checked={state.LORIScompliant.get ? 'yes' : 'no'}
-              help='Select Yes if research datasets will be stored
-              in a LORIS data platform'
-            />
-          </div>
         </div>
-        <span className='header'>
-          Recording metadata
-          <div className='header-hint'>
-            ⓘ For details please see BIDS specification
-          </div>
-        </span>
         <div className='info'>
           <small>Annotation and events file names
           must match one of the EEG file names.</small>
         </div>
-        <div className='container'>
-          <div className='info half'>
+        <span className='header'>
+          Participant Details
+        </span>
+        <div className='info'>
+          <>
             <div className='small-pad'>
-              <FileInput id='bidsMetadataFile'
-                name='bidsMetadataFile'
-                accept='.json'
-                placeholder={
-                  state.bidsMetadataFile.get.map(
-                      (bidsMetadataFile) => bidsMetadataFile['name'],
-                  ).join(', ')
-                }
-                label='Recording Parameters (json)'
+              <TextInput id='participantPSCID'
+                name='participantPSCID'
+                label='LORIS PSCID'
+                required={true}
+                value={state.participantPSCID.get}
                 onUserInput={onUserInput}
-                help='Used to contribute non-required fields to *.json BIDS
-                parameter file. See BIDS spec and template available with
-                this release. Blank fields ignored.'
               />
             </div>
             <div className='small-pad'>
-              <FileInput id='annotationsJSON'
-                name='annotationsJSON'
-                multiple={true}
-                accept='.json'
-                placeholder={
-                  state.annotationsJSON.get.map(
-                      (annotationJSON) => annotationJSON['name'],
-                  ).join(', ')
-                }
-                label='annotations.json'
+              <TextInput id='participantCandID'
+                name='participantCandID'
+                label='LORIS DCCID'
+                required={true}
+                value={state.participantCandID.get}
                 onUserInput={onUserInput}
-                help='Labels for Annotations, compliant with BIDS spec.
-                One file per task/run. Filename must be formatted correctly.'
-              />
-            </div>
-          </div>
-          <div className='info half'>
-            <div className='small-pad'>
-              <FileInput id='eventFiles'
-                name='eventFiles'
-                multiple={true}
-                accept='.tsv'
-                placeholder={
-                  state.eventFiles.get.map(
-                      (eventFile) => eventFile['name'],
-                  ).join(', ')
-                }
-                label='events.tsv (additional)'
-                onUserInput={onUserInput}
-                help='Additional events only. Events embedded in
-                the EEG Annotations signal are automatically extracted.'
               />
             </div>
             <div className='small-pad'>
-              <FileInput id='annotationsTSV'
-                name='annotationsTSV'
-                multiple={true}
-                accept='.tsv'
-                placeholder={
-                  state.annotationsTSV.get.map(
-                      (annotationTSV) => annotationTSV['name'],
-                  ).join(', ')
-                }
-                label='annotations.tsv'
+              <SelectInput id='participantHand'
+                name='participantHand'
+                label='Handedness'
+                value={state.participantHand.get}
+                emptyOption='n/a'
+                options={{
+                  'R': 'Right',
+                  'L': 'Left',
+                  'A': 'Ambidextrous',
+                }}
                 onUserInput={onUserInput}
-                help='Annotation data: time, label, etc compliant
-                with BIDS spec. One file per task/run.
-                Filename must be formatted correctly.'
+                help='Required; see BIDS specification for more information'
               />
             </div>
-          </div>
+          </>
         </div>
         <span className='header'>
           Recording details
@@ -1690,21 +1577,13 @@ const Configuration = (props) => {
                     </b>
                   </label>
                   <div className='comboField'>
-                    <SelectInput id='siteID_API'
-                      name='siteID_API'
-                      label=''
-                      required={true}
-                      value={state.siteID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.siteOptions.get)}
-                      onUserInput={onUserInput}
-                    />
                     {!state.siteUseAPI.get &&
                       <TextInput id='siteID_Manual'
                         name='siteID_Manual'
                         label=''
                         placeholder='n/a'
                         value={state.siteID.get}
+                        readonly={true}
                         onUserInput={onUserInput}
                       />
                     }
@@ -1721,20 +1600,12 @@ const Configuration = (props) => {
                     </b>
                   </label>
                   <div className='comboField'>
-                    <SelectInput id='projectID_API'
-                      name='projectID_API'
-                      label=''
-                      required={true}
-                      value={state.projectID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.projectOptions.get)}
-                      onUserInput={onUserInput}
-                    />
                     {!state.projectUseAPI.get &&
                       <TextInput id='projectID_Manual'
                         name='projectID_Manual'
                         label=''
                         placeholder='n/a'
+                        readonly={true}
                         value={state.projectID.get}
                         onUserInput={onUserInput}
                       />
@@ -1794,18 +1665,8 @@ const Configuration = (props) => {
                     label=''
                     required={true}
                     value={state.session.get}
-                    emptyOption='Enter manually'
+                    emptyOption='Select One'
                     options={arrayToObject(state.sessionOptions.get)}
-                    onUserInput={onUserInput}
-                  />
-                }
-                {!state.sessionUseAPI.get &&
-                  <TextInput id='session_Manual'
-                    name='session_Manual'
-                    label=''
-                    required={!state.LORIScompliant.get}
-                    value={state.session.get}
-                    bannedCharacters={['-', '_', ' ', '/']}
                     onUserInput={onUserInput}
                   />
                 }
@@ -1854,262 +1715,6 @@ const Configuration = (props) => {
             </div>
           </div>
         </div>
-        <span className='header'>
-          Participant Details
-        </span>
-        <div className='info'>
-          {state.LORIScompliant.get &&
-            isAuthenticated &&
-            <div className='small-pad'>
-              <RadioInput id='participantEntryMode'
-                name='participantEntryMode'
-                label='Entry mode'
-                required={true}
-                onUserInput={onUserInput}
-                options={isAuthenticated === true ?
-                  {
-                    manual: 'Manual',
-                    //new_loris: '(beta) Create a LORIS candidate',
-                    existing_loris: 'Use an existing LORIS candidate',
-                  } :
-                  {
-                    manual: 'Manual',
-                  }
-                }
-                checked={state.participantEntryMode.get}
-                help='Specify participant details manually
-                or by lookup in LORIS'
-              />
-            </div>
-          }
-          {state.participantEntryMode.get === 'new_loris' &&
-            <>
-              <div className='small-pad'>
-                <label className="label" htmlFor={props.id}>
-                  <b>Date of Birth <span className="red">*</span></b>
-                </label>
-                <DatePicker id='participantDOB'
-                  name='participantDOB'
-                  required={true}
-                  selected={state.participantDOB.get}
-                  dateFormat="yyyy-MM-dd"
-                  onChange={(date) => onUserInput('participantDOB', date)}
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantSex'
-                  name='participantSex'
-                  label='Biological Sex'
-                  required={true}
-                  value={state.participantSex.get}
-                  emptyOption='n/a'
-                  options={{
-                    'female': 'Female',
-                    'male': 'Male',
-                    'other': 'Other',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-            </>
-          }
-          {state.participantEntryMode.get === 'existing_loris' &&
-            <>
-              <div className='small-pad'>
-                <TextInput id='participantPSCID'
-                  name='participantPSCID'
-                  label='LORIS PSCID'
-                  required={true}
-                  value={state.participantPSCID.get}
-                  onUserInput={onUserInput}
-                />
-              </div>
-              <div className='small-pad'>
-                <TextInput id='participantCandID'
-                  name='participantCandID'
-                  label='LORIS DCCID'
-                  required={true}
-                  value={state.participantCandID.get}
-                  onUserInput={onUserInput}
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-            </>
-          }
-          {state.participantEntryMode.get === 'manual' &&
-            <>
-              <div className='small-pad'>
-                <TextInput id='participantID'
-                  name='participantID'
-                  label='Participant ID'
-                  required={true}
-                  value={state.participantID.get}
-                  onUserInput={onUserInput}
-                  bannedCharacters={['-', '_', ' ', '/']}
-                  help='Study ID (e.g. LORIS PSCID)'
-                />
-                {state.LORIScompliant.get &&
-                  <div><small>Use the LORIS PSCID</small></div>
-                }
-              </div>
-              <div className='small-pad'>
-                <TextInput id='participantAge'
-                  name='participantAge'
-                  label='Participant age'
-                  placeholder='n/a'
-                  value={state.participantAge.get}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantSex'
-                  name='participantSex'
-                  label='Biological Sex'
-                  value={state.participantSex.get}
-                  emptyOption='n/a'
-                  options={{
-                    'female': 'Female',
-                    'male': 'Male',
-                    'other': 'Other',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-            </>
-          }
-        </div>
-        <span className='header'>
-          EDF Header Data
-          <label style={{
-            position: 'absolute',
-            left: '20px',
-            fontSize: '16px',
-            verticalAlign: 'middle',
-          }}>
-            <Switch
-              className='react-switch'
-              onColor="#86d3ff"
-              onHandleColor="#2693e6"
-              handleDiameter={20}
-              uncheckedIcon={false}
-              checkedIcon={false}
-              boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-              activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-              height={15}
-              width={40}
-              name='anonymize'
-              onChange={(checked) => onUserInput('anonymize', checked)}
-              checked={state.anonymize.get}
-              disabled={state.eegData.get?.files?.length > 0 ? false : true}
-            />
-            <span>Anonymize</span>
-          </label>
-        </span>
-        <div className='info-flex-container'>
-          <div className='container'>
-            <div className='half small-pad'>
-              <TextInput id='subjectID'
-                name='subjectID'
-                label='Subject ID'
-                value={state.eegData?.get['subjectID'] || ''}
-                onUserInput={onUserInput}
-                readonly={state.eegData.get?.files?.length > 0 ? false : true}
-              />
-              <div>
-                <small>Recommended EDF anonymization: "X X X X"<br/>
-                (EDF spec: patientID patientSex patientBirthdate patientName)
-                </small>
-              </div>
-            </div>
-            <div className='half small-pad'>
-              <TextInput id='recordingID'
-                name='recordingID'
-                label='Recording ID'
-                value={state.eegData.get?.['recordingID'] || ''}
-                onUserInput={onUserInput}
-                readonly={state.eegData.get?.files?.length > 0 ? false : true}
-              />
-              <div>
-                <small>(EDF spec: Startdate dd-MMM-yyyy
-                  administrationCode investigatorCode equipmentCode)
-                </small>
-              </div>
-            </div>
-            <div className='small-pad half'>
-              <TextInput id='recording_date'
-                name='recording_date'
-                label='Recording Date'
-                readonly={true}
-                value={state.eegData.get?.['date'] ?
-                    new Intl.DateTimeFormat(
-                        'en-US',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: 'numeric',
-                        },
-                    ).format(state.eegData.get['date']) :
-                    ''
-                }
-              />
-            </div>
-          </div>
-        </div>
-        <AuthenticationCredentials
-          title='Login to LORIS'
-          show={authCredentialsVisible}
-          close={hideAuthCredentials}
-          width='500px'
-        />
         <ReactTooltip/>
       </>
     );
@@ -2117,7 +1722,7 @@ const Configuration = (props) => {
     return (
       <>
         <span className='header'>
-          EDF to BIDS
+          MFF to BIDS
         </span>
         <div className='info report'>
           <div className='small-pad'>
@@ -2135,38 +1740,6 @@ const Configuration = (props) => {
           <div className='small-pad'>
             <b>Review your uploaded EEG Parameter metadata:</b>
             <div>{validateRecordingParameters()}</div>
-          </div>
-          <div className='small-pad'>
-            <b>Verify anonymization of EDF header data:</b>
-            {appContext.getFromTask('subjectID') ?
-              <div>
-                Subject ID: {appContext.getFromTask('subjectID')}
-              </div> :
-              <div>
-                {formatWarning('Subject ID is not modified.')}
-              </div>
-            }
-            {appContext.getFromTask('recording_id') &&
-              <div>
-                Recording ID:&nbsp;
-                {appContext.getFromTask('recording_id')}
-              </div>
-            }
-            {appContext.getFromTask('eegData')?.['date'] &&
-              <div>
-                Recording Date:&nbsp;
-                {new Intl.DateTimeFormat(
-                    'en-US',
-                    {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    },
-                ).format(appContext.getFromTask('eegData')['date'])}
-              </div>
-            }
           </div>
 
           {error ?

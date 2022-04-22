@@ -26,6 +26,10 @@ const App = () => {
   const [appMode, setAppMode] = useState('SplashScreen');
   const [activeMenuTab, setActiveMenuTab] = useState(0);
   const [task, setTask] = useState({});
+  const nextStage = () => {
+    setActiveMenuTab(1);
+    setAppMode('Configuration');
+  };
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -95,7 +99,10 @@ const App = () => {
             activeTab={activeMenuTab}
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
-          <Welcome visible={appMode === 'Welcome'}/>
+          <Welcome
+            visible={appMode === 'Welcome'}
+            nextStage={nextStage}
+          />
           <Configuration appMode={appMode}/>
           <Validator visible={appMode === 'Validator'}/>
         </>

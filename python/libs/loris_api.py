@@ -210,7 +210,7 @@ class LorisAPI:
         if json_resp.get('error'):
             return {'error': 'DCCID is not valid.'}
 
-        return json_resp.get('Meta')
+        return json_resp
 
     def upload_callback(self, monitor):
         # Update the upload progress
