@@ -1,6 +1,9 @@
+import csv
 import eeglabio
 import os
+import math
 import mne
+import numpy
 import pymatreader
 from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
@@ -303,6 +306,7 @@ class Converter:
                         mne.export.export_raw(fname=bids_basename.fpath, raw=raw, fmt='eeglab', overwrite=True)
                         fdt_path = os.path.splitext(bids_basename.fpath)[0] + '.fdt'
                         os.remove(fdt_path)
+                        self._regenerate_events_file(bids_basename, file)
                 except Exception as ex:
                     print('Exception ex:')
                     print(ex)
@@ -374,6 +378,32 @@ class Converter:
             rpa=rpa_coord
         )
         raw.set_montage(new_montage)  # set the new montage in the raw object
+
+    @staticmethod
+    def _regenerate_events_file(bids_basename, file):
+
+        events_fpath = os.path.splitext(bids_basename.fpath)[0].removesuffix('_eeg') + '_events.tsv'
+
+        # read the EEG matlab structure to get the detailed events
+        eeg_mat = pymatreader.read_mat(file)
+        event_dict = None
+        if 'EEG' in eeg_mat.keys() and 'event' in eeg_mat['EEG'].keys():
+            event_dict = eeg_mat['EEG']['event']
+        elif 'event' in eeg_mat.keys():
+            event_dict = eeg_mat['event']
+
+        # convert empty arrays into None
+        for key in event_dict.keys():
+            print(type(event_dict[key]))
+            for idx in range(0, len(event_dict[key]), 1):
+                if isinstance(event_dict[key][idx], numpy.ndarray) and event_dict[key][idx].size == 0:
+                    event_dict[key][idx] = float("NaN")
+
+        with open(events_fpath, 'w') as FILE:
+            writer = csv.writer(FILE, delimiter='\t')
+            tsv_columns = ["trial_type" if name == "type" else name for name in event_dict.keys()]
+            writer.writerow(tsv_columns)
+            writer.writerows(zip(*event_dict.values()))
 
 
 # Time - used for generating BIDS 'output' directory
