@@ -12,6 +12,9 @@ class EEGRun {
   eventErrors = null;
   annotationsTSVErrors = null;
   annotationsJSONErrors = null;
+
+  task = null;
+  run = null;
 }
 
 export default EEGRun;

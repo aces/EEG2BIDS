@@ -179,11 +179,11 @@ class Converter:
                 fileFormat=data['fileFormat'],
                 eeg_run=eegRun,
                 ch_type=modality,
-                task=data['taskName'],
+                task=eegRun['task'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                run=((i + 1) if len(data['eegData']['files']) > 1 else None),
+                run=((eegRun['run']) if eegRun['run'] != -1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq']

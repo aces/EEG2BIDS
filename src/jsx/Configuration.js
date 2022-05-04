@@ -51,7 +51,12 @@ const Configuration = (props) => {
     fileFormat: 'mff',
     eegData: [],
     eegFiles: [],
-    mffDirectories: [{path: '', name: ''}],
+    mffDirectories: {
+      RS: [{path: '', name: '', exclude: false}],
+      MMN: [{path: '', name: '', exclude: false}],
+      FACE: [{path: '', name: '', exclude: false}],
+      VEP: [{path: '', name: '', exclude: false}],
+    },
     modality: 'eeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -76,10 +81,10 @@ const Configuration = (props) => {
     bidsMetadataFile: [],
     invalidBidsMetadataFile: [],
     bidsMetadata: null,
-    lineFreq: 'n/a',
+    lineFreq: '60',
     taskName: '',
-    reference: 'n/a',
-    recordingType: 'n/a',
+    reference: 'Cz',
+    recordingType: 'continuous',
     participantEntryMode: 'existing_loris',
     participantPSCID: '',
     participantCandID: '',
@@ -911,6 +916,8 @@ const Configuration = (props) => {
           (eegFile) => {
             const eegRun = new EEGRun();
             eegRun.eegFile = eegFile['path'];
+            eegRun.task = eegFile['task'];
+            eegRun.run = eegFile['run'];
 
             const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
             const eegFileName = eegFile['name'].toLowerCase()
@@ -1034,7 +1041,7 @@ const Configuration = (props) => {
   }, []);
 
   useEffect(() => {
-    state.mffDirectories.set([{path: '', name: ''}]);
+    // state.mffDirectories.set([{path: '', name: ''}]);
     state.eegFiles.set([]);
   }, [state.fileFormatUploaded.get]);
 
@@ -1059,7 +1066,7 @@ const Configuration = (props) => {
     }
   }, [state.eegFiles.get]);
 
-  useEffect(async () => {
+  const convertMFFtoSET = async () => {
     if (socketContext && state.fileFormatUploaded.get === 'mff') {
       const updateMessage = (msg) => {
         console.log(msg);
@@ -1068,7 +1075,28 @@ const Configuration = (props) => {
       };
 
       // if no MFF files, do nothing.
-      const dirs = state.mffDirectories.get.filter((dir) => dir['path'] != '');
+      const dirs = [];
+      for (const key in state.mffDirectories.get) {
+        if (state.mffDirectories.get[key][0]['path'] === '') {
+          continue;
+        }
+        if (state.mffDirectories.get[key].length === 1) {
+          dirs.push({
+            ...state.mffDirectories.get[key][0],
+            task: key,
+            run: -1,
+          });
+        } else {
+          state.mffDirectories.get[key].forEach((dir, i) => {
+            dirs.push({
+              ...dir,
+              task: key,
+              run: i + 1,
+            });
+          });
+        }
+      }
+      // state.mffDirectories.get.filter((dir) => dir['path'] != '');
       if (dirs.length == 0) {
         updateMessage({'error': 'No MFF file selected.'});
         return;
@@ -1096,7 +1124,7 @@ const Configuration = (props) => {
         await myAPI.convertMFFToSET(dir, callback);
       }
     }
-  }, [state.mffDirectories.get]);
+  };
 
   useEffect(() => {
     if (socketContext) {
@@ -1415,48 +1443,80 @@ const Configuration = (props) => {
   /**
    * Remove an MFF directory entry from the form
    *
+   * @param {String} task - the task to update
    * @param {Number} index - index of the directory to delete
    *
    * @return {function}
    */
-  const removeMFFDirectory = (index) => {
+  const removeMFFDirectory = (task, index) => {
     return () => {
-      state.mffDirectories.set(
-          state.mffDirectories.get.filter((dir, idx) => idx !== index),
-      );
+      state.mffDirectories.set((prev) => {
+        prev[task] = prev[task].filter((dir, idx) => idx !== index);
+        return ({
+          ...prev,
+        });
+      });
     };
   };
 
   /**
    * Add an MFF directory entry to the form
+   * @param {Sting} task the task to add run to
    */
-  const addMFFDirectory = () => {
-    state.mffDirectories.set(
-        [
-          ...state.mffDirectories.get,
-          {path: '', name: ''},
-        ],
-    );
+  const addMFFDirectory = (task) => {
+    state.mffDirectories.set((prev) => {
+      prev[task].push({path: '', name: ''});
+      return ({
+        ...prev,
+      });
+    });
+  };
+
+  /**
+   *
+   * @param {string} task the task to update
+   * @param {boolean} exclude exclusion flag
+   * @param {string} reason reason why excluded
+   */
+  const excludeMFFDirectory = (task, exclude, reason) => {
+    state.mffDirectories.set((prev) => {
+      if (prev[task][0]['exclude'] != exclude) {
+        prev[task] = [{path: '', name: '', exclude: exclude, reason: reason}];
+      } else if (exclude) {
+        prev[task][0] = {
+          ...prev[task][0],
+          reason: reason,
+        };
+      }
+      return ({
+        ...prev,
+      });
+    });
   };
 
   /**
    * Update an investigator entry
    *
-   * @param {id} id - the element's id
+   * @param {string} task - the task to update
    * @param {Number} index - index of the dir to update
    * @param {string} value - the value to update
    *
    */
-  const updateMFFDirectory = (id, index, value) => {
+  const updateMFFDirectory = (task, index, value) => {
     if (value) {
-      state.mffDirectories.set(state.mffDirectories.get.map((dir, idx) => {
-        if (idx === index) {
-          return {
-            path: value,
-            name: value.replace(/\.[^/.]+$/, ''),
-          };
-        } else return dir;
-      }));
+      state.mffDirectories.set((prev) => {
+        prev[task] = prev[task].map((dir, idx) => {
+          if (idx === index) {
+            return {
+              path: value,
+              name: value.replace(/\.[^/.]+$/, ''),
+            };
+          } else return dir;
+        });
+        return ({
+          ...prev,
+        });
+      });
     }
   };
 
@@ -1464,49 +1524,11 @@ const Configuration = (props) => {
   const acceptedFileFormats = '.' + state.fileFormatUploaded.get +
     ',.' + fileFormatAlt;
 
+  console.log(state.mffDirectories.get);
+
   if (props.appMode === 'Configuration') {
     return (
       <>
-        <span className='header'>
-          Recording data
-        </span>
-        <div className='info'>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              label='MFF Recording to convert'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              value={state.mffDirectories.get}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [subjectID]_[sessionLabel]_[taskName]_[run-1]_ieeg.mff'}
-            />
-            <div>
-              <small>
-                  Multiple MFF files can be selected for a single
-                  recording
-              </small>
-            </div>
-          </div>
-          <div className='small-pad'>
-            <DirectoryInput id='bidsDirectory'
-              name='bidsDirectory'
-              required={true}
-              label='BIDS output folder'
-              placeholder={state.bidsDirectory.get}
-              onUserInput={onUserInput}
-              help='Where the BIDS-compliant folder will be created'
-            />
-          </div>
-        </div>
-        <div className='info'>
-          <small>Annotation and events file names
-          must match one of the EEG file names.</small>
-        </div>
         <span className='header'>
           Participant Details
         </span>
@@ -1546,6 +1568,93 @@ const Configuration = (props) => {
               />
             </div>
           </>
+        </div>
+        <span className='header'>
+          Recording data
+        </span>
+        <div className='info'>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='RS'
+              label='Resting state/baseline'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.RS}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='MMN'
+              label='Three-stimulus oddball'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.MMN}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='FACE'
+              label='Face processing'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.FACE}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='VEP'
+              label='Visual Evoked Potential'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.VEP}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <DirectoryInput id='bidsDirectory'
+              name='bidsDirectory'
+              required={true}
+              label='BIDS output folder'
+              placeholder={state.bidsDirectory.get}
+              onUserInput={onUserInput}
+              help='Where the BIDS-compliant folder will be created'
+            />
+          </div>
+        </div>
+        <div className='info'>
+          <small>Annotation and events file names
+          must match one of the EEG file names.</small>
         </div>
         <span className='header'>
           Recording details
@@ -1674,46 +1783,15 @@ const Configuration = (props) => {
             </div>
           </div>
           <div className='info half'>
-            <div className='small-pad'>
-              <TextareaInput id='reference'
-                name='reference'
-                required={true}
-                label='Reference'
-                value={state.reference.get}
-                onUserInput={onUserInput}
-                help='See BIDS specification for more information'
-              />
-            </div>
-            <div className='small-pad'>
-              <SelectInput id='lineFreq'
-                name='lineFreq'
-                label='Powerline Frequency'
-                value={state.lineFreq.get}
-                emptyOption='n/a'
-                options={{
-                  '50': '50',
-                  '60': '60',
-                }}
-                onUserInput={onUserInput}
-                help='See BIDS specification for more information'
-              />
-            </div>
-            <div className='small-pad'>
-              <SelectInput id='recordingType'
-                name='recordingType'
-                label='Recording Type'
-                value={state.recordingType.get}
-                emptyOption='n/a'
-                options={{
-                  'continuous': 'Continuous',
-                  'discontinuous': 'Discontinuous',
-                  'epoched': 'Epoched',
-                }}
-                onUserInput={onUserInput}
-                help='See BIDS specification for more information'
-              />
-            </div>
           </div>
+        </div>
+        <div className='small-pad info'>
+          <input type='button'
+            className='start_task primary-btn'
+            onClick={convertMFFtoSET}
+            value='Convert to SET'
+            disabled={error}
+          />
         </div>
         <ReactTooltip/>
       </>

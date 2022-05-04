@@ -46,6 +46,8 @@ module.exports = class MFFToSETService {
                 {
                     path: mffDirectory.name + '.set',
                     name: mffDirectory.name,
+                    task: mffDirectory.task,
+                    run: mffDirectory.run,
                 }
             );
             this.process = null;
@@ -60,6 +62,8 @@ module.exports = class MFFToSETService {
                     {
                         path: mffDirectory.name + '.set',
                         name: mffDirectory.name,
+                        task: mffDirectory.task,
+                        run: mffDirectory.run,
                     }
                 );
             } else {

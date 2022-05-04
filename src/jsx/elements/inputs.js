@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
-import styles from '../../css/Inputs.module.css';
 
 /**
  * FileInput - the input type='file' component.
@@ -140,6 +139,9 @@ DirectoryInput.propTypes = {
  */
 export const MultiDirectoryInput = (props) => {
   const myAPI = window['myAPI']; // from public/preload.js
+
+  // React State
+  const [exclude, setExclude] = useState(false);
   /**
    * handleClick - button by user.
    * @param {number} index
@@ -150,8 +152,28 @@ export const MultiDirectoryInput = (props) => {
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
-    props.updateDirEntry(props.id, index, path.filePaths[0]);
+    props.updateDirEntry(props.task, index, path.filePaths[0]);
   };
+
+  if (props.value[0].exclude) {
+    return (
+      <div>
+        <TextareaInput
+          name={props.name}
+          label={`${props.label} exclusion reason`}
+          onUserInput={(name, value) =>
+            props.excludeMFFDirectory(props.taskName, true, value)}
+          value={props.value[0].reason}
+        />
+        <button
+          type="button"
+          onClick={() => props.excludeMFFDirectory(props.taskName, false, '')}
+        >
+            Include
+        </button>
+      </div>
+    );
+  }
 
   /**
    * Renders the React component.
@@ -159,41 +181,57 @@ export const MultiDirectoryInput = (props) => {
    */
   return props.value.map((dir, index) => (
     <div key={index}>
-      <label className="label" htmlFor={props.id}>
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
-          }
-        </b>
-      </label>
+      {index === 0 ? (
+          <label className="label" htmlFor={props.id}>
+            <b>
+              {props.label} {props.required ?
+                <span className="red">*</span> :
+                null
+              }
+              {props.help &&
+                <i className='fas fa-question-circle' data-tip={props.help}></i>
+              }
+            </b>
+          </label>
+      ) : (
+          <label className="label" htmlFor={props.id}>
+            <b>
+              &emsp;{`Run ${index+1}`}
+            </b>
+          </label>
+      ) }
       <input
         type='button'
         id={props.id}
         name={props.name}
-        value='Choose folder'
+        value='Choose Task Run'
         onClick={() => handleClick(index)}
         style={{marginRight: '10px'}}
       />
       {(props.value.length > 1) &&
         (<button
           type="button"
-          onClick={props.removeDirEntry(index)}
+          onClick={props.removeDirEntry(props.taskName, index)}
         >
-          -
+          Remove Run -
         </button>)
       }
       {(index == props.value.length - 1) &&
         (<button
           type="button"
-          onClick={props.addDirEntry}
+          onClick={() => props.addDirEntry(props.taskName)}
         >
-          +
+          Add Run +
         </button>)
       }
+      {index === 0 && (
+        <button
+          type="button"
+          onClick={() => props.excludeMFFDirectory(props.taskName, true, '')}
+        >
+            Excluded
+        </button>
+      )}
       <a style={{fontSize: '14px', cursor: 'default'}}>
         &nbsp;{dir.path ?? 'No folder chosen'}
       </a>
@@ -203,10 +241,12 @@ export const MultiDirectoryInput = (props) => {
 MultiDirectoryInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
+  taskName: PropTypes.string,
   label: PropTypes.string,
   updateDirEntry: PropTypes.func,
   removeDirEntry: PropTypes.func,
   addDirEntry: PropTypes.func,
+  excludeMFFDirectory: PropTypes.func,
   help: PropTypes.string,
 };
 
