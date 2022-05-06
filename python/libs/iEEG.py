@@ -393,7 +393,8 @@ class Converter:
     @staticmethod
     def _regenerate_events_file(bids_basename, file):
 
-        events_fpath = os.path.splitext(bids_basename.fpath)[0].removesuffix('_eeg') + '_events.tsv'
+        # events_fpath = os.path.splitext(bids_basename.fpath)[0].removesuffix('_eeg') + '_events.tsv'
+        events_fpath = os.path.splitext(bids_basename.fpath)[0][:-4] + '_events.tsv'
 
         # read the EEG matlab structure to get the detailed events
         eeg_mat = pymatreader.read_mat(file)

@@ -152,7 +152,7 @@ export const MultiDirectoryInput = (props) => {
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
-    props.updateDirEntry(props.task, index, path.filePaths[0]);
+    props.updateDirEntry(props.taskName, index, path.filePaths[0]);
   };
 
   if (props.value[0].exclude) {

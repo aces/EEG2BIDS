@@ -15,7 +15,9 @@ class Modifier:
         self.modify_dataset_description_json()
         self.modify_participants_tsv()
         self.modify_participants_json()
-        self.clean_dataset_files()
+        # This method is removing other tasks channels file
+        # removing call to method
+        # self.clean_dataset_files()
         self.copy_event_files()
         self.copy_annotation_files()
         self.modify_eeg_json()
@@ -48,10 +50,10 @@ class Modifier:
     def clean_dataset_files(self):
         if len(self.data['eegData']['files']) > 0:
             # for multiple run recording, clean the duplicate _channels.tsv
-            channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
-            for i in range(1, len(channels_files)):
-                filename = os.path.join(self.get_eeg_path(), channels_files[i])
-                os.remove(filename)
+            # channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
+            # for i in range(1, len(channels_files)):
+            #     filename = os.path.join(self.get_eeg_path(), channels_files[i])
+            #     os.remove(filename)
 
             # remove the run suffix in the file names
             fileOrig = os.path.join(self.get_eeg_path(), channels_files[0])
