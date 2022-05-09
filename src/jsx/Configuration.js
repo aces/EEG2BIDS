@@ -131,6 +131,28 @@ const Configuration = (props) => {
       error: '',
     },
   });
+  const [mffModalVisible, setMffModalVisible] = useState(false);
+  const [mffModalText, setMffModalText] = useState({
+    mode: 'loading',
+    title: {
+      loading: '⏱ Task in Progress!',
+      success: '⭐ Task Finished!',
+      error: '❌ Task Error!',
+    },
+    message: {
+      loading: <span style={{padding: '40px'}}>
+        <span className='bids-loading'>
+            MFF to SET conversion in progress<span>.</span><span>.</span><span>.</span>
+            😴
+        </span>
+      </span>,
+      success: <span style={{padding: '40px'}}>
+        <span className='bids-success'>
+          <span className='checkmark'>&#x2714;</span> Success converting to SET!
+        </span></span>,
+      error: '',
+    },
+  });
 
   /**
    * reset - reset the form fields (state).
@@ -218,6 +240,20 @@ const Configuration = (props) => {
    */
   const hideModal = (hidden) => {
     setModalVisible(!hidden);
+    if (modalText.mode === 'success') {
+      props.nextStage('Validator', 3);
+    }
+  };
+
+  /**
+   * hideModal - display Modal.
+   * @param {boolean} hidden
+   */
+  const hideMffModal = (hidden) => {
+    setMffModalVisible(!hidden);
+    if (mffModalText.mode === 'success') {
+      props.nextStage('Converter', 2);
+    }
   };
 
   const validateJSON = (jsons) => {
@@ -1112,9 +1148,19 @@ const Configuration = (props) => {
           setFiles.push(file);
 
           if (setFiles.length === dirs.length) {
+            return {...prevState, ['mode']: 'success'};
             socketContext.emit('get_set_data', {files: setFiles});
           }
         } else {
+          setMffModalText((prevState) => {
+            prevState.message['error'] = (
+              <div className='bids-errors'>
+                {message['error'].map((error, i) =>
+                  <span key={i}>{error}<br/></span>)}
+              </div>
+            );
+            return {...prevState, ['mode']: 'error'};
+          });
           updateMessage({'error': message});
         }
       };
@@ -1793,6 +1839,14 @@ const Configuration = (props) => {
             disabled={error}
           />
         </div>
+        <Modal
+          title={mffModalText.title[mffModalText.mode]}
+          show={mffModalVisible}
+          close={hideMffModal}
+          width='500px'
+        >
+          {mffModalText.message[mffModalText.mode]}
+        </Modal>
         <ReactTooltip/>
       </>
     );

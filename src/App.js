@@ -26,9 +26,9 @@ const App = () => {
   const [appMode, setAppMode] = useState('SplashScreen');
   const [activeMenuTab, setActiveMenuTab] = useState(0);
   const [task, setTask] = useState({});
-  const nextStage = () => {
-    setActiveMenuTab(1);
-    setAppMode('Configuration');
+  const nextStage = (nextStage, tabNumber) => {
+    setActiveMenuTab(tabNumber);
+    setAppMode(nextStage);
   };
 
   /**
@@ -103,7 +103,7 @@ const App = () => {
             visible={appMode === 'Welcome'}
             nextStage={nextStage}
           />
-          <Configuration appMode={appMode}/>
+          <Configuration appMode={appMode} nextStage={nextStage} />
           <Validator visible={appMode === 'Validator'}/>
         </>
       </AppContext.Provider>

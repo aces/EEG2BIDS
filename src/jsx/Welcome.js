@@ -65,7 +65,7 @@ const Welcome = (props) => {
         <AuthenticationCredentials
           title='Login to LORIS'
           show={true}
-          close={() => props.nextStage()}
+          close={() => props.nextStage('Configuration', 1)}
           width='500px'
         />
       </div>
