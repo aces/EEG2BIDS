@@ -393,6 +393,40 @@ const Configuration = (props) => {
     );
   };
 
+  const checkError = (input) => {
+    switch (input) {
+      case 'participantCandID':
+        if (!appContext.getFromTask('participantCandID')) {
+          error = true;
+          return 'LORIS DCCID is not specified';
+        } else if (appContext.getFromTask('participantCandID')?.error) {
+          error = true;
+          return appContext.getFromTask('participantCandID').error;
+        }
+        return;
+      case 'participantPSCID':
+        if (!appContext.getFromTask('participantCandID')) {
+          error = true;
+          return 'LORIS PSCID is not specified';
+        } else if (
+          !state.participantCandID.get ||!state.participantPSCID.get
+        ) {
+          error = true;
+          return 'The DDCID/PSCID pair you provided' +
+              ' does not match an existing candidate.';
+        }
+        return;
+      case 'session_API':
+        if (!appContext.getFromTask('session')) {
+          error = true;
+          return 'Session is not specified';
+        }
+        return;
+      default:
+        return;
+    }
+  };
+
   const formatWarning = (msg) => {
     return (
       <>
@@ -1588,21 +1622,23 @@ const Configuration = (props) => {
         <div className='info'>
           <>
             <div className='small-pad'>
-              <TextInput id='participantPSCID'
-                name='participantPSCID'
-                label='LORIS PSCID'
-                required={true}
-                value={state.participantPSCID.get}
-                onUserInput={onUserInput}
-              />
-            </div>
-            <div className='small-pad'>
               <TextInput id='participantCandID'
                 name='participantCandID'
                 label='LORIS DCCID'
                 required={true}
                 value={state.participantCandID.get}
                 onUserInput={onUserInput}
+                error={checkError('participantCandID')}
+              />
+            </div>
+            <div className='small-pad'>
+              <TextInput id='participantPSCID'
+                name='participantPSCID'
+                label='LORIS PSCID'
+                required={true}
+                value={state.participantPSCID.get}
+                onUserInput={onUserInput}
+                error={checkError('participantPSCID')}
               />
             </div>
             <div className='small-pad'>
@@ -1621,93 +1657,6 @@ const Configuration = (props) => {
               />
             </div>
           </>
-        </div>
-        <span className='header'>
-          Recording data
-        </span>
-        <div className='info'>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='RS'
-              label='Resting state/baseline'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.RS}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='MMN'
-              label='Three-stimulus oddball'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.MMN}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='FACE'
-              label='Face processing'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.FACE}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='VEP'
-              label='Visual Evoked Potential'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.VEP}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-            />
-          </div>
-          <div className='small-pad'>
-            <DirectoryInput id='bidsDirectory'
-              name='bidsDirectory'
-              required={true}
-              label='BIDS output folder'
-              placeholder={state.bidsDirectory.get}
-              onUserInput={onUserInput}
-              help='Where the BIDS-compliant folder will be created'
-            />
-          </div>
-        </div>
-        <div className='info'>
-          <small>Annotation and events file names
-          must match one of the EEG file names.</small>
         </div>
         <span className='header'>
           Recording details
@@ -1830,6 +1779,7 @@ const Configuration = (props) => {
                     emptyOption='Select One'
                     options={arrayToObject(state.sessionOptions.get)}
                     onUserInput={onUserInput}
+                    error={checkError('session_API')}
                   />
                 }
               </div>
@@ -1837,6 +1787,93 @@ const Configuration = (props) => {
           </div>
           <div className='info half'>
           </div>
+        </div>
+        <span className='header'>
+          Recording data
+        </span>
+        <div className='info'>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='RS'
+              label='Resting state/baseline'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.RS}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='MMN'
+              label='Three-stimulus oddball'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.MMN}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='FACE'
+              label='Face processing'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.FACE}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <MultiDirectoryInput
+              id='mffDirectories'
+              name='mffDirectories'
+              multiple={true}
+              required={true}
+              taskName='VEP'
+              label='Visual Evoked Potential'
+              updateDirEntry={updateMFFDirectory}
+              removeDirEntry={removeMFFDirectory}
+              addDirEntry={addMFFDirectory}
+              excludeMFFDirectory={excludeMFFDirectory}
+              value={state.mffDirectories.get.VEP}
+              help={'Folder name(s) must be formatted correctly: ' +
+                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+            />
+          </div>
+          <div className='small-pad'>
+            <DirectoryInput id='bidsDirectory'
+              name='bidsDirectory'
+              required={true}
+              label='BIDS output folder'
+              placeholder={state.bidsDirectory.get}
+              onUserInput={onUserInput}
+              help='Where the BIDS-compliant folder will be created'
+            />
+          </div>
+        </div>
+        <div className='info'>
+          <small>Annotation and events file names
+          must match one of the EEG file names.</small>
         </div>
         <div className='small-pad info'>
           <input type='button'

@@ -300,6 +300,11 @@ export const TextInput = (props) => {
         placeholder={props.placeholder}
         readOnly={props.readonly}
       />
+      {props.error &&
+          <label className="input-error" htmlFor={props.id}>
+            {props.error}
+          </label>
+      }
     </>
   );
 };
@@ -510,6 +515,11 @@ export const SelectInput = (props) => {
           {emptyOptionHTML}
           {optionList}
         </select>
+        {props.error &&
+          <label className="input-error" htmlFor={props.id}>
+            {props.error}
+          </label>
+        }
       </>
     );
   };
