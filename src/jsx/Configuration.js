@@ -142,7 +142,8 @@ const Configuration = (props) => {
     message: {
       loading: <span style={{padding: '40px'}}>
         <span className='bids-loading'>
-            MFF to SET conversion in progress<span>.</span><span>.</span><span>.</span>
+            MFF to SET conversion in progress
+          <span>.</span><span>.</span><span>.</span>
             😴
         </span>
       </span>,
@@ -1104,6 +1105,10 @@ const Configuration = (props) => {
 
   const convertMFFtoSET = async () => {
     if (socketContext && state.fileFormatUploaded.get === 'mff') {
+      setMffModalVisible(true);
+      setMffModalText((prevState) => {
+        return {...prevState, ['mode']: 'loading'};
+      });
       const updateMessage = (msg) => {
         console.log(msg);
         state.eegData.set(msg);
@@ -1148,8 +1153,10 @@ const Configuration = (props) => {
           setFiles.push(file);
 
           if (setFiles.length === dirs.length) {
-            return {...prevState, ['mode']: 'success'};
             socketContext.emit('get_set_data', {files: setFiles});
+            setMffModalText((prevState) => {
+              return {...prevState, ['mode']: 'success'};
+            });
           }
         } else {
           setMffModalText((prevState) => {
