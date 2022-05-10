@@ -171,6 +171,11 @@ export const MultiDirectoryInput = (props) => {
         >
             Include
         </button>
+        {props.error &&
+          <label className="input-error" htmlFor={props.id}>
+            {props.error}
+          </label>
+        }
       </div>
     );
   }
@@ -225,12 +230,19 @@ export const MultiDirectoryInput = (props) => {
         </button>)
       }
       {index === 0 && (
-        <button
-          type="button"
-          onClick={() => props.excludeMFFDirectory(props.taskName, true, '')}
-        >
-            Excluded
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() => props.excludeMFFDirectory(props.taskName, true, '')}
+          >
+              Excluded
+          </button>
+          {props.error &&
+            <label className="input-error" htmlFor={props.id}>
+              {props.error}
+            </label>
+          }
+        </>
       )}
       <a style={{fontSize: '14px', cursor: 'default'}}>
         &nbsp;{dir.path ?? 'No folder chosen'}

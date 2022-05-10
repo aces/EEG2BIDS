@@ -427,6 +427,42 @@ const Configuration = (props) => {
     }
   };
 
+  const getFileName = (file) => file.path.split(/(\\|\/)/g).pop();
+
+  const checkFileError = (task) => {
+    // Need to split file path based on `/`
+    const pscid = state.participantPSCID.get;
+    const candID = state.participantCandID.get;
+    const session = state.session.get;
+    const substring = `${pscid}_${candID}_${session}_${task}`;
+    if (state.mffDirectories.get[task][0]['exclude']) {
+      if (state.mffDirectories.get[task][0]['reason'] === '') {
+        error = true;
+        return 'Exclusion reason is required.';
+      }
+    } else if (state.mffDirectories.get[task][0]['path'] === '') {
+      error = true;
+      return 'Please provide file or reason for exclusion.';
+    } else if (state.mffDirectories.get[task].length > 1) {
+      let nameError;
+      state.mffDirectories.get[task].forEach((file, idx) => {
+        if (getFileName(file) !== `${substring}_run-${idx + 1}.mff`) {
+          error = true;
+          nameError = 'File should have naming format ' +
+              '[PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-X].mff';
+        }
+      });
+      return nameError;
+    } else if (
+      getFileName(state.mffDirectories.get[task][0]) !== `${substring}.mff`
+    ) {
+      error = true;
+      return 'File should have naming format ' +
+              '[PSCID]_[DCCID]_[VisitLabel]_[taskName].mff';
+    }
+    return;
+  };
+
   const formatWarning = (msg) => {
     return (
       <>
@@ -1807,6 +1843,7 @@ const Configuration = (props) => {
               value={state.mffDirectories.get.RS}
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+              error={checkFileError('RS')}
             />
           </div>
           <div className='small-pad'>
@@ -1824,6 +1861,7 @@ const Configuration = (props) => {
               value={state.mffDirectories.get.MMN}
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+              error={checkFileError('MMN')}
             />
           </div>
           <div className='small-pad'>
@@ -1841,6 +1879,7 @@ const Configuration = (props) => {
               value={state.mffDirectories.get.FACE}
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+              error={checkFileError('FACE')}
             />
           </div>
           <div className='small-pad'>
@@ -1858,6 +1897,7 @@ const Configuration = (props) => {
               value={state.mffDirectories.get.VEP}
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
+              error={checkFileError('VEP')}
             />
           </div>
           <div className='small-pad'>
