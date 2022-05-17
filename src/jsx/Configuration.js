@@ -7,6 +7,7 @@ import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
+const path = require('path');
 
 // Components
 import {
@@ -1216,14 +1217,11 @@ const Configuration = (props) => {
       // Start working on file conversion-
       updateMessage({'error': 'Working on converting files...'});
 
-      const setFiles = [];
-      const callback = (success, message, file) => {
+      const callback = (success, message, files, flags) => {
         if (success) {
-          console.log(message);
-          setFiles.push(file);
-
-          if (setFiles.length === dirs.length) {
-            socketContext.emit('get_set_data', {files: setFiles});
+          if (files.length === dirs.length) {
+            console.log(flags);
+            socketContext.emit('get_set_data', {files: files});
             setMffModalText((prevState) => {
               return {...prevState, ['mode']: 'success'};
             });
@@ -1243,9 +1241,17 @@ const Configuration = (props) => {
       };
 
       const myAPI = window['myAPI']; // from public/preload.js
+      const mffDir = path.dirname(dirs[0].path);
+      console.log(mffDir);
+      const fileNames = [];
       for (const dir of dirs) {
-        await myAPI.convertMFFToSET(dir, callback);
+        if (mffDir !== path.dirname(dir.path)) {
+          console.log('DIFFERENT DIRS: TODO HANDLE');
+        }
+        fileNames.push(path.basename(dir.path));
+        // await myAPI.convertMFFToSET(dir, callback);
       }
+      await myAPI.convertMFFToSET(dirs, callback);
     }
   };
 

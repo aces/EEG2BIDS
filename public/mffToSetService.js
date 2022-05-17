@@ -1,4 +1,6 @@
 const {execFile} = require('child_process');
+const path = require("path");
+const fs = require("fs");
 
 /**
  * EEG2BIDS Wizard Service
@@ -39,39 +41,78 @@ module.exports = class MFFToSETService {
         }
 
         const fs = require('fs');
-        if (fs.existsSync(mffDirectory.name + '.set')) {
-            callback(
-                true,
-                'SET file already exists!',
-                {
-                    path: mffDirectory.name + '.set',
-                    name: mffDirectory.name,
-                    task: mffDirectory.task,
-                    run: mffDirectory.run,
-                }
-            );
-            this.process = null;
-            return;
+        const mffDir = path.dirname(mffDirectory[0].path);
+        const jsonFile = `${mffDir}/files.json`;
+        const fileNames = [];
+        for (const dir of mffDirectory) {
+            if (mffDir !== path.dirname(dir.path)) {
+              console.log('DIFFERENT DIRS: TODO HANDLE');
+            }
+            fileNames.push(path.basename(dir.path));
+            // await myAPI.convertMFFToSET(dir, callback);
         }
+        try {
+            fs.writeFileSync(jsonFile,
+                JSON.stringify(fileNames))
+        } catch (e) {
+            console.log(e);
+        }
+
+        // This should maybe move to the json file creation section
+        // to not add the file if the SET file already exists.
+        // if (fs.existsSync(mffDirectory.name + '.set')) {
+        //     callback(
+        //         true,
+        //         'SET file already exists!',
+        //         {
+        //             path: mffDirectory.name + '.set',
+        //             name: mffDirectory.name,
+        //             task: mffDirectory.task,
+        //             run: mffDirectory.run,
+        //         }
+        //     );
+        //     this.process = null;
+        //     return;
+        // }
         
-        this.process = execFile(pathToService, [mffDirectory.path], (error, stdout, stderr) => {
-            if (fs.existsSync(mffDirectory.name + '.set')) {
-                callback(
-                    true,
-                    'SET file created!',
-                    {
-                        path: mffDirectory.name + '.set',
-                        name: mffDirectory.name,
-                        task: mffDirectory.task,
-                        run: mffDirectory.run,
-                    }
-                );
-            } else {
+        this.process = execFile(pathToService, [mffDir, mffDir, jsonFile], (error, stdout, stderr) => {
+            const setFiles = [];
+            let conversionError = false;
+            for (const dir of mffDirectory) {
+                 if (fs.existsSync(dir.name + '.set')) {
+                     setFiles.push({
+                        path: dir.name + '.set',
+                        name: dir.name,
+                        task: dir.task,
+                        run: dir.run,
+                     });
+                 } else {
+                     conversionError = true;
+                     break;
+                 }
+            }
+
+            if (conversionError) {
                 callback(
                     false,
                     'Could not convert MFF file.',
+                    [],
                     {}
                 );
+            } else {
+                let flags = {};
+                fs.readFile(`${mffDir}/flagchecks.json`, 'utf8',
+                    (err, jsonString) => {
+                        console.log('read file', jsonString, err);
+                        flags = JSON.parse(jsonString);
+                         callback(
+                            true,
+                            'SET file created!',
+                            setFiles,
+                            flags
+                        );
+                    });
+
             }
         });
   }

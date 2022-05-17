@@ -7,6 +7,7 @@
     "@fortawesome/fontawesome-free": "^5.15.4",
     "electron-log": "^4.3.5",
     "electron-store": "^8.0.0",
+    "fs": "0.0.1-security",
     "keytar": "^7.7.0",
     "papaparse": "^5.3.1",
     "prop-types": "^15.7.2",
