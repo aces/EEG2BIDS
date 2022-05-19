@@ -12,20 +12,10 @@ const path = require('path');
 // Components
 import {
   DirectoryInput,
-  FileInput,
-  NumberInput,
-  RadioInput,
   TextInput,
   SelectInput,
-  TextareaInput,
-  MultiDirectoryInput,
+  MultiDirectoryInput, TextareaInput,
 } from './elements/inputs';
-import {
-  AuthenticationMessage,
-  AuthenticationCredentials,
-} from './elements/authentication';
-import Switch from 'react-switch';
-import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -34,6 +24,7 @@ import '../css/Converter.css';
 
 // Display Loading, Success, Error
 import Modal from './elements/modal';
+import ConversionFlags from '../ConversionFlags';
 
 /**
  * Configuration - the Data Configuration component.
@@ -96,6 +87,11 @@ const Configuration = (props) => {
     participantHand: 'n/a',
     anonymize: false,
     subjectID: '',
+    flags: {
+      errors: [],
+      success: [],
+    },
+    reasons: {},
   };
 
   const state = {};
@@ -464,10 +460,23 @@ const Configuration = (props) => {
     return;
   };
 
-  const formatWarning = (msg) => {
+  const reasonUpdate = (name, value) => {
+    state.reasons.set((state) => {
+      state[name] = value;
+      return state;
+    });
+  };
+
+  const formatWarning = (msg, key) => {
+    const value = state.reasons.get[key] ? state.reasons.get[key] : '';
     return (
       <>
         <span className='warning'>&#x26A0;</span> {msg}
+        <TextareaInput
+          name={key}
+          value={value}
+          onUserInput={reasonUpdate}
+        />
       </>
     );
   };
@@ -481,493 +490,38 @@ const Configuration = (props) => {
     );
   };
 
-  const validateData = () => {
-    const result = [];
-
-    // eegData
-    let eegDataStatus = '';
-    if (state.eegData.get?.error) {
-      eegDataStatus = formatError(state.eegData.get.error);
-    } else if (
-      state.eegData.get && state.eegData.get?.files?.length > 0
-    ) {
-      eegDataStatus = formatPass('EEG data file(s): ' +
-        state.eegData.get.files.map(
-            (eegFile) => eegFile['name'],
-        ).join(', '),
-      );
-    } else {
-      eegDataStatus = formatError('No EEG file selected');
+  const reviewWarnings = () => {
+    if (state.flags.errors.length === 0) {
+      return <></>;
     }
-    result.push(<div key='eegDataStatus'>{eegDataStatus}</div>);
 
-
-    // Data modality
-    let modalityStatus = '';
-    if (appContext.getFromTask('modality')) {
-      modalityStatus = formatPass(
-          `Modality: ${appContext.getFromTask('modality')}`,
-      );
-    } else {
-      modalityStatus = formatError('No modality selected');
-    }
-    result.push(<div key='modalityStatus'>{modalityStatus}</div>);
-
-    // events
-    let eventsStatus = '';
-    if (!appContext.getFromTask('eventFiles') ||
-      Object.keys(appContext.getFromTask('eventFiles'))?.length < 1
-    ) {
-      eventsStatus = formatWarning('No events.tsv selected ' +
-      '(for additional events)');
-    } else {
-      // check if any TSV file is invalid
-      if (state.invalidEventFiles.get?.length > 0) {
-        eventsStatus = formatError(
-            `Event file(s) ${state.invalidEventFiles.get.join(', ')}
-            are not valid TSV file(s).`,
-        );
+    const listItems = state.flags.errors.map((err) => {
+      if (err.reason) {
+        return formatError(error.label);
       } else {
-        let match = true;
-
-        // Check that the events files are appropriatly named
-        appContext.getFromTask('eventFiles').map((eventFile) => {
-          if ('files' in appContext.getFromTask('eegData') &&
-          !appContext.getFromTask('eegData')?.files.find(
-              (eegFile) => {
-                const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
-                const eegFileName = eegFile['name'].toLowerCase()
-                    .replace(re, '')
-                    .replace('.' + state.fileFormat.get, '');
-
-                const eegFileNameAlt = eegFile['name'].toLowerCase()
-                    .replace('.' + state.fileFormat.get, '');
-
-                const eventFileName = eventFile['name'].toLowerCase()
-                    .replace('_events.tsv', '').replace('.tsv', '');
-
-                return (
-                  eegFileName === eventFileName ||
-                  eegFileNameAlt === eventFileName
-                );
-              },
-          )) {
-            match = false;
-            eventsStatus = formatError(
-                `Event file ${eventFile['name']}
-                is not matching any eeg file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          eventsStatus = formatPass('Event file(s): ' +
-              appContext.getFromTask('eventFiles').map(
-                  (eventFile) => eventFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(<div key='eventsStatus'>{eventsStatus}</div>);
-
-
-    // annotations TSV
-    let annotationsTSVStatus = '';
-    if (!appContext.getFromTask('annotationsTSV') ||
-      Object.keys(appContext.getFromTask('annotationsTSV'))?.length < 1
-    ) {
-      annotationsTSVStatus = formatWarning('No annotations.tsv selected');
-    } else {
-      // check if any TSV file is invalid
-      if (state.invalidAnnotationsTSV.get?.length > 0) {
-        annotationsTSVStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsTSV.get.join(', ')}
-            are not valid TSV file(s).`,
-        );
-      } else {
-        let match = true;
-
-        // Check that the events files are appropriatly named
-        appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-          if (!appContext.getFromTask('eegData')['files'].find(
-              (eegFile) => {
-                const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
-                const eegFileName = eegFile['name'].toLowerCase()
-                    .replace(re, '')
-                    .replace('.' + state.fileFormat.get, '');
-
-                const eegFileNameAlt = eegFile['name'].toLowerCase()
-                    .replace('.' + state.fileFormat.get, '');
-
-                const annotationsTSVFileName = annotationsTSVFile['name']
-                    .toLowerCase()
-                    .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                return (
-                  eegFileName === annotationsTSVFileName ||
-                  eegFileNameAlt === annotationsTSVFileName
-                );
-              },
-          )) {
-            match = false;
-            annotationsTSVStatus = formatError(
-                `Annotation file ${annotationsTSVFile['name']}
-                is not matching any eeg file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
-              appContext.getFromTask('annotationsTSV').map(
-                  (annotationsTSVFile) => annotationsTSVFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(<div key='annotationsTSVStatus'>{annotationsTSVStatus}</div>);
-
-    // annotations JSON
-    let annotationsJSONStatus = '';
-
-    //if (appContext.getFromTask('annotationsTSV') &&
-    //  Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
-    //) {
-    if (!appContext.getFromTask('annotationsJSON') ||
-      Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
-    ) {
-      annotationsJSONStatus = formatWarning('No annotations.json selected');
-    } else {
-      // check if any JSON file is invalid
-      if (state.invalidAnnotationsJSON.get?.length > 0) {
-        annotationsJSONStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsJSON.get.join(', ')}
-            are not valid JSON file(s).`,
-        );
-      } else {
-        let match = true;
-        // Check that the events files are appropriatly named
-        appContext.getFromTask('annotationsJSON')
-            .map((annotationsJSONFile) => {
-              if (!appContext.getFromTask('eegData')['files'].find(
-                  (eegFile) => {
-                    const re = new RegExp('_i?eeg.'+ state.fileFormat.get, 'i');
-                    const eegFileName = eegFile['name'].toLowerCase()
-                        .replace(re, '')
-                        .replace('.' + state.fileFormat.get, '');
-
-                    const eegFileNameAlt = eegFile['name'].toLowerCase()
-                        .replace('.' + state.fileFormat.get, '');
-
-                    const annotationsJSONFileName =
-                        annotationsJSONFile['name'].toLowerCase()
-                            .replace('_annotations.json', '')
-                            .replace('.json', '');
-
-                    return (
-                      eegFileName === annotationsJSONFileName ||
-                      eegFileNameAlt === annotationsJSONFileName
-                    );
-                  },
-              )) {
-                match = false;
-                annotationsJSONStatus = formatError(
-                    `Annotation file ${annotationsJSONFile['name']}
-                  is not matching any eeg file names.`,
-                );
-              }
-            });
-
-        if (match) {
-          annotationsJSONStatus = formatPass(
-              'Annotations JSON file(s): ' +
-              appContext.getFromTask('annotationsJSON').map(
-                  (annotationsJSONFile) => annotationsJSONFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(
-        <div key='annotationsJSONStatus'>
-          {annotationsJSONStatus}
-        </div>,
-    );
-
-    // bidsDirectory
-    let bidsDirectoryStatus = '';
-    if (appContext.getFromTask('bidsDirectory')) {
-      bidsDirectoryStatus = formatPass('BIDS output directory: ' +
-        appContext.getFromTask('bidsDirectory'),
-      );
-    } else {
-      bidsDirectoryStatus = formatError('No BIDS output folder selected');
-    }
-    result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
-
-    // LORIS compliant
-    let LORIScompliantStatus = '';
-    if (typeof appContext.getFromTask('LORIScompliant') == 'boolean') {
-      LORIScompliantStatus = formatPass(
-          `Data loaded in LORIS: ${appContext.getFromTask('LORIScompliant')}`,
-      );
-    } else {
-      LORIScompliantStatus = formatError(
-          'Select if the data will be loaded into LORIS.',
-      );
-    }
-    result.push(<div key='LORIScompliantStatus'>{LORIScompliantStatus}</div>);
-
-    return result;
-  };
-
-  const validateRecordingParameters = () => {
-    const result = [];
-    let ignoredKeyFound = false;
-
-    if (!appContext.getFromTask('bidsMetadata')) {
-      return formatWarning('No EEG Parameter metadata file selected');
-    }
-
-    if (state.invalidBidsMetadataFile.get?.length > 0) {
-      return formatError(
-          `EEG Parameter metadata file(s) 
-            ${state.invalidBidsMetadataFile.get.join(', ')}
-            are not valid JSON file(s).`,
-      );
-    }
-
-    if ('error' in appContext.getFromTask('bidsMetadata')) {
-      return formatWarning(appContext.getFromTask('bidsMetadata')['error']);
-    }
-
-    const metadata = appContext.getFromTask('bidsMetadata')?.metadata;
-    const ignoredKeys = appContext.getFromTask('bidsMetadata')?.ignored_keys;
-
-    if (!metadata || !ignoredKeys || metadata.length < 1) {
-      return formatWarning(
-          'An error occured while processing ' +
-          'the recording parameters file selected.',
-      );
-    }
-
-    Object.keys(metadata).map((key) => {
-      if (ignoredKeys.indexOf(key) > -1) {
-        ignoredKeyFound = true;
-        result.push(
-            <div key={key}>
-              {formatWarning(`${key}: ${metadata[key]}`)}
-            </div>,
-        );
-      } else {
-        result.push(
-            <div
-              key={key}
-              style={{paddingLeft: '32px'}}
-            >
-              {key}: {typeof metadata[key] == 'object' ?
-                JSON.stringify(metadata[key]) :
-                metadata[key]
-              }
-            </div>,
-        );
+        return formatWarning(err.label);
       }
     });
 
-    if (ignoredKeyFound) {
-      result.push(
-          <p key="message">
-            <span className='warning'>&#x26A0;</span>
-            Note: invalid or extra parameters, as well as
-            parameters with empty values are ignored.
-          </p>,
-      );
-    }
-
-    return result;
+    const value = state.reasons.get['additional'] ?
+        state.reasons.get['additional'] : '';
+    return (
+      <div className='small-pad'>
+        <b>Review your warning flags:</b>
+        {listItems}
+        <TextareaInput
+          name={'additional'}
+          label={'Optional: Please provide additional reasoning ' +
+            'as to why issues happened if not already defined above:'}
+          value={value}
+          onUserInput={reasonUpdate}
+        />
+      </div>
+    );
   };
 
-  const validateRecordingDetails = () => {
-    const result = [];
-
-    // taskName
-    let taskNameStatus = '';
-    const taskName = appContext.getFromTask('taskName');
-    if (taskName) {
-      /* if (taskName.indexOf('-') > -1 ||
-          taskName.indexOf('_') > -1 ||
-          taskName.indexOf('/') > -1) {
-        taskNameStatus = formatError(
-            'Task Name has invalid characters (-, /, _)',
-        );
-      } else {
-        taskNameStatus = formatPass(
-            `Task Name: ${appContext.getFromTask('taskName')}`,
-        );
-      } */
-      taskNameStatus = formatPass(
-          `Task Name: ${appContext.getFromTask('taskName')}`,
-      );
-    } else {
-      taskNameStatus = formatError('Task Name is not specified');
-    }
-    result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
-
-    if (appContext.getFromTask('LORIScompliant')) {
-      // siteID
-      let siteIDStatus = '';
-      if (appContext.getFromTask('siteID')) {
-        siteIDStatus = formatPass(
-            `Site: ${appContext.getFromTask('siteID')}`,
-        );
-      } else {
-        siteIDStatus = formatError('Site is not specified');
-      }
-      result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
-
-      // projectID
-      let projectIDStatus = '';
-      if (appContext.getFromTask('projectID')) {
-        projectIDStatus = formatPass(
-            `Project: ${appContext.getFromTask('projectID')}`,
-        );
-      } else {
-        projectIDStatus = formatError('Project is not specified');
-      }
-      result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
-
-      // subprojectID
-      let subprojectIDStatus = '';
-      if (appContext.getFromTask('subprojectID')) {
-        subprojectIDStatus = formatPass(
-            `Subproject: ${appContext.getFromTask('subprojectID')}`,
-        );
-      } else {
-        projectIDStatus = formatError('Subproject is not specified');
-      }
-      result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
-    }
-
-    // session
-    let sessionStatus = '';
-    if (appContext.getFromTask('session')) {
-      if (
-        appContext.getFromTask('session').indexOf(' ') >= 0 ||
-        appContext.getFromTask('session').indexOf('-') >= 0
-      ) {
-        sessionStatus = formatError('Session is containing a dash/space.');
-      } else {
-        sessionStatus = formatPass(
-            `Session: ${appContext.getFromTask('session')}`,
-        );
-      }
-    } else {
-      sessionStatus = formatError('Session is not specified');
-    }
-    result.push(<div key='sessionStatus'>{sessionStatus}</div>);
-
-    // lineFreq
-    let lineFreqStatus = '';
-    if (appContext.getFromTask('lineFreq')) {
-      lineFreqStatus = formatPass(
-          `Powerline Frequency: ${appContext.getFromTask('lineFreq')}`,
-      );
-    } else {
-      lineFreqStatus = formatWarning('Powerline frequency is not specified');
-    }
-    result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
-
-    // reference
-    let referenceStatus = '';
-    if (appContext.getFromTask('reference')) {
-      referenceStatus = formatPass(
-          `Reference: ${appContext.getFromTask('reference')}`,
-      );
-    } else {
-      referenceStatus = formatError('Reference is not specified');
-    }
-    result.push(<div key='referenceStatus'>{referenceStatus}</div>);
-
-    return result;
-  };
-
-  const validateParticipantDetails = () => {
-    const result = [];
-
-    if (state.participantEntryMode.get == 'existing_loris') {
-      // participantPSCID
-      let participantPSCIDStatus = '';
-
-      // participantCandID
-      let participantCandIDStatus = '';
-
-      if (!appContext.getFromTask('participantPSCID')) {
-        participantPSCIDStatus = formatError(
-            'LORIS PSCID is not specified',
-        );
-      } else {
-        participantPSCIDStatus = formatPass(
-            `LORIS PSCID: ${state.participantPSCID.get}`,
-        );
-      }
-
-      if (!appContext.getFromTask('participantCandID')) {
-        participantCandIDStatus = formatError(
-            'LORIS DCCID is not specified',
-        );
-      } else if (appContext.getFromTask('participantCandID')?.error) {
-        participantCandIDStatus = formatError(
-            appContext.getFromTask('participantCandID').error,
-        );
-      } else {
-        participantCandIDStatus = formatPass(
-            `LORIS DCCID: ${state.participantCandID.get}`,
-        );
-      }
-
-      result.push(
-          <div key='participantPSCIDStatus'>
-            {participantPSCIDStatus}
-          </div>,
-      );
-
-      result.push(
-          <div key='participantCandIDStatus'>
-            {participantCandIDStatus}
-          </div>,
-      );
-    } else {
-      // participantID
-      let participantIDStatus = '';
-      if (state.participantID.get) {
-        participantIDStatus = formatPass(
-            `Participant ID: ${state.participantID.get}`,
-        );
-      } else {
-        participantIDStatus = formatError(
-            'Participant ID is not specified',
-        );
-      }
-      // participantCandID
-      // let participantCandID;
-      // if (state.participantCandID.get) {
-      //   participantCandID = formatPass(
-      //       `DSCID: ${state.participantCandID.get}`,
-      //   );
-      // } else {
-      //   participantCandID = formatError(
-      //       'DSCID is unknown',
-      //   );
-      // }
-      result.push(
-          <div key='participantID'>{participantIDStatus}</div>,
-          // <div key='participantCandID'>{participantCandID}</div>,
-      );
-    }
-
-    return result;
+  const reviewSuccessFlags = () => {
+    return (<></>);
   };
 
   const validate = () => {
@@ -1220,7 +774,24 @@ const Configuration = (props) => {
       const callback = (success, message, files, flags) => {
         if (success) {
           if (files.length === dirs.length) {
-            console.log(flags);
+            const validationFlags = {
+              errors: [],
+              success: [],
+            };
+            Object.keys(flags).forEach((key) => {
+              const flagVal = ConversionFlags[key].flagCondition;
+              if (flags[key] === flagVal) {
+                validationFlags.errors.push({
+                  flag: key,
+                  label: ConversionFlags[key].warning,
+                  reason: ConversionFlags[key].reason,
+                });
+              } else {
+                validationFlags.success.push(ConversionFlags[key].pass);
+              }
+            });
+            state.flags.set(validationFlags);
+
             socketContext.emit('get_set_data', {files: files});
             setMffModalText((prevState) => {
               return {...prevState, ['mode']: 'success'};
@@ -1947,21 +1518,10 @@ const Configuration = (props) => {
           MFF to BIDS
         </span>
         <div className='info report'>
+          {reviewWarnings()}
           <div className='small-pad'>
-            <b>Review your data and metadata:</b>
-            {validateData()}
-          </div>
-          <div className='small-pad'>
-            <b>Review your recording details:</b>
-            {validateRecordingDetails()}
-          </div>
-          <div className='small-pad'>
-            <b>Review your participant details:</b>
-            {validateParticipantDetails()}
-          </div>
-          <div className='small-pad'>
-            <b>Review your uploaded EEG Parameter metadata:</b>
-            <div>{validateRecordingParameters()}</div>
+            <b>Review your success flags:</b>
+            {reviewSuccessFlags()}
           </div>
 
           {error ?
