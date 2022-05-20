@@ -381,12 +381,20 @@ const Configuration = (props) => {
   }, [socketContext]);
 
   let error = false;
-  const formatError = (msg) => {
-    error = true;
+  const formatError = (msg, key) => {
+    const value = state.reasons.get[key] ? state.reasons.get[key] : '';
+    if (value === '') {
+      error = true;
+    }
     return (
-      <>
+      <div key={key} className={'flags'}>
         <span className='error'>&#x274C;</span> {msg}
-      </>
+        <TextareaInput
+          name={key}
+          value={value}
+          onUserInput={reasonUpdate}
+        />
+      </div>
     );
   };
 
@@ -463,43 +471,39 @@ const Configuration = (props) => {
   const reasonUpdate = (name, value) => {
     state.reasons.set((state) => {
       state[name] = value;
-      return state;
+      return {
+        ...state,
+      };
     });
   };
 
   const formatWarning = (msg, key) => {
-    const value = state.reasons.get[key] ? state.reasons.get[key] : '';
     return (
-      <>
+      <div key={key} className={'flags'}>
         <span className='warning'>&#x26A0;</span> {msg}
-        <TextareaInput
-          name={key}
-          value={value}
-          onUserInput={reasonUpdate}
-        />
-      </>
+      </div>
     );
   };
 
-  const formatPass = (msg) => {
+  const formatPass = (msg, key) => {
     return (
-      <>
+      <div className={'flags'} key={key}>
         <span className='checkmark'>&#x2714;</span>
         {msg}
-      </>
+      </div>
     );
   };
 
   const reviewWarnings = () => {
-    if (state.flags.errors.length === 0) {
+    if (state.flags.get.errors.length === 0) {
       return <></>;
     }
 
-    const listItems = state.flags.errors.map((err) => {
+    const listItems = state.flags.get.errors.map((err) => {
       if (err.reason) {
-        return formatError(error.label);
+        return formatError(err.label, err.flag);
       } else {
-        return formatWarning(err.label);
+        return formatWarning(err.label, err.flag);
       }
     });
 
@@ -521,7 +525,15 @@ const Configuration = (props) => {
   };
 
   const reviewSuccessFlags = () => {
-    return (<></>);
+    const listItems = state.flags.get.errors.map((err) => {
+      return formatPass(err.label, err.flag);
+    });
+    return (
+      <div className='small-pad'>
+        <b>Review your success flags:</b>
+        {listItems}
+      </div>
+    );
   };
 
   const validate = () => {
@@ -787,7 +799,10 @@ const Configuration = (props) => {
                   reason: ConversionFlags[key].reason,
                 });
               } else {
-                validationFlags.success.push(ConversionFlags[key].pass);
+                validationFlags.success.push({
+                  flag: key,
+                  label: ConversionFlags[key].pass,
+                });
               }
             });
             state.flags.set(validationFlags);
@@ -813,7 +828,6 @@ const Configuration = (props) => {
 
       const myAPI = window['myAPI']; // from public/preload.js
       const mffDir = path.dirname(dirs[0].path);
-      console.log(mffDir);
       const fileNames = [];
       for (const dir of dirs) {
         if (mffDir !== path.dirname(dir.path)) {
@@ -1223,8 +1237,6 @@ const Configuration = (props) => {
   const fileFormatAlt = state.fileFormatUploaded.get.toUpperCase();
   const acceptedFileFormats = '.' + state.fileFormatUploaded.get +
     ',.' + fileFormatAlt;
-
-  console.log(state.mffDirectories.get);
 
   if (props.appMode === 'Configuration') {
     return (

@@ -32,3 +32,6 @@ textarea {
     color: #064785;
     margin: 0 5px;
 }
+div > .flags {
+    margin-top: 20px;
+}
