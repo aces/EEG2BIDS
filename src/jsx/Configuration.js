@@ -513,13 +513,15 @@ const Configuration = (props) => {
       <div className='small-pad'>
         <b>Review your warning flags:</b>
         {listItems}
-        <TextareaInput
-          name={'additional'}
-          label={'Optional: Please provide additional reasoning ' +
-            'as to why issues happened if not already defined above:'}
-          value={value}
-          onUserInput={reasonUpdate}
-        />
+        <div className={'flags'}>
+          <TextareaInput
+            name={'additional'}
+            label={'Optional: Please provide additional reasoning ' +
+              'as to why issues happened if not already defined above:'}
+            value={value}
+            onUserInput={reasonUpdate}
+          />
+        </div>
       </div>
     );
   };
@@ -783,8 +785,9 @@ const Configuration = (props) => {
       // Start working on file conversion-
       updateMessage({'error': 'Working on converting files...'});
 
-      const callback = (success, message, files, flags) => {
+      const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
+          appContext.setTask('bidsDirectory', bidsDir);
           if (files.length === dirs.length) {
             const validationFlags = {
               errors: [],
@@ -827,15 +830,6 @@ const Configuration = (props) => {
       };
 
       const myAPI = window['myAPI']; // from public/preload.js
-      const mffDir = path.dirname(dirs[0].path);
-      const fileNames = [];
-      for (const dir of dirs) {
-        if (mffDir !== path.dirname(dir.path)) {
-          console.log('DIFFERENT DIRS: TODO HANDLE');
-        }
-        fileNames.push(path.basename(dir.path));
-        // await myAPI.convertMFFToSET(dir, callback);
-      }
       await myAPI.convertMFFToSET(dirs, callback);
     }
   };
@@ -1288,18 +1282,6 @@ const Configuration = (props) => {
         </span>
         <div className='container'>
           <div className='info half'>
-            <div className='small-pad'>
-              <TextInput id='taskName'
-                name='taskName'
-                required={true}
-                label='Task Name'
-                value={state.taskName.get}
-                onUserInput={onUserInput}
-                bannedCharacters={['-', '_', ' ', '/']}
-                help='Task, stimulus, state or experimental context.
-                See BIDS specification for more information.'
-              />
-            </div>
             {state.LORIScompliant.get &&
               <>
                 <div className='small-pad'>
@@ -1343,37 +1325,6 @@ const Configuration = (props) => {
                         placeholder='n/a'
                         readonly={true}
                         value={state.projectID.get}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
-                </div>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#subprojectID_API'>
-                    <b>
-                      Subproject <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
-                        data-tip='Subproject or population cohort'
-                      ></i>
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    <SelectInput id='subprojectID_API'
-                      name='subprojectID_API'
-                      label=''
-                      required={true}
-                      value={state.subprojectID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.subprojectOptions.get)}
-                      onUserInput={onUserInput}
-                    />
-                    {!state.subprojectUseAPI.get &&
-                      <TextInput id='subprojectID_Manual'
-                        name='subprojectID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        value={state.subprojectID.get}
                         onUserInput={onUserInput}
                       />
                     }
@@ -1487,16 +1438,6 @@ const Configuration = (props) => {
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
               error={checkFileError('VEP')}
-            />
-          </div>
-          <div className='small-pad'>
-            <DirectoryInput id='bidsDirectory'
-              name='bidsDirectory'
-              required={true}
-              label='BIDS output folder'
-              placeholder={state.bidsDirectory.get}
-              onUserInput={onUserInput}
-              help='Where the BIDS-compliant folder will be created'
             />
           </div>
         </div>

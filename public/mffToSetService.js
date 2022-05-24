@@ -97,7 +97,8 @@ module.exports = class MFFToSETService {
                     false,
                     'Could not convert MFF file.',
                     [],
-                    {}
+                    {},
+                    ''
                 );
             } else {
                 let flags = {};
@@ -109,7 +110,8 @@ module.exports = class MFFToSETService {
                             true,
                             'SET file created!',
                             setFiles,
-                            flags
+                            flags,
+                            mffDir
                         );
                     });
 
