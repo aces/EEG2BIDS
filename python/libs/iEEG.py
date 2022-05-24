@@ -186,7 +186,8 @@ class Converter:
                 run=((eegRun['run']) if eegRun['run'] != -1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
-                line_freq=data['line_freq']
+                line_freq=data['line_freq'],
+                outputFilename=data['outputFilename']
             )
 
     @staticmethod
@@ -212,7 +213,8 @@ class Converter:
                 run=None,
                 ch_type='seeg',
                 read_only=False,
-                line_freq='n/a'):
+                line_freq='n/a',
+                outputFilename='bids_output'):
         file = eeg_run['eegFile']
 
         raw = ''
@@ -297,8 +299,8 @@ class Converter:
             raw.info['line_freq'] = line_freq
 
             try:
-                os.makedirs(bids_directory + os.path.sep + output_time, exist_ok=True)
-                bids_directory = bids_directory + os.path.sep + output_time
+                os.makedirs(bids_directory + os.path.sep + outputFilename, exist_ok=True)
+                bids_directory = bids_directory + os.path.sep + outputFilename
                 bids_root = bids_directory
 
                 bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, run=run)

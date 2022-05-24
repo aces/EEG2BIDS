@@ -26,7 +26,7 @@ class Modifier:
     def get_bids_root_path(self):
         return os.path.join(
             self.data['bids_directory'],
-            self.data['output_time']
+            self.data['outputFilename']
         )
 
     def get_eeg_path(self, relative=False):

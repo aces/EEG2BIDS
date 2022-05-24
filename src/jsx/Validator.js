@@ -67,14 +67,14 @@ const Validator = (props) => {
   const getBIDSDir = () => {
     if (validationMode == 'lastRun') {
       if (!appContext.getFromTask('bidsDirectory') ||
-          !appContext.getFromTask('output_time')
+          !appContext.getFromTask('outputFilename')
       ) {
         console.error('No bidsDirectory or output_time.');
         return null;
       } else {
         return [
           appContext.getFromTask('bidsDirectory') ?? '',
-          appContext.getFromTask('output_time') ?? '',
+          appContext.getFromTask('outputFilename') ?? '',
         ].filter(Boolean).join('/');
       }
     } else {

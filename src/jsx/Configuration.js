@@ -205,6 +205,7 @@ const Configuration = (props) => {
         taskName: appContext.getFromTask('taskName') ?? '',
         reference: appContext.getFromTask('reference') ?? '',
         subject_id: appContext.getFromTask('subject_id') ?? '',
+        outputFilename: appContext.getFromTask('outputFilename') ?? '',
       });
     }
   };
@@ -787,7 +788,12 @@ const Configuration = (props) => {
 
       const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
+          const pscid = state.participantPSCID.get;
+          const candID = state.participantCandID.get;
+          const session = state.session.get;
+          const outputFilename = `${pscid}_${candID}_${session}_bids`;
           appContext.setTask('bidsDirectory', bidsDir);
+          appContext.setTask('outputFilename', outputFilename);
           if (files.length === dirs.length) {
             const validationFlags = {
               errors: [],
