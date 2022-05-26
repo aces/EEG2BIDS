@@ -37,16 +37,13 @@ def connect(sid, environ):
     if environ['REMOTE_ADDR'] != '127.0.0.1':
         return False  # extra precaution.
 
-def tarfile_bids_thread(bids_directory):
+def tarfile_bids_thread(data):
     tar_handler.set_stage('compressing')
-    tar_handler.package(bids_directory)
-    output_filename = bids_directory + '.tar.gz'
+    tar_handler.package(data['bidsDirectory'])
+    output_filename = data['bidsDirectory'] + '.tar.gz'
     tar_handler.set_stage('loris_upload')
-    loris_api.upload_eeg(output_filename)
-    response = {
-        'compression_time': 'example_5mins'
-    }
-    return eventlet.tpool.Proxy(response)
+    resp = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
+    return eventlet.tpool.Proxy(resp)
 
 @sio.event
 def get_progress(sid):
@@ -63,13 +60,15 @@ def get_progress(sid):
     sio.emit('progress', progress_info)
 
 @sio.event
-def tarfile_bids(sid, bids_directory):
-    response = eventlet.tpool.execute(tarfile_bids_thread, bids_directory)
-    send = {
-        'compression_time': response['compression_time']
-    }
+def tarfile_bids(sid, data):
+    response = eventlet.tpool.execute(tarfile_bids_thread, data)
 
-    sio.emit('response', send)
+    resp = {
+        'type': 'upload',
+        'code': response.status_code,
+        'body': response.json()
+    }
+    sio.emit('response', resp)
 
 
 @sio.event

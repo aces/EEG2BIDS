@@ -216,11 +216,11 @@ class LorisAPI:
         # Update the upload progress
         self.upload_progress = monitor.bytes_read / monitor.len
 
-    def upload_eeg(self, filename):
+    def upload_eeg(self, filename, metaData, candID, pscid, visit):
         print('upload eeg has ran')
         self.upload_progress = 0
         e = MultipartEncoder(
-            fields={'field0': 'value', 'field1': 'value',
+            fields={'metaData': json.dumps(metaData), 'candID': candID, 'pscid': pscid, 'visit': visit,
                     'eegFile': (filename, open(filename, 'rb'), 'application/x-tar')}
         )
         m = MultipartEncoderMonitor(e, self.upload_callback)

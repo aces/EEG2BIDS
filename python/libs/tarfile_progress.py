@@ -33,12 +33,13 @@ class TarFile(tarfile.TarFile):
         '''
 
         self.__progresscallback = None
+        self.total_size = 0
 
         tarfile.TarFile.__init__(self, name, mode, fileobj, format,
                                  tarinfo, dereference, ignore_zeros, encoding,
                                  errors, pax_headers, debug, errorlevel)
 
-    def add(self, name, arcname=None, recursive=True, filter=None, progress=None):
+    def add(self, name, arcname=None, recursive=True, filter=None, progress=None, calculateSize=False):
         '''
         Add the file *name* to the archive. *name* may be any type of file (directory,
         fifo, symbolic link, etc.). If given, *arcname* specifies an alternative name
@@ -72,11 +73,27 @@ class TarFile(tarfile.TarFile):
             affected when *exclude* is ultimately removed.
         '''
 
+        if calculateSize:
+            total_size = 0
+            for dirpath, dirnames, filenames in os.walk(name):
+                for f in filenames:
+                    fp = os.path.join(dirpath, f)
+                    # skip if it is symbolic link
+                    if not os.path.islink(fp):
+                        total_size += os.path.getsize(fp)
+            self.total_size = total_size
+            self.read_bytes = 0
         if progress is not None:
             progress(0)
             self.__progresscallback = progress
 
         return tarfile.TarFile.add(self, name, arcname=arcname, recursive=recursive, filter=filter)
+
+    def progress_update(self, bytes_read):
+        if (self.total_size > 0):
+            self.read_bytes = self.read_bytes + bytes_read
+            progress = (self.read_bytes * 100) / self.total_size
+            self.__progresscallback(progress)
 
     def addfile(self, tarinfo, fileobj=None, progress=None):
         """
@@ -92,7 +109,7 @@ class TarFile(tarfile.TarFile):
             self.__progresscallback = progress
 
         if fileobj is not None:
-            fileobj = filewrapper(fileobj, tarinfo, self.__progresscallback)
+            fileobj = filewrapper(fileobj, tarinfo, self.progress_update)
 
         result = tarfile.TarFile.addfile(self, tarinfo, fileobj)
 
@@ -110,7 +127,7 @@ class TarFile(tarfile.TarFile):
                 stats = os.fstat(self.fileobj.fileno())
                 sudoinfo = sudotarinfo()
                 sudoinfo.size = stats.st_size
-                self.fileobj = filewrapper(self.fileobj, sudoinfo, progress)
+                self.fileobj = filewrapper(self.fileobj, sudoinfo, self.progress_update)
                 self.__progresscallback = None
             except:
                 # This means that we have a stream or similar. So we will report
@@ -154,7 +171,7 @@ class TarFile(tarfile.TarFile):
         fileobj = tarfile.TarFile.extractfile(self, member)
 
         if fileobj is not None:
-            fileobj = filewrapper(fileobj, member, self.__progresscallback)
+            fileobj = filewrapper(fileobj, member, self.progress_update)
 
         return fileobj
 
@@ -185,13 +202,17 @@ class filewrapper(object):
         Call this on every read to update our progress through the file
         '''
         if self._progress is not None:
-            self._totalread += length
-
-            progress = (self._totalread * 100) / self._size
-
-            if progress > self._lastprogress and progress <= 100:
-                self._progress(progress)
-                self._lastprogress = progress
+            if self._size < self._totalread + length:
+                self._progress(self._size - self._totalread)
+            else:
+                self._progress(length)
+                self._totalread += length
+            #
+            # progress = (self._totalread * 100) / self._size
+            #
+            # if progress > self._lastprogress and progress <= 100:
+            #     self._progress(length)
+            #     self._lastprogress = progress
 
     def read(self, size=-1):
         data = self._fileobj.read(size)

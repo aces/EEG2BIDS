@@ -175,6 +175,7 @@ const Configuration = (props) => {
       return {...prevState, ['mode']: 'loading'};
     });
     setModalVisible(true);
+    appContext.setTask('reasons', state.reasons.get);
 
     if (appContext.getFromTask('eegData')?.['files'].length > 0) {
       socketContext.emit('eeg_to_bids', {
@@ -757,11 +758,11 @@ const Configuration = (props) => {
 
       // if no MFF files, do nothing.
       const dirs = [];
+      const exclude = {};
       for (const key in state.mffDirectories.get) {
-        if (state.mffDirectories.get[key][0]['path'] === '') {
-          continue;
-        }
-        if (state.mffDirectories.get[key].length === 1) {
+        if (state.mffDirectories.get[key][0]['exclude']) {
+          exclude[key] = state.mffDirectories.get[key][0]['reason'];
+        } else if (state.mffDirectories.get[key].length === 1) {
           dirs.push({
             ...state.mffDirectories.get[key][0],
             task: key,
@@ -786,6 +787,8 @@ const Configuration = (props) => {
       // Start working on file conversion-
       updateMessage({'error': 'Working on converting files...'});
 
+      appContext.setTask('exclude', exclude);
+
       const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
           const pscid = state.participantPSCID.get;
@@ -794,6 +797,7 @@ const Configuration = (props) => {
           const outputFilename = `${pscid}_${candID}_${session}_bids`;
           appContext.setTask('bidsDirectory', bidsDir);
           appContext.setTask('outputFilename', outputFilename);
+          appContext.setTask('flags', flags);
           if (files.length === dirs.length) {
             const validationFlags = {
               errors: [],
@@ -1264,21 +1268,6 @@ const Configuration = (props) => {
                 value={state.participantPSCID.get}
                 onUserInput={onUserInput}
                 error={checkError('participantPSCID')}
-              />
-            </div>
-            <div className='small-pad'>
-              <SelectInput id='participantHand'
-                name='participantHand'
-                label='Handedness'
-                value={state.participantHand.get}
-                emptyOption='n/a'
-                options={{
-                  'R': 'Right',
-                  'L': 'Left',
-                  'A': 'Ambidextrous',
-                }}
-                onUserInput={onUserInput}
-                help='Required; see BIDS specification for more information'
               />
             </div>
           </>

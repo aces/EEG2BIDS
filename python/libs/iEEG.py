@@ -105,7 +105,7 @@ class TarFile:
     def package(self, bids_directory):
         output_filename = bids_directory + '.tar.gz'
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(bids_directory, arcname=os.path.basename(bids_directory), progress = self.update_progress)
+            tar.add(bids_directory, arcname=os.path.basename(bids_directory), progress = self.update_progress, calculateSize=True)
 
         #import platform
         #import subprocess

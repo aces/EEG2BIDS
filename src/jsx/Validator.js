@@ -45,7 +45,7 @@ const Validator = (props) => {
       </span>,
       success: <span>
         <span className='bids-success'>
-          Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
+          Success Uploading files! <a className='checkmark'> &#x2714;</a>
         </span></span>,
       error: '',
     },
@@ -114,13 +114,32 @@ const Validator = (props) => {
     console.info('packageBIDS();');
 
     const bidsDirectory = getBIDSDir();
+    const exclude = appContext.getFromTask('exclude');
+    const flags = appContext.getFromTask('flags');
+    const reasons = appContext.getFromTask('reasons');
+    const candID = appContext.getFromTask('participantCandID');
+    const pscid = appContext.getFromTask('participantPSCID');
+    const visit = appContext.getFromTask('session');
+    const metaData = {
+      exclude: exclude,
+      flags: flags,
+      reasons: reasons,
+    };
+
     if (bidsDirectory) {
+      const data = {
+        bidsDirectory: bidsDirectory,
+        metaData: metaData,
+        candID: candID,
+        pscid: pscid,
+        visit: visit,
+      };
       setModalText((prevState) => {
         return {...prevState, ['mode']: 'loading'};
       });
       setModalVisible(true);
 
-      socketContext.emit('tarfile_bids', bidsDirectory);
+      socketContext.emit('tarfile_bids', data);
       monitorProgress();
     }
   };
@@ -194,8 +213,17 @@ const Validator = (props) => {
     console.info(message);
     if (message['file_paths'] && message['result']) {
       setValidator(message);
-    } else if (message['compression_time']) {
+    } else if (message['type'] === 'upload') {
       setModalText((prevState) => {
+        if (message.code >= 400) {
+          const prevMessage = prevState.message;
+          prevMessage.error = message.body.error;
+          return {
+            ...prevState,
+            ['mode']: 'error',
+            message: prevMessage,
+          };
+        }
         return {...prevState, ['mode']: 'success'};
       });
     }
