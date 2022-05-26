@@ -120,6 +120,7 @@ const Validator = (props) => {
     const candID = appContext.getFromTask('participantCandID');
     const pscid = appContext.getFromTask('participantPSCID');
     const visit = appContext.getFromTask('session');
+    const mffFiles = appContext.getFromTask('mffFiles');
     const metaData = {
       exclude: exclude,
       flags: flags,
@@ -133,6 +134,8 @@ const Validator = (props) => {
         candID: candID,
         pscid: pscid,
         visit: visit,
+        mffFiles: mffFiles,
+        filePrefix: `${pscid}_${candID}_${visit}`,
       };
       setModalText((prevState) => {
         return {...prevState, ['mode']: 'loading'};

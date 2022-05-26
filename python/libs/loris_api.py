@@ -10,6 +10,7 @@ class LorisAPI:
     password = ''
     token = ''
     upload_progress = 0
+    upload_pii_progress = 0
 
     def login(self):
         resp = requests.post(
@@ -216,6 +217,10 @@ class LorisAPI:
         # Update the upload progress
         self.upload_progress = monitor.bytes_read / monitor.len
 
+    def upload_pii_callback(self, monitor):
+        # Update the upload progress
+        self.upload_pii_progress = monitor.bytes_read / monitor.len
+
     def upload_eeg(self, filename, metaData, candID, pscid, visit):
         print('upload eeg has ran')
         self.upload_progress = 0
@@ -226,6 +231,18 @@ class LorisAPI:
         m = MultipartEncoderMonitor(e, self.upload_callback)
 
         resp = requests.post(self.uploadURL, data=m,
+                          headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token}, verify=False)
+
+        return resp
+
+    def upload_pii(self, filename):
+        self.upload_pii_progress = 0
+        e = MultipartEncoder(
+            fields={'eegFile': (filename, open(filename, 'rb'), 'application/x-tar')}
+        )
+        m = MultipartEncoderMonitor(e, self.upload_pii_callback)
+
+        resp = requests.post('https://integration.hbcd.ahc.umn.edu/api/v1/eeg', data=m,
                           headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token}, verify=False)
 
         return resp

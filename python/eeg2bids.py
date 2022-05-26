@@ -38,6 +38,10 @@ def connect(sid, environ):
         return False  # extra precaution.
 
 def tarfile_bids_thread(data):
+    tar_handler.set_stage('packaging PII')
+    pii_tar = tar_handler.packagePII(data['mffFiles'], data['filePrefix'])
+    tar_handler.set_stage('upload PII')
+    loris_api.upload_pii(pii_tar)
     tar_handler.set_stage('compressing')
     tar_handler.package(data['bidsDirectory'])
     output_filename = data['bidsDirectory'] + '.tar.gz'
@@ -54,9 +58,11 @@ def get_progress(sid):
     if tar_handler.stage == 'loris_upload':
         progress_info['progress'] = int(loris_api.upload_progress * 100)
     elif tar_handler.stage == 'compressing':
-        print('eeg ', tar_handler.progress)
         progress_info['progress'] = int(tar_handler.progress)
-
+    elif tar_handler.stage == 'packaging PII':
+        progress_info['progress'] = int(tar_handler.pii_progress)
+    elif tar_handler.stage == 'upload PII':
+        progress_info['progress'] = int(loris_api.upload_pii_progress * 100)
     sio.emit('progress', progress_info)
 
 @sio.event

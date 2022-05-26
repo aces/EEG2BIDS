@@ -39,6 +39,10 @@ class TarFile(tarfile.TarFile):
                                  tarinfo, dereference, ignore_zeros, encoding,
                                  errors, pax_headers, debug, errorlevel)
 
+    def setTotalSize(self, size):
+        self.total_size = size
+        self.read_bytes = 0
+
     def add(self, name, arcname=None, recursive=True, filter=None, progress=None, calculateSize=False):
         '''
         Add the file *name* to the archive. *name* may be any type of file (directory,

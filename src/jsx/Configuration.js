@@ -14,7 +14,7 @@ import {
   DirectoryInput,
   TextInput,
   SelectInput,
-  MultiDirectoryInput, TextareaInput,
+  MultiDirectoryInput, TextareaInput, FileInput,
 } from './elements/inputs';
 
 // Socket.io
@@ -85,6 +85,7 @@ const Configuration = (props) => {
     participantAge: 'n/a',
     participantSex: 'n/a',
     participantHand: 'n/a',
+    image_file: [],
     anonymize: false,
     subjectID: '',
     flags: {
@@ -435,6 +436,24 @@ const Configuration = (props) => {
   };
 
   const getFileName = (file) => file.path.split(/(\\|\/)/g).pop();
+
+  const checkPhotoError = () => {
+    if (state.image_file.get.length === 0) {
+      error = true;
+      return 'Image Files is required.';
+    }
+    const pscid = state.participantPSCID.get;
+    const candID = state.participantCandID.get;
+    const session = state.session.get;
+    const filename = `${pscid}_${candID}_${session}_EEG.zip`;
+    if (state.image_file.get[0].name !== filename) {
+      error = true;
+      return 'File should have naming format ' +
+              '[PSCID]_[DCCID]_[VisitLabel]_[taskName]_EEG.zip';
+    }
+
+    return;
+  };
 
   const checkFileError = (task) => {
     // Need to split file path based on `/`
@@ -788,6 +807,9 @@ const Configuration = (props) => {
       updateMessage({'error': 'Working on converting files...'});
 
       appContext.setTask('exclude', exclude);
+      const mffFiles = dirs.map((dir) => dir.path);
+      mffFiles.push(state.image_file.get[0].path);
+      appContext.setTask('mffFiles', mffFiles);
 
       const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
@@ -1433,6 +1455,21 @@ const Configuration = (props) => {
               help={'Folder name(s) must be formatted correctly: ' +
                   'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
               error={checkFileError('VEP')}
+            />
+          </div>
+          <div className='small-pad'>
+            <FileInput
+              id={'image_file'}
+              required={true}
+              name={'image_file'}
+              label={'Placement Photos'}
+              accept={'.zip'}
+              onUserInput={onUserInput}
+              help={'For photos taken with iPad of cap placement'}
+              placeholder={
+                state.image_file.get.map((file) => file['name']).join(', ')
+              }
+              error={checkPhotoError()}
             />
           </div>
         </div>

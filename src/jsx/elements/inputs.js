@@ -57,6 +57,11 @@ export const FileInput = (props) => {
         fontSize: '14px',
         cursor: 'default',
       }}>{props.placeholder ?? 'No file chosen'}</a>
+      {props.error &&
+          <label className="input-error" htmlFor={props.id}>
+            {props.error}
+          </label>
+      }
     </>
   );
 };
