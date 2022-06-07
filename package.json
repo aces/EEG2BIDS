@@ -23,7 +23,7 @@
     "@babel/eslint-parser": "^7.18.2",
     "concurrently": "^7.2.1",
     "cross-env": "^7.0.3",
-    "electron": "^19.0.3",
+    "electron": "^",
     "electron-builder": "^23.0.3",
     "electron-devtools-installer": "^3.2.0",
     "eslint": "^8.17.0",
@@ -37,7 +37,7 @@
     "wait-on": "^6.0.1"
   },
   "scripts": {
-    "rebuild": "rebuild --runtime=electron --target=19.0.3",
+    "rebuild": "rebuild --runtime=electron --target=18.0.0",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
