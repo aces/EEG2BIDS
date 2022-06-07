@@ -1,13 +1,9 @@
 source bin/activate
 pyinstaller --paths=python python/eeg2bids.py -w -F \
 --name eeg2bids-service \
---add-data 'python/libs/bids_validator/rules/top_level_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/rules/associated_data_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/rules/file_level_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/rules/phenotypic_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/rules/session_level_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/rules/subject_level_rules.json:bids_validator/rules' \
---add-data 'python/libs/bids_validator/tsv/non_custom_columns.json:bids_validator/tsv' \
+--add-data 'python/libs/mne:mne' \
+--add-data 'python/libs/mne_bids:mne_bids' \
+--add-data 'python/libs/bids_validator:bids_validator' \
 --hidden-import=eventlet.hubs.epolls \
 --hidden-import=eventlet.hubs.kqueue \
 --hidden-import=eventlet.hubs.selects \
