@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import ReactTooltip from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
-// import 'react-datepicker/dist/react-datepicker.css';
+import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
 
@@ -24,7 +24,7 @@ import {
 
 // todo remove Switch and DatePicker
 // import Switch from 'react-switch';
-// import DatePicker from 'react-datepicker';
+import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext} from './socket.io';
@@ -1706,13 +1706,13 @@ const Configuration = (props) => {
                 <label className="label" htmlFor={props.id}>
                   <b>Date of Birth <span className="red">*</span></b>
                 </label>
-                {/*<DatePicker id='participantDOB'*/}
-                {/*  name='participantDOB'*/}
-                {/*  required={true}*/}
-                {/*  selected={state.participantDOB.get}*/}
-                {/*  dateFormat="yyyy-MM-dd"*/}
-                {/*  onChange={(date) => onUserInput('participantDOB', date)}*/}
-                {/*/>*/}
+                <DatePicker id='participantDOB'
+                  name='participantDOB'
+                  required={true}
+                  selected={state.participantDOB.get}
+                  dateFormat="yyyy-MM-dd"
+                  onChange={(date) => onUserInput('participantDOB', date)}
+                />
               </div>
               <div className='small-pad'>
                 <SelectInput id='participantSex'
