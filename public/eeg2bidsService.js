@@ -1,4 +1,4 @@
-const {execFile} = require('child_process');
+const {execFile, spawn} = require('child_process');
 
 /**
  * EEG2BIDS Wizard Service
@@ -24,7 +24,9 @@ module.exports = class EEG2BIDSService {
         'dist/eeg2bids-service-windows.exe' :
         'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
     );
-    this.process = execFile(pathToService);
+    this.process = this.platform === 'win32' ?
+      execFile(pathToService) :
+      spawn(pathToService);
   }
 
   /**
