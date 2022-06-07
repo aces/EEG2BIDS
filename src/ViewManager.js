@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BrowserRouter,
+  HashRouter,
   Routes,
   Route,
 } from 'react-router-dom';
@@ -20,15 +20,15 @@ const ViewManager = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div>
         <Routes>
           {/*<Route path='/' element={ViewManager.View}/>*/}
-          <Route path='/app' exact element={<App/>}/>
+          <Route path='/' exact element={<App/>}/>
           <Route path='/settings' element={<Settings/>}/>
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 ViewManager.views = () => {

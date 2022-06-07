@@ -37,7 +37,7 @@
     "wait-on": "^6.0.1"
   },
   "scripts": {
-    "rebuild": "rebuild --runtime=electron --target=11.2.1",
+    "rebuild": "rebuild --runtime=electron --target=19.0.3",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
@@ -150,6 +150,7 @@
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "files": [
+      "build/index.html/*",
       "build/**/*",
       "node_modules/**/*",
       "utils/**/*",
