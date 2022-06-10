@@ -22,8 +22,7 @@ import {
   AuthenticationCredentials,
 } from './elements/authentication';
 
-// todo remove Switch and DatePicker
-// import Switch from 'react-switch';
+import Switch from 'react-switch';
 import DatePicker from 'react-datepicker';
 
 // Socket.io
@@ -1851,22 +1850,22 @@ const Configuration = (props) => {
             fontSize: '16px',
             verticalAlign: 'middle',
           }}>
-            {/*<Switch*/}
-            {/*  className='react-switch'*/}
-            {/*  onColor="#86d3ff"*/}
-            {/*  onHandleColor="#2693e6"*/}
-            {/*  handleDiameter={20}*/}
-            {/*  uncheckedIcon={false}*/}
-            {/*  checkedIcon={false}*/}
-            {/*  boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"*/}
-            {/*  activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"*/}
-            {/*  height={15}*/}
-            {/*  width={40}*/}
-            {/*  name='anonymize'*/}
-            {/*  onChange={(checked) => onUserInput('anonymize', checked)}*/}
-            {/*  checked={state.anonymize.get}*/}
-            {/*  disabled={state.edfData.get?.files?.length > 0 ? false : true}*/}
-            {/*/>*/}
+            <Switch
+              className='react-switch'
+              onColor="#86d3ff"
+              onHandleColor="#2693e6"
+              handleDiameter={20}
+              uncheckedIcon={false}
+              checkedIcon={false}
+              boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+              activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+              height={15}
+              width={40}
+              name='anonymize'
+              onChange={(checked) => onUserInput('anonymize', checked)}
+              checked={state.anonymize.get}
+              disabled={state.edfData.get?.files?.length > 0 ? false : true}
+            />
             <span>Anonymize</span>
           </label>
         </span>
