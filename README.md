@@ -13,9 +13,9 @@ EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (
 
 #### Development Requirements
 
- * [Node.js](https://nodejs.org/en/download/current) == 14.16.1 LTS
- * [NPM](https://www.npmjs.com) >= 7.10.0 (included with Node.js)
- * [Python](https://www.python.org/downloads/) == 3.8.5
+ * [Node.js](https://nodejs.org/en/download/current) == 16.15.1 LTS
+ * [NPM](https://www.npmjs.com) >= 8.12.1 (included with Node.js)
+ * [Python](https://www.python.org/downloads/) == 3.10.5
 
 #### Development Build guides
 
