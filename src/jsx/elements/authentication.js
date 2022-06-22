@@ -214,7 +214,6 @@ export const AuthenticationCredentials = (props) => {
     const credentials = await myAPI.getLorisAuthenticationCredentials();
     setLorisURL(credentials.lorisURL);
     setLorisUsername(credentials.lorisUsername);
-    setLorisPassword(credentials.lorisPassword);
   }, []);
 
   useEffect(async () => {
@@ -260,7 +259,12 @@ export const AuthenticationCredentials = (props) => {
       credentials.lorisUsername &&
       credentials.lorisPassword
     ) {
-      myAPI.setLorisAuthenticationCredentials(credentials);
+      const storeFields = {
+        lorisURL: credentials.lorisURL,
+        lorisUsername: credentials.lorisUsername,
+        lorisPassword: '12345',
+      };
+      myAPI.setLorisAuthenticationCredentials(storeFields);
       socketContext.emit('set_loris_credentials', credentials);
     }
   };
