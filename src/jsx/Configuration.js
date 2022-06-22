@@ -372,8 +372,11 @@ const Configuration = (props) => {
           setModalText((prevState) => {
             prevState.message['error'] = (
               <div className='bids-errors'>
-                {message['error'].map((error, i) =>
-                  <span key={i}>{error}<br/></span>)}
+                {Array.isArray(message['error']) ?
+                  message['error'].map((error, i) =>
+                    <span key={i}>{error}<br/></span>) :
+                  <span>{message['error']}</span>
+                }
               </div>
             );
             return {...prevState, ['mode']: 'error'};
@@ -449,7 +452,7 @@ const Configuration = (props) => {
     if (state.image_file.get[0].name !== filename) {
       error = true;
       return 'File should have naming format ' +
-              '[PSCID]_[DCCID]_[VisitLabel]_[taskName]_EEG.zip';
+              '[PSCID]_[DCCID]_[VisitLabel]_EEG.zip';
     }
 
     return;
@@ -548,7 +551,7 @@ const Configuration = (props) => {
   };
 
   const reviewSuccessFlags = () => {
-    const listItems = state.flags.get.errors.map((err) => {
+    const listItems = state.flags.get.success.map((err) => {
       return formatPass(err.label, err.flag);
     });
     return (
@@ -1011,11 +1014,7 @@ const Configuration = (props) => {
 
           state.projectID.set(data.Meta.Project);
           state.siteID.set(data.Meta.Site);
-
-          const visits = data.Visits.filter((visit) => {
-            return ['V03Y00M09', 'V05Y01M03', 'V07Y04M00'].includes(visit);
-          });
-          state.sessionOptions.set(visits);
+          state.sessionOptions.set(data.Visits);
         } else {
           state.participantID.set('');
           appContext.setTask('participantID', '');
@@ -1504,10 +1503,7 @@ const Configuration = (props) => {
         </span>
         <div className='info report'>
           {reviewWarnings()}
-          <div className='small-pad'>
-            <b>Review your success flags:</b>
-            {reviewSuccessFlags()}
-          </div>
+          {reviewSuccessFlags()}
 
           {error ?
             <div className="alert alert-danger" role="alert">

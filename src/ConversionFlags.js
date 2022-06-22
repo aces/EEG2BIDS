@@ -381,7 +381,7 @@ const flagConditions = {
   duplicate_file: {
     pass: 'There aren\'t multiple files for the same task.',
     warning: 'There are multiple files of the same task. Please explain why:',
-    flagCondition: 0,
+    flagCondition: 1,
     reason: true,
   },
   high_impedance: {
@@ -390,7 +390,7 @@ const flagConditions = {
         'be improved by making sure all electrodes (especially ref and com) ' +
         'have good contact with the scalp, and the sponges are wet. If the ' +
         'same electrode is persistently bad, it might need to be replaced.',
-    flagCondition: 0,
+    flagCondition: 1,
     reason: false,
   },
 };

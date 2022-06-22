@@ -194,7 +194,7 @@ const Validator = (props) => {
       });
       socketContext.on('progress', (message) => {
         setProgress(message);
-        if (message.progress < 100 && progress.stage !== 'loris_upload') {
+        if (message.progress < 100 || progress.stage !== 'loris_upload') {
           monitorProgress();
         }
       });

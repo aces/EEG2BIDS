@@ -38,15 +38,20 @@ def connect(sid, environ):
         return False  # extra precaution.
 
 def tarfile_bids_thread(data):
-    tar_handler.set_stage('packaging PII')
-    pii_tar = tar_handler.packagePII(data['mffFiles'], data['filePrefix'])
-    tar_handler.set_stage('upload PII')
-    loris_api.upload_pii(pii_tar)
-    tar_handler.set_stage('compressing')
-    tar_handler.package(data['bidsDirectory'])
-    output_filename = data['bidsDirectory'] + '.tar.gz'
-    tar_handler.set_stage('loris_upload')
-    resp = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
+    try:
+        tar_handler.set_stage('packaging PII')
+        pii_tar = tar_handler.packagePII(data['mffFiles'], data['filePrefix'])
+        tar_handler.set_stage('upload PII')
+        pii = loris_api.upload_pii(pii_tar)
+        tar_handler.set_stage('compressing')
+        tar_handler.package(data['bidsDirectory'])
+        output_filename = data['bidsDirectory'] + '.tar.gz'
+        tar_handler.set_stage('loris_upload')
+        resp = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
+    except Exception as ex:
+        resp = {
+            'error': 'Unknown - ' + str(ex)
+        }
     return eventlet.tpool.Proxy(resp)
 
 @sio.event
@@ -69,11 +74,19 @@ def get_progress(sid):
 def tarfile_bids(sid, data):
     response = eventlet.tpool.execute(tarfile_bids_thread, data)
 
-    resp = {
-        'type': 'upload',
-        'code': response.status_code,
-        'body': response.json()
-    }
+    if 'error' in response:
+        print(response)
+        resp = {
+            'type': 'upload',
+            'code': response.status_code,
+            'body': response.error
+        }
+    else:
+        resp = {
+            'type': 'upload',
+            'code': response.status_code,
+            'body': response.json()
+        }
     sio.emit('response', resp)
 
 
@@ -330,6 +343,10 @@ def eeg_to_bids_thread(data):
         except WriteError as e:
             response = {
                 'error': 'Cannot write file - ' + str(e)
+            }
+        except Exception as e:
+            response = {
+                'error': 'Unknown - ' + str(e)
             }
     else:
         response = {
