@@ -310,19 +310,11 @@ const Configuration = (props) => {
     if (socketContext) {
       state.participantID.set('');
 
-      if (!state.participantCandID.get || !state.participantPSCID.get) {
-        appContext.setTask('participantCandID', {
-          error: 'The DDCID/PSCID pair you provided' +
-              ' does not match an existing candidate.',
-        });
-        return;
-      }
-
       socketContext.emit('get_participant_data', {
         candID: state.participantCandID.get,
       });
     }
-  }, [state.participantCandID.get, state.participantPSCID.get]);
+  }, [state.participantCandID.get]);
 
   useEffect(() => {
     validateJSON(state.bidsMetadataFile.get)
@@ -418,9 +410,9 @@ const Configuration = (props) => {
       case 'participantPSCID':
         if (!appContext.getFromTask('participantCandID')) {
           error = true;
-          return 'LORIS PSCID is not specified';
+          return 'LORIS DDCID is required first';
         } else if (
-          !state.participantCandID.get ||!state.participantPSCID.get
+          appContext.getFromTask('participantID') !== state.participantPSCID.get
         ) {
           error = true;
           return 'The DDCID/PSCID pair you provided' +
@@ -563,48 +555,6 @@ const Configuration = (props) => {
   };
 
   const validate = () => {
-    /*if (socketContext) {
-      if (state.session.get && state.siteID.get &&
-          state.projectID.get && state.subprojectID.get &&
-          state.eegData.get?.date && state.participantDOB.get &&
-          state.participantSex.get
-      ) {
-        const visitDate = state.eegData.get['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    //    const dob = state.participantDOB.get
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    console.info('start request for new candidate');
-        socketContext.emit('create_candidate_and_visit', {
-          project: state.projectID.get,
-          dob: dob,
-          sex: state.participantSex.get,
-          site: state.siteID.get,
-          subproject: state.subprojectID.get,
-          visit: state.session.get,
-          date: visitDate,
-        });
-      }
-
-      if (state.participantCandID.get && state.session.get &&
-          state.siteID.get && state.projectID.get &&
-          state.subprojectID.get && state.eegData.get?.date
-      ) {
-        console.info('start request to create the visit');
-        const visitDate = state.eegData.get['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    socketContext.emit('create_visit', {
-          candID: state.participantCandID.get,
-          project: state.projectID.get,
-          site: state.siteID.get,
-          subproject: state.subprojectID.get,
-          visit: state.session.get,
-          date: visitDate,
-        });
-    } */
-
     if (state.eegData.get?.files?.length > 0) {
       const eventFiles = [...state.eventFiles.get];
       const annotationsTSVs = [...state.annotationsTSV.get];
@@ -712,33 +662,6 @@ const Configuration = (props) => {
       state.eegRuns.set(eegRuns);
     }
   };
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(() => {
-    if (!state.participantCandID.get || !state.session.get ||
-      !state.siteID.get || !state.projectID.get ||
-      !state.subprojectID.get || !state.eegData.get?.date) return;
-
-    const visitDate = state.eegData.get['date']
-        .toISOString().replace(/T.*/, '');
-
-    socketContext.emit('create_visit', {
-      candID: state.participantCandID.get,
-      project: state.projectID.get,
-      site: state.siteID.get,
-      subproject: state.subprojectID.get,
-      visit: state.session.get,
-      date: visitDate,
-    });
-  }, [state.participantCandID.get, state.session.get,
-    state.siteID.get, state.projectID.get, state.subprojectID.get,
-    state.eegData.get]);
-
-  useEffect(() => {
-    Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
-  }, []);
 
   useEffect(() => {
     // state.mffDirectories.set([{path: '', name: ''}]);
@@ -989,20 +912,15 @@ const Configuration = (props) => {
           //state.participantEntryMode.set('new_loris');
         }
       });
-    }
-  }, [socketContext]);
 
-  useEffect(() => {
-    if (socketContext) {
       socketContext.on('participant_data', (data) => {
         if (data?.error) {
           appContext.setTask('participantCandID', {error: data.error});
-          state.participantID.set('');
+          state.participantID.set(data.error);
           appContext.setTask('participantID', '');
-        } else if (state.participantPSCID.get == data.Meta.PSCID) {
-          appContext.setTask('participantCandID', state.participantCandID.get);
+        } else {
+          appContext.setTask('participantCandID', data.Meta.CandID);
 
-          console.log(data);
           state.participantID.set(data.Meta.PSCID);
           appContext.setTask('participantID', data.Meta.PSCID);
 
@@ -1015,17 +933,14 @@ const Configuration = (props) => {
           state.projectID.set(data.Meta.Project);
           state.siteID.set(data.Meta.Site);
           state.sessionOptions.set(data.Visits);
-        } else {
-          state.participantID.set('');
-          appContext.setTask('participantID', '');
-          appContext.setTask('participantCandID', {
-            error: 'The DDCID/PSCID pair you provided' +
-                ' does not match an existing candidate.',
-          });
         }
       });
     }
-  }, [socketContext, state.participantPSCID.get]);
+  }, [socketContext]);
+
+  useEffect(() => {
+    console.log('FAKE EFFECT TO TRIGGER RERENDER');
+  }, [state.participantID.get]);
 
   /**
    * onUserInput - input change by user.
@@ -1289,6 +1204,7 @@ const Configuration = (props) => {
                 value={state.participantPSCID.get}
                 onUserInput={onUserInput}
                 error={checkError('participantPSCID')}
+                readonly={checkError('participantCandID')}
               />
             </div>
           </>
