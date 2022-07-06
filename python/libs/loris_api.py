@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 import urllib
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
@@ -226,7 +227,7 @@ class LorisAPI:
         self.upload_progress = 0
         e = MultipartEncoder(
             fields={'metaData': json.dumps(metaData), 'candID': candID, 'pscid': pscid, 'visit': visit,
-                    'eegFile': (filename, open(filename, 'rb'), 'application/x-tar')}
+                    'eegFile': (os.path.basename(filename), open(filename, 'rb'), 'application/x-tar')}
         )
         m = MultipartEncoderMonitor(e, self.upload_callback)
 
@@ -238,7 +239,7 @@ class LorisAPI:
     def upload_pii(self, filename):
         self.upload_pii_progress = 0
         e = MultipartEncoder(
-            fields={'eegFile': (filename, open(filename, 'rb'), 'application/x-tar')}
+            fields={'eegFile': (os.path.basename(filename), open(filename, 'rb'), 'application/x-tar')}
         )
         m = MultipartEncoderMonitor(e, self.upload_pii_callback)
 

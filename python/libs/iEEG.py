@@ -197,7 +197,7 @@ class Converter:
     # sub_project_id: '', session: '', subject_id: ''}
     def __init__(self, data):
         print('- Converter: init started.')
-        modality = 'seeg'
+        modality = 'eeg'
         if data['modality'] == 'eeg':
             modality = 'eeg'
 

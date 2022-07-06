@@ -47,11 +47,16 @@ def tarfile_bids_thread(data):
         tar_handler.package(data['bidsDirectory'])
         output_filename = data['bidsDirectory'] + '.tar.gz'
         tar_handler.set_stage('loris_upload')
-        resp = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
+        lor = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
     except Exception as ex:
         resp = {
             'error': 'Unknown - ' + str(ex)
         }
+
+    resp ={
+        'loris': lor,
+        'pii': pii
+    }
     return eventlet.tpool.Proxy(resp)
 
 @sio.event
@@ -73,19 +78,28 @@ def get_progress(sid):
 @sio.event
 def tarfile_bids(sid, data):
     response = eventlet.tpool.execute(tarfile_bids_thread, data)
+    print(response)
 
-    if 'error' in response:
-        print(response)
+    if response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
+        error = ''
+        if response['pii'].status_code >= 400:
+            error += 'PII Error: '
+            error += response['pii'].reason
+        if response['loris'].status_code >= 400:
+            error += '\nLORIS Error: '
+            error += response['loris'].reason
         resp = {
             'type': 'upload',
-            'code': response.status_code,
-            'body': response.error
+            'code': response['pii'].status_code if response['pii'].status_code > response['loris'].status_code else response['loris'].status_code,
+            'body': {
+                'error': error
+            }
         }
     else:
         resp = {
             'type': 'upload',
-            'code': response.status_code,
-            'body': response.json()
+            'code': response['loris'].status_code,
+            'body': response['loris'].json()
         }
     sio.emit('response', resp)
 

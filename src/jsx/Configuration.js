@@ -183,7 +183,7 @@ const Configuration = (props) => {
         eegData: appContext.getFromTask('eegData') ?? [],
         fileFormat: state.fileFormat.get ?? '',
         eegRuns: state.eegRuns.get ?? [],
-        modality: appContext.getFromTask('modality') ?? 'ieeg',
+        modality: appContext.getFromTask('modality') ?? 'eeg',
         bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
         read_only: false,
         event_files: appContext.getFromTask('eventFiles').length > 0 ?
