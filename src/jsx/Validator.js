@@ -27,7 +27,9 @@ const Validator = (props) => {
   const [validationMode, setValidationMode] = useState('lastRun');
   const [progress, setProgress] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [packaging, setPackaging] = useState(false);
   const [modalText, setModalText] = useState({
     mode: 'loading',
     title: {
@@ -141,6 +143,7 @@ const Validator = (props) => {
         return {...prevState, ['mode']: 'loading'};
       });
       setModalVisible(true);
+      setPackaging(true);
 
       socketContext.emit('tarfile_bids', data);
       monitorProgress();
@@ -198,6 +201,17 @@ const Validator = (props) => {
           monitorProgress();
         }
       });
+      socketContext.on('connect', () => {
+        setConnected(true);
+        if (packaging) {
+          monitorProgress();
+        }
+        debug('VALIDATION CONNECTED');
+      });
+      socketContext.on('disconnect', () => {
+        setConnected(false);
+        debug('VALIDATION DISCONNECTED');
+      });
     }
   }, [socketContext]);
 
@@ -229,6 +243,7 @@ const Validator = (props) => {
         }
         return {...prevState, ['mode']: 'success'};
       });
+      setPackaging(false);
     }
   };
 
@@ -307,6 +322,11 @@ const Validator = (props) => {
       >
         {modalText.mode === 'loading' && (
           <div>
+            {!connected && (
+              <div style={{'color': 'red'}}>
+                LOST CONNECTION TO PYTHON
+              </div>
+            )}
             <div className='bids-loading'>
                 BIDS {progress['stage']} in progress:
               <div className='progress-wrapper'>
