@@ -95,7 +95,7 @@ module.exports = class MFFToSETService {
             if (conversionError) {
                 callback(
                     false,
-                    'Could not convert MFF file.',
+                    {error: ['Could not convert MFF file.', error, stdout, stderr]},
                     [],
                     {},
                     ''
