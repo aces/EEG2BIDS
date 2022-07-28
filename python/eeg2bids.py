@@ -1,5 +1,7 @@
 # import _thread
 import os
+import traceback
+
 os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 import eventlet
 from eventlet import tpool
@@ -352,15 +354,15 @@ def eeg_to_bids_thread(data):
             return eventlet.tpool.Proxy(response)
         except ReadError as e:
             response = {
-                'error': 'Cannot read file - ' + str(e)
+                'error': 'Cannot read file - ' + str(e) + ' Trace - ' + traceback.format_exc()
             }
         except WriteError as e:
             response = {
-                'error': 'Cannot write file - ' + str(e)
+                'error': 'Cannot write file - ' + str(e) + ' Trace - ' + traceback.format_exc()
             }
         except Exception as e:
             response = {
-                'error': 'Unknown - ' + str(e)
+                'error': 'Unknown - ' + str(e) + ' Trace - ' + traceback.format_exc()
             }
     else:
         response = {
