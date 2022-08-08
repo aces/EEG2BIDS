@@ -52,10 +52,11 @@ def tarfile_bids_thread(data):
         lor = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
     except Exception as ex:
         resp = {
-            'error': 'Unknown - ' + str(ex)
+            'error': 'Unknown - ' + str(ex) + ' Trace - ' + traceback.format_exc()
         }
+        return eventlet.tpool.Proxy(resp)
 
-    resp ={
+    resp = {
         'loris': lor,
         'pii': pii
     }
@@ -82,7 +83,15 @@ def tarfile_bids(sid, data):
     response = eventlet.tpool.execute(tarfile_bids_thread, data)
     print(response)
 
-    if response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
+    if 'error' in response:
+        resp = {
+            'type': 'upload',
+            'code': 500,
+            'body': {
+                'error': response.error
+            }
+        }
+    elif response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
         error = ''
         if response['pii'].status_code >= 400:
             error += 'PII Error: '
