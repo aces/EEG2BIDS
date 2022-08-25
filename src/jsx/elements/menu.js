@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../css/Menu.css';
+import {SocketContext} from '../socket.io';
 
 /**
  * MenuTab - the menu tab component.
@@ -37,6 +38,22 @@ MenuTab.propTypes = {
  * @return {JSX.Element}
  */
 const Menu = (props) => {
+  const socketContext = useContext(SocketContext);
+  const [connected, setConnected] = useState(false);
+  const [reason, setReason] = useState('');
+
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('connect', () => {
+        setReason('');
+        setConnected(true);
+      });
+      socketContext.on('disconnect', (reason) => {
+        setReason(reason);
+        setConnected(false);
+      });
+    }
+  }, [socketContext]);
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
@@ -56,6 +73,11 @@ const Menu = (props) => {
           />
         ))}
       </div>
+      {!connected && (
+        <div className="alert alert-warning" role="alert">
+          Disconnected from Python <br />{reason}
+        </div>
+      )}
     </div>
   ) : null;
 };

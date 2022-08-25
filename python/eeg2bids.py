@@ -340,12 +340,18 @@ def eeg_to_bids_thread(data):
     print('data is ')
     print(data)
     error_messages = []
+    debug_path = data['bids_directory']
     if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
         error_messages.append('No eeg file(s) to convert.')
     if 'bids_directory' not in data or not data['bids_directory']:
         error_messages.append('The BIDS output folder is missing.')
+        debug_path = os.path.expanduser('~')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
+
+    f = open(debug_path + "\debug.log", "a")
+    f.write(str(data))
+    f.close()
 
     if not error_messages:
         time = iEEG.Time()
@@ -377,11 +383,17 @@ def eeg_to_bids_thread(data):
         response = {
             'error': error_messages
         }
+
+    f = open(data['bids_directory'] + "\debug.log", "a")
+    f.write('\n\n')
+    f.write(str(response))
+    f.close()
     return eventlet.tpool.Proxy(response)
 
 
 @sio.event
 def eeg_to_bids(sid, data):
+    exit()
     # data = { file_paths: [], bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}

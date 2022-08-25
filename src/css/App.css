@@ -34,3 +34,11 @@ body {
     padding-left: 10px;
     color: red;
 }
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    position: fixed;
+    z-index: 104;
+}

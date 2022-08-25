@@ -27,7 +27,7 @@ const Validator = (props) => {
   const [validationMode, setValidationMode] = useState('lastRun');
   const [progress, setProgress] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
-  const [modalVisible, setModalVisible] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const [connected, setConnected] = useState(false);
   const [packaging, setPackaging] = useState(false);
   const [modalText, setModalText] = useState({
