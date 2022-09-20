@@ -55,8 +55,8 @@ const Welcome = (props) => {
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
-  return props.visible ? (
-    <>
+  return (
+    <div style={{display: props.visible ? 'block' : 'none'}}>
       <span className='title'>
         Welcome to <b>EEG2BIDS Wizard</b>
       </span>
@@ -130,9 +130,10 @@ const Welcome = (props) => {
         Copyright © 2021 <a className='mcin' onClick={openMCIN}>
         MCIN</a>.
       </div>
-    </>
-  ) : null;
+    </div>
+  );
 };
+
 Welcome.propTypes = {
   visible: PropTypes.bool,
 };

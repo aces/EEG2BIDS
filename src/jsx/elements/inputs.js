@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
+import ReactTooltip from 'react-tooltip';
 import styles from '../../css/Inputs.module.css';
 
 /**
@@ -58,12 +59,15 @@ export const FileInput = (props) => {
         fontSize: '14px',
         cursor: 'default',
       }}>{props.placeholder ?? 'No file chosen'}</a>
+      <ReactTooltip/>
     </>
   );
 };
+
 FileInput.defaultProps = {
   multiple: false,
 };
+
 FileInput.propTypes = {
   id: PropTypes.string,
   multiple: PropTypes.bool,
@@ -120,9 +124,11 @@ export const DirectoryInput = (props) => {
       <a style={{fontSize: '14px', cursor: 'default'}}>
         &nbsp;{props.placeholder ?? 'No folder chosen'}
       </a>
+      <ReactTooltip/>
     </>
   );
 };
+
 DirectoryInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -182,13 +188,16 @@ export const TextInput = (props) => {
         placeholder={props.placeholder}
         readOnly={props.readonly}
       />
+      <ReactTooltip/>
     </>
   );
 };
+
 TextInput.defaultProps = {
   readonly: false,
   required: false,
 };
+
 TextInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -224,85 +233,90 @@ export const RadioInput = (props) => {
         event.target.value,
     );
   };
-  /**
-   * generateRadioLayout - creates the radio input layout.
-   * @return {JSX.Element}
-   */
-  const generateRadioLayout = () => {
-    const styleRow = {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: '100%',
-    };
-    const styleColumn = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignSelf: 'flex-start',
-      marginRight: '10px',
-    };
-    const styleLabel = {
-      margin: 0,
-      color: '#064785',
-      cursor: 'pointer',
-    };
-    const styleInput = {
-      display: 'inline-block',
-      margin: '0 5px 0 5px',
-      cursor: 'pointer',
-    };
-    const content = [];
-    for (const [key] of Object.entries(props.options)) {
-      content.push(
-          <div key={key}
-            style={styleColumn}>
-            <span style={{cursor: 'pointer'}}>
-              <input
-                type='radio'
-                id={`${props.id}_${key}`}
-                name={`${props.name}_${key}`}
-                value={key}
-                checked={props.checked === key}
-                onChange={handleChange}
-                style={styleInput}
-              />
-              <label htmlFor={`${props.id}_${key}`}
-                style={styleLabel}
-              >
-                {props.options[key]}
-              </label>
-            </span>
-          </div>,
-      );
-    }
-    return <div key={props.name + '_key'} style={styleRow}>
-      <label className="label" htmlFor={props.id}>
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
-          }
-        </b>
-      </label>
-      {content}
-    </div>;
+
+  const styleRow = {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
   };
+
+  const styleColumn = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignSelf: 'flex-start',
+    marginRight: '10px',
+  };
+
+  const styleLabel = {
+    margin: 0,
+    color: '#064785',
+    cursor: 'pointer',
+  };
+
+  const styleInput = {
+    display: 'inline-block',
+    margin: '0 5px 0 5px',
+    cursor: 'pointer',
+  };
+
+  const content = [];
+  for (const [key] of Object.entries(props.options)) {
+    content.push(
+        <div
+          key={key}
+          style={styleColumn}
+        >
+          <span style={{cursor: 'pointer'}}>
+            <input
+              type='radio'
+              id={`${props.id}_${key}`}
+              name={`${props.name}_${key}`}
+              value={key}
+              checked={props.checked === key}
+              onChange={handleChange}
+              style={styleInput}
+            />
+            <label
+              htmlFor={`${props.id}_${key}`}
+              style={styleLabel}
+            >
+              {props.options[key]}
+            </label>
+          </span>
+        </div>,
+    );
+  }
+
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
     <>
-      {generateRadioLayout()}
+      <div key={props.name + '_key'} style={styleRow}>
+        <label className="label" htmlFor={props.id}>
+          <b>
+            {props.label} {props.required ?
+              <span className="red">*</span> :
+              null
+            }
+            {props.help &&
+              <i className='fas fa-question-circle' data-tip={props.help}></i>
+            }
+          </b>
+        </label>
+        {content}
+      </div>
+      <ReactTooltip/>
     </>
   );
 };
+
 RadioInput.defaultProps = {
   required: false,
 };
+
 RadioInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -330,81 +344,76 @@ export const SelectInput = (props) => {
         event.target.value,
     );
   };
-  /**
-   * generateRadioLayout - creates the radio input layout.
-   * @return {JSX.Element}
-   */
-  const generateSelectLayout = () => {
-    const styleRow = {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: '100%',
-    };
-    const styleColumn = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignSelf: 'flex-start',
-      marginRight: '10px',
-    };
-    const styleInput = {
-      display: 'inline-block',
-      margin: '0 10px 10px 0',
-      cursor: 'pointer',
-    };
 
-    let emptyOptionHTML = null;
-    // Add empty option
-    if (props.emptyOption) {
-      emptyOptionHTML = <option>{props.emptyOption}</option>;
-    }
+  const styleRow = {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+  };
 
-    const optionList = Object.keys(props.options).map((key, index) => {
+  const styleColumn = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignSelf: 'flex-start',
+    marginRight: '10px',
+  };
+
+  const styleInput = {
+    display: 'inline-block',
+    margin: '0 10px 10px 0',
+    cursor: 'pointer',
+  };
+
+  let emptyOptionHTML = null;
+  // Add empty option
+  if (props.emptyOption) {
+    emptyOptionHTML = <option>{props.emptyOption}</option>;
+  }
+
+  const optionList = props.options ?
+    Object.keys(props.options).map((key, index) => {
       return (
         <option value={key} key={index}>
           {props.options[key]}
         </option>
       );
-    });
+    }) : null;
 
-    return (
-      <>
-        {props.label &&
-          <label className="label" htmlFor={props.id}>
-            <b>
-              {props.label} {props.required ?
-                <span className="red">*</span> :
-                null
-              }
-              {props.help &&
-                <i className='fas fa-question-circle' data-tip={props.help}></i>
-              }
-            </b>
-          </label>
-        }
-        <select
-          id={props.id}
-          name={props.name}
-          value={props.value || ''}
-          onChange={handleChange}
-          style={styleInput}
-        >
-          {emptyOptionHTML}
-          {optionList}
-        </select>
-      </>
-    );
-  };
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
     <>
-      {generateSelectLayout()}
+      {props.label &&
+        <label className="label" htmlFor={props.id}>
+          <b>
+            {props.label} {props.required ?
+              <span className="red">*</span> :
+              null
+            }
+            {props.help &&
+              <i className='fas fa-question-circle' data-tip={props.help}></i>
+            }
+          </b>
+        </label>
+      }
+      <select
+        id={props.id}
+        name={props.name}
+        value={props.value || ''}
+        onChange={handleChange}
+        style={styleInput}
+      >
+        {emptyOptionHTML}
+        {optionList}
+      </select>
+      <ReactTooltip/>
     </>
   );
 };
+
 SelectInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -452,9 +461,11 @@ export const NumberInput = (props) => {
         onChange={handleChange}
         placeholder={props.placeholder}
       />
+      <ReactTooltip/>
     </>
   );
 };
+
 NumberInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -509,6 +520,7 @@ export const TextareaInput = (props) => {
         onChange={handleChange}
       >
       </textarea>
+      <ReactTooltip/>
     </>
   );
 };

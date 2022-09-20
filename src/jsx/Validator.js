@@ -17,7 +17,7 @@ import {DirectoryInput, RadioInput} from './elements/inputs';
  */
 const Validator = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
+  const {state, updateState} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
   // React State
@@ -64,15 +64,13 @@ const Validator = (props) => {
    */
   const getBIDSDir = () => {
     if (validationMode == 'lastRun') {
-      if (!appContext.getFromTask('bidsDirectory') ||
-          !appContext.getFromTask('output_time')
-      ) {
-        console.error('No bidsDirectory or output_time.');
+      if (!state.bidsDirectory || !state.outputTime) {
+        console.error('No bidsDirectory or outputTime.');
         return null;
       } else {
         return [
-          appContext.getFromTask('bidsDirectory') ?? '',
-          appContext.getFromTask('output_time') ?? '',
+          state.bidsDirectory ?? '',
+          state.outputTime ?? '',
         ].filter(Boolean).join('/');
       }
     } else {
@@ -152,22 +150,22 @@ const Validator = (props) => {
   }, [validationMode, bidsDirectory]);
 
   useEffect(() => {
-    if (socketContext) {
-      socketContext.on('bids', (message) => {
-        if (message['output_time']) {
-          setValidator({});
-        }
-      });
-    }
-  }, [socketContext]);
+    if (!socketContext?.connected) return;
+    socketContext.on('bids', (message) => {
+      if (message['output_time']) {
+        setValidator({});
+      }
+    });
+  }, [socketContext?.connected]);
 
   useEffect(() => {
-    if (!appContext.getFromTask('output_time')) {
+    if (!state.outputTime) {
       setValidationMode('folder');
     } else {
       setValidationMode('lastRun');
     }
-  }, [props.visible]);
+  }, [state.outputTime]);
+
   /**
    * onMessage - received message from python.
    * @param {object} message - response
@@ -183,8 +181,8 @@ const Validator = (props) => {
     }
   };
 
-  return props.visible ? (
-    <>
+  return (
+    <div style={{display: props.visible ? 'block' : 'none'}}>
       <span className='header'>
         Validate and package
       </span>
@@ -195,13 +193,13 @@ const Validator = (props) => {
             label='BIDS files to validate:'
             onUserInput={(_, value) => setValidationMode(value)}
             options={
-              appContext.getFromTask('output_time') ?
+              state.outputTime ?
               {
                 folder: 'Select a folder',
                 lastRun: `Current recording:
-                  ${appContext.getFromTask('participantID')}
-                  ${appContext.getFromTask('session')}
-                  ${appContext.getFromTask('taskName')}`,
+                  ${state.participantID}
+                  ${state.session}
+                  ${state.taskName}`,
               } :
               {
                 folder: 'Select a folder',
@@ -228,10 +226,7 @@ const Validator = (props) => {
             className='primary-btn'
             style={{marginRight: '10px'}}
             disabled={
-              (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
-              ) ||
+              (validationMode == 'lastRun' && !state.outputTime) ||
               (validationMode == 'folder' && !bidsDirectory)
             }
           />
@@ -241,8 +236,7 @@ const Validator = (props) => {
             className='primary-btn'
             disabled={
               (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
+                validationMode == 'lastRun' && !state.outputTime
               ) ||
               (validationMode == 'folder' && !bidsDirectory)
             }
@@ -259,9 +253,10 @@ const Validator = (props) => {
         {modalText.message[modalText.mode]}
       </Modal>
       <Event event='response' handler={onMessage} />
-    </>
-  ) : null;
+    </div>
+  );
 };
+
 Validator.propTypes = {
   visible: PropTypes.bool,
 };

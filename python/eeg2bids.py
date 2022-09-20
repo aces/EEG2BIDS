@@ -194,7 +194,6 @@ def get_edf_data(sid, data):
 
 @sio.event
 def get_bids_metadata(sid, data):
-    # data = { file_path: 'path to metadata file' }
     print('data:', data)
 
     if 'file_path' not in data or not data['file_path']:
@@ -240,7 +239,7 @@ def edf_to_bids_thread(data):
     error_messages = []
     if 'edfData' not in data or 'files' not in data['edfData'] or not data['edfData']['files']:
         error_messages.append('No .edf file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
+    if 'bidsDirectory' not in data or not data['bidsDirectory']:
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
@@ -253,7 +252,7 @@ def edf_to_bids_thread(data):
             iEEG.Converter(data)  # EDF to BIDS format.
 
             # store subject_id for Modifier
-            data['subject_id'] = iEEG.Converter.m_info['subject_id']
+            data['subjectID'] = iEEG.Converter.m_info['subject_id']
             Modifier(data)  # Modifies data of BIDS format
             response = {
                 'output_time': data['output_time']
@@ -272,9 +271,6 @@ def edf_to_bids_thread(data):
 
 @sio.event
 def edf_to_bids(sid, data):
-    # data = { file_paths: [], bids_directory: '', read_only: false,
-    # event_files: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', session: '', subject_id: ''}
     print('edf_to_bids: ', data)
     response = eventlet.tpool.execute(edf_to_bids_thread, data)
     print(response)

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {useState, useContext} from 'react';
+import {AppContext} from '../../context';
 import PropTypes from 'prop-types';
 import '../../css/Menu.css';
 
@@ -8,22 +9,20 @@ import '../../css/Menu.css';
  * @return {JSX.Element}
  */
 const MenuTab = (props) => {
-  // css styling.
-  const classesTitleText = props.active ?
-    'menu-title menu-active' : 'menu-title';
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
     <div className='menuTab'>
-      <div className={classesTitleText}
+      <div className={`menu-title ${props.active && 'menu-active'}`}
         onClick={props.onClick}>
         {props.title}
       </div>
     </div>
   );
 };
+
 MenuTab.propTypes = {
   id: PropTypes.string,
   title: PropTypes.string,
@@ -37,6 +36,9 @@ MenuTab.propTypes = {
  * @return {JSX.Element}
  */
 const Menu = (props) => {
+  const {setState} = useContext(AppContext);
+  const [activeMenuTab, setActiveMenuTab] = useState(0);
+
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
@@ -44,28 +46,28 @@ const Menu = (props) => {
   return props.visible ? (
     <div className='root'>
       <div className='menu'>
-        { props.tabs.map((tab, index) => (
+        {props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
-            index={index}
-            length={props.tabs.length}
             title={tab.title}
-            onClick={tab.onClick}
-            active={index === props.activeTab}
-            activeIndex={props.activeTab}
+            onClick={
+              (e) => {
+                e.preventDefault();
+                setActiveMenuTab(tab.index);
+                setState({appMode: tab.id});
+              }
+            }
+            active={index === activeMenuTab}
           />
         ))}
       </div>
     </div>
   ) : null;
 };
-Menu.defaultProps = {
-  activeTab: 0,
-};
+
 Menu.propTypes = {
   visible: PropTypes.bool,
   tabs: PropTypes.array,
-  activeTab: PropTypes.number,
 };
 
 export default Menu;

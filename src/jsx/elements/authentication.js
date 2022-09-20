@@ -59,6 +59,7 @@ const PasswordInput = (props) => {
     </div>
   );
 };
+
 PasswordInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -110,6 +111,7 @@ const AuthInput = (props) => {
     </div>
   );
 };
+
 AuthInput.propTypes = {
   id: PropTypes.string,
   name: PropTypes.string,
@@ -127,7 +129,7 @@ AuthInput.propTypes = {
 
 export const AuthenticationMessage = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
+  const {setState} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
   // React state
@@ -149,9 +151,9 @@ export const AuthenticationMessage = (props) => {
       credentials.lorisUsername &&
       credentials.lorisPassword
     ) {
-      appContext.setTask('lorisURL', credentials.lorisURL);
-      appContext.setTask('lorisUsername', credentials.lorisUsername);
-      appContext.setTask('lorisPassword', credentials.lorisPassword);
+      setState({lorisURL: credentials.lorisURL});
+      setState({lorisUsername: credentials.lorisUsername});
+      setState({lorisPassword: credentials.lorisPassword});
       socketContext.emit('set_loris_credentials', credentials);
     }
   }, []);
@@ -160,18 +162,18 @@ export const AuthenticationMessage = (props) => {
    * Similar to componentDidMount and componentDidUpdate.
    */
   useEffect(async () => {
-    if (socketContext) {
-      socketContext.on('loris_login_response', (data) => {
-        if (data.error) {
-          setLoginMessage(data.error);
-          setLoginLink('Log in...');
-        } else {
-          setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
-          setLoginLink('Sign in to another account..');
-        }
-      });
-    }
-  }, [socketContext]);
+    if (!socketContext?.connected) return;
+
+    socketContext.on('loris_login_response', (data) => {
+      if (data.error) {
+        setLoginMessage(data.error);
+        setLoginLink('Log in...');
+      } else {
+        setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
+        setLoginLink('Sign in to another account..');
+      }
+    });
+  }, [socketContext?.connected]);
 
   /**
    * User clicked sign in..
@@ -196,13 +198,8 @@ AuthenticationMessage.propTypes = {
 
 export const AuthenticationCredentials = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
+  const {state, setState} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
-
-  // React state
-  const [lorisURL, setLorisURL] = useState('');
-  const [lorisUsername, setLorisUsername] = useState('');
-  const [lorisPassword, setLorisPassword] = useState('');
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -210,9 +207,9 @@ export const AuthenticationCredentials = (props) => {
   useEffect(async () => {
     const myAPI = window['myAPI'];
     const credentials = await myAPI.getLorisAuthenticationCredentials();
-    setLorisURL(credentials.lorisURL);
-    setLorisUsername(credentials.lorisUsername);
-    setLorisPassword(credentials.lorisPassword);
+    setState({lorisURL: credentials.lorisURL});
+    setState({lorisUsername: credentials.lorisUsername});
+    setState({lorisPassword: credentials.lorisPassword});
   }, []);
 
   /**
@@ -222,9 +219,9 @@ export const AuthenticationCredentials = (props) => {
   const handleClear = () => {
     const myAPI = window['myAPI'];
     myAPI.removeLorisAuthenticationCredentials();
-    setLorisURL('');
-    setLorisUsername('');
-    setLorisPassword('');
+    setState({lorisURL: ''});
+    setState({lorisUsername: ''});
+    setState({lorisPassword: ''});
   };
 
   /**
@@ -234,9 +231,9 @@ export const AuthenticationCredentials = (props) => {
   const handleClose = () => {
     const myAPI = window['myAPI'];
     const credentials = {
-      lorisURL: lorisURL,
-      lorisUsername: lorisUsername,
-      lorisPassword: lorisPassword,
+      lorisURL: state.lorisURL,
+      lorisUsername: state.lorisUsername,
+      lorisPassword: state.lorisPassword,
     };
     if (credentials &&
       credentials.lorisURL &&
@@ -255,19 +252,7 @@ export const AuthenticationCredentials = (props) => {
    * @param {object|string|boolean} value - element value
    */
   const onUserInput = (name, value) => {
-    switch (name) {
-      case 'lorisURL':
-        setLorisURL(value);
-        break;
-      case 'lorisUsername':
-        setLorisUsername(value);
-        break;
-      case 'lorisPassword':
-        setLorisPassword(value);
-        break;
-    }
-    // Update the 'task' of app context.
-    appContext.setTask(name, value);
+    setState({[name]: value});
   };
 
   // Styling for rendering
@@ -298,21 +283,21 @@ export const AuthenticationCredentials = (props) => {
                 name='lorisURL'
                 label='LORIS URL: (Example: https://demo.loris.ca)'
                 placeholder='Example: https://demo.loris.ca'
-                value={lorisURL}
+                value={state.lorisURL}
                 onUserInput={onUserInput}
               />
               <AuthInput id='lorisUsername'
                 name='lorisUsername'
                 label='Username'
                 placeholder='Username'
-                value={lorisUsername}
+                value={state.lorisUsername}
                 onUserInput={onUserInput}
               />
               <PasswordInput id='lorisPassword'
                 name='lorisPassword'
                 label='Password'
                 placeholder=' '
-                value={lorisPassword}
+                value={state.lorisPassword}
                 onUserInput={onUserInput}
               />
               <div className={styles.authSubmitContainer}>

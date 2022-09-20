@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useReducer} from 'react';
 import {AppContext} from './context';
 import './css/App.css';
 
@@ -15,6 +15,7 @@ import Help from './jsx/elements/help';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
+import Converter from './jsx/Converter';
 import Validator from './jsx/Validator';
 
 /**
@@ -23,19 +24,64 @@ import Validator from './jsx/Validator';
  */
 const App = () => {
   // React State
-  const [appMode, setAppMode] = useState('SplashScreen');
-  const [activeMenuTab, setActiveMenuTab] = useState(0);
-  const [task, setTask] = useState({});
+
+  const initialState = {
+    eegRuns: null,
+    edfData: [],
+    edfFiles: [],
+    modality: 'ieeg',
+    eventFiles: [],
+    invalidEventFiles: [],
+    annotationsTSV: [],
+    invalidAnnotationsTSV: [],
+    annotationsJSON: [],
+    invalidAnnotationsJSON: [],
+    bidsDirectory: null,
+    LORIScompliant: true,
+    siteID: 'n/a',
+    projectID: 'n/a',
+    subprojectID: 'n/a',
+    session: '',
+    bidsMetadataFile: [],
+    invalidBidsMetadataFile: [],
+    bidsMetadata: null,
+    lineFreq: 'n/a',
+    taskName: '',
+    reference: 'n/a',
+    recordingType: 'n/a',
+    participantEntryMode: 'existing_loris',
+    participantPSCID: '',
+    participantCandID: '',
+    participantID: '',
+    participantDOB: null,
+    participantAge: 'n/a',
+    participantSex: 'n/a',
+    participantHand: 'n/a',
+    subjectID: '',
+    preparedBy: '',
+    outputTime: '',
+  };
+
+  const reducer = (state, values) => {
+    return {...state, ...values};
+  };
+
+  const [state, setState] = useReducer(
+      reducer,
+      {
+        ...initialState,
+        appMode: 'SplashScreen',
+        isAuthenticated: false,
+        errors: false,
+      },
+  );
 
   /**
-   * Similar to componentDidMount and componentDidUpdate.
+   * reset - reset the form fields (state).
    */
-  useEffect(() => {
-    setTimeout(
-        () => {
-          setAppMode('Welcome');
-        }, 1500);
-  }, []);
+  const resetState = () => {
+    setState(initialState);
+  };
 
   /**
    * Renders the React component.
@@ -43,61 +89,34 @@ const App = () => {
    */
   return (
     <Socket uri={uri} options={options}>
-      <AppContext.Provider value={{
-        setAppMode: (appMode) => {
-          setAppMode(appMode);
-        },
-        setTask: (key, value) => {
-          task[key] = value;
-          setTask(task);
-        },
-        getFromTask: (key) => {
-          return task[key] ?? '';
-        },
-      }}>
+      <AppContext.Provider value={{state, setState, resetState}}>
         <>
           {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
-          <Menu visible={appMode !== 'SplashScreen'}
+          <Menu visible={state.appMode !== 'SplashScreen'}
             tabs={[
               {
                 title: '1) Getting started',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(0);
-                  setAppMode('Welcome');
-                },
+                id: 'Welcome',
               },
               {
                 title: '2) Configuration',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(1);
-                  setAppMode('Configuration');
-                },
+                id: 'Configuration',
               },
               {
                 title: '3) EDF to BIDS',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(2);
-                  setAppMode('Converter');
-                },
+                id: 'Converter',
               },
               {
                 title: '4) Validate and package',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(3);
-                  setAppMode('Validator');
-                },
+                id: 'Validator',
               },
             ]}
-            activeTab={activeMenuTab}
           />
-          <SplashScreen visible={appMode === 'SplashScreen'}/>
-          <Welcome visible={appMode === 'Welcome'}/>
-          <Configuration appMode={appMode}/>
-          <Validator visible={appMode === 'Validator'}/>
+          <SplashScreen visible={state.appMode === 'SplashScreen'}/>
+          <Welcome visible={state.appMode === 'Welcome'}/>
+          <Configuration visible={state.appMode === 'Configuration'}/>
+          <Converter visible={state.appMode === 'Converter'}/>
+          <Validator visible={state.appMode === 'Validator'}/>
         </>
       </AppContext.Provider>
     </Socket>

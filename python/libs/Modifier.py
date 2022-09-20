@@ -23,7 +23,7 @@ class Modifier:
 
     def get_bids_root_path(self):
         return os.path.join(
-            self.data['bids_directory'],
+            self.data['bidsDirectory'],
             self.data['output_time']
         )
 
@@ -120,26 +120,26 @@ class Modifier:
                 output.append(
                     [
                         participant_id,
-                        self.data['age'],
-                        self.data['sex'],
-                        self.data['hand'],
-                        self.data['site_id'],
-                        self.data['sub_project_id'],
-                        self.data['project_id']
+                        self.data['participantAge'],
+                        self.data['participantSex'],
+                        self.data['participantHand'],
+                        self.data['siteID'],
+                        self.data['subprojectID'],
+                        self.data['projectID']
                     ]
                 )
             except ValueError:
                 try:
-                    participant_id, age, sex, hand, site, project, subproject = line
+                    participant_id, age, sex, hand, site, subproject, project = line
                     output.append(
                         [
                             participant_id,
-                            self.data['age'],
-                            self.data['sex'],
-                            self.data['hand'],
-                            self.data['site_id'],
-                            self.data['sub_project_id'],
-                            self.data['project_id']
+                            self.data['participantAge'],
+                            self.data['participantSex'],
+                            self.data['participantHand'],
+                            self.data['siteID'],
+                            self.data['subprojectID'],
+                            self.data['projectID']
                         ]
                     )
                 except ValueError:
@@ -303,7 +303,7 @@ class Modifier:
             try:
                 with open(file_path, "r") as fp:
                     file_data = json.load(fp)
-                    file_data["RecordingType"] = self.data['recording_type']
+                    file_data["RecordingType"] = self.data['recordingType']
 
                     if (self.data["modality"] == 'ieeg'):
                         referenceField = 'iEEGReference'

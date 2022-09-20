@@ -100,11 +100,11 @@ class TarFile:
         #import platform
         #import subprocess
         #if platform.system() == 'Windows':
-        #    os.startfile(data['bids_directory'])
+        #    os.startfile(data['bidsDirectory'])
         #elif platform.system() == 'Darwin':
-        #    subprocess.Popen(['open', data['bids_directory']])
+        #    subprocess.Popen(['open', data['bidsDirectory']])
         #else:
-        #    subprocess.Popen(['xdg-open', data['bids_directory']])
+        #    subprocess.Popen(['xdg-open', data['bidsDirectory']])
 
 
 # Anonymize - scrubs edf header data.
@@ -149,9 +149,6 @@ class Anonymize:
 class Converter:
     m_info = ''
 
-    # data = { file_path: '', bids_directory: '', read_only: false,
-    # event_files: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', session: '', subject_id: ''}
     def __init__(self, data):
         print('- Converter: init started.')
         modality = 'seeg'
@@ -163,13 +160,13 @@ class Converter:
                 eeg_run=eegRun,
                 ch_type=modality,
                 task=data['taskName'],
-                bids_directory=data['bids_directory'],
+                bids_directory=data['bidsDirectory'],
                 subject_id=data['participantID'],
                 session=data['session'],
                 run=((i + 1) if len(data['edfData']['files']) > 1 else None),
                 output_time=data['output_time'],
-                read_only=data['read_only'],
-                line_freq=data['line_freq']
+                read_only=data['readOnly'],
+                line_freq=data['lineFreq']
             )
 
     @staticmethod
