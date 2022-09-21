@@ -1,4 +1,3 @@
-# import _thread
 import os
 import traceback
 
@@ -25,7 +24,12 @@ lorisCredentials = {
 }
 
 # Create socket listener.
-sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
+sio = socketio.Server(
+    async_mode='eventlet',
+    cors_allowed_origins=[],
+    logger=True,
+    engineio_logger=True,
+)
 app = socketio.WSGIApp(sio)
 
 # Create Loris API handler.
@@ -35,9 +39,13 @@ tar_handler = iEEG.TarFile()
 
 @sio.event
 def connect(sid, environ):
-    print('connect: ', sid)
-    if environ['REMOTE_ADDR'] != '127.0.0.1':
+    try:
+      print('connect: ', sid)
+      if environ['REMOTE_ADDR'] != '127.0.0.1':
         return False  # extra precaution.
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
+    
 
 def tarfile_bids_thread(data):
     try:
@@ -50,106 +58,120 @@ def tarfile_bids_thread(data):
         output_filename = data['bidsDirectory'] + '.tar.gz'
         tar_handler.set_stage('loris_upload')
         lor = loris_api.upload_eeg(output_filename, data['metaData'], data['candID'], data['pscid'], data['visit'])
-    except Exception as ex:
+
         resp = {
-            'error': 'Unknown - ' + str(ex) + ' Trace - ' + traceback.format_exc()
+            'loris': lor,
+            'pii': pii
+        }
+        return eventlet.tpool.Proxy(resp)
+    except Exception as e:
+        resp = {
+            'error': 'Unknown - ' + str(e) + ' Trace - ' + traceback.format_exc()
         }
         return eventlet.tpool.Proxy(resp)
 
-    resp = {
-        'loris': lor,
-        'pii': pii
-    }
-    return eventlet.tpool.Proxy(resp)
 
 @sio.event
 def get_progress(sid):
-    progress_info = {
-        'stage': tar_handler.stage,
-        'progress': 0
-    }
-    if tar_handler.stage == 'loris_upload':
-        progress_info['progress'] = int(loris_api.upload_progress * 100)
-    elif tar_handler.stage == 'compressing':
-        progress_info['progress'] = int(tar_handler.progress)
-    elif tar_handler.stage == 'packaging PII':
-        progress_info['progress'] = int(tar_handler.pii_progress)
-    elif tar_handler.stage == 'upload PII':
-        progress_info['progress'] = int(loris_api.upload_pii_progress * 100)
-    sio.emit('progress', progress_info)
+    try:
+        progress_info = {
+            'stage': tar_handler.stage,
+            'progress': 0
+        }
+        if tar_handler.stage == 'loris_upload':
+            progress_info['progress'] = int(loris_api.upload_progress * 100)
+        elif tar_handler.stage == 'compressing':
+            progress_info['progress'] = int(tar_handler.progress)
+        elif tar_handler.stage == 'packaging PII':
+            progress_info['progress'] = int(tar_handler.pii_progress)
+        elif tar_handler.stage == 'upload PII':
+            progress_info['progress'] = int(loris_api.upload_pii_progress * 100)
+        sio.emit('progress', progress_info)
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
+
 
 @sio.event
 def tarfile_bids(sid, data):
-    response = eventlet.tpool.execute(tarfile_bids_thread, data)
-    print(response)
+    try:
+        response = eventlet.tpool.execute(tarfile_bids_thread, data)
+        print(response)
 
-    if 'error' in response:
-        resp = {
-            'type': 'upload',
-            'code': 500,
-            'body': {
-                'error': response.error
+        if 'error' in response:
+            resp = {
+                'type': 'upload',
+                'code': 500,
+                'body': {
+                    'error': response.error
+                }
             }
-        }
-    elif response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
-        error = ''
-        if response['pii'].status_code >= 400:
-            error += 'PII Error: '
-            error += response['pii'].reason
-        if response['loris'].status_code >= 400:
-            error += '\nLORIS Error: '
-            error += response['loris'].reason
-        resp = {
-            'type': 'upload',
-            'code': response['pii'].status_code if response['pii'].status_code > response['loris'].status_code else response['loris'].status_code,
-            'body': {
-                'error': error
+        elif response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
+            error = ''
+            if response['pii'].status_code >= 400:
+                error += 'PII Error: '
+                error += response['pii'].reason
+            if response['loris'].status_code >= 400:
+                error += '\nLORIS Error: '
+                error += response['loris'].reason
+            resp = {
+                'type': 'upload',
+                'code': response['pii'].status_code if response['pii'].status_code > response['loris'].status_code else response['loris'].status_code,
+                'body': {
+                    'error': error
+                }
             }
-        }
-    else:
-        resp = {
-            'type': 'upload',
-            'code': response['loris'].status_code,
-            'body': response['loris'].json()
-        }
-    sio.emit('response', resp)
+        else:
+            resp = {
+                'type': 'upload',
+                'code': response['loris'].status_code,
+                'body': response['loris'].json()
+            }
+        sio.emit('response', resp)
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
 
 
 @sio.event
 def get_participant_data(sid, data):
-    # todo helper to to data validation
-    if 'candID' not in data or not data['candID']:
-        return
+    try:
+        # todo helper to to data validation
+        if 'candID' not in data or not data['candID']:
+            return
 
-    candidate = loris_api.get_candidate(data['candID'])
-    sio.emit('participant_data', candidate)
-
+        candidate = loris_api.get_candidate(data['candID'])
+        sio.emit('participant_data', candidate)
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
+    
 
 @sio.event
 def set_loris_credentials(sid, data):
-    global lorisCredentials
-    lorisCredentials = data
-    if 'lorisURL' not in lorisCredentials:
-        print('error with credentials:', data)
-        return
+    try:
+        global lorisCredentials
+        lorisCredentials = data
+        if 'lorisURL' not in lorisCredentials:
+            print('error with credentials:', data)
+            return
 
-    if lorisCredentials['lorisURL'].endswith('/'):
-        lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
-    loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
-    loris_api.uploadURL = lorisCredentials['lorisURL'] + '/electrophysiology_uploader/upload/'
-    loris_api.username = lorisCredentials['lorisUsername']
-    loris_api.password = lorisCredentials['lorisPassword']
-    resp = loris_api.login()
+        if lorisCredentials['lorisURL'].endswith('/'):
+            lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
+        loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
+        loris_api.uploadURL = lorisCredentials['lorisURL'] + '/electrophysiology_uploader/upload/'
+        loris_api.username = lorisCredentials['lorisUsername']
+        loris_api.password = lorisCredentials['lorisPassword']
+        resp = loris_api.login()
 
-    if resp.get('error'):
-        sio.emit('loris_login_response', {'error': resp.get('error')})
-    else:
-        sio.emit('loris_login_response', {
-            'success': 200,
-            'lorisUsername': loris_api.username
-        })
-        sio.emit('loris_sites', loris_api.get_sites())
-        sio.emit('loris_projects', loris_api.get_projects())
+        if resp.get('error'):
+            sio.emit('loris_login_response', {'error': resp.get('error')})
+        else:
+            sio.emit('loris_login_response', {
+                'success': 200,
+                'lorisUsername': loris_api.username
+            })
+            sio.emit('loris_sites', loris_api.get_sites())
+            sio.emit('loris_projects', loris_api.get_projects())
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
 
 
 def get_loris_sites(sid):
@@ -173,26 +195,32 @@ def get_loris_visits(sid, subproject):
 
 @sio.event
 def create_visit(sid, data):
-    loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
-    loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
-
+    try:
+        loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
+        loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
+    
 @sio.event
 def create_candidate_and_visit(sid, data):
-    new_candidate = loris_api.create_candidate(
-        data['project'],
-        data['dob'],
-        data['sex'],
-        data['site'],
-    )
+    try:
+        new_candidate = loris_api.create_candidate(
+            data['project'],
+            data['dob'],
+            data['sex'],
+            data['site'],
+        )
 
-    if new_candidate['CandID']:
-        print('create_visit')
-        loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
-                               data['subproject'])
-        loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
-                                   data['project'], data['date'])
-        print('new_candidate_created')
-        sio.emit('new_candidate_created', new_candidate)
+        if new_candidate['CandID']:
+            print('create_visit')
+            loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
+                                data['subproject'])
+            loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
+                                    data['project'], data['date'])
+            print('new_candidate_created')
+            sio.emit('new_candidate_created', new_candidate)
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
 
 
 @sio.event
@@ -406,22 +434,25 @@ def eeg_to_bids(sid, data):
 
 @sio.event
 def validate_bids(sid, bids_directory):
-    print('validate_bids: ', bids_directory)
-    error_messages = []
-    if not bids_directory:
-        error_messages.append('The BIDS output directory is missing.')
+    try:
+        print('validate_bids: ', bids_directory)
+        error_messages = []
+        if not bids_directory:
+            error_messages.append('The BIDS output directory is missing.')
 
-    if not error_messages:
-        BIDS.Validate(bids_directory)
-        response = {
-            'file_paths': BIDS.Validate.file_paths,
-            'result': BIDS.Validate.result
-        }
-    else:
-        response = {
-            'error': error_messages
-        }
-    sio.emit('response', response)
+        if not error_messages:
+            BIDS.Validate(bids_directory)
+            response = {
+                'file_paths': BIDS.Validate.file_paths,
+                'result': BIDS.Validate.result
+            }
+        else:
+            response = {
+                'error': error_messages
+            }
+        sio.emit('response', response)
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())
 
 
 @sio.event
@@ -430,8 +461,11 @@ def disconnect(sid):
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(
+    try:
+      eventlet.wsgi.server(
         eventlet.listen(('127.0.0.1', 7301)),
         app,
         log_output=True
-    )
+      )
+    except Exception as e:
+      sio.emit('server_error', traceback.format_exc())

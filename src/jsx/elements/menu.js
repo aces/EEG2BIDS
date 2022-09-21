@@ -40,24 +40,25 @@ MenuTab.propTypes = {
 const Menu = (props) => {
   const socketContext = useContext(SocketContext);
   const [connected, setConnected] = useState(false);
-  const [reason, setReason] = useState('');
+  const [alerts, setAlerts] = useState([]);
+  const [alertOpen, setAlertOpen] = useState(false);
 
   useEffect(() => {
     if (socketContext) {
       socketContext.on('connect', () => {
-        setReason('');
+        setAlerts([]);
         setConnected(true);
       });
-      socketContext.on('disconnect', (reason) => {
-        setReason(reason);
+      socketContext.on('disconnect', (msg) => {
+        setAlerts([...alerts, 'Disconnected from Python - ' + msg]);
         setConnected(false);
       });
+      socketContext.on('server_error', (msg) => {
+        setAlerts([...alerts, msg]);
+      });
     }
-  }, [socketContext]);
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
+  }, [socketContext, alerts]);
+
   return props.visible ? (
     <div className='root'>
       <div className='menu'>
@@ -73,9 +74,13 @@ const Menu = (props) => {
           />
         ))}
       </div>
-      {!connected && (
-        <div className="alert alert-warning" role="alert">
-          Disconnected from Python <br />{reason}
+      {alerts.length > 0 && (
+        <div
+          className="alert alert-warning notice"
+          role="alert"
+          onClick={() => setAlertOpen(!alertOpen)}
+        >
+          {alertOpen && alerts.map((alert) => <p>{alert}</p>)}
         </div>
       )}
     </div>

@@ -34,7 +34,17 @@ body {
     padding-left: 10px;
     color: red;
 }
-
+.notice:hover {
+    cursor: pointer;
+}
+.notice:before {
+    content: '!';
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 15px;
+    padding: 0 5px;
+    color: orangered;
+}
 .alert-warning {
     color: #856404;
     background-color: #fff3cd;
