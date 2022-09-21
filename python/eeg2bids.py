@@ -421,7 +421,6 @@ def eeg_to_bids_thread(data):
 
 @sio.event
 def eeg_to_bids(sid, data):
-    exit()
     # data = { file_paths: [], bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
