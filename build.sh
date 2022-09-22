@@ -1,5 +1,5 @@
 source bin/activate
-pyinstaller --paths=python python/eeg2bids.py -w -F \
+pyi-makespec --paths=python python/eeg2bids.py -w -F \
 --name eeg2bids-service \
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/rules/associated_data_rules.json:bids_validator/rules' \
@@ -8,6 +8,8 @@ pyinstaller --paths=python python/eeg2bids.py -w -F \
 --add-data 'python/libs/bids_validator/rules/session_level_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/rules/subject_level_rules.json:bids_validator/rules' \
 --add-data 'python/libs/bids_validator/tsv/non_custom_columns.json:bids_validator/tsv' \
+--add-data 'python/lib/python3.8/site-packages/mne/:mne' \
+--add-data 'python/lib/python3.8/site-packages/mne_bids/:mne_bids' \
 --hidden-import=eventlet.hubs.epolls \
 --hidden-import=eventlet.hubs.kqueue \
 --hidden-import=eventlet.hubs.selects \
@@ -17,5 +19,4 @@ pyinstaller --paths=python python/eeg2bids.py -w -F \
 --hidden-import=dns.version  --hidden-import=dns.zone \
 --hidden-import=engineio.async_drivers.eventlet \
 --hidden-import=json \
---hidden-import=csv \
---clean
+--hidden-import=csv

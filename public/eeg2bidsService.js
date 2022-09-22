@@ -1,5 +1,5 @@
-const {execFile} = require('child_process');
-
+const {execFile, spawn} = require('child_process');
+    
 /**
  * EEG2BIDS Wizard Service
  */
@@ -24,7 +24,20 @@ module.exports = class EEG2BIDSService {
         'dist/eeg2bids-service-windows.exe' :
         'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
     );
-    this.process = execFile(pathToService);
+
+    this.process = spawn(pathToService, []);
+
+    this.process.stdout.on('data', function (data) {
+      console.log('stdout: ' + data.toString());
+    });
+
+    this.process.stderr.on('data', function (data) {
+      console.log('stderr: ' + data.toString());
+    });
+
+    this.process.on('exit', function (code) {
+      console.log('child process exited with code ' + code.toString());
+    });
   }
 
   /**

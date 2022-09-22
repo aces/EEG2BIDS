@@ -36,10 +36,18 @@ python-service build:
 # first follow the Development Build guide
 # then paste the following commands:
 pip install pyinstaller
-chmod +x build.sh
-./build.sh
+pyinstaller eeg2bids-service.spec --clean
 # Visit the /dist for the "python-service" build.
 ```
+To generate the eeg2bids-service.spec file:
+```
+chmod +x build.sh
+./build.sh
+# Open eeg2bids-service.spec and add on the first line
+import sys
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
+```
+
 
 electron-app build:
 ```

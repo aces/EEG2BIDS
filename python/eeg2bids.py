@@ -28,7 +28,6 @@ sio = socketio.Server(
     async_mode='eventlet',
     cors_allowed_origins=[],
     logger=True,
-    engineio_logger=True,
 )
 app = socketio.WSGIApp(sio)
 
@@ -40,11 +39,12 @@ tar_handler = iEEG.TarFile()
 @sio.event
 def connect(sid, environ):
     try:
-      print('connect: ', sid)
-      if environ['REMOTE_ADDR'] != '127.0.0.1':
-        return False  # extra precaution.
+        print('connect: ', sid)
+        if environ['REMOTE_ADDR'] != '127.0.0.1':
+            return False  # extra precaution.
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+        sio.emit('server_error', traceback.format_exc())
+        print(traceback.format_exc())
     
 
 def tarfile_bids_thread(data):
@@ -89,6 +89,7 @@ def get_progress(sid):
         sio.emit('progress', progress_info)
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
 
 
 @sio.event
@@ -129,6 +130,7 @@ def tarfile_bids(sid, data):
         sio.emit('response', resp)
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
 
 
 @sio.event
@@ -142,6 +144,7 @@ def get_participant_data(sid, data):
         sio.emit('participant_data', candidate)
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
     
 
 @sio.event
@@ -161,6 +164,8 @@ def set_loris_credentials(sid, data):
         loris_api.password = lorisCredentials['lorisPassword']
         resp = loris_api.login()
 
+        print(resp)
+
         if resp.get('error'):
             sio.emit('loris_login_response', {'error': resp.get('error')})
         else:
@@ -171,7 +176,9 @@ def set_loris_credentials(sid, data):
             sio.emit('loris_sites', loris_api.get_sites())
             sio.emit('loris_projects', loris_api.get_projects())
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+        sio.emit('loris_login_response', {'error': str(e)})
+        sio.emit('server_error', traceback.format_exc())
+        print(traceback.format_exc())
 
 
 def get_loris_sites(sid):
@@ -200,6 +207,7 @@ def create_visit(sid, data):
         loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
     
 @sio.event
 def create_candidate_and_visit(sid, data):
@@ -221,6 +229,7 @@ def create_candidate_and_visit(sid, data):
             sio.emit('new_candidate_created', new_candidate)
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
 
 
 @sio.event
@@ -452,6 +461,7 @@ def validate_bids(sid, bids_directory):
         sio.emit('response', response)
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
 
 
 @sio.event
@@ -468,3 +478,4 @@ if __name__ == '__main__':
       )
     except Exception as e:
       sio.emit('server_error', traceback.format_exc())
+      print(traceback.format_exc())
