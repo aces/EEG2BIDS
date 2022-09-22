@@ -130,13 +130,9 @@ export const AuthenticationMessage = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
+  const defaultLoginMessage = 'You are not logged into a LORIS Account';
   // React state
-  const [loginMessage, setLoginMessage] = useState(
-      '(Optional) You are not logged into a LORIS Account',
-  );
-  const [loginLink, setLoginLink] = useState(
-      'Log in...',
-  );
+  const [loginMessage, setLoginMessage] = useState(defaultLoginMessage);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -146,13 +142,10 @@ export const AuthenticationMessage = (props) => {
     const credentials = await myAPI.getLorisAuthenticationCredentials();
     if (credentials &&
       credentials.lorisURL &&
-      credentials.lorisUsername &&
-      credentials.lorisPassword
+      credentials.lorisUsername
     ) {
       appContext.setTask('lorisURL', credentials.lorisURL);
       appContext.setTask('lorisUsername', credentials.lorisUsername);
-      appContext.setTask('lorisPassword', credentials.lorisPassword);
-      socketContext.emit('set_loris_credentials', credentials);
     }
   }, []);
 
@@ -163,11 +156,12 @@ export const AuthenticationMessage = (props) => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
         if (data.error) {
-          setLoginMessage(data.error);
-          setLoginLink('Log in...');
+          setLoginMessage(defaultLoginMessage);
         } else {
-          setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
-          setLoginLink('Sign in to another account..');
+          setLoginMessage(
+              `LORIS account: ${data.lorisURL.replace(/^https?:\/\//, '')} |
+              ${data.lorisUsername}`,
+          );
         }
       });
     }
@@ -184,9 +178,6 @@ export const AuthenticationMessage = (props) => {
       <span className={styles.loginMessage}>
         {loginMessage}
       </span>
-      <a className={styles.loginLink} onClick={handleClick}>
-        &nbsp;&nbsp;&nbsp;&nbsp;{loginLink}
-      </a>
     </div>
   );
 };
@@ -262,7 +253,7 @@ export const AuthenticationCredentials = (props) => {
       const storeFields = {
         lorisURL: credentials.lorisURL,
         lorisUsername: credentials.lorisUsername,
-        lorisPassword: '12345',
+        lorisPassword: 'password',
       };
       myAPI.setLorisAuthenticationCredentials(storeFields);
       socketContext.emit('set_loris_credentials', credentials);

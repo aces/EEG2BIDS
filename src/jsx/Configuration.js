@@ -1204,7 +1204,7 @@ const Configuration = (props) => {
                 value={state.participantPSCID.get}
                 onUserInput={onUserInput}
                 error={checkError('participantPSCID')}
-                readonly={checkError('participantCandID')}
+                readonly={checkError('participantCandID') !== undefined}
               />
             </div>
           </>

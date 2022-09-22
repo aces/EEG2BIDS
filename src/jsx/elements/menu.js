@@ -2,6 +2,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import '../../css/Menu.css';
 import {SocketContext} from '../socket.io';
+import {AuthenticationMessage} from './authentication';
 
 /**
  * MenuTab - the menu tab component.
@@ -17,12 +18,23 @@ const MenuTab = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <div className='menuTab'>
-      <div className={classesTitleText}
-        onClick={props.onClick}>
-        {props.title}
-      </div>
-    </div>
+    <>
+      {props.disabled ?
+        <div className='menuTab disabled'>
+          <div className={classesTitleText}>
+            {props.title}
+          </div>
+        </div> :
+        <div className='menuTab'>
+          <div
+            className={classesTitleText}
+            onClick={props.onClick}
+          >
+            {props.title}
+          </div>
+        </div>
+      }
+    </>
   );
 };
 MenuTab.propTypes = {
@@ -30,6 +42,7 @@ MenuTab.propTypes = {
   title: PropTypes.string,
   onClick: PropTypes.func,
   active: PropTypes.bool,
+  disabled: PropTypes.bool,
 };
 
 /**
@@ -40,6 +53,7 @@ MenuTab.propTypes = {
 const Menu = (props) => {
   const socketContext = useContext(SocketContext);
   const [connected, setConnected] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [alerts, setAlerts] = useState([]);
   const [alertOpen, setAlertOpen] = useState(false);
 
@@ -59,8 +73,21 @@ const Menu = (props) => {
     }
   }, [socketContext, alerts]);
 
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('loris_login_response', (data) => {
+        if (data.success) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      });
+    }
+  }, [socketContext]);
+
   return props.visible ? (
     <div className='root'>
+      <div><AuthenticationMessage /></div>
       <div className='menu'>
         { props.tabs.map((tab, index) => (
           <MenuTab
@@ -71,6 +98,7 @@ const Menu = (props) => {
             onClick={tab.onClick}
             active={index === props.activeTab}
             activeIndex={props.activeTab}
+            disabled={!isAuthenticated && index > 0}
           />
         ))}
       </div>

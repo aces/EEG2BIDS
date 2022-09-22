@@ -6,17 +6,10 @@
     cursor: default;
     font-size: 12px;
     background-color: #e9eaee;
-    width: 50%;
 }
 .loginMessage {
     font-size: 14px;
 }
-.loginLink {
-    color: #3b5ead;
-    font-weight: bolder;
-    cursor: pointer;
-}
-
 /* Authentication "modal" CSS */
 .authCredentialsOverlay {
     top: 0;
@@ -104,7 +97,7 @@
 /* Authentication "Submit" button CSS */
 .authSubmitContainer {
     display: block;
-    margin: 10px 50px 0 0;
+    margin: 10px 0 0 0;
     text-align: right;
 }
 .authClearButton {
@@ -126,7 +119,7 @@
 .authSubmitButton {
     border: 0;
     width: 120px;
-    height: 45px;
+    height: 35px;
     color: #fff;
     cursor: pointer;
     border-radius: 30px;
@@ -187,11 +180,11 @@
 /* Authentication "hide" password CSS */
 .eye-open {
     right: 0;
-    top: 15px;
+    top: 18px;
     z-index: 11;
     content: 'Hide';
     cursor: pointer;
-    font-size: 14pt;
+    font-size: 13px;
     position: absolute;
     margin-left: -20px;
 }
@@ -200,11 +193,11 @@
 }
 .eye-close {
     right: 0;
-    top: 15px;
+    top: 18px;
     z-index: 11;
     content: 'Show';
     cursor: pointer;
-    font-size: 14pt;
+    font-size: 13px;
     position: absolute;
     margin-left: -20px;
 }

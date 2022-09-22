@@ -162,6 +162,7 @@ def set_loris_credentials(sid, data):
         loris_api.uploadURL = lorisCredentials['lorisURL'] + '/electrophysiology_uploader/upload/'
         loris_api.username = lorisCredentials['lorisUsername']
         loris_api.password = lorisCredentials['lorisPassword']
+        loris_api.token = ''
         resp = loris_api.login()
 
         print(resp)
@@ -171,12 +172,14 @@ def set_loris_credentials(sid, data):
         else:
             sio.emit('loris_login_response', {
                 'success': 200,
-                'lorisUsername': loris_api.username
+                'lorisUsername': loris_api.username,
+                'lorisURL': lorisCredentials['lorisURL']
             })
             sio.emit('loris_sites', loris_api.get_sites())
             sio.emit('loris_projects', loris_api.get_projects())
     except Exception as e:
-        sio.emit('loris_login_response', {'error': str(e)})
+        sio.emit('loris_login_response', {'error': 'Connection refused.'})
+        print(str(e))
         sio.emit('server_error', traceback.format_exc())
         print(traceback.format_exc())
 
