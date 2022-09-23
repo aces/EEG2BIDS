@@ -239,6 +239,7 @@ export const MultiDirectoryInput = (props) => {
           <button
             type="button"
             onClick={() => props.excludeMFFDirectory(props.taskName, true, '')}
+            style={{marginLeft: '10px'}}
           >
               Excluded
           </button>

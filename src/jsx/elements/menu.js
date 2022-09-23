@@ -108,7 +108,7 @@ const Menu = (props) => {
           role="alert"
           onClick={() => setAlertOpen(!alertOpen)}
         >
-          {alertOpen && alerts.map((alert) => <p>{alert}</p>)}
+          {alertOpen && alerts.map((alert, key) => <p key={key}>{alert}</p>)}
         </div>
       )}
     </div>

@@ -385,7 +385,7 @@ const Configuration = (props) => {
       error = true;
     }
     return (
-      <div key={key} className={'flags'}>
+      <div key={key} className='flags'>
         <span className='error'>&#x274C;</span> {msg}
         <TextareaInput
           name={key}
@@ -495,7 +495,7 @@ const Configuration = (props) => {
 
   const formatWarning = (msg, key) => {
     return (
-      <div key={key} className={'flags'}>
+      <div key={key} className='flags'>
         <span className='warning'>&#x26A0;</span> {msg}
       </div>
     );
@@ -503,7 +503,7 @@ const Configuration = (props) => {
 
   const formatPass = (msg, key) => {
     return (
-      <div className={'flags'} key={key}>
+      <div className='flags' key={key}>
         <span className='checkmark'>&#x2714;</span>
         {msg}
       </div>
@@ -529,9 +529,9 @@ const Configuration = (props) => {
       <div className='small-pad'>
         <b>Review your warning flags:</b>
         {listItems}
-        <div className={'flags'}>
+        <div className='flags'>
           <TextareaInput
-            name={'additional'}
+            name='additional'
             label={'Optional: Please provide additional reasoning ' +
               'as to why issues happened if not already defined above:'}
             value={value}
@@ -1213,7 +1213,7 @@ const Configuration = (props) => {
           Recording details
         </span>
         <div className='container'>
-          <div className='info half'>
+          <div className='info' style={{width: '100%'}}>
             {state.LORIScompliant.get &&
               <>
                 <div className='small-pad'>
@@ -1374,13 +1374,13 @@ const Configuration = (props) => {
           </div>
           <div className='small-pad'>
             <FileInput
-              id={'image_file'}
+              id='image_file'
               required={true}
-              name={'image_file'}
-              label={'Placement Photos'}
-              accept={'.zip'}
+              name='image_file'
+              label='Placement Photos'
+              accept='.zip'
               onUserInput={onUserInput}
-              help={'For photos taken with iPad of cap placement'}
+              help='For photos taken with iPad of cap placement'
               placeholder={
                 state.image_file.get.map((file) => file['name']).join(', ')
               }

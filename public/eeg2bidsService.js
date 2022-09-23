@@ -1,4 +1,6 @@
-const {execFile, spawn} = require('child_process');
+const {spawn} = require('child_process');
+const os = require('os');
+const pythonLog = require('electron-log');
     
 /**
  * EEG2BIDS Wizard Service
@@ -8,9 +10,9 @@ module.exports = class EEG2BIDSService {
    * constructor
    */
   constructor() {
-    const os = require('os');
     this.platform = os.platform(); // darwin or win32.
     this.process = null; // the service process.
+    pythonLog.transports.file.fileName = 'python.log';
   }
 
   /**
@@ -28,15 +30,15 @@ module.exports = class EEG2BIDSService {
     this.process = spawn(pathToService, []);
 
     this.process.stdout.on('data', function (data) {
-      console.log('stdout: ' + data.toString());
+      pythonLog.info(data.toString());
     });
 
     this.process.stderr.on('data', function (data) {
-      console.log('stderr: ' + data.toString());
+      pythonLog.error(data.toString());
     });
 
     this.process.on('exit', function (code) {
-      console.log('child process exited with code ' + code.toString());
+      pythonLog.info('Python process exited with code ' + code.toString());
     });
   }
 
