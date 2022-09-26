@@ -1,6 +1,8 @@
 const {spawn, exec} = require('child_process');
 const os = require('os');
 const pythonLog = require('electron-log');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * EEG2BIDS Wizard Service
@@ -13,6 +15,19 @@ module.exports = class EEG2BIDSService {
     this.platform = os.platform(); // darwin or win32.
     this.process = null; // the service process.
     pythonLog.transports.file.fileName = 'python.log';
+    pythonLog.transports.file.archiveLog = (file) => {
+      const today  = new Date();
+      let date = new Date().toISOString().replace(/T/, '-').replaceAll(/:/g, '_').replace(/\..+/, '');
+
+      file = file.toString();
+      const info = path.parse(file);
+
+      try {
+        fs.renameSync(file, path.join(info.dir, info.name + '-' + date + info.ext));
+      } catch (e) {
+        console.warn('Could not rotate log', e);
+      }
+    }
   }
 
   /**
@@ -30,11 +45,11 @@ module.exports = class EEG2BIDSService {
     this.process = spawn(pathToService, []);
 
     this.process.stdout.on('data', function (data) {
-      pythonLog.info(data.toString());
+      pythonLog.info('stdout: ' + data.toString());
     });
 
     this.process.stderr.on('data', function (data) {
-      pythonLog.error(data.toString());
+      pythonLog.error('sterr: ' + data.toString());
     });
 
     this.process.on('exit', function (code) {

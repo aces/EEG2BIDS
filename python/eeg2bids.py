@@ -15,6 +15,7 @@ import datetime
 import json
 import subprocess
 import sys
+import functools
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -103,7 +104,7 @@ def tarfile_bids(sid, data):
                 'type': 'upload',
                 'code': 500,
                 'body': {
-                    'error': response.error
+                    'error': response['error']
                 }
             }
         elif response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
@@ -474,6 +475,7 @@ def disconnect(sid):
 
 if __name__ == '__main__':
     try:
+      print = functools.partial(print, flush=True)
       eventlet.wsgi.server(
         eventlet.listen(('127.0.0.1', 7301)),
         app,
