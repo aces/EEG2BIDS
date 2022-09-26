@@ -39,8 +39,16 @@ Inside project root using your "Windows PowerShell" type the following,
 # first follow the Development Build guide
 # then paste the following commands:
 python -m pip install pyinstaller
-.\build.ps1
+pyinstaller eeg2bids-service-windows.spec --clean
 # Visit the /dist for the "python-service" build.
+```
+To generate the eeg2bids-service-windows.spec file:
+```
+chmod +x build.sh
+.\build.ps1
+# Open eeg2bids-service.spec and add on the first line
+import sys
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 ```
 
 2) electron-app build:

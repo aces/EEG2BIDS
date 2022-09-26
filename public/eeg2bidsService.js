@@ -1,7 +1,7 @@
-const {spawn} = require('child_process');
+const {spawn, exec} = require('child_process');
 const os = require('os');
 const pythonLog = require('electron-log');
-    
+
 /**
  * EEG2BIDS Wizard Service
  */
@@ -38,17 +38,30 @@ module.exports = class EEG2BIDSService {
     });
 
     this.process.on('exit', function (code) {
-      pythonLog.info('Python process exited with code ' + code.toString());
+      pythonLog.info('Python process exited');
     });
   }
 
   /**
    * shutdown the service process
    */
-  shutdown() {
+  shutdown(callback) {
     if (this.process) {
       console.info('[SHUTDOWN of eeg2bidsService]');
-      // this.process.kill();
+
+      if(os.platform() === 'win32'){
+        exec('taskkill /pid ' + this.process.pid + ' /T /F', (error, stdout, stderr) => {
+          if (error) {
+            console.error(`exec error: ${error}`);
+          }
+          console.log(stdout);
+          console.error(stderr);
+          callback();
+        });
+      } else if(os.platform() !== 'darwin'){
+        this.process.kill();
+      }
+
       this.process = null;
     }
   }

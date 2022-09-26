@@ -36,9 +36,16 @@ python-service build:
 pip install pyinstaller
 sudo apt-get install python3-dev
 sudo apt-get install binutils
+pyinstaller eeg2bids-service.spec --clean
+# Visit the /dist for the "python-service" build.
+```
+To generate the eeg2bids-service.spec file:
+```
 chmod +x build.sh
 ./build.sh
-# Visit the /dist for the "python-service" build.
+# Open eeg2bids-service.spec and add on the first line
+import sys
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 ```
 
 electron-app build:

@@ -82,7 +82,6 @@ const createMainWindow = () => {
   });
 
   mainWindow.on('closed', function() {
-    eeg2bidsService.shutdown();
     mainWindow = null;
   });
 };
@@ -189,9 +188,10 @@ app.on('ready', async () => {
 });
 
 app.on('window-all-closed', () => {
-  eeg2bidsService.shutdown();
+  // Wait for shutdown to stop
+  // the service and quit the app
   if (process.platform !== 'darwin') {
-    app.quit();
+    eeg2bidsService.shutdown(() => app.quit());
   }
 });
 
