@@ -34,15 +34,27 @@ module.exports = class EEG2BIDSService {
    * startup the service process
    */
   async startup() {
-    const pathToService = require('path').join(
+    let pathToService;
+
+    if (process.env.DEV) {
+      pathToService = require('path').join(
+          __dirname,
+          '..',
+          this.platform === 'win32' ?
+            'start-server.ps1' :
+            'start-server.sh',
+      );
+      this.process = spawn('powershell.exe', [pathToService])
+    } else {
+      pathToService = require('path').join(
         __dirname,
         '..',
       this.platform === 'win32' ?
         'dist/eeg2bids-service-windows.exe' :
         'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
-    );
-
-    this.process = spawn(pathToService, []);
+      );
+      this.process = spawn(pathToService, []);
+    }
 
     this.process.stdout.on('data', function (data) {
       pythonLog.info('stdout: ' + data.toString());

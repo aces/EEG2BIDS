@@ -234,7 +234,9 @@ const Validator = (props) => {
       setModalText((prevState) => {
         if (message.code >= 400) {
           const prevMessage = prevState.message;
-          prevMessage.error = message.body.error;
+          prevMessage.error = message.body.errors.map(
+              (error, index) => <p key={index}>{error}</p>,
+          );
           return {
             ...prevState,
             ['mode']: 'error',
@@ -337,6 +339,11 @@ const Validator = (props) => {
                     style={{width: `${progress.progress}%`}}
                   />
                 </div>
+                {progress.read ?
+                  <div className="bytes">
+                    {progress.read}/{progress.total}
+                  </div> : null
+                }
               </div>
             </div>
           </div>

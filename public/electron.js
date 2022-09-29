@@ -16,15 +16,13 @@ const EEG2BIDSService = process.env.DEV ?
 
 // Launch python service.
 const eeg2bidsService = new EEG2BIDSService();
-if (!process.env.DEV) {
-  eeg2bidsService.startup().then((error) => {
-    if (error) {
-      console.info('[SERVICE] eeg2bids-service failed');
-    } else {
-      console.info('[SERVICE] eeg2bids-service success');
-    }
-  });
-}
+eeg2bidsService.startup().then((error) => {
+  if (error) {
+    console.info('[SERVICE] eeg2bids-service failed');
+  } else {
+    console.info('[SERVICE] eeg2bids-service success');
+  }
+});
 
 if (process.env.DEV) {
   const {

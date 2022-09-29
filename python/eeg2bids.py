@@ -27,8 +27,8 @@ lorisCredentials = {
 # Create socket listener.
 sio = socketio.Server(
     async_mode='eventlet',
+    ping_timeout=60000,
     cors_allowed_origins=[],
-    logger=True,
 )
 app = socketio.WSGIApp(sio)
 
@@ -44,16 +44,18 @@ def connect(sid, environ):
         if environ['REMOTE_ADDR'] != '127.0.0.1':
             return False  # extra precaution.
     except Exception as e:
-        sio.emit('server_error', traceback.format_exc())
+        sio.emit('server_error', str(e))
         print(traceback.format_exc())
     
 
 def tarfile_bids_thread(data):
+    print('tarfile_bids_thread:', data)
     try:
         tar_handler.set_stage('packaging PII')
         pii_tar = tar_handler.packagePII(data['mffFiles'], data['filePrefix'])
         tar_handler.set_stage('upload PII')
         pii = loris_api.upload_pii(pii_tar)
+
         tar_handler.set_stage('compressing')
         tar_handler.package(data['bidsDirectory'])
         output_filename = data['bidsDirectory'] + '.tar.gz'
@@ -64,11 +66,13 @@ def tarfile_bids_thread(data):
             'loris': lor,
             'pii': pii
         }
+
         return eventlet.tpool.Proxy(resp)
     except Exception as e:
         resp = {
-            'error': 'Unknown - ' + str(e) + ' Trace - ' + traceback.format_exc()
+            'error': 'Unknown - ' + str(e)
         }
+        print(traceback.format_exc())
         return eventlet.tpool.Proxy(resp)
 
 
@@ -77,49 +81,63 @@ def get_progress(sid):
     try:
         progress_info = {
             'stage': tar_handler.stage,
-            'progress': 0
+            'progress': 0,
+            'read': 0,
+            'total': 0,
         }
         if tar_handler.stage == 'loris_upload':
-            progress_info['progress'] = int(loris_api.upload_progress * 100)
+            progress_info['progress'] = int(
+                loris_api.upload_read / loris_api.upload_total * 100
+            )
+            progress_info['read'] = loris_api.upload_read
+            progress_info['total'] = loris_api.upload_total
         elif tar_handler.stage == 'compressing':
             progress_info['progress'] = int(tar_handler.progress)
         elif tar_handler.stage == 'packaging PII':
             progress_info['progress'] = int(tar_handler.pii_progress)
         elif tar_handler.stage == 'upload PII':
-            progress_info['progress'] = int(loris_api.upload_pii_progress * 100)
+            progress_info['progress'] = int(
+                loris_api.upload_pii_read / loris_api.upload_pii_total * 100
+            )
+            progress_info['read'] = loris_api.upload_pii_read
+            progress_info['total'] = loris_api.upload_pii_total
         sio.emit('progress', progress_info)
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
 
 
 @sio.event
 def tarfile_bids(sid, data):
+    print('tarfile_bids:', data)
     try:
         response = eventlet.tpool.execute(tarfile_bids_thread, data)
-        print(response)
 
         if 'error' in response:
             resp = {
                 'type': 'upload',
                 'code': 500,
                 'body': {
-                    'error': response['error']
+                    'errors': [response['error']]
                 }
             }
         elif response['pii'].status_code >= 400 or response['loris'].status_code >= 400:
-            error = ''
+            errors = []
             if response['pii'].status_code >= 400:
-                error += 'PII Error: '
-                error += response['pii'].reason
+                print(response['pii'])
+                errors.append('PII Error: ' + response['pii'].reason)
             if response['loris'].status_code >= 400:
-                error += '\nLORIS Error: '
-                error += response['loris'].reason
+                try:
+                    error = response['loris'].json()['error']
+                    errors.append('LORIS Error: ' + error)
+                except json.decoder.JSONDecodeError as e:
+                    error = response['loris'].reason
+                    errors.append('LORIS Error: ' + error)
             resp = {
                 'type': 'upload',
                 'code': response['pii'].status_code if response['pii'].status_code > response['loris'].status_code else response['loris'].status_code,
                 'body': {
-                    'error': error
+                    'errors': errors
                 }
             }
         else:
@@ -130,27 +148,29 @@ def tarfile_bids(sid, data):
             }
         sio.emit('response', resp)
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
 
 
 @sio.event
 def get_participant_data(sid, data):
+    print('get_participant_data:', data)
     try:
-        # todo helper to to data validation
+        # todo helper to do data validation
         if 'candID' not in data or not data['candID']:
             return
 
         candidate = loris_api.get_candidate(data['candID'])
         sio.emit('participant_data', candidate)
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
     
 
 @sio.event
 def set_loris_credentials(sid, data):
     try:
+        print('set_loris_credentials:', data)
         global lorisCredentials
         lorisCredentials = data
         if 'lorisURL' not in lorisCredentials:
@@ -166,8 +186,6 @@ def set_loris_credentials(sid, data):
         loris_api.token = ''
         resp = loris_api.login()
 
-        print(resp)
-
         if resp.get('error'):
             sio.emit('loris_login_response', {'error': resp.get('error')})
         else:
@@ -180,8 +198,7 @@ def set_loris_credentials(sid, data):
             sio.emit('loris_projects', loris_api.get_projects())
     except Exception as e:
         sio.emit('loris_login_response', {'error': 'Connection refused.'})
-        print(str(e))
-        sio.emit('server_error', traceback.format_exc())
+        sio.emit('server_error', str(e))
         print(traceback.format_exc())
 
 
@@ -206,15 +223,17 @@ def get_loris_visits(sid, subproject):
 
 @sio.event
 def create_visit(sid, data):
+    print('create_visit')
     try:
         loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
         loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
     
 @sio.event
 def create_candidate_and_visit(sid, data):
+    print('create_candidate_and_visit')
     try:
         new_candidate = loris_api.create_candidate(
             data['project'],
@@ -224,20 +243,19 @@ def create_candidate_and_visit(sid, data):
         )
 
         if new_candidate['CandID']:
-            print('create_visit')
             loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
                                 data['subproject'])
             loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
                                     data['project'], data['date'])
-            print('new_candidate_created')
             sio.emit('new_candidate_created', new_candidate)
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
 
 
 @sio.event
 def get_edf_data(sid, data):
+    print('get_edf_data')
     # data = { files: 'EDF files (array of {path, name})' }
 
     if 'files' not in data or not data['files']:
@@ -284,15 +302,16 @@ def get_edf_data(sid, data):
         }
 
     except ReadError as e:
-        print(e)
+        print(traceback.format_exc())
         response = {
             'error': 'Cannot read file - ' + str(e)
         }
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
         response = {
             'error': 'Failed to retrieve EDF header information',
         }
+    print(response)
     sio.emit('edf_data', response)
 
 
@@ -327,18 +346,19 @@ def get_set_data(sid, data):
         }
 
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
         response = {
             'error': 'Failed to retrieve SET file information',
         }
 
+    print(response)
     sio.emit('set_data', response)
 
 
 @sio.event
 def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
-    print('data:', data)
+    print('get_bids_metadata:', data)
 
     if 'file_path' not in data or not data['file_path']:
         msg = 'No metadata file selected.'
@@ -362,24 +382,23 @@ def get_bids_metadata(sid, data):
                         'ignored_keys': ignored_keys,
                     }
                 except ValueError as e:
-                    print(e)
+                    print(traceback.format_exc())
                     metadata = {}
                     response = {
                         'error': 'Metadata file format is not valid.',
                     }
         except IOError:
-            msg = "Could not read the metadata file."
-            print(msg)
+            print(traceback.format_exc())
             response = {
-                'error': msg,
+                'error': "Could not read the metadata file.",
             }
 
+    print(response)
     sio.emit('bids_metadata', response)
 
 
 def eeg_to_bids_thread(data):
-    print('data is ')
-    print(data)
+    print('eeg_to_bids_thread:', data)
     error_messages = []
     debug_path = data['bids_directory']
     if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
@@ -410,16 +429,19 @@ def eeg_to_bids_thread(data):
             return eventlet.tpool.Proxy(response)
         except ReadError as e:
             response = {
-                'error': 'Cannot read file - ' + str(e) + ' Trace - ' + traceback.format_exc()
+                'error': 'Cannot read file - ' + str(e)
             }
+            print(traceback.format_exc())
         except WriteError as e:
             response = {
-                'error': 'Cannot write file - ' + str(e) + ' Trace - ' + traceback.format_exc()
+                'error': 'Cannot write file - ' + str(e)
             }
+            print(traceback.format_exc())
         except Exception as e:
             response = {
-                'error': 'Unknown - ' + str(e) + ' Trace - ' + traceback.format_exc()
+                'error': 'Unknown - ' + str(e)
             }
+            print(traceback.format_exc())
     else:
         response = {
             'error': error_messages
@@ -429,6 +451,7 @@ def eeg_to_bids_thread(data):
     f.write('\n\n')
     f.write(str(response))
     f.close()
+    print(response)
     return eventlet.tpool.Proxy(response)
 
 
@@ -440,14 +463,13 @@ def eeg_to_bids(sid, data):
     print('eeg_to_bids: ', data)
     response = eventlet.tpool.execute(eeg_to_bids_thread, data)
     print(response)
-    print('Response received!')
     sio.emit('bids', response.copy())
 
 
 @sio.event
 def validate_bids(sid, bids_directory):
+    print('validate_bids: ', bids_directory)
     try:
-        print('validate_bids: ', bids_directory)
         error_messages = []
         if not bids_directory:
             error_messages.append('The BIDS output directory is missing.')
@@ -462,9 +484,11 @@ def validate_bids(sid, bids_directory):
             response = {
                 'error': error_messages
             }
+
+        print(response)
         sio.emit('response', response)
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())
 
 
@@ -482,5 +506,5 @@ if __name__ == '__main__':
         log_output=True
       )
     except Exception as e:
-      sio.emit('server_error', traceback.format_exc())
+      sio.emit('server_error', str(e))
       print(traceback.format_exc())

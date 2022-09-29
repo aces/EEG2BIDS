@@ -3,6 +3,8 @@ import os
 import requests
 import urllib
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+import traceback
+
 
 class LorisAPI:
     url = ''
@@ -10,10 +12,15 @@ class LorisAPI:
     username = ''
     password = ''
     token = ''
-    upload_progress = 0
-    upload_pii_progress = 0
+
+    upload_read = 0
+    upload_total = -1
+
+    upload_pii_read = 0
+    upload_pii_total = -1
 
     def login(self):
+        print('login has ran')
         resp = requests.post(
             url=self.url + 'login',
             json={
@@ -23,7 +30,7 @@ class LorisAPI:
             verify=False
         )
 
-        print(resp)
+        print(resp.status_code)
 
         login_succeeded = {}
         if resp.status_code == 405:
@@ -36,7 +43,6 @@ class LorisAPI:
                 login_succeeded = {'error': resp_json.get('error')}
             else:
                 self.token = resp_json.get('token')
-                print(self.token)
         return login_succeeded
 
     def get_projects(self):
@@ -48,6 +54,7 @@ class LorisAPI:
         )
 
         json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
         return json_resp.get('Projects')
 
     def get_all_subprojects(self):
@@ -57,9 +64,10 @@ class LorisAPI:
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
-        print('getting subprojects')
-        print(resp)
+
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
         return json_resp.get('Subprojects')
 
     def get_subprojects(self, project):
@@ -70,14 +78,13 @@ class LorisAPI:
 
     def get_visits(self, subproject):
         print('get_visits has ran')
-        print('get_visits look here:')
         resp = requests.get(
             url=self.url + 'subprojects/' + urllib.parse.quote(subproject),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
 
-        print(resp)
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
         return json_resp.get('Visits')
@@ -90,8 +97,7 @@ class LorisAPI:
             verify=False
         )
 
-        print(resp)
-
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
         print (json_resp)
         sites = json_resp.get('Sites')
@@ -105,8 +111,9 @@ class LorisAPI:
             verify=False
         )
 
-        print(resp)
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
         return json_resp
 
     def get_visit(self, candid, visit, site, subproject, project):
@@ -126,9 +133,9 @@ class LorisAPI:
             verify=False
         )
 
-        print(visit)
-        print(resp)
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
+        print(json_resp)
         return json_resp
 
     def start_next_stage(self, candid, visit, site, subproject, project, date):
@@ -151,9 +158,7 @@ class LorisAPI:
             }),
             verify=False
         )
-        print('resp.status_code:')
         print(resp.status_code)
-        print('resp.text:')
         print(resp.text)
 
     def create_candidate(self, project, dob, sex, site):
@@ -172,7 +177,7 @@ class LorisAPI:
             verify=False
         )
 
-        print(resp)
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
         return json_resp
@@ -191,20 +196,19 @@ class LorisAPI:
             }),
             verify=False
         )
-        print('resp:')
-        print(resp)
+        print(resp.status_code)
         # json_resp = json.loads(resp.content.decode('ascii'))
         # print(json_resp)
 
     def get_candidate(self, candid):
-        print('get_candidate has ran')
+        print('get_candidate has ran for: ', candid)
         resp = requests.get(
             url=self.url + '/candidates/' + candid,
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
 
-        print(resp)
+        print(resp.status_code)
         json_resp = json.loads(resp.content.decode('ascii'))
         print(json_resp)
 
@@ -216,15 +220,19 @@ class LorisAPI:
 
     def upload_callback(self, monitor):
         # Update the upload progress
-        self.upload_progress = monitor.bytes_read / monitor.len
+        self.upload_read = monitor.bytes_read
+        self.upload_total = monitor.len
+        
 
     def upload_pii_callback(self, monitor):
         # Update the upload progress
-        self.upload_pii_progress = monitor.bytes_read / monitor.len
+        self.upload_pii_read = monitor.bytes_read
+        self.upload_pii_total = monitor.len
 
     def upload_eeg(self, filename, metaData, candID, pscid, visit):
         print('upload eeg has ran')
-        self.upload_progress = 0
+        self.upload_read = 0
+        self.upload_total = -1
         e = MultipartEncoder(
             fields={'metaData': json.dumps(metaData), 'candID': candID, 'pscid': pscid, 'visit': visit,
                     'eegFile': (os.path.basename(filename), open(filename, 'rb'), 'application/x-tar')}
@@ -234,10 +242,15 @@ class LorisAPI:
         resp = requests.post(self.uploadURL, data=m,
                           headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token}, verify=False)
 
+        print(resp.status_code)
+        print(resp.text)
+
         return resp
 
     def upload_pii(self, filename):
-        self.upload_pii_progress = 0
+        print('upload pii has ran')
+        self.upload_pii_read = 0
+        self.upload_pii_total = -1
         e = MultipartEncoder(
             fields={'eegFile': (os.path.basename(filename), open(filename, 'rb'), 'application/x-tar')}
         )
@@ -246,6 +259,7 @@ class LorisAPI:
         resp = requests.post('https://integration.hbcd.ahc.umn.edu/api/v1/eeg', data=m,
                           headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token}, verify=False)
 
+        print(resp.status_code)
+        print(resp.text)
+
         return resp
-
-

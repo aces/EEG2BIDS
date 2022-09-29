@@ -115,7 +115,7 @@ class TarFile:
         return total_size
 
     def packagePII(self, files, filePrefix):
-        output_filename = os.path.dirname(files[0]) + os.path.sep + filePrefix + '_pii.tar.gz'
+        output_filename = os.path.dirname(files[0]) + os.path.sep + filePrefix + '_EEG.tar.gz'
         filesize = 0
         for file in files:
             filesize += self.calculateFileSize(file)
