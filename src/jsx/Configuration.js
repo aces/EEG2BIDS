@@ -7,7 +7,6 @@ import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
-const path = require('path');
 
 // Components
 import {
@@ -1325,7 +1324,7 @@ const Configuration = (props) => {
               multiple={true}
               required={true}
               taskName='MMN'
-              label='Three-stimulus oddball'
+              label='MMN'
               updateDirEntry={updateMFFDirectory}
               removeDirEntry={removeMFFDirectory}
               addDirEntry={addMFFDirectory}

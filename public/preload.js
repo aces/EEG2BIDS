@@ -1,4 +1,9 @@
 const {contextBridge} = require('electron');
+const jsLog = require('electron-log');
+const {archiveLog} = require('./logs');
+
+jsLog.transports.file.fileName = 'js.log';
+jsLog.transports.file.archiveLog = archiveLog;
 
 /**
  * contextBridge should be cautious of security risk.
@@ -64,5 +69,6 @@ contextBridge.exposeInMainWorld('myAPI', {
       }
     });
     //return setFile;
-  }
+  },
+  logger: jsLog,
 });

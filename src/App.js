@@ -17,6 +17,8 @@ import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
 import Validator from './jsx/Validator';
 
+Object.assign(console, window.myAPI.logger.functions);
+
 /**
  * App - the main window.
  * @return {JSX.Element}
