@@ -63,6 +63,10 @@ const Menu = (props) => {
         setAlerts([]);
         setConnected(true);
       });
+      socketContext.on('connect_error', () => {
+        setAlerts([...alerts, 'Cannot connect to Python']);
+        setConnected(false);
+      });
       socketContext.on('disconnect', (msg) => {
         setAlerts([...alerts, 'Disconnected from Python - ' + msg]);
         setConnected(false);

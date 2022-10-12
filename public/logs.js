@@ -1,3 +1,6 @@
+
+const path = require('path');
+
 /**
  * Rotate log file
  */

@@ -1,3 +1,4 @@
+import logging
 import os
 import traceback
 
@@ -129,6 +130,7 @@ def tarfile_bids(sid, data):
             if response['loris'].status_code >= 400:
                 try:
                     error = response['loris'].json()['error']
+                    print(error)
                     errors.append('LORIS Error: ' + error)
                 except json.decoder.JSONDecodeError as e:
                     error = response['loris'].reason
@@ -500,9 +502,16 @@ def disconnect(sid):
 if __name__ == '__main__':
     try:
       print = functools.partial(print, flush=True)
+
+      log = logging.getLogger()
+      handler = logging.StreamHandler(sys.stdout)
+      log.addHandler(handler)
+      log.setLevel(logging.DEBUG)
+
       eventlet.wsgi.server(
         eventlet.listen(('127.0.0.1', 7301)),
         app,
+        log=log,
         log_output=True
       )
     except Exception as e:

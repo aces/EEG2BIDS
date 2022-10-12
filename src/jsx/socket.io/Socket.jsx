@@ -46,8 +46,12 @@ const Socket = (props) => {
         debug('connected');
       });
 
+      socket.on('connect_error', () => {
+        console.info('[Socket] connect error');
+      });
+
       socket.onAny((eventName, ...args) => {
-        console.info(`EVENT: ${eventName}`);
+        console.info(`EVENT: ${eventName}, ${JSON.stringify(args)}`);
       });
 
       socket.on('disconnect', () => {
