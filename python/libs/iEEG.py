@@ -20,7 +20,7 @@ import pymatreader
 import scipy.io as sio
 from mne_bids import BIDSPath, write_raw_bids
 from mne_bids.dig import _write_dig_bids
-
+import shutil
 
 class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
@@ -210,6 +210,11 @@ class Converter:
         modality = 'eeg'
         if data['modality'] == 'eeg':
             modality = 'eeg'
+
+        # Remove files from any previous attempt
+        dest_path = os.path.join(data['bids_directory'], data['outputFilename'])
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
 
         for i, eegRun in enumerate(data['eegRuns']):
             eegRun['eegBIDSBasename'] = self.to_bids(

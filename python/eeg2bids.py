@@ -436,7 +436,7 @@ def eeg_to_bids_thread(data):
             print(traceback.format_exc())
         except WriteError as e:
             response = {
-                'error': 'Cannot write file - Please delete the ' + data['outputFilename'] + ' folder and try again.'
+                'error': 'Cannot write file - ' + str(e)
             }
             print(traceback.format_exc())
         except Exception as e:
