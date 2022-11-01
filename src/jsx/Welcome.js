@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import '../css/Welcome.css';
 import {AuthenticationCredentials} from './elements/authentication';
+import {name, version} from '../../package.json';
 
 /**
  * Welcome - the Getting started component.
@@ -78,7 +79,8 @@ const Welcome = (props) => {
         <a className='open-source' onClick={openIssues}>
           Contact us
         </a> with your feedback.<br/>
-        Copyright © 2021 <a className='mcin' onClick={openMCIN}>
+        {name} v{version}
+         - Copyright © 2021 <a className='mcin' onClick={openMCIN}>
         MCIN</a>.
       </div>
     </>
