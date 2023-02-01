@@ -200,3 +200,8 @@ app.on('activate', () => {
     createMainWindow();
   }
 });
+
+app.on('browser-window-created', (_, window) => {
+  // Required for more recent versions of electron
+  require('@electron/remote/main').enable(window.webContents);
+});
