@@ -54,8 +54,26 @@ const Socket = (props) => {
         console.info(`EVENT: ${eventName}, ${JSON.stringify(args)}`);
       });
 
-      socket.on('disconnect', () => {
+      socket.on('disconnect', (reason, details) => {
         console.info('[Socket] disconnect');
+        console.info('---- Disconnect details START ----');
+        console.info(reason); // "transport close"
+
+        // in that case, details is a plain object
+        console.info(details);
+        console.info(details?.message);
+        console.info(details?.description);
+
+        // details.context is a CloseEvent object
+        console.info(details?.context?.code);
+        console.info(details?.context?.reason);
+
+        // Example within a cluster without sticky sessions:
+        console.info(details?.context?.status);
+        console.info(details?.context?.responseText);
+
+        console.info('---- Disconnect details END ----');
+
         socket.status = 'disconnected';
         debug('disconnect');
       });
@@ -96,6 +114,7 @@ const Socket = (props) => {
     </SocketContext.Provider>
   );
 };
+
 Socket.propTypes = {
   options: PropTypes.object.isRequired,
   uri: PropTypes.string.isRequired,

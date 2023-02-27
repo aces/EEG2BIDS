@@ -462,9 +462,11 @@ def eeg_to_bids(sid, data):
     # data = { file_paths: [], bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
+    print('BIDS Conversion - START')
     print('eeg_to_bids: ', data)
     response = eventlet.tpool.execute(eeg_to_bids_thread, data)
     print(response)
+    print('BIDS Conversion - END')
     sio.emit('bids', response.copy())
 
 

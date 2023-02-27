@@ -268,7 +268,7 @@ const Configuration = (props) => {
             JSON.parse(e.target.result);
             resolve(null);
           } catch (e) {
-            console.log(e);
+            console.error(e);
             resolve(json.name);
           }
         };
@@ -290,7 +290,7 @@ const Configuration = (props) => {
               {
                 quoteChar: '',
                 complete: (results, file) => {
-                  console.log(results.errors);
+                  console.error(results.errors);
                   if (results.errors.length > 0) {
                     resolve(tsv.name);
                   } else {
@@ -671,11 +671,11 @@ const Configuration = (props) => {
     if (socketContext) {
       let emit = '';
       if (state.fileFormatUploaded.get === 'edf') {
-        console.log('edf file selected');
+        console.info('edf file selected');
         emit = 'get_edf_data';
       }
       if (state.fileFormatUploaded.get === 'set') {
-        console.log('set file selected');
+        console.info('set file selected');
         emit = 'get_set_data';
       }
       socketContext.emit(emit, {
@@ -695,7 +695,7 @@ const Configuration = (props) => {
         return {...prevState, ['mode']: 'loading'};
       });
       const updateMessage = (msg) => {
-        console.log(msg);
+        console.info(msg);
         state.eegData.set(msg);
         appContext.setTask('eegData', msg);
       };
@@ -938,7 +938,7 @@ const Configuration = (props) => {
   }, [socketContext]);
 
   useEffect(() => {
-    console.log('FAKE EFFECT TO TRIGGER RERENDER');
+    console.info('FAKE EFFECT TO TRIGGER RERENDER');
   }, [state.participantID.get]);
 
   /**

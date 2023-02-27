@@ -46,7 +46,7 @@ module.exports = class MFFToSETService {
         const fileNames = [];
         for (const dir of mffDirectory) {
             if (mffDir !== path.dirname(dir.path)) {
-              console.log('DIFFERENT DIRS: TODO HANDLE');
+              console.error('DIFFERENT DIRS: TODO HANDLE');
             }
             fileNames.push(path.basename(dir.path));
             // await myAPI.convertMFFToSET(dir, callback);
@@ -55,7 +55,7 @@ module.exports = class MFFToSETService {
             fs.writeFileSync(jsonFile,
                 JSON.stringify(fileNames))
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
 
         // This should maybe move to the json file creation section
@@ -104,7 +104,7 @@ module.exports = class MFFToSETService {
                 let flags = {};
                 fs.readFile(`${mffDir}/flagchecks.json`, 'utf8',
                     (err, jsonString) => {
-                        console.log('read file', jsonString, err);
+                        console.info('read file', jsonString, err);
                         flags = JSON.parse(jsonString);
                          callback(
                             true,
