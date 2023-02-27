@@ -43,7 +43,7 @@
     "rebuild": "rebuild --runtime=electron --target=11.2.1",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
-    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
+    "start": "concurrently \"npm run react-start\" \"wait-on http://127.0.0.1:3000/ && npm run electron-start\"",
     "start-server": "./start-server.sh",
     "react-build": "cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
     "pack": "electron-builder --dir -c.extraMetadata.main=build/electron.js",

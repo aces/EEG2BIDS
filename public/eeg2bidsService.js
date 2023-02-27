@@ -33,7 +33,9 @@ module.exports = class EEG2BIDSService {
             'start-server.ps1' :
             'start-server.sh',
       );
-      this.process = spawn('powershell.exe', [pathToService])
+      this.platform === 'win32' ?
+        this.process = spawn('powershell.exe', [pathToService]) :
+        this.process = spawn('bash', [pathToService])
     } else {
       pathToService = require('path').join(
         __dirname,
