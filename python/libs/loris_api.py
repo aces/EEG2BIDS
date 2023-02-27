@@ -4,7 +4,7 @@ import requests
 import urllib
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import traceback
-
+import BinaryChunkedUpload
 
 class LorisAPI:
     url = ''
@@ -233,6 +233,10 @@ class LorisAPI:
         print('upload eeg has ran')
         self.upload_read = 0
         self.upload_total = -1
+
+        bcUpload = BinaryChunkedUpload(self.uploadURL, self.token, os.path.basename(filename), self.upload_callback)
+        bcUpload.upload()
+
         e = MultipartEncoder(
             fields={'metaData': json.dumps(metaData), 'candID': candID, 'pscid': pscid, 'visit': visit,
                     'eegFile': (os.path.basename(filename), open(filename, 'rb'), 'application/x-tar')}
