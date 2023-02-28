@@ -1,59 +1,81 @@
 import React, {useContext, useEffect} from 'react';
 import {AppContext} from '../../context';
-import {formatError, formatWarning, formatPass} from '../Converter';
 
 /**
  * Recording Data - the Recording Data component.
+ * @return {JSX.Element}
  */
 const RecordingData = () => {
   const {state, setState} = useContext(AppContext);
 
-  const edfFile = () => {
-    let validationStatus;
+  console.log(state);
 
+  const capitalize = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
+  const validateEdfFile = () => {
     if (state.edfData?.error) {
-      validationStatus = {
+      return ({
         status: 'error',
         msg: state.edfData.error,
-      };
+      });
     } else if (state.edfData?.files?.length > 0) {
-      validationStatus = {
+      return ({
         status: 'pass',
         msg: 'EDF data file(s): ' +
           state.edfData.files.map(
               (edfFile) => edfFile['name'],
           ).join(', '),
-      };
+      });
     } else {
-      validationStatus = {
+      return ({
         status: 'error',
         msg: 'No EDF file selected',
-      };
+      });
     }
-
-    return {
-      edfFile: validationStatus,
-    };
   };
 
-  const modality = () => {
-    let validationStatus;
-
+  const validateModality = () => {
     if (state.modality) {
-      validationStatus = {
+      return ({
         status: 'pass',
         msg: `Modality: ${state.modality}`,
-      };
+      });
     } else {
-      validationStatus = {
+      return ({
         status: 'error',
         msg: 'No modality selected',
-      };
+      });
     }
+  };
 
-    return {
-      modality: validationStatus,
-    };
+  const validateOutputDir = () => {
+    if (state.bidsDirectory) {
+      return ({
+        status: 'pass',
+        msg: 'BIDS output directory: ' + state.bidsDirectory,
+      });
+    } else {
+      return ({
+        status: 'error',
+        msg: 'No BIDS output folder selected',
+      });
+    }
+  };
+
+  const validateLORISCompliant = () => {
+    if (typeof state.LORIScompliant == 'boolean') {
+      return ({
+        status: 'pass',
+        msg: `Data loaded in LORIS: ${state.LORIScompliant}`,
+      });
+    } else {
+      return ({
+        status: 'error',
+        msg: 'Select if the data will be loaded into LORIS.',
+      });
+    }
   };
 
   const isFileNameValid = (edfFiles, file, suffix, extension) => {
@@ -73,182 +95,89 @@ const RecordingData = () => {
     );
   };
 
-  const edfFileNames = state.edfData.files.map(
-      (edfFile) => edfFile['name'],
-  );
-
-  const metadataFiles = (metadataFiles, suffix, extension) => {
-    const result = [];
-    let eventsStatus;
-    if (!metadataFiles ||
-      Object.keys(metadataFiles)?.length < 1
-    ) {
-      eventsStatus = formatWarning('No events.tsv selected ');
-    } else {
-      // check if any TSV file is invalid
-      if (state.invalidEventFiles?.length > 0) {
-        eventsStatus = formatError(
-            `Event file(s) ${state.invalidEventFiles.join(', ')}
-            are not valid TSV file(s).`,
-        );
-      } else {
-        let match = true;
-
-        // Check that the events files are appropriatly named
-        state.eventFiles.map((eventFile) => {
-          if (!isFileNameValid(
-              edfFileNames,
-              eventFile['name'],
-              'events',
-              'tsv',
-          )) {
-            match = false;
-            eventsStatus = formatError(
-                `Event file ${eventFile['name']}
-                is not matching any edf file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          eventsStatus = formatPass('Event file(s): ' +
-              state.eventFiles.map(
-                  (eventFile) => eventFile['name'],
-              ).join(', '),
-          );
-        }
-      }
+  const validateMetadataFiles = (
+      metadataFiles,
+      invalidFiles,
+      suffix,
+      extension,
+  ) => {
+    if (!metadataFiles || Object.keys(metadataFiles)?.length < 1) {
+      return ({
+        status: 'warning',
+        msg: `No ${suffix}.${extension} selected`,
+      });
     }
-    result.push(<div key='eventsStatus'>{eventsStatus}</div>);
-    return result;
-  };
 
-
-  const validateData = () => {
-    const result = [];
-
-    // annotations TSV
-    let annotationsTSVStatus = '';
-    if (!state.annotationsTSV ||
-      Object.keys(state.annotationsTSV)?.length < 1
-    ) {
-      annotationsTSVStatus = formatWarning('No annotations.tsv selected');
-    } else {
-      // check if any TSV file is invalid
-      if (state.invalidAnnotationsTSV?.length > 0) {
-        annotationsTSVStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsTSV.join(', ')}
-            are not valid TSV file(s).`,
-        );
-      } else {
-        let match = true;
-
-        // Check that the events files are appropriatly named
-        state.annotationsTSV.map((annotationsTSVFile) => {
-          if (!isFileNameValid(
-              edfFileNames,
-              annotationsTSVFile['name'],
-              'annotations',
-              'tsv',
-          )) {
-            match = false;
-            annotationsTSVStatus = formatError(
-                `Annotation file ${annotationsTSVFile['name']}
-                is not matching any edf file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
-              state.annotationsTSV.map(
-                  (annotationsTSVFile) => annotationsTSVFile['name'],
-              ).join(', '),
-          );
-        }
-      }
+    // check if any file is invalid (syntax/format)
+    if (invalidFiles?.length > 0) {
+      return ({
+        status: 'error',
+        msg: `${capitalize(suffix)} file(s) ${invalidFiles.join(', ')}
+        are not valid ${extension.toUpperCase()} file(s).`,
+      });
     }
-    result.push(<div key='annotationsTSVStatus'>{annotationsTSVStatus}</div>);
 
-    // annotations JSON
-    let annotationsJSONStatus = '';
-
-    //if (appContext.getFromTask('annotationsTSV') &&
-    //  Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
-    //) {
-    if (!state.annotationsJSON ||
-      Object.keys(state.annotationsJSON)?.length < 1
-    ) {
-      annotationsJSONStatus = formatWarning('No annotations.json selected');
-    } else {
-      // check if any JSON file is invalid
-      if (state.invalidAnnotationsJSON?.length > 0) {
-        annotationsJSONStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsJSON.join(', ')}
-            are not valid JSON file(s).`,
-        );
-      } else {
-        let match = true;
-        // Check that the events files are appropriatly named
-        state.annotationsJSON.map((annotationsJSONFile) => {
-          if (!isFileNameValid(
-              edfFileNames,
-              annotationsJSONFile['name'],
-              'annotations',
-              'json',
-          )) {
-            match = false;
-            annotationsJSONStatus = formatError(
-                `Annotation file ${annotationsJSONFile['name']}
-              is not matching any edf file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          annotationsJSONStatus = formatPass(
-              'Annotations JSON file(s): ' +
-              state.annotationsJSON.map(
-                  (annotationsJSONFile) => annotationsJSONFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(
-        <div key='annotationsJSONStatus'>
-          {annotationsJSONStatus}
-        </div>,
+    const edfFileNames = state.edfData.files?.map(
+        (edfFile) => edfFile['name'],
     );
-    //}
 
+    // Check that the files are appropriatly named
+    const invalidNames = metadataFiles
+        .filter((file) => {
+          !isFileNameValid(edfFileNames, file['name'], suffix, extension);
+        })
+        .map((file) => file['name']);
 
-    // bidsDirectory
-    let bidsDirectoryStatus = '';
-    if (state.bidsDirectory) {
-      bidsDirectoryStatus = formatPass(
-          'BIDS output directory: ' + state.bidsDirectory,
-      );
-    } else {
-      bidsDirectoryStatus = formatError('No BIDS output folder selected');
+    if (invalidNames?.length > 0) {
+      return ({
+        status: 'error',
+        msg: `${capitalize(suffix)} file(s) ${invalidNames.join(', ')} 
+        are not matching any edf file names.`,
+      });
     }
-    result.push(<div key='bidsDirectoryStatus'>{bidsDirectoryStatus}</div>);
 
-    // LORIS compliant
-    let LORIScompliantStatus = '';
-    if (typeof state.LORIScompliant == 'boolean') {
-      LORIScompliantStatus = formatPass(
-          `Data loaded in LORIS: ${state.LORIScompliant}`,
-      );
-    } else {
-      LORIScompliantStatus = formatError(
-          'Select if the data will be loaded into LORIS.',
-      );
-    }
-    result.push(<div key='LORIScompliantStatus'>{LORIScompliantStatus}</div>);
-
-    return result;
+    return ({
+      status: 'pass',
+      msg: `${capitalize(suffix)} ${extension.toUpperCase()} file(s): ` +
+      metadataFiles.map((file) => file['name']).join(', '),
+    });
   };
+
+  const results = [
+    validateEdfFile(),
+    validateOutputDir(),
+    validateModality(),
+    validateLORISCompliant(),
+    validateMetadataFiles(
+        state.eventFiles,
+        state.invalidEventFiles,
+        'events',
+        'tsv',
+    ),
+    validateMetadataFiles(
+        state.annotationsTSV,
+        state.invalidAnnotationsTSV,
+        'annotations',
+        'tsv',
+    ),
+    validateMetadataFiles(
+        state.annotationsJSON,
+        state.invalidAnnotationsJSON,
+        'annotations',
+        'json',
+    ),
+  ];
+
+  return (
+    <div className='small-pad'>
+      <b>Review your data and metadata:</b>
+      <div>{results.map((result, key) =>
+        <div key={key}>
+          <span className={result.status}>{result.msg}</span>
+        </div>,
+      )}</div>
+    </div>
+  );
 };
 
 export default RecordingData;

@@ -43,7 +43,7 @@ const Validator = (props) => {
       </span>,
       success: <span style={{padding: '40px'}}>
         <span className='bids-success'>
-          Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
+          Success compressing BIDS! <a className='pass'> &#x2714;</a>
         </span></span>,
       error: '',
     },

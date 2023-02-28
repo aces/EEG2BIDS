@@ -1,19 +1,25 @@
-.checkmark {
-    font-size: 18px;
-    padding-right: 10px;
+.pass:before {
+    content: '✔';
     color: #43a243;
+    font-size: 18px;
     font-family: Segoe UI Symbol, serif;
+    padding-right: 10px;
 }
-.warning {
+.warning:before {
+    content: '⚠';
     font-size: 20px;
     padding-right: 10px;
     color: #FF8C00;
     font-family: Segoe UI Symbol, serif;
 }
-.error {
-    font-size: 18px;
+.error:before {
+    content: '❌';
+    font-size: 16px;
     padding-right: 10px;
     color: red;
+}
+.pass, .error, .warning {
+    line-height: 24px;
 }
 .tooltip {
     cursor: default;

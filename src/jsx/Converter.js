@@ -16,46 +16,9 @@ import {
   TextInput,
 } from './elements/inputs';
 import RecordingData from './Converter/RecordingData';
-
-/**
- * formatError - Helper to format error msg
- * @param {string} msg
- * @return {JSX.Element}
- */
-export const formatError = (msg) => {
-  return (
-    <>
-      <span className='error'>&#x274C;</span> {msg}
-    </>
-  );
-};
-
-/**
- * formatWarning - Helper to format warning msg
- * @param {string} msg
- * @return {JSX.Element}
- */
-export const formatWarning = (msg) => {
-  return (
-    <>
-      <span className='warning'>&#x26A0;</span> {msg}
-    </>
-  );
-};
-
-/**
- * formatPass - Helper to format pass msg
- * @param {string} msg
- * @return {JSX.Element}
- */
-export const formatPass = (msg) => {
-  return (
-    <>
-      <span className='checkmark'>&#x2714;</span>
-      {msg}
-    </>
-  );
-};
+import RecordingDetails from './Converter/RecordingDetails';
+import ParticipantDetails from './Converter/ParticipantDetails';
+import RecordingParameters from './Converter/RecordingParameters';
 
 /**
  * Converter - the EDF to BIDS component.
@@ -86,7 +49,7 @@ const Converter = (props) => {
       </span>,
       success: <span style={{padding: '40px'}}>
         <span className='bids-success'>
-          <span className='checkmark'>&#x2714;</span> Success creating BIDS!
+          <span className='pass'>&#x2714;</span> Success creating BIDS!
         </span></span>,
       error: '',
     },
@@ -138,48 +101,6 @@ const Converter = (props) => {
   }, [props.visible]);
 
   const validate = () => {
-    /*if (socketContext) {
-      if (state.session && state.siteID &&
-          state.projectID && state.subprojectID &&
-          state.edfData?.date && state.participantDOB &&
-          state.participantSex
-      ) {
-        const visitDate = state.edfData['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    //    const dob = state.participantDOB
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    console.info('start request for new candidate');
-        socketContext.emit('create_candidate_and_visit', {
-          project: state.projectID,
-          dob: dob,
-          sex: state.participantSex,
-          site: state.siteID,
-          subproject: state.subprojectID,
-          visit: state.session,
-          date: visitDate,
-        });
-      }
-
-      if (state.participantCandID && state.session &&
-          state.siteID && state.projectID &&
-          state.subprojectID && state.edfData?.date
-      ) {
-        console.info('start request to create the visit');
-        const visitDate = state.edfData['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    socketContext.emit('create_visit', {
-          candID: state.participantCandID,
-          project: state.projectID,
-          site: state.siteID,
-          subproject: state.subprojectID,
-          visit: state.session,
-          date: visitDate,
-        });
-    } */
-
     if (state.edfData?.files?.length > 0) {
       const eventFiles = [...state.eventFiles];
       const annotationsTSVs = [...state.annotationsTSV];
@@ -284,253 +205,6 @@ const Converter = (props) => {
     }
   };
 
-  const validateRecordingParameters = () => {
-    const result = [];
-    let ignoredKeyFound = false;
-
-    if (!state.bidsMetadata) {
-      return formatWarning('No EEG Parameter metadata file selected');
-    }
-
-    if (state.invalidBidsMetadataFile?.length > 0) {
-      return formatError(
-          `EEG Parameter metadata file(s) 
-            ${state.invalidBidsMetadataFile.join(', ')}
-            are not valid JSON file(s).`,
-      );
-    }
-
-    if ('error' in state.bidsMetadata) {
-      return formatWarning(state.bidsMetadata['error']);
-    }
-
-    const metadata = state.bidsMetadata?.metadata;
-    const ignoredKeys = state.bidsMetadata?.ignored_keys;
-
-    if (!metadata || !ignoredKeys || metadata.length < 1) {
-      return formatWarning(
-          'An error occured while processing ' +
-          'the recording parameters file selected.',
-      );
-    }
-
-    Object.keys(metadata).map((key) => {
-      if (ignoredKeys.indexOf(key) > -1) {
-        ignoredKeyFound = true;
-        result.push(
-            <div key={key}>
-              {formatWarning(`${key}: ${metadata[key]}`)}
-            </div>,
-        );
-      } else {
-        result.push(
-            <div
-              key={key}
-              style={{paddingLeft: '32px'}}
-            >
-              {key}: {typeof metadata[key] == 'object' ?
-                JSON.stringify(metadata[key]) :
-                metadata[key]
-              }
-            </div>,
-        );
-      }
-    });
-
-    if (ignoredKeyFound) {
-      result.push(
-          <p key="message">
-            <span className='warning'>&#x26A0;</span>
-            Note: invalid or extra parameters, as well as
-            parameters with empty values are ignored.
-          </p>,
-      );
-    }
-
-    return result;
-  };
-
-  const validateRecordingDetails = () => {
-    const result = [];
-
-    // taskName
-    let taskNameStatus = '';
-    const taskName = state.taskName;
-    if (taskName) {
-      /* if (taskName.indexOf('-') > -1 ||
-          taskName.indexOf('_') > -1 ||
-          taskName.indexOf('/') > -1) {
-        taskNameStatus = formatError(
-            'Task Name has invalid characters (-, /, _)',
-        );
-      } else {
-        taskNameStatus = formatPass(
-            `Task Name: ${appContext.getFromTask('taskName')}`,
-        );
-      } */
-      taskNameStatus = formatPass(
-          `Task Name: ${state.taskName}`,
-      );
-    } else {
-      taskNameStatus = formatError('Task Name is not specified');
-    }
-    result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
-
-    if (state.LORIScompliant) {
-      // siteID
-      let siteIDStatus = '';
-      if (state.siteID) {
-        siteIDStatus = formatPass(
-            `Site: ${state.siteID}`,
-        );
-      } else {
-        siteIDStatus = formatError('Site is not specified');
-      }
-      result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
-
-      // projectID
-      let projectIDStatus = '';
-      if (state.projectID) {
-        projectIDStatus = formatPass(
-            `Project: ${state.projectID}`,
-        );
-      } else {
-        projectIDStatus = formatError('Project is not specified');
-      }
-      result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
-
-      // subprojectID
-      let subprojectIDStatus = '';
-      if (state.subprojectID) {
-        subprojectIDStatus = formatPass(
-            `Subproject: ${state.subprojectID}`,
-        );
-      } else {
-        projectIDStatus = formatError('Subproject is not specified');
-      }
-      result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
-    }
-
-    // session
-    let sessionStatus = '';
-    if (state.session) {
-      if (
-        state.session.indexOf(' ') >= 0 ||
-        state.session.indexOf('-') >= 0
-      ) {
-        sessionStatus = formatError('Session is containing a dash/space.');
-      } else {
-        sessionStatus = formatPass(
-            `Session: ${state.session}`,
-        );
-      }
-    } else {
-      sessionStatus = formatError('Session is not specified');
-    }
-    result.push(<div key='sessionStatus'>{sessionStatus}</div>);
-
-    // lineFreq
-    let lineFreqStatus = '';
-    if (state.lineFreq) {
-      lineFreqStatus = formatPass(
-          `Powerline Frequency: ${state.lineFreq}`,
-      );
-    } else {
-      lineFreqStatus = formatWarning('Powerline frequency is not specified');
-    }
-    result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
-
-    // reference
-    let referenceStatus = '';
-    if (state.reference) {
-      referenceStatus = formatPass(
-          `Reference: ${state.reference}`,
-      );
-    } else {
-      referenceStatus = formatError('Reference is not specified');
-    }
-    result.push(<div key='referenceStatus'>{referenceStatus}</div>);
-
-    return result;
-  };
-
-  const validateParticipantDetails = () => {
-    const result = [];
-
-    if (state.participantEntryMode == 'existing_loris') {
-      // participantPSCID
-      let participantPSCIDStatus = '';
-
-      // participantCandID
-      let participantCandIDStatus = '';
-
-      if (!state.participantPSCID) {
-        participantPSCIDStatus = formatError(
-            'LORIS PSCID is not specified',
-        );
-      } else {
-        participantPSCIDStatus = formatPass(
-            `LORIS PSCID: ${state.participantPSCID}`,
-        );
-      }
-
-      if (!state.participantCandID) {
-        participantCandIDStatus = formatError(
-            'LORIS DCCID is not specified',
-        );
-      } else if (state.participantCandID?.error) {
-        participantCandIDStatus = formatError(
-            state.participantCandID.error,
-        );
-      } else {
-        participantCandIDStatus = formatPass(
-            `LORIS DCCID: ${state.participantCandID}`,
-        );
-      }
-
-      result.push(
-          <div key='participantPSCIDStatus'>
-            {participantPSCIDStatus}
-          </div>,
-      );
-
-      result.push(
-          <div key='participantCandIDStatus'>
-            {participantCandIDStatus}
-          </div>,
-      );
-    } else {
-      // participantID
-      let participantIDStatus = '';
-      if (state.participantID) {
-        participantIDStatus = formatPass(
-            `Participant ID: ${state.participantID}`,
-        );
-      } else {
-        participantIDStatus = formatError(
-            'Participant ID is not specified',
-        );
-      }
-      // participantCandID
-      // let participantCandID;
-      // if (state.participantCandID) {
-      //   participantCandID = formatPass(
-      //       `DSCID: ${state.participantCandID}`,
-      //   );
-      // } else {
-      //   participantCandID = formatError(
-      //       'DSCID is unknown',
-      //   );
-      // }
-      result.push(
-          <div key='participantID'>{participantIDStatus}</div>,
-          // <div key='participantCandID'>{participantCandID}</div>,
-      );
-    }
-
-    return result;
-  };
-
   /**
    * hideModal - display Modal.
    * @param {boolean} hidden
@@ -576,22 +250,10 @@ const Converter = (props) => {
         EDF to BIDS
       </span>
       <div className='info report'>
-        <div className='small-pad'>
-          <b>Review your data and metadata:</b>
-          <div></div>
-        </div>
-        <div className='small-pad'>
-          <b>Review your recording details:</b>
-          {validateRecordingDetails()}
-        </div>
-        <div className='small-pad'>
-          <b>Review your participant details:</b>
-          {validateParticipantDetails()}
-        </div>
-        <div className='small-pad'>
-          <b>Review your uploaded EEG Parameter metadata:</b>
-          <div>{validateRecordingParameters()}</div>
-        </div>
+        <RecordingData/>
+        <RecordingDetails/>
+        <ParticipantDetails/>
+        <RecordingParameters/>
         <div className='small-pad'>
           <b>Verify anonymization of EDF header data:</b>
           {state.subjectID ?
@@ -599,7 +261,7 @@ const Converter = (props) => {
               Subject ID: {state.subjectID}
             </div> :
             <div>
-              {formatWarning('Subject ID is not modified.')}
+              <span className='warning'>Subject ID is not modified.</span>
             </div>
           }
           {state.recording_id &&
