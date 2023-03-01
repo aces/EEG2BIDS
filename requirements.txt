@@ -1,6 +1,7 @@
 eventlet~=0.31.0
 mne==1.2.0
-mne-bids==0.10
+#mne-bids==0.12
+git+https://github.com/laemtl/mne-bids@copyfile_eeglab_type_conflict#egg=mne_bids
 numpy~=1.20.3
 mne-features~=0.1
 python-socketio~=5.0.4
@@ -9,5 +10,5 @@ bids-validator==1.9.3
 pybv~=0.4
 requests~=2.25.0
 pymatreader~=0.0.30
-eeglabio~=0.0.1.post6
+eeglabio~=0.0.2.post3
 requests-toolbelt~=0.9.1

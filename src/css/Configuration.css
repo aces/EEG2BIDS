@@ -7,17 +7,24 @@
 .readonly:focus, .readonly:focus{
     outline: none;
 }
-input[type="button"].primary-btn {
+.primary-btn {
     color: #fff;
     background-color: #064785;
     border: none;
     border-radius: .25rem;
     padding: .375rem .75rem;
 }
-input[type="button"].primary-btn:disabled {
+.primary-btn:disabled {
     color: #ddd;
     background-color: #858b97;
     border: 1px solid #ddd;
+}
+.btn {
+    border: 1px solid #064785;
+    color: #064785;
+    background: #ebf0f5;
+    border-radius: .25rem;
+    padding: .275rem .5rem;
 }
 textarea {
     vertical-align: top;

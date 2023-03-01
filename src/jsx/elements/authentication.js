@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useContext} from 'react';
-import {AppContext} from '../../context';
 import PropTypes from 'prop-types';
 import styles from '../../css/Authentication.module.css';
 
@@ -127,27 +126,11 @@ AuthInput.propTypes = {
 
 export const AuthenticationMessage = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
   const defaultLoginMessage = 'You are not logged into a LORIS Account';
   // React state
   const [loginMessage, setLoginMessage] = useState(defaultLoginMessage);
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(async () => {
-    const myAPI = window['myAPI'];
-    const credentials = await myAPI.getLorisAuthenticationCredentials();
-    if (credentials &&
-      credentials.lorisURL &&
-      credentials.lorisUsername
-    ) {
-      appContext.setTask('lorisURL', credentials.lorisURL);
-      appContext.setTask('lorisUsername', credentials.lorisUsername);
-    }
-  }, []);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -167,12 +150,6 @@ export const AuthenticationMessage = (props) => {
     }
   }, [socketContext]);
 
-  /**
-   * User clicked sign in..
-   */
-  const handleClick = () => {
-    props.setAuthCredentialsVisible(true);
-  };
   return (
     <div className={styles.authMessageContainer}>
       <span className={styles.loginMessage}>
@@ -187,7 +164,6 @@ AuthenticationMessage.propTypes = {
 
 export const AuthenticationCredentials = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
   // React state
@@ -203,8 +179,10 @@ export const AuthenticationCredentials = (props) => {
   useEffect(async () => {
     const myAPI = window['myAPI'];
     const credentials = await myAPI.getLorisAuthenticationCredentials();
-    setLorisURL(credentials.lorisURL);
-    setLorisUsername(credentials.lorisUsername);
+    credentials?.lorisURL &&
+      setLorisURL(credentials.lorisURL);
+    credentials?.lorisUsername &&
+      setLorisUsername(credentials.lorisUsername);
   }, []);
 
   useEffect(async () => {
@@ -245,10 +223,10 @@ export const AuthenticationCredentials = (props) => {
       lorisUsername: lorisUsername,
       lorisPassword: lorisPassword,
     };
-    if (credentials &&
-      credentials.lorisURL &&
-      credentials.lorisUsername &&
-      credentials.lorisPassword
+    if (
+      credentials?.lorisURL &&
+      credentials?.lorisUsername &&
+      credentials?.lorisPassword
     ) {
       const storeFields = {
         lorisURL: credentials.lorisURL,
@@ -277,8 +255,6 @@ export const AuthenticationCredentials = (props) => {
         setLorisPassword(value);
         break;
     }
-    // Update the 'task' of app context.
-    appContext.setTask(name, value);
   };
 
   return (

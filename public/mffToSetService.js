@@ -1,6 +1,7 @@
 const {execFile} = require('child_process');
-const path = require("path");
-const fs = require("fs");
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 /**
  * EEG2BIDS Wizard Service
@@ -10,7 +11,6 @@ module.exports = class MFFToSETService {
    * constructor
    */
   constructor() {
-    const os = require('os');
     this.platform = os.platform(); // darwin or win32.
     this.process = null; // the service process.
   }
@@ -19,7 +19,7 @@ module.exports = class MFFToSETService {
    * startup the service process
    */
     async startup(mffDirectory, callback) {
-        const pathToService = require('path').join(
+        const pathToService = path.join(
             __dirname,
             '..',
           this.platform === 'win32' ?
@@ -40,7 +40,6 @@ module.exports = class MFFToSETService {
             return;
         }
 
-        const fs = require('fs');
         const mffDir = path.dirname(mffDirectory[0].path);
         const jsonFile = `${mffDir}/files.json`;
         const fileNames = [];
@@ -49,7 +48,6 @@ module.exports = class MFFToSETService {
               console.error('DIFFERENT DIRS: TODO HANDLE');
             }
             fileNames.push(path.basename(dir.path));
-            // await myAPI.convertMFFToSET(dir, callback);
         }
         try {
             fs.writeFileSync(jsonFile,
@@ -57,23 +55,6 @@ module.exports = class MFFToSETService {
         } catch (e) {
             console.error(e);
         }
-
-        // This should maybe move to the json file creation section
-        // to not add the file if the SET file already exists.
-        // if (fs.existsSync(mffDirectory.name + '.set')) {
-        //     callback(
-        //         true,
-        //         'SET file already exists!',
-        //         {
-        //             path: mffDirectory.name + '.set',
-        //             name: mffDirectory.name,
-        //             task: mffDirectory.task,
-        //             run: mffDirectory.run,
-        //         }
-        //     );
-        //     this.process = null;
-        //     return;
-        // }
         
         this.process = execFile(pathToService, [mffDir, mffDir, jsonFile], (error, stdout, stderr) => {
             const setFiles = [];
@@ -125,7 +106,6 @@ module.exports = class MFFToSETService {
   shutdown() {
     if (this.process) {
       console.info('[SHUTDOWN of mffToSetService]');
-      // this.process.kill();
       this.process = null;
     }
   }

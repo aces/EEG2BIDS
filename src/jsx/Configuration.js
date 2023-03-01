@@ -5,15 +5,13 @@ import ReactTooltip from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
-import EEGRun from './types/EEGRun';
-import Papa from 'papaparse';
 
 // Components
 import {
-  DirectoryInput,
   TextInput,
   SelectInput,
-  MultiDirectoryInput, TextareaInput, FileInput,
+  MultiDirectoryInput,
+  FileInput,
 } from './elements/inputs';
 
 // Socket.io
@@ -32,102 +30,8 @@ import ConversionFlags from '../ConversionFlags';
  */
 const Configuration = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
-
-  // React State
-  const initialState = {
-    eegRuns: null,
-    fileFormatUploaded: 'mff',
-    fileFormat: 'mff',
-    eegData: [],
-    eegFiles: [],
-    mffDirectories: {
-      RS: [{path: '', name: '', exclude: false}],
-      MMN: [{path: '', name: '', exclude: false}],
-      FACE: [{path: '', name: '', exclude: false}],
-      VEP: [{path: '', name: '', exclude: false}],
-    },
-    modality: 'eeg',
-    eventFiles: [],
-    invalidEventFiles: [],
-    annotationsTSV: [],
-    invalidAnnotationsTSV: [],
-    annotationsJSON: [],
-    invalidAnnotationsJSON: [],
-    bidsDirectory: null,
-    LORIScompliant: true,
-    siteID: 'n/a',
-    siteOptions: [],
-    siteUseAPI: false,
-    projectID: 'n/a',
-    projectOptions: [],
-    projectUseAPI: false,
-    subprojectID: 'n/a',
-    subprojectOptions: [],
-    subprojectUseAPI: false,
-    session: '',
-    sessionOptions: [],
-    sessionUseAPI: false,
-    bidsMetadataFile: [],
-    invalidBidsMetadataFile: [],
-    bidsMetadata: null,
-    lineFreq: '60',
-    taskName: '',
-    reference: 'Cz',
-    recordingType: 'continuous',
-    participantEntryMode: 'existing_loris',
-    participantPSCID: '',
-    participantCandID: '',
-    participantID: '',
-    participantDOB: null,
-    participantAge: 'n/a',
-    participantSex: 'n/a',
-    participantHand: 'n/a',
-    image_file: [],
-    anonymize: false,
-    subjectID: '',
-    flags: {
-      errors: [],
-      success: [],
-    },
-    reasons: {},
-  };
-
-  const state = {};
-  for (const [key, value] of Object.entries(initialState)) {
-    state[key] = {};
-    [state[key].get, state[key].set] = useState(value);
-  }
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const [preparedBy, setPreparedBy] = useState('');
-  const [displayErrors, setDisplayErrors] = useState(false);
-  const [outputTime, setOutputTime] = useState('');
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalText, setModalText] = useState({
-    mode: 'loading',
-    title: {
-      loading: '⏱ Task in Progress!',
-      success: '⭐ Task Finished!',
-      error: '❌ Task Error!',
-    },
-    message: {
-      loading: <span style={{padding: '40px'}}>
-        <span className='bids-loading'>
-            BIDS creation in progress<span>.</span><span>.</span><span>.</span>
-            😴
-        </span>
-      </span>,
-      success: <span style={{padding: '40px'}}>
-        <span className='bids-success'>
-          <span className='checkmark'>&#x2714;</span> Success creating BIDS!
-        </span></span>,
-      error: '',
-    },
-  });
+  const {state, setState} = useContext(AppContext);
   const [mffModalVisible, setMffModalVisible] = useState(false);
   const [mffModalText, setMffModalText] = useState({
     mode: 'loading',
@@ -152,274 +56,51 @@ const Configuration = (props) => {
     },
   });
 
-  /**
-   * reset - reset the form fields (state).
-   */
-  const reset = () => {
-    for (const [key, value] of Object.entries(initialState)) {
-      state[key].set(value);
-    }
-  };
-
-  /**
-   * beginBidsCreation - create BIDS format.
-   *   Sent by socket to python: eeg_to_bids.
-   */
-  const beginBidsCreation = () => {
-    if (!preparedBy) {
-      setDisplayErrors(true);
-      return;
-    }
-
-    setModalText((prevState) => {
-      return {...prevState, ['mode']: 'loading'};
-    });
-    setModalVisible(true);
-    appContext.setTask('reasons', state.reasons.get);
-
-    if (appContext.getFromTask('eegData')?.['files'].length > 0) {
-      socketContext.emit('eeg_to_bids', {
-        eegData: appContext.getFromTask('eegData') ?? [],
-        fileFormat: state.fileFormat.get ?? '',
-        eegRuns: state.eegRuns.get ?? [],
-        modality: appContext.getFromTask('modality') ?? 'eeg',
-        bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-        read_only: false,
-        event_files: appContext.getFromTask('eventFiles').length > 0 ?
-          appContext.getFromTask('eventFiles')[0]['path'] : '',
-        annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
-          appContext.getFromTask('annotationsTSV')[0]['path'] : '',
-        annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
-          appContext.getFromTask('annotationsJSON')[0]['path'] : '',
-        bidsMetadata: appContext.getFromTask('bidsMetadata') ?? '',
-        site_id: appContext.getFromTask('siteID') ?? '',
-        project_id: appContext.getFromTask('projectID') ?? '',
-        sub_project_id: appContext.getFromTask('subprojectID') ?? '',
-        session: appContext.getFromTask('session') ?? '',
-        participantID: appContext.getFromTask('participantID') ?? '',
-        age: appContext.getFromTask('participantAge') ?? '',
-        hand: appContext.getFromTask('participantHand') ?? '',
-        sex: appContext.getFromTask('participantSex') ?? '',
-        preparedBy: preparedBy ?? '',
-        line_freq: appContext.getFromTask('lineFreq') || 'n/a',
-        recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
-        taskName: appContext.getFromTask('taskName') ?? '',
-        reference: appContext.getFromTask('reference') ?? '',
-        subject_id: appContext.getFromTask('subject_id') ?? '',
-        outputFilename: appContext.getFromTask('outputFilename') ?? '',
-      });
-    }
-  };
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
   useEffect(() => {
-    if (outputTime) {
-      // cleanup time display for user.
-      let time = outputTime.replace('output-', '');
-      time = time.slice(0, time.lastIndexOf('-')) + ' ' +
-        time.slice(time.lastIndexOf('-')+1);
-      setSuccessMessage(<>
-        <a className='task-finished'>Last created at: {time}</a>
-      </>);
-    }
-  }, [outputTime]);
-
-  useEffect(() => {
-    if (isAuthenticated && state.LORIScompliant.get) {
-      state.participantEntryMode.set('existing_loris');
+    if (state.isAuthenticated && state.LORIScompliant) {
+      setState({participantEntryMode: 'existing_loris'});
     } else {
-      state.participantEntryMode.set('manual');
+      setState({participantEntryMode: 'manual'});
     }
-  }, [state.LORIScompliant.get, isAuthenticated]);
-
-  /**
-   * hideModal - display Modal.
-   * @param {boolean} hidden
-   */
-  const hideModal = (hidden) => {
-    setModalVisible(!hidden);
-    if (modalText.mode === 'success') {
-      props.nextStage('Validator', 3);
-    }
-  };
-
-  /**
-   * hideModal - display Modal.
-   * @param {boolean} hidden
-   */
-  const hideMffModal = (hidden) => {
-    setMffModalVisible(!hidden);
-    if (mffModalText.mode === 'success') {
-      props.nextStage('Converter', 2);
-    }
-  };
-
-  const validateJSON = (jsons) => {
-    const promisesArray = [];
-    for (let i = 0; i < jsons?.length; i++) {
-      const json = jsons[i];
-      promisesArray.push(new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsText(json, 'UTF-8');
-        fileReader.onload = (e) => {
-          try {
-            JSON.parse(e.target.result);
-            resolve(null);
-          } catch (e) {
-            console.error(e);
-            resolve(json.name);
-          }
-        };
-      }));
-    }
-    return Promise.all(promisesArray);
-  };
-
-  const validateTSV = (tsvs) => {
-    const promisesArray = [];
-    for (let i = 0; i < tsvs?.length; i++) {
-      const tsv = tsvs[i];
-      promisesArray.push(new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsText(tsv, 'UTF-8');
-        fileReader.onload = (e) => {
-          Papa.parse(
-              e.target.result,
-              {
-                quoteChar: '',
-                complete: (results, file) => {
-                  console.error(results.errors);
-                  if (results.errors.length > 0) {
-                    resolve(tsv.name);
-                  } else {
-                    resolve(null);
-                  }
-                },
-              },
-          );
-        };
-      }));
-    }
-    return Promise.all(promisesArray);
-  };
+  }, [state.LORIScompliant, state.isAuthenticated]);
 
   useEffect(() => {
     if (socketContext) {
-      state.participantID.set('');
+      setState({participantID: ''});
 
       socketContext.emit('get_participant_data', {
-        candID: state.participantCandID.get,
+        candID: state.participantCandID,
       });
     }
-  }, [state.participantCandID.get]);
-
-  useEffect(() => {
-    validateJSON(state.bidsMetadataFile.get)
-        .then((result) => {
-          state.invalidBidsMetadataFile.set(result.filter((el) => el != null));
-        });
-  }, [state.bidsMetadataFile.get]);
-
-  useEffect(() => {
-    validateTSV(state.eventFiles.get)
-        .then((result) => {
-          state.invalidEventFiles.set(result.filter((el) => el != null));
-        });
-  }, [state.eventFiles.get]);
-
-  useEffect(() => {
-    validateJSON(state.annotationsJSON.get)
-        .then((result) => {
-          state.invalidAnnotationsJSON.set(result.filter((el) => el != null));
-        });
-  }, [state.annotationsJSON.get]);
-
-  useEffect(() => {
-    validateTSV(state.annotationsTSV.get)
-        .then((result) => {
-          state.invalidAnnotationsTSV.set(result.filter((el) => el != null));
-        });
-  }, [state.annotationsTSV.get]);
-
-  useEffect(() => {
-    if (props.appMode === 'Converter') {
-      console.info('validate');
-      validate();
-    }
-  }, [props.appMode]);
-
-  useEffect(() => {
-    if (socketContext) {
-      socketContext.on('bids', (message) => {
-        if (message['output_time']) {
-          setOutputTime(message['output_time']);
-          appContext.setTask('output_time', message['output_time']);
-          setModalText((prevState) => {
-            return {...prevState, ['mode']: 'success'};
-          });
-        } else if (message['error']) {
-          setModalText((prevState) => {
-            prevState.message['error'] = (
-              <div className='bids-errors'>
-                {Array.isArray(message['error']) ?
-                  message['error'].map((error, i) =>
-                    <span key={i}>{error}<br/></span>) :
-                  <span>{message['error']}</span>
-                }
-              </div>
-            );
-            return {...prevState, ['mode']: 'error'};
-          });
-        }
-      });
-    }
-  }, [socketContext]);
+  }, [state.participantCandID]);
 
   let error = false;
-  const formatError = (msg, key) => {
-    const value = state.reasons.get[key] ? state.reasons.get[key] : '';
-    if (value === '') {
-      error = true;
-    }
-    return (
-      <div key={key} className='flags'>
-        <span className='error'>&#x274C;</span> {msg}
-        <TextareaInput
-          name={key}
-          value={value}
-          onUserInput={reasonUpdate}
-        />
-      </div>
-    );
-  };
-
   const checkError = (input) => {
     switch (input) {
       case 'participantCandID':
-        if (!appContext.getFromTask('participantCandID')) {
+        if (!state.participantCandID) {
           error = true;
           return 'LORIS DCCID is not specified';
-        } else if (appContext.getFromTask('participantCandID')?.error) {
+        } else if (state.participantCandID?.error) {
           error = true;
-          return appContext.getFromTask('participantCandID').error;
+          return state.participantCandID.error;
         }
         return;
       case 'participantPSCID':
-        if (!appContext.getFromTask('participantCandID')) {
+        if (!state.participantPSCID) {
           error = true;
-          return 'LORIS DDCID is required first';
+          return 'LORIS PSCID is not specified';
         } else if (
-          appContext.getFromTask('participantID') !== state.participantPSCID.get
+          state.participantCandID &&
+          state.participantID !== state.participantPSCID
         ) {
           error = true;
-          return 'The DDCID/PSCID pair you provided' +
+          return 'The PSCID/DDCID pair you provided' +
               ' does not match an existing candidate.';
         }
         return;
       case 'session_API':
-        if (!appContext.getFromTask('session')) {
+        if (!state.session) {
           error = true;
           return 'Session is not specified';
         }
@@ -429,18 +110,18 @@ const Configuration = (props) => {
     }
   };
 
-  const getFileName = (file) => file.path.split(/(\\|\/)/g).pop();
+  const getFileName = (file) => file.path?.split(/(\\|\/)/g).pop();
 
   const checkPhotoError = () => {
-    if (state.image_file.get.length === 0) {
+    if (state.image_file.length === 0) {
       error = true;
-      return 'Image Files is required.';
+      return 'Image files are required.';
     }
-    const pscid = state.participantPSCID.get;
-    const candID = state.participantCandID.get;
-    const session = state.session.get;
+    const pscid = state.participantPSCID;
+    const candID = state.participantCandID;
+    const session = state.session;
     const filename = `${pscid}_${candID}_${session}_EEG.zip`;
-    if (state.image_file.get[0].name !== filename) {
+    if (state.image_file[0].name !== filename) {
       error = true;
       return 'File should have naming format ' +
               '[PSCID]_[DCCID]_[VisitLabel]_EEG.zip';
@@ -451,269 +132,92 @@ const Configuration = (props) => {
 
   const checkFileError = (task) => {
     // Need to split file path based on `/`
-    const pscid = state.participantPSCID.get;
-    const candID = state.participantCandID.get;
-    const session = state.session.get;
+    const pscid = state.participantPSCID;
+    const candID = state.participantCandID;
+    const session = state.session;
     const substring = `${pscid}_${candID}_${session}_${task}`;
-    if (state.mffDirectories.get[task][0]['exclude']) {
-      if (state.mffDirectories.get[task][0]['reason'] === '') {
-        error = true;
-        return 'Exclusion reason is required.';
-      }
-    } else if (state.mffDirectories.get[task][0]['path'] === '') {
-      error = true;
-      return 'Please provide file or reason for exclusion.';
-    } else if (state.mffDirectories.get[task].length > 1) {
-      let nameError;
-      state.mffDirectories.get[task].forEach((file, idx) => {
-        if (getFileName(file) !== `${substring}_run-${idx + 1}.mff`) {
+    if (state.mffDirectories[task].length > 1) {
+      const nameError = Array(state.mffDirectories[task].length);
+      state.mffDirectories[task].forEach((file, idx) => {
+        if (file.path === '') {
           error = true;
-          nameError = 'File should have naming format ' +
-              '[PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-X].mff';
+          nameError[idx] = 'Please provide file or remove run.';
+        } else if (getFileName(file) !== `${substring}_run-${idx + 1}.mff`) {
+          error = true;
+          nameError[idx] = 'File should have naming format ' +
+            `[PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-${idx + 1}].mff`;
         }
       });
       return nameError;
+    } else if (state.mffDirectories[task][0].exclude) {
+      if (state.mffDirectories[task][0].reason === '') {
+        error = true;
+        return ['Exclusion reason is required.'];
+      }
+    } else if (state.mffDirectories[task][0].path === '') {
+      error = true;
+      return ['Please provide file or reason for exclusion.'];
     } else if (
-      getFileName(state.mffDirectories.get[task][0]) !== `${substring}.mff`
+      getFileName(state.mffDirectories[task][0]) !== `${substring}.mff`
     ) {
       error = true;
-      return 'File should have naming format ' +
-              '[PSCID]_[DCCID]_[VisitLabel]_[taskName].mff';
+      return ['File should have naming format ' +
+              '[PSCID]_[DCCID]_[VisitLabel]_[taskName].mff'];
     }
     return;
   };
 
-  const reasonUpdate = (name, value) => {
-    state.reasons.set((state) => {
-      state[name] = value;
-      return {
-        ...state,
-      };
-    });
-  };
-
-  const formatWarning = (msg, key) => {
-    return (
-      <div key={key} className='flags'>
-        <span className='warning'>&#x26A0;</span> {msg}
-      </div>
-    );
-  };
-
-  const formatPass = (msg, key) => {
-    return (
-      <div className='flags' key={key}>
-        <span className='checkmark'>&#x2714;</span>
-        {msg}
-      </div>
-    );
-  };
-
-  const reviewWarnings = () => {
-    if (state.flags.get.errors.length === 0) {
-      return <></>;
-    }
-
-    const listItems = state.flags.get.errors.map((err) => {
-      if (err.reason) {
-        return formatError(err.label, err.flag);
-      } else {
-        return formatWarning(err.label, err.flag);
-      }
-    });
-
-    const value = state.reasons.get['additional'] ?
-        state.reasons.get['additional'] : '';
-    return (
-      <div className='small-pad'>
-        <b>Review your warning flags:</b>
-        {listItems}
-        <div className='flags'>
-          <TextareaInput
-            name='additional'
-            label={'Optional: Please provide additional reasoning ' +
-              'as to why issues happened if not already defined above:'}
-            value={value}
-            onUserInput={reasonUpdate}
-          />
-        </div>
-      </div>
-    );
-  };
-
-  const reviewSuccessFlags = () => {
-    const listItems = state.flags.get.success.map((err) => {
-      return formatPass(err.label, err.flag);
-    });
-    return (
-      <div className='small-pad'>
-        <b>Review your success flags:</b>
-        {listItems}
-      </div>
-    );
-  };
-
-  const validate = () => {
-    if (state.eegData.get?.files?.length > 0) {
-      const eventFiles = [...state.eventFiles.get];
-      const annotationsTSVs = [...state.annotationsTSV.get];
-      const annotationsJSONs = [...state.annotationsJSON.get];
-
-      const eegRuns = [];
-
-      state.eegData.get?.files.map(
-          (eegFile) => {
-            const eegRun = new EEGRun();
-            eegRun.eegFile = eegFile['path'];
-            eegRun.task = eegFile['task'];
-            eegRun.run = eegFile['run'];
-
-            const re = new RegExp('_i?eeg.' + state.fileFormat.get, 'i');
-            const eegFileName = eegFile['name'].toLowerCase()
-                .replace(re, '')
-                .replace('.' + state.fileFormat.get, '');
-
-            const eegFileNameAlt = eegFile['name'].toLowerCase()
-                .replace('.' + state.fileFormat.get, '');
-
-            // Check if we do have a matching event file
-            const eventFileIndex = eventFiles.findIndex((eventFile) => {
-              const eventFileName = eventFile['name'].toLowerCase()
-                  .replace('_events.tsv', '').replace('.tsv', '');
-              return (
-                eegFileName === eventFileName ||
-                eegFileNameAlt === eventFileName
-              );
-            });
-
-            if (eventFileIndex > -1) {
-              eegRun.eventFile = eventFiles[eventFileIndex]['path'];
-              eventFiles.splice(eventFileIndex, 1);
-            }
-
-            // Check if we do have a matching annotations TSV file
-            const annotationsTSVIndex = annotationsTSVs.findIndex(
-                (annotationsTSV) => {
-                  const annotationsTSVName = annotationsTSV['name']
-                      .toLowerCase()
-                      .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                  return (
-                    eegFileName === annotationsTSVName ||
-                    eegFileNameAlt === annotationsTSVName
-                  );
-                },
-            );
-
-            if (annotationsTSVIndex > -1) {
-              eegRun.annotationsTSV =
-                annotationsTSVs[annotationsTSVIndex]['path'];
-              annotationsTSVs.splice(annotationsTSVIndex, 1);
-            }
-
-            // Check if we do have a matching annotations JSON file
-            const annotationsJSONIndex = annotationsJSONs.findIndex(
-                (annotationsJSON) => {
-                  const annotationsJSONName = annotationsJSON['name']
-                      .toLowerCase()
-                      .replace('_annotations.json', '')
-                      .replace('.json', '');
-
-                  return (
-                    eegFileName === annotationsJSONName ||
-                    eegFileNameAlt === annotationsJSONName
-                  );
-                },
-            );
-
-            if (annotationsJSONIndex > -1) {
-              eegRun.annotationsJSON =
-                annotationsJSONs[annotationsJSONIndex]['path'];
-              annotationsJSONs.splice(annotationsJSONIndex, 1);
-            }
-
-            eegRuns.push(eegRun);
-          },
-      );
-
-      eegRuns.eventErrors = [];
-      eventFiles.map((eventFile) => {
-        eegRuns.eventErrors.push(`Event file ${eventFile['name']}
-          is not matching any eeg file names.`);
-      });
-
-      eegRuns.annotationsTSVErrors = [];
-      annotationsTSVs.map((annotationsTSV) => {
-        eegRuns.annotationsTSVErrors.push(
-            `Annotation file ${annotationsTSV['name']}
-            is not matching any eeg file names.`,
-        );
-      });
-
-      eegRuns.annotationsJSONErrors = [];
-      annotationsJSONs.map((annotationsJSON) => {
-        eegRuns.annotationsJSONErrors.push(
-            `Annotation file  ${annotationsJSON['name']}
-            is not matching any eeg file names.`,
-        );
-      });
-
-      state.eegRuns.set(eegRuns);
-    }
-  };
-
   useEffect(() => {
-    // state.mffDirectories.set([{path: '', name: ''}]);
-    state.eegFiles.set([]);
-  }, [state.fileFormatUploaded.get]);
+    // setState({mffDirectories: [{path: '', name: ''}]});
+    setState({eegFiles: []});
+  }, [state.fileFormatUploaded]);
 
   useEffect(() => {
     if (socketContext) {
       let emit = '';
-      if (state.fileFormatUploaded.get === 'edf') {
+      if (state.fileFormatUploaded === 'edf') {
         console.info('edf file selected');
         emit = 'get_edf_data';
       }
-      if (state.fileFormatUploaded.get === 'set') {
+      if (state.fileFormatUploaded === 'set') {
         console.info('set file selected');
         emit = 'get_set_data';
       }
       socketContext.emit(emit, {
-        files: state.eegFiles.get.map((eegFile) =>
+        files: state.eegFiles.map((eegFile) =>
           ({
             path: eegFile['path'],
             name: eegFile['name'],
           })),
       });
     }
-  }, [state.eegFiles.get]);
+  }, [state.eegFiles]);
 
   const convertMFFtoSET = async () => {
-    if (socketContext && state.fileFormatUploaded.get === 'mff') {
+    if (socketContext && state.fileFormatUploaded === 'mff') {
       setMffModalVisible(true);
       setMffModalText((prevState) => {
         return {...prevState, ['mode']: 'loading'};
       });
       const updateMessage = (msg) => {
         console.info(msg);
-        state.eegData.set(msg);
-        appContext.setTask('eegData', msg);
+        setState({eegData: msg});
       };
 
       // if no MFF files, do nothing.
       const dirs = [];
       const exclude = {};
-      for (const key in state.mffDirectories.get) {
-        if (state.mffDirectories.get[key][0]['exclude']) {
-          exclude[key] = state.mffDirectories.get[key][0]['reason'];
-        } else if (state.mffDirectories.get[key].length === 1) {
+      for (const key in state.mffDirectories) {
+        if (state.mffDirectories[key][0]['exclude']) {
+          exclude[key] = state.mffDirectories[key][0]['reason'];
+        } else if (state.mffDirectories[key].length === 1) {
           dirs.push({
-            ...state.mffDirectories.get[key][0],
+            ...state.mffDirectories[key][0],
             task: key,
             run: -1,
           });
         } else {
-          state.mffDirectories.get[key].forEach((dir, i) => {
+          state.mffDirectories[key].forEach((dir, i) => {
             dirs.push({
               ...dir,
               task: key,
@@ -722,7 +226,7 @@ const Configuration = (props) => {
           });
         }
       }
-      // state.mffDirectories.get.filter((dir) => dir['path'] != '');
+      // state.mffDirectories.filter((dir) => dir['path'] != '');
       if (dirs.length == 0) {
         updateMessage({'error': 'No MFF file selected.'});
         return;
@@ -731,20 +235,20 @@ const Configuration = (props) => {
       // Start working on file conversion-
       updateMessage({'error': 'Working on converting files...'});
 
-      appContext.setTask('exclude', exclude);
+      setState({exclude: exclude});
       const mffFiles = dirs.map((dir) => dir.path);
-      mffFiles.push(state.image_file.get[0].path);
-      appContext.setTask('mffFiles', mffFiles);
+      mffFiles.push(state.image_file[0].path);
+      setState({mffFiles: mffFiles});
 
       const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
-          const pscid = state.participantPSCID.get;
-          const candID = state.participantCandID.get;
-          const session = state.session.get;
-          const outputFilename = `${pscid}_${candID}_${session}_bids`;
-          appContext.setTask('bidsDirectory', bidsDir);
-          appContext.setTask('outputFilename', outputFilename);
-          appContext.setTask('flags', flags);
+          const pscid = state.participantPSCID;
+          const candID = state.participantCandID;
+          const session = state.session;
+          setState({bidsDirectory: bidsDir});
+          setState({outputFilename: `${pscid}_${candID}_${session}_bids`});
+          setState({flags: flags});
+
           if (files.length === dirs.length) {
             const validationFlags = {
               errors: [],
@@ -765,12 +269,17 @@ const Configuration = (props) => {
                 });
               }
             });
-            state.flags.set(validationFlags);
+            setState({validationFlags: validationFlags});
 
             socketContext.emit('get_set_data', {files: files});
             setMffModalText((prevState) => {
               return {...prevState, ['mode']: 'success'};
             });
+
+            setTimeout(() => {
+              setMffModalVisible(false);
+              setState({appMode: 'Converter'});
+            }, 5000);
           }
         } else {
           setMffModalText((prevState) => {
@@ -793,28 +302,21 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (socketContext) {
-      if (state.bidsMetadataFile.get.length > 0) {
+      if (state.bidsMetadataFile.length > 0) {
         socketContext.emit('get_bids_metadata', {
-          file_path: state.bidsMetadataFile.get[0]['path'],
-          modality: state.modality.get,
+          file_path: state.bidsMetadataFile[0]['path'],
+          modality: state.modality,
         });
       }
     }
-  }, [state.bidsMetadataFile.get, state.modality.get]);
+  }, [state.bidsMetadataFile, state.modality]);
 
   useEffect(() => {
-    if (!state.eegData.get?.date || !state.participantDOB.get) return;
+    if (!state.eegData?.date || !state.participantDOB) return;
 
-    const age = getAge(state.participantDOB.get, state.eegData.get.date);
-    state.participantAge.set(age);
-    appContext.setTask('participantAge', age);
-  }, [state.participantDOB.get, state.eegData.get]);
-
-  useEffect(() => {
-    if (!state.eegData.get?.files) return;
-
-    validate();
-  }, [state.eegData.get]);
+    const age = getAge(state.participantDOB, state.eegData.date);
+    setState({participantAge: age});
+  }, [state.participantDOB, state.eegData]);
 
   useEffect(() => {
     if (socketContext) {
@@ -824,7 +326,7 @@ const Configuration = (props) => {
         sites.map((site) => {
           siteOpts.push(site.Name);
         });
-        state.siteOptions.set(siteOpts);
+        setState({siteOptions: siteOpts});
       });
 
       socketContext.on('loris_projects', (projects) => {
@@ -832,7 +334,7 @@ const Configuration = (props) => {
         Object.keys(projects).map((project) => {
           projectOpts.push(project);
         });
-        state.projectOptions.set(projectOpts);
+        setState({projectOptions: projectOpts});
       });
 
       socketContext.on('loris_subprojects', (subprojects) => {
@@ -840,7 +342,7 @@ const Configuration = (props) => {
         subprojects?.map((subproject) => {
           subprojectOpts.push(subproject);
         });
-        state.subprojectOptions.set(subprojectOpts);
+        setState({subprojectOptions: subprojectOpts});
       });
 
       socketContext.on('loris_visits', (visits) => {
@@ -850,7 +352,7 @@ const Configuration = (props) => {
             visitOpts.push(visit);
           });
         }
-        state.sessionOptions.set(visitOpts);
+        setState({sessionOptions: visitOpts});
       });
 
       socketContext.on('edf_data', (message) => {
@@ -862,10 +364,9 @@ const Configuration = (props) => {
           message['date'] = new Date(message['date']);
         }
 
-        state.subjectID.set(message?.['subjectID'] || '');
-        state.eegData.set(message);
-        state.fileFormat.set('edf');
-        appContext.setTask('eegData', message);
+        setState({subjectID: message?.['subjectID'] || ''});
+        setState({eegData: message});
+        setState({fileFormat: 'edf'});
       });
 
       socketContext.on('set_data', (message) => {
@@ -877,10 +378,9 @@ const Configuration = (props) => {
           message['date'] = new Date(message['date']);
         }
 
-        state.subjectID.set(message?.['subjectID'] || '');
-        state.eegData.set(message);
-        state.fileFormat.set('set');
-        appContext.setTask('eegData', message);
+        setState({subjectID: message?.['subjectID'] || ''});
+        setState({eegData: message});
+        setState({fileFormat: 'set'});
       });
 
       socketContext.on('bids_metadata', (message) => {
@@ -888,58 +388,33 @@ const Configuration = (props) => {
           console.error(message['error']);
         }
 
-        state.bidsMetadata.set(message);
-        appContext.setTask('bidsMetadata', message);
+        setState({bidsMetadata: message});
       });
 
       socketContext.on('new_candidate_created', (data) => {
         console.info('candidate created !!!');
 
-        state.participantID.set(data['PSCID']);
-        state.participantCandID.set(data['CandID']);
-        appContext.setTask('participantID', data['PSCID']);
-        appContext.setTask('participantCandID', data['CandID']);
-      });
-
-      socketContext.on('loris_login_response', (data) => {
-        // todo from alizee - this code should not,
-        //  isAuthenticated should be passed back from authentication component
-        if (data.error) {
-          // todo display error message - login failure
-        } else {
-          setIsAuthenticated(true);
-          //state.participantEntryMode.set('new_loris');
-        }
+        setState({participantID: data['PSCID']});
+        setState({participantCandID: data['CandID']});
       });
 
       socketContext.on('participant_data', (data) => {
         if (data?.error) {
-          appContext.setTask('participantCandID', {error: data.error});
-          state.participantID.set(data.error);
-          appContext.setTask('participantID', '');
+          // TODO: participantID souldn't store errors
+          // since its value is used in Validator
+          setState({participantID: data.error});
         } else {
-          appContext.setTask('participantCandID', data.Meta.CandID);
-
-          state.participantID.set(data.Meta.PSCID);
-          appContext.setTask('participantID', data.Meta.PSCID);
-
-          state.participantDOB.set(new Date(data.Meta.DoB));
-          appContext.setTask('participantDoB', data.Meta.DoB);
-
-          state.participantSex.set(data.Meta.Sex);
-          appContext.setTask('participantSex', data.Meta.Sex);
-
-          state.projectID.set(data.Meta.Project);
-          state.siteID.set(data.Meta.Site);
-          state.sessionOptions.set(data.Visits);
+          setState({participantCandID: data.Meta.CandID});
+          setState({participantID: data.Meta.PSCID});
+          setState({participantDoB: new Date(data.Meta.DoB)});
+          setState({participantSex: data.Meta.Sex});
+          setState({projectID: data.Meta.Project});
+          setState({siteID: data.Meta.Site});
+          setState({sessionOptions: data.Visits});
         }
       });
     }
   }, [socketContext]);
-
-  useEffect(() => {
-    console.info('FAKE EFFECT TO TRIGGER RERENDER');
-  }, [state.participantID.get]);
 
   /**
    * onUserInput - input change by user.
@@ -959,101 +434,105 @@ const Configuration = (props) => {
         } else {
           value = false;
         }
-        state.LORIScompliant.set(value);
+        setState({LORIScompliant: value});
         break;
       case 'recordingID':
-        state.eegData.set((prevState) => {
-          return {...prevState, [name]: value};
+        setState({
+          eegData: {
+            ...state.eegData,
+            [name]: value,
+          },
         });
-        appContext.setTask(name, value);
         break;
       case 'subjectID':
-        state.eegData.set((prevState) => {
-          return {...prevState, [name]: value};
+        setState({
+          eegData: {
+            ...state.eegData,
+            [name]: value,
+          },
         });
-        state.subjectID.set(value);
-        appContext.setTask(name, value);
+        setState({subjectID: value});
         break;
       case 'siteID_API':
         if (value == 'Enter manually') {
           value = '';
-          state.siteUseAPI.set(false);
+          setState({siteUseAPI: false});
         } else {
-          state.siteUseAPI.set(true);
+          setState({siteUseAPI: true});
         }
-        state.siteID.set(value);
+        setState({siteID: value});
         name = 'siteID';
         break;
       case 'siteID_Manual':
-        state.siteID.set(value);
+        setState({siteID: value});
         name = 'siteID';
         break;
       case 'projectID_API':
         if (value == 'Enter manually') {
-          state.projectUseAPI.set(false);
+          setState({projectUseAPI: false});
           value = '';
         } else {
-          state.projectUseAPI.set(true);
+          setState({projectUseAPI: true});
           socketContext.emit('get_loris_subprojects', value);
         }
-        state.projectID.set(value);
+        setState({projectID: value});
         name = 'projectID';
         break;
       case 'projectID_Manual':
-        state.projectID.set(value);
+        setState({projectID: value});
         name = 'projectID';
         break;
       case 'subprojectID_API':
         if (value == 'Enter manually') {
-          state.subprojectUseAPI.set(false);
+          setState({subprojectUseAPI: false});
           value = '';
         } else {
-          state.subprojectUseAPI.set(true);
+          setState({subprojectUseAPI: true});
           socketContext.emit('get_loris_visits', value);
         }
-        state.subprojectID.set(value);
+        setState({subprojectID: value});
         name = 'subprojectID';
         break;
       case 'subprojectID_Manual':
-        state.subprojectID.set(value);
+        setState({subprojectID: value});
         name = 'subprojectID';
         break;
       case 'session_API':
         if (value == 'Enter manually') {
-          state.sessionUseAPI.set(false);
+          setState({sessionUseAPI: false});
           value = '';
         } else {
-          state.sessionUseAPI.set(true);
+          setState({sessionUseAPI: true});
         }
-        state.session.set(value);
+        setState({session: value});
         name = 'session';
         break;
       case 'session_Manual':
-        state.session.set(value);
+        setState({session: value});
         name = 'session';
         break;
       case 'anonymize':
         if (value) {
-          state.eegData.set((prevState) => {
-            return {...prevState, ['subjectID']: 'X X X X'};
+          setState({
+            eegData: {
+              ...state.eegData,
+              ['subjectID']: 'X X X X',
+            },
           });
-          appContext.setTask('subjectID', 'X X X X');
         } else {
-          state.eegData.set((prevState) => {
-            return {...prevState, ['subjectID']: state.subjectID.get};
+          setState({
+            eegData: {
+              ...state.eegData,
+              ['subjectID']: state.subjectID,
+            },
           });
-          appContext.setTask('subjectID', state.subjectID.get);
         }
-        state.anonymize.set(value);
+        setState({anonymize: value});
         break;
       default:
         if (name in state) {
-          state[name].set(value);
+          setState({[name]: value});
         }
-    }
-    if (name in state) {
-      // Update the 'task' of app context.
-      appContext.setTask(name, value);
     }
   };
 
@@ -1103,12 +582,13 @@ const Configuration = (props) => {
    */
   const removeMFFDirectory = (task, index) => {
     return () => {
-      state.mffDirectories.set((prev) => {
-        prev[task] = prev[task].filter((dir, idx) => idx !== index);
-        return ({
-          ...prev,
-        });
-      });
+      setState({mffDirectories: {
+        ...state.mffDirectories,
+        [task]: [
+          ...state.mffDirectories[task].slice(0, index),
+          ...state.mffDirectories[task].slice(index+1),
+        ],
+      }});
     };
   };
 
@@ -1117,12 +597,16 @@ const Configuration = (props) => {
    * @param {Sting} task the task to add run to
    */
   const addMFFDirectory = (task) => {
-    state.mffDirectories.set((prev) => {
-      prev[task].push({path: '', name: ''});
-      return ({
-        ...prev,
-      });
-    });
+    setState({mffDirectories: {
+      ...state.mffDirectories,
+      [task]: [
+        ...state.mffDirectories[task],
+        {
+          path: '',
+          name: '',
+        },
+      ],
+    }});
   };
 
   /**
@@ -1132,19 +616,20 @@ const Configuration = (props) => {
    * @param {string} reason reason why excluded
    */
   const excludeMFFDirectory = (task, exclude, reason) => {
-    state.mffDirectories.set((prev) => {
-      if (prev[task][0]['exclude'] != exclude) {
-        prev[task] = [{path: '', name: '', exclude: exclude, reason: reason}];
-      } else if (exclude) {
-        prev[task][0] = {
-          ...prev[task][0],
-          reason: reason,
-        };
-      }
-      return ({
-        ...prev,
-      });
-    });
+    let taskList = [];
+    if (state.mffDirectories[task][0]['exclude'] != exclude) {
+      taskList = [{path: '', name: '', exclude: exclude, reason: reason}];
+    } else if (exclude) {
+      taskList = [{
+        ...state.mffDirectories[task][0],
+        reason: reason,
+      }];
+    }
+
+    setState({mffDirectories: {
+      ...state.mffDirectories,
+      [task]: taskList,
+    }});
   };
 
   /**
@@ -1157,322 +642,251 @@ const Configuration = (props) => {
    */
   const updateMFFDirectory = (task, index, value) => {
     if (value) {
-      state.mffDirectories.set((prev) => {
-        prev[task] = prev[task].map((dir, idx) => {
-          if (idx === index) {
-            return {
-              path: value,
-              name: value.replace(/\.[^/.]+$/, ''),
-            };
-          } else return dir;
-        });
-        return ({
-          ...prev,
-        });
-      });
+      setState({mffDirectories: {
+        ...state.mffDirectories,
+        [task]: [
+          ...state.mffDirectories[task].slice(0, index),
+          {
+            path: value,
+            name: value.replace(/\.[^/.]+$/, ''),
+          },
+          ...state.mffDirectories[task].slice(index+1),
+        ],
+      }});
     }
   };
 
-  const fileFormatAlt = state.fileFormatUploaded.get.toUpperCase();
-  const acceptedFileFormats = '.' + state.fileFormatUploaded.get +
-    ',.' + fileFormatAlt;
+  const filePrefix = (state.participantPSCID || '[PSCID]') + '_' +
+    (state.participantCandID || '[DCCID]') + '_' +
+    (state.session || '[VisitLabel]');
 
-  if (props.appMode === 'Configuration') {
-    return (
-      <>
-        <span className='header'>
-          Participant Details
-        </span>
-        <div className='info'>
-          <>
-            <div className='small-pad'>
-              <TextInput id='participantCandID'
-                name='participantCandID'
-                label='LORIS DCCID'
-                required={true}
-                value={state.participantCandID.get}
-                onUserInput={onUserInput}
-                error={checkError('participantCandID')}
-              />
-            </div>
-            <div className='small-pad'>
-              <TextInput id='participantPSCID'
-                name='participantPSCID'
-                label='LORIS PSCID'
-                required={true}
-                value={state.participantPSCID.get}
-                onUserInput={onUserInput}
-                error={checkError('participantPSCID')}
-                readonly={checkError('participantCandID') !== undefined}
-              />
-            </div>
-          </>
-        </div>
-        <span className='header'>
-          Recording details
-        </span>
-        <div className='container'>
-          <div className='info' style={{width: '100%'}}>
-            {state.LORIScompliant.get &&
-              <>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#siteID_API'>
-                    <b>
-                      Site <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
-                        data-tip='Study Centre'
-                      ></i>
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    {!state.siteUseAPI.get &&
-                      <TextInput id='siteID_Manual'
-                        name='siteID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        value={state.siteID.get}
-                        readonly={true}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
-                </div>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#projectID_API'>
-                    <b>
-                      Project <span className="red">*</span>
-                      <i
-                        className='fas fa-question-circle'
-                        data-tip='Study'
-                      ></i>
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    {!state.projectUseAPI.get &&
-                      <TextInput id='projectID_Manual'
-                        name='projectID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        readonly={true}
-                        value={state.projectID.get}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
-                </div>
-              </>
-            }
-            <div className='small-pad'>
-              <label className="label" htmlFor='#session_API'>
-                <b>
-                  Session <span className="red">*</span>
-                  <i
-                    className='fas fa-question-circle'
-                    data-tip='Visit or TimePoint Label'
-                  ></i>
-                </b>
-                {state.LORIScompliant.get &&
-                  <div><small>(LORIS Visit Label)</small></div>
-                }
-              </label>
-              <div className='comboField'>
-                {state.LORIScompliant.get &&
-                  <SelectInput id='session_API'
-                    name='session_API'
-                    label=''
-                    required={true}
-                    value={state.session.get}
-                    emptyOption='Select One'
-                    options={arrayToObject(state.sessionOptions.get)}
-                    onUserInput={onUserInput}
-                    error={checkError('session_API')}
-                  />
-                }
-              </div>
-            </div>
-          </div>
-          <div className='info half'>
-          </div>
-        </div>
-        <span className='header'>
-          Recording data
-        </span>
-        <div className='info'>
+  return props.visible ? (
+    <>
+      <span className='header'>
+        Participant Details
+      </span>
+      <div className='info'>
+        <>
           <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
+            <TextInput id='participantPSCID'
+              name='participantPSCID'
+              label='LORIS PSCID'
               required={true}
-              taskName='RS'
-              label='Resting state/baseline'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.RS}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-              error={checkFileError('RS')}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='MMN'
-              label='MMN'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.MMN}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-              error={checkFileError('MMN')}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='FACE'
-              label='Face processing'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.FACE}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-              error={checkFileError('FACE')}
-            />
-          </div>
-          <div className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
-              multiple={true}
-              required={true}
-              taskName='VEP'
-              label='Visual Evoked Potential'
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories.get.VEP}
-              help={'Folder name(s) must be formatted correctly: ' +
-                  'e.g. [PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-1].mff'}
-              error={checkFileError('VEP')}
-            />
-          </div>
-          <div className='small-pad'>
-            <FileInput
-              id='image_file'
-              required={true}
-              name='image_file'
-              label='Placement Photos'
-              accept='.zip'
+              value={state.participantPSCID}
               onUserInput={onUserInput}
-              help='For photos taken with iPad of cap placement'
-              placeholder={
-                state.image_file.get.map((file) => file['name']).join(', ')
-              }
-              error={checkPhotoError()}
+              error={checkError('participantPSCID')}
             />
           </div>
+          <div className='small-pad'>
+            <TextInput id='participantCandID'
+              name='participantCandID'
+              label='LORIS DCCID'
+              required={true}
+              value={state.participantCandID}
+              onUserInput={onUserInput}
+              error={checkError('participantCandID')}
+            />
+          </div>
+        </>
+      </div>
+      <span className='header'>
+        Recording details
+      </span>
+      <div className='container'>
+        <div className='info' style={{width: '100%'}}>
+          {state.LORIScompliant &&
+            <>
+              <div className='small-pad'>
+                <label className="label" htmlFor='#siteID_API'>
+                  <b>
+                    Site <span className="red">*</span>
+                    <i
+                      className='fas fa-question-circle'
+                      data-tip='Study Centre'
+                    ></i>
+                  </b>
+                </label>
+                <div className='comboField'>
+                  {!state.siteUseAPI &&
+                    <TextInput id='siteID_Manual'
+                      name='siteID_Manual'
+                      label=''
+                      placeholder='n/a'
+                      value={state.siteID}
+                      readonly={true}
+                      onUserInput={onUserInput}
+                    />
+                  }
+                </div>
+              </div>
+              <div className='small-pad'>
+                <label className="label" htmlFor='#projectID_API'>
+                  <b>
+                    Project <span className="red">*</span>
+                    <i
+                      className='fas fa-question-circle'
+                      data-tip='Study'
+                    ></i>
+                  </b>
+                </label>
+                <div className='comboField'>
+                  {!state.projectUseAPI &&
+                    <TextInput id='projectID_Manual'
+                      name='projectID_Manual'
+                      label=''
+                      placeholder='n/a'
+                      readonly={true}
+                      value={state.projectID}
+                      onUserInput={onUserInput}
+                    />
+                  }
+                </div>
+              </div>
+            </>
+          }
+          <div className='small-pad'>
+            <label className="label" htmlFor='#session_API'>
+              <b>
+                Session <span className="red">*</span>
+                <i
+                  className='fas fa-question-circle'
+                  data-tip='Visit or TimePoint Label'
+                ></i>
+              </b>
+              {state.LORIScompliant &&
+                <div><small>(LORIS Visit Label)</small></div>
+              }
+            </label>
+            <div className='comboField'>
+              {state.LORIScompliant &&
+                <SelectInput id='session_API'
+                  name='session_API'
+                  label=''
+                  required={true}
+                  value={state.session}
+                  emptyOption='Select One'
+                  options={arrayToObject(state.sessionOptions)}
+                  onUserInput={onUserInput}
+                  error={checkError('session_API')}
+                />
+              }
+            </div>
+          </div>
         </div>
-        <div className='info'>
-          <small>Annotation and events file names
-          must match one of the EEG file names.</small>
+        <div className='info half'>
         </div>
-        <div className='small-pad info'>
-          <input type='button'
-            className='start_task primary-btn'
-            onClick={convertMFFtoSET}
-            value='Convert to SET'
-            disabled={error}
+      </div>
+      <span className='header'>
+        Recording data
+      </span>
+      <div className='info'>
+        <div className='small-pad'>
+          <MultiDirectoryInput
+            id='mffDirectories'
+            name='mffDirectories'
+            multiple={true}
+            required={true}
+            taskName='RS'
+            label='Resting state/baseline'
+            updateDirEntry={updateMFFDirectory}
+            removeDirEntry={removeMFFDirectory}
+            addDirEntry={addMFFDirectory}
+            excludeMFFDirectory={excludeMFFDirectory}
+            value={state.mffDirectories.RS}
+            help={'Folder name(s) must be formatted correctly: ' +
+              `e.g. ${filePrefix}_RS[_run-X].mff`}
+            error={checkFileError('RS')}
           />
         </div>
-        <Modal
-          title={mffModalText.title[mffModalText.mode]}
-          show={mffModalVisible}
-          close={hideMffModal}
-          width='500px'
-        >
-          {mffModalText.message[mffModalText.mode]}
-        </Modal>
-        <ReactTooltip/>
-      </>
-    );
-  } else if (props.appMode === 'Converter') {
-    return (
-      <>
-        <span className='header'>
-          MFF to BIDS
-        </span>
-        <div className='info report'>
-          {reviewWarnings()}
-          {reviewSuccessFlags()}
-
-          {error ?
-            <div className="alert alert-danger" role="alert">
-              &#x274C; Please correct the above errors.
-            </div> :
-            <div className="alert alert-success" role="alert">
-              &#x2714; Ready to proceed
-            </div>
-          }
-
-          <hr/>
-
-          <div className='small-pad'>
-            <TextInput id='preparedBy'
-              name='preparedBy'
-              required={true}
-              label='Prepared by'
-              value={preparedBy}
-              placeholder='Enter your name'
-              onUserInput={(_, value) => setPreparedBy(value)}
-              help='Name of person performing data conversion
-              and validation is required.'
-            />
-            {!preparedBy && displayErrors &&
-              <div>
-                <span className='error'>&#x274C;</span>
-                Required for conversion logging
-              </div>
-            }
-          </div>
-          <div className='small-pad convert-bids-row'>
-            <input type='button'
-              className='start_task primary-btn'
-              onClick={beginBidsCreation}
-              value='Convert to BIDS'
-              disabled={error}
-            />
-            {successMessage}
-          </div>
+        <div className='small-pad'>
+          <MultiDirectoryInput
+            id='mffDirectories'
+            name='mffDirectories'
+            multiple={true}
+            required={true}
+            taskName='MMN'
+            label='MMN'
+            updateDirEntry={updateMFFDirectory}
+            removeDirEntry={removeMFFDirectory}
+            addDirEntry={addMFFDirectory}
+            excludeMFFDirectory={excludeMFFDirectory}
+            value={state.mffDirectories.MMN}
+            help={'Folder name(s) must be formatted correctly: ' +
+              `e.g. ${filePrefix}_MMN[_run-X].mff`}
+            error={checkFileError('MMN')}
+          />
         </div>
-        <Modal
-          title={modalText.title[modalText.mode]}
-          show={modalVisible}
-          close={hideModal}
-          width='500px'
-        >
-          {modalText.message[modalText.mode]}
-        </Modal>
-        <ReactTooltip/>
-      </>
-    );
-  } else {
-    return null;
-  }
+        <div className='small-pad'>
+          <MultiDirectoryInput
+            id='mffDirectories'
+            name='mffDirectories'
+            multiple={true}
+            required={true}
+            taskName='FACE'
+            label='Face processing'
+            updateDirEntry={updateMFFDirectory}
+            removeDirEntry={removeMFFDirectory}
+            addDirEntry={addMFFDirectory}
+            excludeMFFDirectory={excludeMFFDirectory}
+            value={state.mffDirectories.FACE}
+            help={'Folder name(s) must be formatted correctly: ' +
+              `e.g. ${filePrefix}_FACE[_run-X].mff`}
+            error={checkFileError('FACE')}
+          />
+        </div>
+        <div className='small-pad'>
+          <MultiDirectoryInput
+            id='mffDirectories'
+            name='mffDirectories'
+            multiple={true}
+            required={true}
+            taskName='VEP'
+            label='Visual Evoked Potential'
+            updateDirEntry={updateMFFDirectory}
+            removeDirEntry={removeMFFDirectory}
+            addDirEntry={addMFFDirectory}
+            excludeMFFDirectory={excludeMFFDirectory}
+            value={state.mffDirectories.VEP}
+            help={'Folder name(s) must be formatted correctly: ' +
+              `e.g. ${filePrefix}_VEP[_run-X].mff`}
+            error={checkFileError('VEP')}
+          />
+        </div>
+        <div className='small-pad'>
+          <FileInput
+            id='image_file'
+            required={true}
+            name='image_file'
+            label='Placement Photos'
+            accept='.zip'
+            onUserInput={onUserInput}
+            help='For photos taken with iPad of cap placement'
+            placeholder={
+              state.image_file.map((file) => file['name']).join(', ')
+            }
+            error={checkPhotoError()}
+          />
+        </div>
+      </div>
+      <div className='small-pad info'>
+        <input type='button'
+          className='start_task primary-btn'
+          onClick={convertMFFtoSET}
+          value='Convert to SET'
+          disabled={error}
+        />
+      </div>
+      <Modal
+        title={mffModalText.title[mffModalText.mode]}
+        show={mffModalVisible}
+        close={() => setMffModalVisible(false)}
+        width='500px'
+      >
+        {mffModalText.message[mffModalText.mode]}
+      </Modal>
+      <ReactTooltip/>
+    </>
+  ) : null;
 };
 
 Configuration.propTypes = {

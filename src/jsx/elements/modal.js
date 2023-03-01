@@ -3,12 +3,6 @@ import PropTypes from 'prop-types';
 import '../../css/Modal.css';
 
 const Modal = (props) => {
-  /**
-   * handleClose - close the Modal.
-   */
-  const handleClose = () => {
-    props.close(true);
-  };
   const styleVisible = {visibility: props.show ? 'visible' : 'hidden'};
   const styleAnimation = {width: props.width ? props.width : 'auto'};
   const styleContainer = {
@@ -31,7 +25,7 @@ const Modal = (props) => {
             <span className='modalHeader'>
               {props.title}
               <span className='modalHeaderClose'
-                onClick={handleClose}>
+                onClick={props.close}>
                 ×
               </span>
             </span>

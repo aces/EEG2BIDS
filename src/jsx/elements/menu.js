@@ -1,7 +1,7 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
+import {AppContext} from '../../context';
 import PropTypes from 'prop-types';
 import '../../css/Menu.css';
-import {SocketContext} from '../socket.io';
 import {AuthenticationMessage} from './authentication';
 
 /**
@@ -10,33 +10,22 @@ import {AuthenticationMessage} from './authentication';
  * @return {JSX.Element}
  */
 const MenuTab = (props) => {
-  // css styling.
-  const classesTitleText = props.active ?
-    'menu-title menu-active' : 'menu-title';
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <>
-      {props.disabled ?
-        <div className='menuTab disabled'>
-          <div className={classesTitleText}>
-            {props.title}
-          </div>
-        </div> :
-        <div className='menuTab'>
-          <div
-            className={classesTitleText}
-            onClick={props.onClick}
-          >
-            {props.title}
-          </div>
-        </div>
-      }
-    </>
+    <div className={`menuTab ${props.disabled && 'disabled'}`}>
+      <div
+        className={`menu-title ${props.active && 'menu-active'}`}
+        onClick={props.disabled ? undefined : props.onClick}
+      >
+        {props.title}
+      </div>
+    </div>
   );
 };
+
 MenuTab.propTypes = {
   id: PropTypes.string,
   title: PropTypes.string,
@@ -51,80 +40,42 @@ MenuTab.propTypes = {
  * @return {JSX.Element}
  */
 const Menu = (props) => {
-  const socketContext = useContext(SocketContext);
-  const [connected, setConnected] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [alerts, setAlerts] = useState([]);
+  const {state, setState} = useContext(AppContext);
   const [alertOpen, setAlertOpen] = useState(false);
-
-  useEffect(() => {
-    if (socketContext) {
-      socketContext.on('connect', () => {
-        setAlerts([]);
-        setConnected(true);
-      });
-      socketContext.on('connect_error', () => {
-        setAlerts([...alerts, 'Cannot connect to Python']);
-        setConnected(false);
-      });
-      socketContext.on('disconnect', (msg) => {
-        setAlerts([...alerts, 'Disconnected from Python - ' + msg]);
-        setConnected(false);
-      });
-      socketContext.on('server_error', (msg) => {
-        setAlerts([...alerts, msg]);
-      });
-    }
-  }, [socketContext, alerts]);
-
-  useEffect(() => {
-    if (socketContext) {
-      socketContext.on('loris_login_response', (data) => {
-        if (data.success) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      });
-    }
-  }, [socketContext]);
 
   return props.visible ? (
     <div className='root'>
       <div><AuthenticationMessage /></div>
       <div className='menu'>
-        { props.tabs.map((tab, index) => (
+        {props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
-            index={index}
-            length={props.tabs.length}
             title={tab.title}
-            onClick={tab.onClick}
-            active={index === props.activeTab}
-            activeIndex={props.activeTab}
-            disabled={!isAuthenticated && index > 0}
+            disabled={!state.isAuthenticated && index > 0}
+            active={state.appMode === tab.id}
+            onClick={() => setState({appMode: tab.id})}
           />
         ))}
       </div>
-      {alerts.length > 0 && (
+      {props.alerts.length > 0 && (
         <div
           className="alert alert-warning notice"
           role="alert"
           onClick={() => setAlertOpen(!alertOpen)}
         >
-          {alertOpen && alerts.map((alert, key) => <p key={key}>{alert}</p>)}
+          {alertOpen && props.alerts.map(
+              (alert, key) => <p key={key}>{alert}</p>,
+          )}
         </div>
       )}
     </div>
   ) : null;
 };
-Menu.defaultProps = {
-  activeTab: 0,
-};
+
 Menu.propTypes = {
   visible: PropTypes.bool,
   tabs: PropTypes.array,
-  activeTab: PropTypes.number,
+  alerts: PropTypes.array,
 };
 
 export default Menu;

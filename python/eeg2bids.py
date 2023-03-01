@@ -11,10 +11,8 @@ from python.libs.iEEG import ReadError, WriteError, metadata as metadata_fields
 from python.libs.Modifier import Modifier
 from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
-import csv
 import datetime
 import json
-import subprocess
 import sys
 import functools
 
@@ -31,12 +29,12 @@ sio = socketio.Server(
     ping_timeout=60000,
     cors_allowed_origins=[],
 )
+
 app = socketio.WSGIApp(sio)
 
 # Create Loris API handler.
 loris_api = LorisAPI()
 tar_handler = iEEG.TarFile()
-
 
 @sio.event
 def connect(sid, environ):
@@ -188,7 +186,7 @@ def set_loris_credentials(sid, data):
         loris_api.token = ''
         resp = loris_api.login()
 
-        if resp.get('error'):
+        if isinstance(resp, dict) and resp.get('error'):
             sio.emit('loris_login_response', {'error': resp.get('error')})
         else:
             sio.emit('loris_login_response', {
@@ -498,7 +496,10 @@ def validate_bids(sid, bids_directory):
 
 @sio.event
 def disconnect(sid):
-    print('disconnect: ', sid)
+    try:
+        print('disconnect: ', sid)
+    except:
+        pass
 
 
 if __name__ == '__main__':

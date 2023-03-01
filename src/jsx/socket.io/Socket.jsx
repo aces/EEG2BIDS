@@ -51,7 +51,9 @@ const Socket = (props) => {
       });
 
       socket.onAny((eventName, ...args) => {
-        console.info(`EVENT: ${eventName}, ${JSON.stringify(args)}`);
+        if (eventName !== 'progress') {
+          console.info(`EVENT: ${eventName}, ${JSON.stringify(args)}`);
+        }
       });
 
       socket.on('disconnect', (reason, details) => {

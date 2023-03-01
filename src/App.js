@@ -1,5 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState, useReducer, useEffect} from 'react';
 import {AppContext} from './context';
+import Main from './jsx/Main';
+import SplashScreen from './jsx/SplashScreen';
 import './css/App.css';
 
 // Socket.io
@@ -9,14 +11,6 @@ const options = {
   transports: ['websocket'],
 };
 
-// Main components
-import Menu from './jsx/elements/menu';
-import Help from './jsx/elements/help';
-import SplashScreen from './jsx/SplashScreen';
-import Welcome from './jsx/Welcome';
-import Configuration from './jsx/Configuration';
-import Validator from './jsx/Validator';
-
 Object.assign(console, window.myAPI.logger.functions);
 
 /**
@@ -24,23 +18,110 @@ Object.assign(console, window.myAPI.logger.functions);
  * @return {JSX.Element}
  */
 const App = () => {
-  // React State
-  const [appMode, setAppMode] = useState('SplashScreen');
-  const [activeMenuTab, setActiveMenuTab] = useState(0);
-  const [task, setTask] = useState({});
-  const nextStage = (nextStage, tabNumber) => {
-    setActiveMenuTab(tabNumber);
-    setAppMode(nextStage);
+  const [serverUp, setServerUp] = useState(false);
+
+  const initialState = {
+    eegRuns: null,
+    modality: 'eeg',
+    eventFiles: [],
+    invalidEventFiles: [],
+    annotationsTSV: [],
+    invalidAnnotationsTSV: [],
+    annotationsJSON: [],
+    invalidAnnotationsJSON: [],
+    bidsDirectory: null,
+    LORIScompliant: true,
+    siteID: 'n/a',
+    projectID: 'n/a',
+    subprojectID: 'n/a',
+    session: '',
+    bidsMetadataFile: [],
+    invalidBidsMetadataFile: [],
+    bidsMetadata: null,
+    lineFreq: 'n/a',
+    taskName: '',
+    reference: 'n/a',
+    recordingType: 'n/a',
+    participantEntryMode: 'existing_loris',
+    participantPSCID: '',
+    participantCandID: '',
+    participantID: '',
+    participantDOB: null,
+    participantAge: 'n/a',
+    participantSex: 'n/a',
+    participantHand: 'n/a',
+    subjectID: '',
+    preparedBy: '',
+    outputTime: '',
+    reasons: {},
+    eegData: [],
+    exclude: {},
+    mffFiles: [],
+    outputFilename: '',
+    flags: {},
+    validationFlags: {
+      errors: [],
+      success: [],
+    },
+    fileFormat: 'mff',
+    fileFormatUploaded: 'mff',
+    eegFiles: [],
+    mffDirectories: {
+      RS: [{path: '', name: '', exclude: false}],
+      MMN: [{path: '', name: '', exclude: false}],
+      FACE: [{path: '', name: '', exclude: false}],
+      VEP: [{path: '', name: '', exclude: false}],
+    },
+    siteOptions: [],
+    siteUseAPI: false,
+    projectOptions: [],
+    projectUseAPI: false,
+    subprojectOptions: [],
+    subprojectUseAPI: false,
+    sessionOptions: [],
+    sessionUseAPI: false,
+    image_file: [],
+    anonymize: false,
   };
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(() => {
-    setTimeout(
-        () => {
-          setAppMode('Welcome');
-        }, 1500);
+  const reducer = (state, values) => {
+    return {...state, ...values};
+  };
+
+  const [state, setState] = useReducer(
+      reducer,
+      {
+        ...initialState,
+        appMode: 'SplashScreen',
+        isAuthenticated: false,
+        wsConnected: false,
+        errors: false,
+      },
+  );
+
+  const resetState = () => {
+    setState(initialState);
+  };
+
+  useEffect(async () => {
+    const isAvailable = () => {
+      const timeout = new Promise((_, reject) => {
+        setTimeout(reject, 300, 'Request timed out');
+      });
+      const request = fetch(
+          uri + '/socket.io/?EIO=4&transport=polling',
+          {mode: 'no-cors'},
+      );
+      return Promise
+          .race([timeout, request])
+          .then(() => {
+            setServerUp(true);
+            console.info('Server up');
+            clearInterval(loop);
+          })
+          .catch(() => console.error('Python server not reachable'));
+    };
+    const loop = setInterval(isAvailable, 3000);
   }, []);
 
   /**
@@ -48,68 +129,13 @@ const App = () => {
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <Socket uri={uri} options={options}>
-      <AppContext.Provider value={{
-        setAppMode: (appMode) => {
-          setAppMode(appMode);
-        },
-        setTask: (key, value) => {
-          task[key] = value;
-          setTask(task);
-        },
-        getFromTask: (key) => {
-          return task[key] ?? '';
-        },
-      }}>
-        <>
-          {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
-          <Menu visible={appMode !== 'SplashScreen'}
-            tabs={[
-              {
-                title: '1) Getting started',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(0);
-                  setAppMode('Welcome');
-                },
-              },
-              {
-                title: '2) Configuration',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(1);
-                  setAppMode('Configuration');
-                },
-              },
-              {
-                title: '3) EEG to BIDS',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(2);
-                  setAppMode('Converter');
-                },
-              },
-              {
-                title: '4) Validate and package',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(3);
-                  setAppMode('Validator');
-                },
-              },
-            ]}
-            activeTab={activeMenuTab}
-          />
-          <SplashScreen visible={appMode === 'SplashScreen'}/>
-          <Welcome
-            visible={appMode === 'Welcome'}
-            nextStage={nextStage}
-          />
-          <Configuration appMode={appMode} nextStage={nextStage} />
-          <Validator visible={appMode === 'Validator'}/>
-        </>
-      </AppContext.Provider>
-    </Socket>
+    serverUp ?
+      <Socket uri={uri} options={options}>
+        <AppContext.Provider value={{state, setState, resetState}}>
+          <Main />
+        </AppContext.Provider>
+      </Socket> :
+      <SplashScreen visible={true} />
   );
 };
 

@@ -1,4 +1,3 @@
-import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 
 /**
@@ -37,7 +36,7 @@ export const FileInput = (props) => {
           }
         </b>
       </label>
-      <button>
+      <button className='btn'>
         <label htmlFor={props.id}>
           {
             'Choose file' +
@@ -58,9 +57,9 @@ export const FileInput = (props) => {
         cursor: 'default',
       }}>{props.placeholder ?? 'No file chosen'}</a>
       {props.error &&
-          <label className="input-error" htmlFor={props.id}>
+          <div className="input-error">
             {props.error}
-          </label>
+          </div>
       }
     </>
   );
@@ -119,6 +118,7 @@ export const DirectoryInput = (props) => {
         id={props.id}
         name={props.name}
         value='Choose folder'
+        className='btn'
         onClick={handleClick}
       />
       <a style={{fontSize: '14px', cursor: 'default'}}>
@@ -145,8 +145,6 @@ DirectoryInput.propTypes = {
 export const MultiDirectoryInput = (props) => {
   const myAPI = window['myAPI']; // from public/preload.js
 
-  // React State
-  const [exclude, setExclude] = useState(false);
   /**
    * handleClick - button by user.
    * @param {number} index
@@ -170,17 +168,20 @@ export const MultiDirectoryInput = (props) => {
             props.excludeMFFDirectory(props.taskName, true, value)}
           value={props.value[0].reason}
         />
-        <button
-          type="button"
-          onClick={() => props.excludeMFFDirectory(props.taskName, false, '')}
-        >
-            Include
-        </button>
         {props.error &&
-          <label className="input-error" htmlFor={props.id}>
+          <div className="input-error">
             {props.error}
-          </label>
+          </div>
         }
+        <div>
+          <button
+            type="button"
+            className='btn'
+            onClick={() => props.excludeMFFDirectory(props.taskName, false, '')}
+          >
+            Include
+          </button>
+        </div>
       </div>
     );
   }
@@ -205,9 +206,7 @@ export const MultiDirectoryInput = (props) => {
           </label>
       ) : (
           <label className="label" htmlFor={props.id}>
-            <b>
-              &emsp;{`Run ${index+1}`}
-            </b>
+            <b>{`Run ${index+1}`}</b>
           </label>
       ) }
       <input
@@ -215,44 +214,48 @@ export const MultiDirectoryInput = (props) => {
         id={props.id}
         name={props.name}
         value='Choose Task Run'
+        className='btn'
         onClick={() => handleClick(index)}
         style={{marginRight: '10px'}}
       />
       {(props.value.length > 1) &&
         (<button
           type="button"
+          className='btn'
           onClick={props.removeDirEntry(props.taskName, index)}
         >
           Remove Run -
         </button>)
       }
-      {(index == props.value.length - 1) &&
-        (<button
-          type="button"
-          onClick={() => props.addDirEntry(props.taskName)}
-        >
-          Add Run +
-        </button>)
-      }
-      {index === 0 && (
-        <>
-          <button
-            type="button"
-            onClick={() => props.excludeMFFDirectory(props.taskName, true, '')}
-            style={{marginLeft: '10px'}}
-          >
-              Excluded
-          </button>
-          {props.error &&
-            <label className="input-error" htmlFor={props.id}>
-              {props.error}
-            </label>
-          }
-        </>
-      )}
       <a style={{fontSize: '14px', cursor: 'default'}}>
         &nbsp;{dir.path ?? 'No folder chosen'}
       </a>
+      {props.error?.[index] &&
+        <div className="input-error">
+          {props.error[index]}
+        </div>
+      }
+      {(index == props.value.length - 1) &&
+        (<div>
+          <button
+            type="button"
+            className='btn'
+            onClick={() => props.addDirEntry(props.taskName)}
+            style={{marginRight: '10px'}}
+          >
+            Add Run +
+          </button>
+          <button
+            type="button"
+            className='btn'
+            onClick={() =>
+              props.excludeMFFDirectory(props.taskName, true, '')
+            }
+          >
+            Excluded
+          </button>
+        </div>)
+      }
     </div>
   ));
 };
@@ -319,9 +322,13 @@ export const TextInput = (props) => {
         readOnly={props.readonly}
       />
       {props.error &&
-          <label className="input-error" htmlFor={props.id}>
-            {props.error}
-          </label>
+        <label
+          className="input-error"
+          style={{paddingLeft: '10px'}}
+          htmlFor={props.id}
+        >
+          {props.error}
+        </label>
       }
     </>
   );
@@ -476,18 +483,6 @@ export const SelectInput = (props) => {
    * @return {JSX.Element}
    */
   const generateSelectLayout = () => {
-    const styleRow = {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: '100%',
-    };
-    const styleColumn = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignSelf: 'flex-start',
-      marginRight: '10px',
-    };
     const styleInput = {
       display: 'inline-block',
       margin: '0 10px 10px 0',
@@ -634,7 +629,11 @@ export const TextareaInput = (props) => {
    */
   return (
     <>
-      <label className="label" htmlFor={props.id}>
+      <label
+        className="label"
+        htmlFor={props.id}
+        style={{paddingBottom: '10px'}}
+      >
         <b>
           {props.label} {props.required ?
             <span className="red">*</span> :

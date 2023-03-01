@@ -1,4 +1,4 @@
-import React, {useEffect, useContext} from 'react';
+import {useEffect, useContext} from 'react';
 import {SocketContext} from './SocketContext';
 import PropTypes from 'prop-types';
 import {warning} from './utils';

@@ -28,10 +28,12 @@ const SplashScreen = (props) => {
     </>
   ) : null;
 };
+
 SplashScreen.propTypes = {
   size: PropTypes.string,
   visible: PropTypes.bool,
 };
+
 SplashScreen.defaultProps = {
   size: '60',
 };

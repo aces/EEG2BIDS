@@ -18,17 +18,16 @@ import {debug} from './socket.io/utils';
  */
 const Validator = (props) => {
   // React Context
-  const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
+  const {state} = useContext(AppContext);
 
   // React State
   const [validator, setValidator] = useState({});
   const [validPath, setValidPaths] = useState(null);
-  const [validationMode, setValidationMode] = useState('lastRun');
+  const [validationMode, setValidationMode] = useState('folder');
   const [progress, setProgress] = useState({});
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [connected, setConnected] = useState(false);
   const [packaging, setPackaging] = useState(false);
   const [modalText, setModalText] = useState({
     mode: 'loading',
@@ -40,7 +39,7 @@ const Validator = (props) => {
     message: {
       loading: <span style={{padding: '40px'}}>
         <span className='bids-loading'>
-          BIDS {progress['stage']} in progress {progress['progress']}%
+          BIDS {progress.stage} in progress {progress.progress}%
           <span>.</span><span>.</span><span>.</span>
           😴
         </span>
@@ -54,29 +53,19 @@ const Validator = (props) => {
   });
 
   /**
-   * hideModal - display Modal.
-   * @param {boolean} hidden
-   */
-  const hideModal = (hidden) => {
-    setModalVisible(!hidden);
-  };
-
-  /**
    * getBIDSDir - get BIDS directory.
    *
    * @return {string}
    */
   const getBIDSDir = () => {
     if (validationMode == 'lastRun') {
-      if (!appContext.getFromTask('bidsDirectory') ||
-          !appContext.getFromTask('outputFilename')
-      ) {
+      if (!state.bidsDirectory || !state.outputFilename) {
         console.error('No bidsDirectory or output_time.');
         return null;
       } else {
         return [
-          appContext.getFromTask('bidsDirectory') ?? '',
-          appContext.getFromTask('outputFilename') ?? '',
+          state.bidsDirectory ?? '',
+          state.outputFilename ?? '',
         ].filter(Boolean).join('/');
       }
     } else {
@@ -116,27 +105,23 @@ const Validator = (props) => {
     console.info('packageBIDS();');
 
     const bidsDirectory = getBIDSDir();
-    const exclude = appContext.getFromTask('exclude');
-    const flags = appContext.getFromTask('flags');
-    const reasons = appContext.getFromTask('reasons');
-    const candID = appContext.getFromTask('participantCandID');
-    const pscid = appContext.getFromTask('participantPSCID');
-    const visit = appContext.getFromTask('session');
-    const mffFiles = appContext.getFromTask('mffFiles');
     const metaData = {
-      exclude: exclude,
-      flags: flags,
-      reasons: reasons,
+      exclude: state.exclude,
+      flags: state.flags,
+      reasons: state.reasons,
     };
 
     if (bidsDirectory) {
+      const candID = state.participantCandID;
+      const pscid = state.participantPSCID;
+      const visit = state.session;
       const data = {
         bidsDirectory: bidsDirectory,
         metaData: metaData,
         candID: candID,
         pscid: pscid,
         visit: visit,
-        mffFiles: mffFiles,
+        mffFiles: state.mffFiles,
         filePrefix: `${pscid}_${candID}_${visit}`,
       };
       setModalText((prevState) => {
@@ -183,6 +168,10 @@ const Validator = (props) => {
 
   useEffect(() => {
     setValidator({});
+
+    if (validationMode == 'lastRun') {
+      packageBIDS();
+    }
   }, [validationMode, bidsDirectory]);
 
   useEffect(() => {
@@ -197,31 +186,26 @@ const Validator = (props) => {
       });
       socketContext.on('progress', (message) => {
         setProgress(message);
-        if (message.progress < 100 || progress.stage !== 'loris_upload') {
+        if (message.progress < 100 || message.stage !== 'loris_upload') {
           monitorProgress();
         }
       });
       socketContext.on('connect', () => {
-        setConnected(true);
         if (packaging) {
           monitorProgress();
         }
-        debug('VALIDATION CONNECTED');
-      });
-      socketContext.on('disconnect', () => {
-        setConnected(false);
-        debug('VALIDATION DISCONNECTED');
       });
     }
   }, [socketContext]);
 
   useEffect(() => {
-    if (!appContext.getFromTask('output_time')) {
+    if (!state.outputTime) {
       setValidationMode('folder');
     } else {
       setValidationMode('lastRun');
     }
-  }, [props.visible]);
+  }, [state.outputTime]);
+
   /**
    * onMessage - received message from python.
    * @param {object} message - response
@@ -261,13 +245,13 @@ const Validator = (props) => {
             label='BIDS files to validate:'
             onUserInput={(_, value) => setValidationMode(value)}
             options={
-              appContext.getFromTask('output_time') ?
+              state.outputTime ?
               {
                 folder: 'Select a folder',
                 lastRun: `Current recording:
-                  ${appContext.getFromTask('participantID')}
-                  ${appContext.getFromTask('session')}
-                  ${appContext.getFromTask('taskName')}`,
+                  ${state.participantID}
+                  ${state.session}
+                  ${state.taskName}`,
               } :
               {
                 folder: 'Select a folder',
@@ -294,10 +278,7 @@ const Validator = (props) => {
             className='primary-btn'
             style={{marginRight: '10px'}}
             disabled={
-              (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
-              ) ||
+              (validationMode == 'lastRun' && !state.outputTime) ||
               (validationMode == 'folder' && !bidsDirectory)
             }
           />
@@ -306,10 +287,7 @@ const Validator = (props) => {
             value='Package BIDS'
             className='primary-btn'
             disabled={
-              (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
-              ) ||
+              (validationMode == 'lastRun' && !state.outputTime) ||
               (validationMode == 'folder' && !bidsDirectory)
             }
           />
@@ -319,18 +297,18 @@ const Validator = (props) => {
       <Modal
         title={modalText.title[modalText.mode]}
         show={modalVisible}
-        close={hideModal}
+        close={() => setModalVisible(false)}
         width='500px'
       >
         {modalText.mode === 'loading' && (
           <div>
-            {!connected && (
+            {!state.wsConnected && (
               <div style={{'color': 'red'}}>
                 LOST CONNECTION TO PYTHON
               </div>
             )}
             <div className='bids-loading'>
-                BIDS {progress['stage']} in progress:
+                BIDS {progress.stage} in progress:
               <div className='progress-wrapper'>
                 <div className="pull-right">{progress.progress}%</div>
                 <div className="progress">

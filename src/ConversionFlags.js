@@ -393,6 +393,62 @@ const flagConditions = {
     flagCondition: 1,
     reason: false,
   },
+  DIN3_RS_present: {
+    pass: 'DIN3 Exist for RS',
+    warning: 'No DIN3 flags in RS! Check that your stimtracker ' +
+        'is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN3_RS_num: {
+    pass: 'Correct Number of DIN3 for RS',
+    warning: 'Incorrect number of DIN3 flags in RS! Check that your ' +
+        'Stimtracker is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN3_VEP_present: {
+    pass: 'DIN3 Exist for VEP',
+    warning: 'No DIN3 flags in VEP! Check that your Stimtracker ' +
+        'is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN3_VEP_num: {
+    pass: 'Correct Number of DIN3 for VEP',
+    warning: 'Incorrect number of DIN3 flags in VEP! ' +
+        'Check that your Stimtracker is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN3_FACE_present: {
+    pass: 'DIN3 Exist for FACE',
+    warning: 'No DIN3 flags in FACE! Check that your Stimtracker ' +
+        'is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN3_FACE_num: {
+    pass: 'Correct Number of DIN3 for FACE',
+    warning: 'Incorrect number of DIN3 flags in FACE! ' +
+        'Check that your Stimtracker is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN2_MMN_present: {
+    pass: 'DIN3 Exist for MMN',
+    warning: 'No DIN2 flags in MMN! Check that your ' +
+        'Stimtracker is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
+  DIN2_MMN_num: {
+    pass: 'Correct Number of DIN2 for MMN',
+    warning: 'Incorrect number of DIN2 flags in MMN! ' +
+        'Check that your Stimtracker is turned on and set up properly.',
+    flagCondition: 0,
+    reason: false,
+  },
 };
 
 export default flagConditions;

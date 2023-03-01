@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import '../css/Welcome.css';
 import {AuthenticationCredentials} from './elements/authentication';
 import {name, version} from '../../package.json';
+import {AppContext} from '../context';
 
 /**
  * Welcome - the Getting started component.
@@ -10,13 +11,7 @@ import {name, version} from '../../package.json';
  * @return {JSX.Element}
  */
 const Welcome = (props) => {
-  /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
-   */
-  const openBIDS = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitBIDS();
-  };
+  const {setState} = useContext(AppContext);
   /**
    * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
@@ -45,13 +40,6 @@ const Welcome = (props) => {
     const myAPI = window['myAPI'];
     myAPI.visitMCIN();
   };
-  /**
-   * openSettings - Open EEG2BIDS Wizard settings.
-   */
-  const openSettings = () => {
-    const myAPI = window['myAPI'];
-    myAPI.openSettings();
-  };
 
   /**
    * Renders the React component.
@@ -66,7 +54,7 @@ const Welcome = (props) => {
         <AuthenticationCredentials
           title='Login to LORIS'
           show={true}
-          close={() => props.nextStage('Configuration', 1)}
+          close={() => setState({appMode: 'Configuration'})}
           width='500px'
         />
       </div>
@@ -88,7 +76,6 @@ const Welcome = (props) => {
 };
 Welcome.propTypes = {
   visible: PropTypes.bool,
-  nextStage: PropTypes.func,
 };
 
 export default Welcome;

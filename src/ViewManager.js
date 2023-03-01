@@ -3,7 +3,6 @@ import {BrowserRouter as Router, Route} from 'react-router-dom';
 
 // Components
 import App from './App';
-import Settings from './Settings';
 
 /**
  * ViewManager - the multiple windows manager.
@@ -26,7 +25,6 @@ const ViewManager = (props) => {
 ViewManager.views = () => {
   return {
     app: <App/>,
-    settings: <Settings/>,
   };
 };
 ViewManager.View = (props) => {
