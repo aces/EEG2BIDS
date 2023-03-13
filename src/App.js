@@ -19,32 +19,19 @@ Object.assign(console, window.myAPI.logger.functions);
  */
 const App = () => {
   const [serverUp, setServerUp] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const initialState = {
     eegRuns: null,
     modality: 'eeg',
     eventFiles: [],
-    invalidEventFiles: [],
-    annotationsTSV: [],
-    invalidAnnotationsTSV: [],
-    annotationsJSON: [],
-    invalidAnnotationsJSON: [],
     bidsDirectory: null,
-    LORIScompliant: true,
-    siteID: 'n/a',
-    projectID: 'n/a',
-    subprojectID: 'n/a',
-    session: '',
     bidsMetadataFile: [],
-    invalidBidsMetadataFile: [],
     bidsMetadata: null,
     lineFreq: 'n/a',
     taskName: '',
     reference: 'n/a',
     recordingType: 'n/a',
-    participantEntryMode: 'existing_loris',
-    participantPSCID: '',
-    participantCandID: '',
     participantID: '',
     participantDOB: null,
     participantAge: 'n/a',
@@ -66,22 +53,7 @@ const App = () => {
     fileFormat: 'mff',
     fileFormatUploaded: 'mff',
     eegFiles: [],
-    mffDirectories: {
-      RS: [{path: '', name: '', exclude: false}],
-      MMN: [{path: '', name: '', exclude: false}],
-      FACE: [{path: '', name: '', exclude: false}],
-      VEP: [{path: '', name: '', exclude: false}],
-    },
-    siteOptions: [],
-    siteUseAPI: false,
-    projectOptions: [],
-    projectUseAPI: false,
-    subprojectOptions: [],
-    subprojectUseAPI: false,
-    sessionOptions: [],
-    sessionUseAPI: false,
-    image_file: [],
-    anonymize: false,
+    filePrefix: '',
   };
 
   const reducer = (state, values) => {
@@ -95,12 +67,26 @@ const App = () => {
         appMode: 'SplashScreen',
         isAuthenticated: false,
         wsConnected: false,
-        errors: false,
       },
   );
 
   const resetState = () => {
     setState(initialState);
+  };
+
+  const setError = (errName, errValue) => {
+    if (errValue === null) {
+      setErrors((errors) => {
+        /* eslint-disable no-unused-vars */
+        const {[errName]: _, ...errs} = errors;
+        return {...errs};
+      });
+    } else {
+      setErrors((errors) => ({
+        ...errors,
+        [errName]: errValue,
+      }));
+    }
   };
 
   useEffect(async () => {
@@ -131,7 +117,10 @@ const App = () => {
   return (
     serverUp ?
       <Socket uri={uri} options={options}>
-        <AppContext.Provider value={{state, setState, resetState}}>
+        <AppContext.Provider value={{
+          state, setState, resetState,
+          errors, setError,
+        }}>
           <Main />
         </AppContext.Provider>
       </Socket> :

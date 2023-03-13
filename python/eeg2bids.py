@@ -194,14 +194,15 @@ def set_loris_credentials(sid, data):
                 'lorisUsername': loris_api.username,
                 'lorisURL': lorisCredentials['lorisURL']
             })
-            sio.emit('loris_sites', loris_api.get_sites())
-            sio.emit('loris_projects', loris_api.get_projects())
+            # sio.emit('loris_sites', loris_api.get_sites())
+            # sio.emit('loris_projects', loris_api.get_projects())
     except Exception as e:
         sio.emit('loris_login_response', {'error': 'Connection refused.'})
         sio.emit('server_error', str(e))
         print(traceback.format_exc())
 
 
+@sio.event
 def get_loris_sites(sid):
     sio.emit('loris_sites', loris_api.get_sites())
 
@@ -214,6 +215,15 @@ def get_loris_projects(sid):
 @sio.event
 def get_loris_subprojects(sid, project):
     sio.emit('loris_subprojects', loris_api.get_subprojects(project))
+
+
+@sio.event
+def get_loris_visit(sid, data):
+    if 'candID' not in data or not data['candID']:
+        return
+    if 'visit' not in data or not data['visit']:
+        return
+    sio.emit('loris_visit', loris_api.get_visit(data['candID'], data['visit']))
 
 
 @sio.event
@@ -231,6 +241,7 @@ def create_visit(sid, data):
       sio.emit('server_error', str(e))
       print(traceback.format_exc())
     
+
 @sio.event
 def create_candidate_and_visit(sid, data):
     print('create_candidate_and_visit')
@@ -243,10 +254,23 @@ def create_candidate_and_visit(sid, data):
         )
 
         if new_candidate['CandID']:
-            loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
+            new_visit = loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
                                 data['subproject'])
-            loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
-                                    data['project'], data['date'])
+            if new_visit.get('error'):
+                new_candidate['error'] = f"Candidate {new_candidate['CandID']} created, "
+                + f"but cannot create visit {data['visit']}: {new_visit.get('error')}"
+            else:
+                visit_started = loris_api.start_next_stage(
+                    new_candidate['CandID'],
+                    data['visit'],
+                    data['site'],
+                    data['subproject'],
+                    data['project'],
+                    data['date']
+                )
+            if visit_started.get('error'):
+                new_candidate['error'] = f"Candidate {new_candidate['CandID']} and visit {data['visit']} created, "
+                + f"but cannot start visit: {visit_started.get('error')}"
             sio.emit('new_candidate_created', new_candidate)
     except Exception as e:
       sio.emit('server_error', str(e))

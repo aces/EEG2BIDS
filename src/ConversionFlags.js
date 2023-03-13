@@ -70,7 +70,7 @@ const flagConditions = {
     reason: true,
   },
   RS_present: {
-    pass: 'There is a Resting Sqtate stimuli flag',
+    pass: 'There is a Resting State stimuli flag',
     warning: 'No Resting State flags! There might be a connection issue ' +
         'between the Eprime and Netstation computers. Be sure to open ' +
         'netstation BEFORE E-prime, and check that the bas+ flags are ' +

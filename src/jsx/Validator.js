@@ -112,17 +112,14 @@ const Validator = (props) => {
     };
 
     if (bidsDirectory) {
-      const candID = state.participantCandID;
-      const pscid = state.participantPSCID;
-      const visit = state.session;
       const data = {
         bidsDirectory: bidsDirectory,
         metaData: metaData,
-        candID: candID,
-        pscid: pscid,
-        visit: visit,
+        candID: state.participantCandID,
+        pscid: state.participantPSCID,
+        visit: state.session,
         mffFiles: state.mffFiles,
-        filePrefix: `${pscid}_${candID}_${visit}`,
+        filePrefix: state.filePrefix,
       };
       setModalText((prevState) => {
         return {...prevState, ['mode']: 'loading'};
@@ -249,7 +246,7 @@ const Validator = (props) => {
               {
                 folder: 'Select a folder',
                 lastRun: `Current recording:
-                  ${state.participantID}
+                  ${state.participantID || state.participantPSCID}
                   ${state.session}
                   ${state.taskName}`,
               } :

@@ -69,16 +69,12 @@ const Converter = (props) => {
         read_only: false,
         event_files: state.eventFiles.length > 0 ?
           state.eventFiles[0]['path'] : '',
-        annotations_tsv: state.annotationsTSV.length > 0 ?
-          state.annotationsTSV[0]['path'] : '',
-        annotations_json: state.annotationsJSON.length > 0 ?
-          state.annotationsJSON[0]['path'] : '',
         bidsMetadata: state.bidsMetadata ?? '',
         site_id: state.siteID ?? '',
         project_id: state.projectID ?? '',
         sub_project_id: state.subprojectID ?? '',
         session: state.session ?? '',
-        participantID: state.participantID ?? '',
+        participantID: state.participantID || state.participantPSCID || '',
         age: state.participantAge ?? '',
         hand: state.participantHand ?? '',
         sex: state.participantSex ?? '',

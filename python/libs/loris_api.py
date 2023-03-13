@@ -6,6 +6,7 @@ import urllib
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 from python.libs.BinaryChunkedUpload import BinaryChunkedUpload
 import time
+import hashlib
 
 class LorisAPI:
     url = ''
@@ -30,17 +31,15 @@ class LorisAPI:
         )
         print(f"login: {resp.status_code}")
         try:
-            resp_json = json.loads(resp.content.decode('ascii'))
-            if resp_json.get('error'):
-                print(resp_json.get('error'))
-                return {'error': resp_json.get('error')}
-            else:
-                self.token = resp_json.get('token')
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if json_resp.get('token'):
+                self.token = json_resp.get('token')
                 return True
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': 'User credentials error!'}
+        return {'error': 'User credentials error!'}
 
 
 
@@ -53,11 +52,13 @@ class LorisAPI:
         print(f"get_projects: {resp.status_code}")
         try:
             json_resp = json.loads(resp.content.decode('ascii'))
-            return json_resp.get('Projects')
+            print(json_resp)
+            if json_resp.get('Projects'):
+                return json_resp.get('Projects')
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': 'Cannot get projects!'}
+        return {'error': 'Cannot get projects!'}
 
 
 
@@ -70,11 +71,13 @@ class LorisAPI:
         print(f"get_all_subprojects: {resp.status_code}")
         try:
             json_resp = json.loads(resp.content.decode('ascii'))
-            return json_resp.get('Subprojects')
+            print(json_resp)
+            if json_resp.get('Subprojects'):
+                return json_resp.get('Subprojects')
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': 'Cannot get subprojects!'}
+        return {'error': 'Cannot get subprojects!'}
 
 
 
@@ -86,11 +89,14 @@ class LorisAPI:
         )
         print(f"get_project {project}: {resp.status_code}")
         try:
-            return json.loads(resp.content.decode('ascii'))
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Unable to find project {project}!"}
+        return {'error': f"Unable to find project {project}!"}
 
 
 
@@ -98,11 +104,13 @@ class LorisAPI:
         print(f"get_subprojects {project}")
         try:
             project = self.get_project(project)
-            return project.get('Subprojects')
+            print(project)
+            if project.get('Subprojects'):
+                return project.get('Subprojects')
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Unable to find subprojects for {project}!"}
+        return {'error': f"Unable to find subprojects for {project}!"}
 
 
 
@@ -115,11 +123,13 @@ class LorisAPI:
         print(f"get_visits for {subproject}: {resp.status_code}")
         try:
             json_resp = json.loads(resp.content.decode('ascii'))
-            return json_resp.get('Visits')
+            print(json_resp)
+            if json_resp.get('Visits'):
+                return json_resp.get('Visits')
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Unable to find visits for {subproject}!"}
+        return {'error': f"Unable to find visits for {subproject}!"}
 
 
 
@@ -132,42 +142,38 @@ class LorisAPI:
         print(f"get_sites: {resp.status_code}")
         try:
             json_resp = json.loads(resp.content.decode('ascii'))
-            return json_resp.get('Sites')
+            print(json_resp)
+            if json_resp.get('Sites'):
+                return json_resp.get('Sites')
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': 'Cannot get sites!'}
+        return {'error': 'Cannot get sites!'}
 
 
 
-    def get_visit(self, candid, visit, site, subproject, project):
+    def get_visit(self, candid, visit):
         resp = requests.get(
             url=self.url + '/candidates/' + str(candid) + '/' + urllib.parse.quote(visit),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data=json.dumps({
-                "Meta": {
-                    "CandID": candid,
-                    "Visit": visit,
-                    "Site": site,
-                    "Battery": subproject,
-                    "Project": project
-                }
-            }),
             verify=False
         )
         print(f"get_visit {candid} {visit}: {resp.status_code}")
         try:
-            return json.loads(resp.content.decode('ascii'))
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Cannot get visit {candid} {visit}!"}
+        return {'error': f"Cannot get visit {candid} {visit}!"}
 
 
 
     def start_next_stage(self, candid, visit, site, subproject, project, date):
         resp = requests.patch(
-            url=self.url + '/candidates/' + str(candid) + '/' + urllib.parse.quote(visit),
+            url=self.url + '/candidates/' + candid + '/' + urllib.parse.quote(visit),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             data=json.dumps({
                 "CandID": candid,
@@ -185,7 +191,15 @@ class LorisAPI:
             verify=False
         )
         print(f"start_next_stage {candid} {visit}: {resp.status_code}")
-
+        try:
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
+        except Exception as e:
+            print(str(e))
+            print(traceback.format_exc())
+        return {'error': f"Cannot start visit {candid} {visit}!"}
 
 
     def create_candidate(self, project, dob, sex, site):
@@ -204,17 +218,20 @@ class LorisAPI:
         )
         print(f"create_candidate: {resp.status_code}")
         try:
-            return json.loads(resp.content.decode('ascii'))
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Cannot create candidate!"}
+        return {'error': 'Cannot create candidate!'}
 
 
 
     def create_visit(self, candid, visit, site, project, subproject):
         resp = requests.put(
-            url=self.url + '/candidates/' + candid + '/' + visit,
+            url=self.url + '/candidates/' + candid + '/' + urllib.parse.quote(visit),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             data=json.dumps({
                 "CandID": candid,
@@ -226,6 +243,15 @@ class LorisAPI:
             verify=False
         )
         print(f"create_visit: {resp.status_code}")
+        try:
+            json_resp = json.loads(resp.content.decode('ascii'))
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
+        except Exception as e:
+            print(str(e))
+            print(traceback.format_exc())
+        return {'error': f"Cannot create visit {visit} for candidate {candid}!"}
 
 
 
@@ -238,14 +264,13 @@ class LorisAPI:
         print(f"get_candidate {candid}: {resp.status_code}")
         try:
             json_resp = json.loads(resp.content.decode('ascii'))
-            if json_resp.get('error'):
-                print(json_resp.get('error'))
-                return {'error': 'DCCID is not valid.'}
-            return json_resp
+            print(json_resp)
+            if not json_resp.get('error'):
+                return json_resp
         except Exception as e:
             print(str(e))
             print(traceback.format_exc())
-            return {'error': f"Unable to find candidate {candid}!"}
+        return {'error': f"Unable to find candidate {candid}!"}
 
 
 
@@ -273,6 +298,7 @@ class LorisAPI:
 
         e = MultipartEncoder(
             fields={
+                'checksum': hashlib.md5(open(filename,'rb').read()).hexdigest(),
                 'metaData': json.dumps(metaData),
                 'candID': candID,
                 'pscid': pscid,

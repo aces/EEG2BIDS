@@ -6,12 +6,7 @@ class EEGRun {
   eegBIDSBasename = null;
 
   eventFile = null;
-  annotationsTSV = null;
-  annotationsJSON = null;
-
   eventErrors = null;
-  annotationsTSVErrors = null;
-  annotationsJSONErrors = null;
 
   task = null;
   run = null;
