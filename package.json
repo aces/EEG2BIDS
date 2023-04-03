@@ -151,8 +151,11 @@
       }
     },
     "nsis": {
-      "oneClick": true,
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "files": [
       "build/**/*",
