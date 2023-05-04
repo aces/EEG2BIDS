@@ -57,7 +57,7 @@ const RecordingMetadata = (props) => {
             JSON.parse(e.target.result);
             resolve(null);
           } catch (e) {
-            console.log(e);
+            console.error(e);
             resolve(json.name);
           }
         };
@@ -79,7 +79,7 @@ const RecordingMetadata = (props) => {
               {
                 quoteChar: '',
                 complete: (results, file) => {
-                  console.log(results.errors);
+                  console.error(results.errors);
                   if (results.errors.length > 0) {
                     resolve(tsv.name);
                   } else {
@@ -182,13 +182,11 @@ const RecordingMetadata = (props) => {
   };
 
   useEffect(() => {
-    if (socketContext) {
-      if (state.bidsMetadataFile.length > 0) {
-        socketContext.emit('get_bids_metadata', {
-          file_path: state.bidsMetadataFile[0]['path'],
-          modality: state.modality,
-        });
-      }
+    if (state.bidsMetadataFile?.length > 0) {
+      socketContext?.emit('get_bids_metadata', {
+        file_path: state.bidsMetadataFile[0]['path'],
+        modality: state.modality,
+      });
     }
   }, [state.bidsMetadataFile, state.modality]);
 

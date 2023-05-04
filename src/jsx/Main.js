@@ -33,7 +33,7 @@ const Main = () => {
       });
 
       socketContext.on('connect_error', (err) => {
-        console.log(`connect_error due to ${err.message}`);
+        console.error(`connect_error due to ${err.message}`);
         setAlerts([...alerts, 'Cannot connect to Python']);
       });
 

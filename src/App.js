@@ -26,8 +26,6 @@ const App = () => {
     modality: 'eeg',
     eventFiles: [],
     bidsDirectory: null,
-    bidsMetadataFile: [],
-    bidsMetadata: null,
     lineFreq: 'n/a',
     taskName: '',
     reference: 'n/a',
