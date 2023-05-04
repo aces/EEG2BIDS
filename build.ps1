@@ -1,5 +1,5 @@
 .\Scripts\activate
-pyinstaller --paths=python python/eeg2bids.py -F `
+pyinstaller --paths=python python/eeg2bids.py -D `
 --name eeg2bids-service-windows `
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json;./bids_validator/rules' `
 --add-data 'python/libs/bids_validator/rules/associated_data_rules.json;./bids_validator/rules' `

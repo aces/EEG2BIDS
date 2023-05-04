@@ -44,7 +44,7 @@ pyinstaller eeg2bids-service-windows.spec --clean
 ```
 To generate the eeg2bids-service-windows.spec file:
 ```
-chmod +x build.sh
+chmod +x build.ps1
 .\build.ps1
 # Open eeg2bids-service.spec and add on the first line
 import sys

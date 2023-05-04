@@ -43,7 +43,7 @@ module.exports = class EEG2BIDSService {
               __dirname,
               '..',
             this.platform === 'win32' ?
-              'dist/eeg2bids-service-windows.exe' :
+              'dist/eeg2bids-service-windows/eeg2bids-service-windows.exe' :
               'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
             );
             this.process = spawn(pathToService, []);
