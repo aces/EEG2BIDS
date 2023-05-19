@@ -1,0 +1,45 @@
+{
+    "recordingMetadata": false,
+    "participantMetadata": {
+        "species": false,
+        "sex": true,
+        "handedness": true,
+        "strain": false,
+        "strain_rrid": false,
+        "additional": [
+            {
+                "name": "weight",
+                "label":  "Weight",
+                "default": "n/a",
+                "help": false,
+                "display": false
+            },
+            {
+                "name": "height",
+                "label":  "Height",
+                "default": "n/a",
+                "help": false,
+                "display": false
+            }
+        ]
+    },
+    "tasks": [
+        {
+            "key": "RS",
+            "label": "Resting state/baseline"
+        },
+        {
+            "key": "MMN",
+            "label": "MMN"
+        },
+        {
+            "key": "FACE",
+            "label": "Face processing"
+        },
+        {
+            "key": "VEP",
+            "label": "Visual Evoked Potential"
+        }
+    ],
+    "allowAdditionalTask": true
+}

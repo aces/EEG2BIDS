@@ -3,6 +3,7 @@ import {AppContext} from './context';
 import Main from './jsx/Main';
 import SplashScreen from './jsx/SplashScreen';
 import './css/App.css';
+import config from './config.json';
 
 // Socket.io
 import {Socket} from './jsx/socket.io';
@@ -33,8 +34,6 @@ const App = () => {
     participantID: '',
     participantDOB: null,
     participantAge: 'n/a',
-    participantSex: 'n/a',
-    participantHand: 'n/a',
     subjectID: '',
     preparedBy: '',
     outputTime: '',
@@ -118,6 +117,7 @@ const App = () => {
         <AppContext.Provider value={{
           state, setState, resetState,
           errors, setError,
+          config,
         }}>
           <Main />
         </AppContext.Provider>

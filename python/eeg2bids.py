@@ -16,13 +16,6 @@ import json
 import sys
 import functools
 
-# LORIS credentials of user
-lorisCredentials = {
-    'lorisURL': '',
-    'lorisUsername': '',
-    'lorisPassword': '',
-}
-
 # Create socket listener.
 sio = socketio.Server(
     async_mode='eventlet',
@@ -171,31 +164,29 @@ def get_participant_data(sid, data):
 def set_loris_credentials(sid, data):
     try:
         print('set_loris_credentials:', data)
-        global lorisCredentials
-        lorisCredentials = data
-        if 'lorisURL' not in lorisCredentials:
-            print('error with credentials:', data)
+        if 'lorisURL' not in data:
+            print('Error with credentials:', data)
             return
 
-        if lorisCredentials['lorisURL'].endswith('/'):
-            lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
-        loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
-        loris_api.uploadURL = lorisCredentials['lorisURL'] + '/electrophysiology_uploader/upload/'
-        loris_api.username = lorisCredentials['lorisUsername']
-        loris_api.password = lorisCredentials['lorisPassword']
-        loris_api.token = ''
-        resp = loris_api.login()
-
-        if isinstance(resp, dict) and resp.get('error'):
-            sio.emit('loris_login_response', {'error': resp.get('error')})
+        if 'lorisToken' in data:
+            loris_api.token = data['lorisToken']
+            loris_api.url = data['lorisURL']
         else:
-            sio.emit('loris_login_response', {
-                'success': 200,
-                'lorisUsername': loris_api.username,
-                'lorisURL': lorisCredentials['lorisURL']
-            })
-            # sio.emit('loris_sites', loris_api.get_sites())
-            # sio.emit('loris_projects', loris_api.get_projects())
+            loris_api.token = ''
+            resp = loris_api.login(data['lorisURL'], data['lorisUsername'], data['lorisPassword'])
+
+            if isinstance(resp, dict) and resp.get('error'):
+                sio.emit('loris_login_response', {'error': resp.get('error')})
+                return
+        
+        sio.emit('loris_login_response', {
+            'success': 200,
+            'lorisUsername': data['lorisUsername'],
+            'lorisURL': data['lorisURL'],
+            'lorisToken': loris_api.token,
+        })
+        # sio.emit('loris_sites', loris_api.get_sites())
+        # sio.emit('loris_projects', loris_api.get_projects())
     except Exception as e:
         sio.emit('loris_login_response', {'error': 'Connection refused.'})
         sio.emit('server_error', str(e))

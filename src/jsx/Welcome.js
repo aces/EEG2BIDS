@@ -1,9 +1,8 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import '../css/Welcome.css';
 import {AuthenticationCredentials} from './elements/authentication';
 import {name, version} from '../../package.json';
-import {AppContext} from '../context';
 
 /**
  * Welcome - the Getting started component.
@@ -11,7 +10,6 @@ import {AppContext} from '../context';
  * @return {JSX.Element}
  */
 const Welcome = (props) => {
-  const {setState} = useContext(AppContext);
   /**
    * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
@@ -45,18 +43,15 @@ const Welcome = (props) => {
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
-  return props.visible ? (
-    <>
+  return (
+    <div style={{
+      display: props.visible ? 'block' : 'none',
+    }}>
       <span className='title'>
         Welcome to <b>EEG2BIDS Wizard</b>
       </span>
       <div className='info'>
-        <AuthenticationCredentials
-          title='Login to LORIS'
-          show={true}
-          close={() => setState({appMode: 'Configuration'})}
-          width='500px'
-        />
+        <AuthenticationCredentials/>
       </div>
       <div className='footer'>
         Powered by <a className='open-source' onClick={openGitHub}>
@@ -71,8 +66,8 @@ const Welcome = (props) => {
          - Copyright © 2021 <a className='mcin' onClick={openMCIN}>
         MCIN</a>.
       </div>
-    </>
-  ) : null;
+    </div>
+  );
 };
 Welcome.propTypes = {
   visible: PropTypes.bool,

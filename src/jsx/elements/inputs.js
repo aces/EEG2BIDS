@@ -243,7 +243,7 @@ export const MultiDirectoryInput = (props) => {
             onClick={() => props.addDirEntry(props.taskName)}
             style={{marginRight: '10px'}}
           >
-            Add Run +
+            Add Run
           </button>
           <button
             type="button"
@@ -353,7 +353,10 @@ TextInput.propTypes = {
   ]),
   bannedCharacters: PropTypes.array,
   readonly: PropTypes.bool,
-  help: PropTypes.string,
+  help: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.bool,
+  ]),
 };
 
 /**

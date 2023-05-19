@@ -2,6 +2,7 @@ import React, {useState, useEffect, useContext} from 'react';
 import PropTypes from 'prop-types';
 import styles from '../../css/Authentication.module.css';
 
+import {AppContext} from '../../context';
 // Socket.io
 import {SocketContext} from '../socket.io';
 
@@ -125,46 +126,47 @@ AuthInput.propTypes = {
 };
 
 export const AuthenticationMessage = (props) => {
-  // React Context
-  const socketContext = useContext(SocketContext);
-
-  const defaultLoginMessage = 'You are not logged into a LORIS Account';
-  // React state
-  const [loginMessage, setLoginMessage] = useState(defaultLoginMessage);
+  const {state, setState} = useContext(AppContext);
 
   /**
-   * Similar to componentDidMount and componentDidUpdate.
+   * Signout and reset credentials.
    */
-  useEffect(async () => {
-    if (socketContext) {
-      socketContext.on('loris_login_response', (data) => {
-        if (data.error) {
-          setLoginMessage(defaultLoginMessage);
-        } else {
-          setLoginMessage(
-              `LORIS account: ${data.lorisURL.replace(/^https?:\/\//, '')} |
-              ${data.lorisUsername}`,
-          );
-        }
-      });
-    }
-  }, [socketContext]);
+  const signout = () => {
+    window['myAPI'].removeLorisAuthenticationCredentials();
+    setState({isAuthenticated: false});
+    setState({lorisUsername: ''});
+    setState({lorisUrl: ''});
+    setState({appMode: 'Welcome'});
+  };
 
   return (
     <div className={styles.authMessageContainer}>
       <span className={styles.loginMessage}>
-        {loginMessage}
+        {state.lorisURL && state.lorisUsername ?
+          <>
+            LORIS account:
+            {state.lorisURL
+                .replace(/^https?:\/\//, '')
+                .replace(/\/$/, '')
+            }
+            | {state.lorisUsername}
+          </> : <>You are not logged into a LORIS Account</>
+        }
       </span>
+      {state.isAuthenticated && <input
+        type='button'
+        value='Sign out'
+        onClick={signout}
+        className={styles.authSignoutButton}
+      />}
     </div>
   );
-};
-AuthenticationMessage.propTypes = {
-  onUserInput: PropTypes.func,
 };
 
 export const AuthenticationCredentials = (props) => {
   // React Context
   const socketContext = useContext(SocketContext);
+  const {setState} = useContext(AppContext);
 
   // React state
   const [lorisURL, setLorisURL] = useState('');
@@ -172,17 +174,32 @@ export const AuthenticationCredentials = (props) => {
   const [lorisPassword, setLorisPassword] = useState('');
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isCredentialsLoaded, setIsCredentialsLoaded] = useState(false);
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(async () => {
-    const myAPI = window['myAPI'];
-    const credentials = await myAPI.getLorisAuthenticationCredentials();
+  const getSavedCredentials = async () => {
+    if (isCredentialsLoaded) return;
+
+    const credentials =
+      await window['myAPI'].getLorisAuthenticationCredentials();
+
     credentials?.lorisURL &&
       setLorisURL(credentials.lorisURL);
     credentials?.lorisUsername &&
       setLorisUsername(credentials.lorisUsername);
+
+    // Check if token exists
+    if (credentials?.lorisToken) {
+      socketContext.emit('set_loris_credentials', {
+        lorisURL: credentials.lorisURL,
+        lorisUsername: credentials.lorisUsername,
+        lorisToken: credentials.lorisToken,
+      });
+    }
+    setIsCredentialsLoaded(true);
+  };
+
+  useEffect(() => {
+    setState({isAuthenticated: false});
   }, []);
 
   useEffect(async () => {
@@ -191,50 +208,39 @@ export const AuthenticationCredentials = (props) => {
         if (data.error) {
           setError(true);
           setErrorMessage(data.error);
+          setState({isAuthenticated: false});
+          setState({lorisURL: ''});
+          setState({lorisUsername: ''});
         } else {
           setError(false);
           setErrorMessage('');
-          props.close(true);
+          setState({appMode: 'Configuration'});
+          setState({isAuthenticated: true});
+          setState({lorisURL: data.lorisURL});
+          setState({lorisUsername: data.lorisUsername});
+
+          window['myAPI'].setLorisAuthenticationCredentials({
+            lorisURL: data.lorisURL,
+            lorisUsername: data.lorisUsername,
+            lorisToken: data.lorisToken,
+          });
         }
       });
+
+      getSavedCredentials();
     }
   }, [socketContext]);
 
   /**
-   * handleClear - Close the Authentication Credentials
-   *   but first update (?new) credentials.
+   * onSubmit - Update (?new) credentials and login
    */
-  const handleClear = () => {
-    const myAPI = window['myAPI'];
-    myAPI.removeLorisAuthenticationCredentials();
-    setLorisURL('');
-    setLorisUsername('');
-    setLorisPassword('');
-  };
-
-  /**
-   * handleClose - Close the Authentication Credentials
-   *   but first update (?new) credentials.
-   */
-  const handleClose = () => {
-    const myAPI = window['myAPI'];
-    const credentials = {
-      lorisURL: lorisURL,
-      lorisUsername: lorisUsername,
-      lorisPassword: lorisPassword,
-    };
-    if (
-      credentials?.lorisURL &&
-      credentials?.lorisUsername &&
-      credentials?.lorisPassword
-    ) {
-      const storeFields = {
-        lorisURL: credentials.lorisURL,
-        lorisUsername: credentials.lorisUsername,
-        lorisPassword: 'password',
-      };
-      myAPI.setLorisAuthenticationCredentials(storeFields);
-      socketContext.emit('set_loris_credentials', credentials);
+  const onSubmit = () => {
+    if (lorisURL && lorisUsername && lorisPassword) {
+      socketContext.emit('set_loris_credentials', {
+        lorisURL: lorisURL,
+        lorisUsername: lorisUsername,
+        lorisPassword: lorisPassword,
+      });
     }
   };
 
@@ -286,27 +292,12 @@ export const AuthenticationCredentials = (props) => {
       <div className={styles.authSubmitContainer}>
         <input
           type='button'
-          value='Clear'
-          onClick={handleClear}
-          className={styles.authClearButton}/>
-        <input
-          type='button'
           value='Submit'
-          onClick={handleClose}
+          onClick={onSubmit}
           className={styles.authSubmitButton}/>
       </div>
     </div>
   );
-};
-AuthenticationCredentials.propTypes = {
-  show: PropTypes.bool.isRequired,
-  close: PropTypes.func.isRequired,
-  width: PropTypes.string,
-  title: PropTypes.string,
-};
-AuthenticationCredentials.defaultProps = {
-  width: null,
-  title: null,
 };
 
 export default {

@@ -10,9 +10,6 @@ import hashlib
 
 class LorisAPI:
     url = ''
-    uploadURL = ''
-    username = ''
-    password = ''
     token = ''
 
     upload_read = 0
@@ -20,12 +17,13 @@ class LorisAPI:
     upload_pii_read = 0
     upload_pii_total = -1
 
-    def login(self):
+    def login(self, url, username, password):
+        self.url = url.rstrip('/') + '/api/v0.0.4-dev'
         resp = requests.post(
-            url=self.url + 'login',
+            url=self.url + '/login',
             json={
-                'username': self.username,
-                'password': self.password
+                'username': username,
+                'password': password
             },
             verify=False
         )
@@ -45,7 +43,7 @@ class LorisAPI:
 
     def get_projects(self):
         resp = requests.get(
-            url=self.url + 'projects',
+            url=self.url + '/projects',
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
@@ -64,7 +62,7 @@ class LorisAPI:
 
     def get_all_subprojects(self):
         resp = requests.get(
-            url=self.url + 'subprojects',
+            url=self.url + '/subprojects',
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
@@ -83,7 +81,7 @@ class LorisAPI:
 
     def get_project(self, project):
         resp = requests.get(
-            url=self.url + 'projects/' + urllib.parse.quote(project),
+            url=self.url + '/projects/' + urllib.parse.quote(project),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
@@ -116,7 +114,7 @@ class LorisAPI:
 
     def get_visits(self, subproject):
         resp = requests.get(
-            url=self.url + 'subprojects/' + urllib.parse.quote(subproject),
+            url=self.url + '/subprojects/' + urllib.parse.quote(subproject),
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
@@ -135,7 +133,7 @@ class LorisAPI:
 
     def get_sites(self):
         resp = requests.get(
-            url=self.url + 'sites',
+            url=self.url + '/sites',
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             verify=False
         )
@@ -204,7 +202,7 @@ class LorisAPI:
 
     def create_candidate(self, project, dob, sex, site):
         resp = requests.post(
-            url=self.url + '/candidates/',
+            url=self.url + '/candidates',
             headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
             data=json.dumps({
                 "Candidate": {
@@ -312,7 +310,7 @@ class LorisAPI:
         st = time.time()
 
         resp = requests.post(
-            self.uploadURL,
+            self.url + '/electrophysiology_uploader/upload',
             data=m,
             headers={'Content-Type': m.content_type, 'Authorization': 'Bearer %s' % self.token},
             verify=False

@@ -1,13 +1,29 @@
 const electron = require('electron');
 const path = require('path');
 const url = require('url');
+const Store = require('electron-store');
+const {ipcMain} = require('electron');
+
+// Set data in electron-store (not secure)
+const store = new Store({
+  schema: {
+    lorisURL: {
+      type: 'string',
+    },
+    lorisUsername: {
+      type: 'string',
+    },
+    lorisToken: {
+      type: 'string',
+    }
+  }
+});
 
 // [security] Used for inputs.js (dialog call) to succeed.
 require('@electron/remote/main').initialize();
 
 const {app} = electron;
 const {BrowserWindow} = electron;
-const {ipcMain} = require('electron');
 const nativeImage = electron.nativeImage;
 
 const EEG2BIDSService = process.env.DEV ?
@@ -87,53 +103,19 @@ const createMainWindow = () => {
 app.on('ready', async () => {
   createMainWindow();
   const updateCredential = async (event, credentials) => {
-    try {
-      const keytar = require('keytar');
-      // Delete all old credentials
-      const services = await keytar.findCredentials('EEG2BIDS');
-      for (const service of services) {
-        await keytar.deletePassword('EEG2BIDS', service?.account || '');
-      }
-
-      if (credentials?.lorisUsername && credentials?.lorisPassword) {
-        // Set new credentials (secure)
-        await keytar.setPassword(
-          'EEG2BIDS',
-          credentials.lorisUsername,
-          credentials.lorisPassword,
-        );
-      }
-
-      // Set lorisURL in electron-store (not secure)
-      const Store = require('electron-store');
-      const schema = {
-        lorisURL: {
-          type: 'string',
-        },
-      };
-      const store = new Store({schema});
-      store.set('lorisURL', credentials?.lorisURL || '');
-    } catch(e) {
-      console.error(e);
-    }
+    credentials?.lorisURL && store.set('lorisURL', credentials?.lorisURL);
+    credentials?.lorisUsername && store.set('lorisUsername');
+    store.set('lorisToken', credentials?.lorisToken || '');
   };
 
   ipcMain.on('removeLorisAuthenticationCredentials', updateCredential);
   ipcMain.on('setLorisAuthenticationCredentials', updateCredential);
   ipcMain.handle('getLorisAuthenticationCredentials', async () => {
-    try {
-      const keytar = require('keytar');
-      const credentials = await keytar.findCredentials('EEG2BIDS');
-      const Store = require('electron-store');
-      const store = new Store();
-      return {
-        lorisURL: store.get('lorisURL') ?? '',
-        lorisUsername: credentials?.[0]?.account || '',
-        lorisPassword: credentials?.[0]?.password || '',
-      };
-    } catch(e) {
-      console.error(e);
-    }
+    return {
+      lorisURL: store.get('lorisURL') ?? '',
+      lorisUsername: store.get('lorisUsername') ?? '',
+      lorisToken: store.get('lorisToken') ?? '',
+    };
   });
 });
 

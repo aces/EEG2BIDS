@@ -45,7 +45,7 @@ const Menu = (props) => {
 
   return props.visible ? (
     <div className='root'>
-      <div><AuthenticationMessage /></div>
+      <AuthenticationMessage />
       <div className='menu'>
         {props.tabs.map((tab, index) => (
           <MenuTab

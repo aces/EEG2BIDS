@@ -6,6 +6,8 @@
     cursor: default;
     font-size: 12px;
     background-color: #e9eaee;
+    justify-content: space-between;
+    display: flex;
 }
 .loginMessage {
     font-size: 14px;
@@ -100,20 +102,19 @@
     margin: 10px 0 0 0;
     text-align: right;
 }
-.authClearButton {
+.authSignoutButton {
     border: 0;
-    width: 100px;
-    height: 35px;
     color: #fff;
     cursor: pointer;
-    margin: 0 30px 0 0;
-    border-radius: 30px;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
     text-decoration: none;
     background-color: #6591be;
     box-shadow: 0 2px 8px 0 rgb(223, 226, 229),
         0 2px 10px 0 rgb(225, 226, 229);
 }
-.authClearButton:focus {
+.authSignoutButton:focus {
   outline: 0;
 }
 .authSubmitButton {

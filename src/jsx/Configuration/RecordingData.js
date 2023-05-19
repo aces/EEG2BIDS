@@ -12,23 +12,17 @@ import {
  * @return {JSX.Element}
  */
 const RecordingData = () => {
-  const {state, setState} = useContext(AppContext);
+  const {state, setState, config} = useContext(AppContext);
   const [isLoaded, setIsLoaded] = useState(false);
-
-  const tasks = {
-    RS: 'Resting state/baseline',
-    MMN: 'MMN',
-    FACE: 'Face processing',
-    VEP: 'Visual Evoked Potential',
-  };
 
   const initState = {
     image_file: [],
     mffDirectories: {
-      ...Object.fromEntries(Object.keys(tasks).map((taskKey) =>
-        [taskKey, [{path: '', name: '', exclude: false}]],
+      ...Object.fromEntries(config.tasks.map((task) =>
+        [task.key, [{path: '', name: '', exclude: false}]],
       )),
     },
+    tasks: config.tasks,
   };
 
   useEffect(() => {
@@ -43,7 +37,6 @@ const RecordingData = () => {
     const undefStateKeys = Object.keys(initState).filter(
         (stateKey) => !(stateKey in state),
     );
-    console.log(undefStateKeys);
     if (undefStateKeys.length === 0) setIsLoaded(true);
   }, Object.keys(initState).map((stateKey) => state[stateKey]));
 
@@ -201,26 +194,40 @@ const RecordingData = () => {
         Recording data
       </span>
       <div className='info'>
-        {Object.keys(tasks).map((taskKey) =>
-          <div key={taskKey} className='small-pad'>
+        {state.tasks.map((task) =>
+          <div key={task.key} className='small-pad'>
             <MultiDirectoryInput
               id='mffDirectories'
               name='mffDirectories'
               multiple={true}
               required={true}
-              taskName={taskKey}
-              label={tasks[taskKey]}
+              taskName={task.key}
+              label={task.label}
               updateDirEntry={updateMFFDirectory}
               removeDirEntry={removeMFFDirectory}
               addDirEntry={addMFFDirectory}
               excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories[taskKey]}
+              value={state.mffDirectories[task.key]}
               help={'Folder name(s) must be formatted correctly: ' +
-                `e.g. ${state.filePrefix}_${taskKey}[_run-X].mff`}
-              error={checkFileError(taskKey)}
+                `e.g. ${state.filePrefix}_${task.key}[_run-X].mff`}
+              error={checkFileError(task.key)}
             />
           </div>,
         )}
+
+        {config.allowAdditionalTask &&
+          <div className='small-pad'>
+            <button
+              type="button"
+              className='btn'
+              onClick={() => {}}
+              style={{marginRight: '10px'}}
+            >
+              Add Task
+            </button>
+          </div>
+        }
+
         <div className='small-pad'>
           <FileInput
             id='image_file'

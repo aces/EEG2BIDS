@@ -105,48 +105,50 @@ const RecordingDetails = () => {
   }, [state.session]);
 
   useEffect(() => {
-    socketContext.on('loris_visit', (visit) => {
-      if (!visit?.error) {
-        const age = getAge(state.participantDOB, visit?.Stages?.Visit.Date);
-        setState({participantAge: age});
-      }
-    });
+    if (socketContext) {
+      socketContext.on('loris_visit', (visit) => {
+        if (!visit?.error) {
+          const age = getAge(state.participantDOB, visit?.Stages?.Visit.Date);
+          setState({participantAge: age});
+        }
+      });
 
-    socketContext.on('loris_projects', (projects) => {
-      if (projects?.error) {
-        setError('projectID', projects.error);
-      } else {
-        setError('projectID', null);
-        setState({projectOptions: Object.keys(projects)});
-      }
-    });
+      socketContext.on('loris_projects', (projects) => {
+        if (projects?.error) {
+          setError('projectID', projects.error);
+        } else {
+          setError('projectID', null);
+          setState({projectOptions: Object.keys(projects)});
+        }
+      });
 
-    socketContext.on('loris_subprojects', (subprojects) => {
-      if (subprojects?.error) {
-        setError('subprojectID', subprojects.error);
-      } else {
-        setError('subprojectID', null);
-        setState({subprojectOptions: subprojects});
-      }
-    });
+      socketContext.on('loris_subprojects', (subprojects) => {
+        if (subprojects?.error) {
+          setError('subprojectID', subprojects.error);
+        } else {
+          setError('subprojectID', null);
+          setState({subprojectOptions: subprojects});
+        }
+      });
 
-    socketContext.on('loris_visits', (visits) => {
-      if (visits?.error) {
-        setError('session', visits.error);
-      } else {
-        setError('session', null);
-        setState({sessionOptions: visits});
-      }
-    });
+      socketContext.on('loris_visits', (visits) => {
+        if (visits?.error) {
+          setError('session', visits.error);
+        } else {
+          setError('session', null);
+          setState({sessionOptions: visits});
+        }
+      });
 
-    socketContext.on('loris_sites', (sites) => {
-      if (sites?.error) {
-        setError('siteID', sites.error);
-      } else {
-        setError('siteID', null);
-        setState({siteOptions: sites?.map((site) => site.Name)});
-      }
-    });
+      socketContext.on('loris_sites', (sites) => {
+        if (sites?.error) {
+          setError('siteID', sites.error);
+        } else {
+          setError('siteID', null);
+          setState({siteOptions: sites?.map((site) => site.Name)});
+        }
+      });
+    }
   }, [socketContext]);
 
   return isLoaded && (

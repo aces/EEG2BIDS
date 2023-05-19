@@ -111,13 +111,15 @@ const MFF2SET = () => {
 
   return (
     <>
-      <div className='small-pad info'>
-        <input type='button'
-          className='start_task primary-btn'
-          onClick={convertMFFtoSET}
-          value='Convert to SET'
-          disabled={errors.length}
-        />
+      <div className='info'>
+        <div className='small-pad info'>
+          <input type='button'
+            className='start_task primary-btn'
+            onClick={convertMFFtoSET}
+            value='Convert to SET'
+            disabled={errors.length}
+          />
+        </div>
       </div>
       <Modal
         title={

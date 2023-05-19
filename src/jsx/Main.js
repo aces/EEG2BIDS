@@ -46,22 +46,6 @@ const Main = () => {
       socketContext.on('server_error', (msg) => {
         setAlerts([...alerts, msg]);
       });
-
-      socketContext.on('loris_login_response', (data) => {
-        /*
-        // todo from alizee - this code should not,
-        //  isAuthenticated should be passed back from authentication component
-        if (data.error) {
-          // todo display error message - login failure
-        }
-        */
-
-        if (data.success) {
-          setState({isAuthenticated: true});
-        } else {
-          setState({isAuthenticated: false});
-        }
-      });
     }
   }, [socketContext]);
 

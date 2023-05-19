@@ -26,7 +26,7 @@ import MFF2SET from './Configuration/MFF2SET';
 const Configuration = (props) => {
   // React Context
   const socketContext = useContext(SocketContext);
-  const {state, setState} = useContext(AppContext);
+  const {state, setState, config} = useContext(AppContext);
 
   useEffect(() => {
     setState({filePrefix:
@@ -93,16 +93,18 @@ const Configuration = (props) => {
     }
   }, [socketContext]);
 
-  return props.visible ? (
-    <>
+  return (
+    <div style={{
+      display: props.visible ? 'block' : 'none',
+    }}>
       <ParticipantDetails/>
       <RecordingDetails/>
-      <RecordingMetadata/>
+      {config.recordingMetadata && <RecordingMetadata/>}
       <RecordingData/>
       <MFF2SET/>
       <ReactTooltip/>
-    </>
-  ) : null;
+    </div>
+  );
 };
 
 Configuration.propTypes = {
