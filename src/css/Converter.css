@@ -5,13 +5,11 @@
     font-family: Segoe UI Symbol, serif;
 }
 .warning {
-    font-size: 20px;
     padding-right: 10px;
     color: #FF8C00;
     font-family: Segoe UI Symbol, serif;
 }
 .error {
-    font-size: 18px;
     padding-right: 10px;
     color: red;
 }

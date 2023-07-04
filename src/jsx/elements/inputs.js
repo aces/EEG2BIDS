@@ -17,7 +17,7 @@ export const FileInput = (props) => {
     // Clear the input file
     event.target.value = null;
 
-    props.onUserInput(props.id, files);
+    props.onUserInput(props.name, files);
   };
   /**
    * Renders the React component.
@@ -37,7 +37,7 @@ export const FileInput = (props) => {
         </b>
       </label>
       <button className='btn'>
-        <label htmlFor={props.id}>
+        <label htmlFor={props.name}>
           {
             'Choose file' +
             (props.multiple ? '(s)' : '')
@@ -46,7 +46,7 @@ export const FileInput = (props) => {
       </button>
       <input
         type='file'
-        id={props.id}
+        id={props.name}
         multiple={props.multiple}
         name={props.name}
         accept={props.accept}
@@ -68,7 +68,6 @@ FileInput.defaultProps = {
   multiple: false,
 };
 FileInput.propTypes = {
-  id: PropTypes.string,
   multiple: PropTypes.bool,
   name: PropTypes.string,
   label: PropTypes.string,
@@ -94,7 +93,7 @@ export const DirectoryInput = (props) => {
     const path = await dialog.showOpenDialog({
       properties: ['openDirectory'],
     });
-    props.onUserInput(props.id, path.filePaths[0]);
+    props.onUserInput(props.name, path.filePaths[0]);
   };
   /**
    * Renders the React component.
@@ -102,7 +101,7 @@ export const DirectoryInput = (props) => {
    */
   return (
     <>
-      <label className="label" htmlFor={props.id}>
+      <label className="label" htmlFor={props.name}>
         <b>
           {props.label} {props.required ?
             <span className="red">*</span> :
@@ -115,7 +114,7 @@ export const DirectoryInput = (props) => {
       </label>
       <input
         type='button'
-        id={props.id}
+        id={props.name}
         name={props.name}
         value='Choose folder'
         className='btn'
@@ -128,7 +127,6 @@ export const DirectoryInput = (props) => {
   );
 };
 DirectoryInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
   onUserInput: PropTypes.func,
@@ -138,11 +136,11 @@ DirectoryInput.propTypes = {
 
 
 /**
- * DirectoryInput - the directory select component.
+ * TaskRunInput - the directory select component.
  * @param {object} props
  * @return {JSX.Element}
  */
-export const MultiDirectoryInput = (props) => {
+export const TaskRunInput = (props) => {
   const myAPI = window['myAPI']; // from public/preload.js
 
   /**
@@ -153,9 +151,15 @@ export const MultiDirectoryInput = (props) => {
     // Send directory to parent component
     const dialog = await myAPI.dialog();
     const path = await dialog.showOpenDialog({
-      properties: ['openDirectory'],
+      properties: props.browseDir ? ['openDirectory'] : ['openFile'],
+      filters: [
+        {
+          name: 'EEG Recordings',
+          extensions: props.accept,
+        },
+      ],
     });
-    props.updateDirEntry(props.taskName, index, path.filePaths[0]);
+    props.update(props.taskName, index, path.filePaths[0]);
   };
 
   if (props.value[0].exclude) {
@@ -165,7 +169,7 @@ export const MultiDirectoryInput = (props) => {
           name={props.name}
           label={`${props.label} exclusion reason`}
           onUserInput={(name, value) =>
-            props.excludeMFFDirectory(props.taskName, true, value)}
+            props.exclude(props.taskName, true, value)}
           value={props.value[0].reason}
         />
         {props.error &&
@@ -177,7 +181,7 @@ export const MultiDirectoryInput = (props) => {
           <button
             type="button"
             className='btn'
-            onClick={() => props.excludeMFFDirectory(props.taskName, false, '')}
+            onClick={() => props.exclude(props.taskName, false, '')}
           >
             Include
           </button>
@@ -193,7 +197,7 @@ export const MultiDirectoryInput = (props) => {
   return props.value.map((dir, index) => (
     <div key={index}>
       {index === 0 ? (
-          <label className="label" htmlFor={props.id}>
+          <label className="label" htmlFor={props.name}>
             <b>
               {props.label} {props.required ?
                 <span className="red">*</span> :
@@ -205,13 +209,13 @@ export const MultiDirectoryInput = (props) => {
             </b>
           </label>
       ) : (
-          <label className="label" htmlFor={props.id}>
+          <label className="label" htmlFor={props.name}>
             <b>{`Run ${index+1}`}</b>
           </label>
       ) }
       <input
         type='button'
-        id={props.id}
+        id={props.name}
         name={props.name}
         value='Choose Task Run'
         className='btn'
@@ -222,7 +226,7 @@ export const MultiDirectoryInput = (props) => {
         (<button
           type="button"
           className='btn'
-          onClick={props.removeDirEntry(props.taskName, index)}
+          onClick={props.remove(props.taskName, index)}
         >
           Remove Run -
         </button>)
@@ -240,7 +244,7 @@ export const MultiDirectoryInput = (props) => {
           <button
             type="button"
             className='btn'
-            onClick={() => props.addDirEntry(props.taskName)}
+            onClick={() => props.add(props.taskName)}
             style={{marginRight: '10px'}}
           >
             Add Run
@@ -249,7 +253,7 @@ export const MultiDirectoryInput = (props) => {
             type="button"
             className='btn'
             onClick={() =>
-              props.excludeMFFDirectory(props.taskName, true, '')
+              props.exclude(props.taskName, true, '')
             }
           >
             Excluded
@@ -259,16 +263,17 @@ export const MultiDirectoryInput = (props) => {
     </div>
   ));
 };
-MultiDirectoryInput.propTypes = {
-  id: PropTypes.string,
+TaskRunInput.propTypes = {
   name: PropTypes.string,
   taskName: PropTypes.string,
   label: PropTypes.string,
-  updateDirEntry: PropTypes.func,
-  removeDirEntry: PropTypes.func,
-  addDirEntry: PropTypes.func,
-  excludeMFFDirectory: PropTypes.func,
+  update: PropTypes.func,
+  remove: PropTypes.func,
+  add: PropTypes.func,
+  exclude: PropTypes.func,
   help: PropTypes.string,
+  accept: PropTypes.array,
+  browseDir: PropTypes.bool,
 };
 
 /**
@@ -290,7 +295,7 @@ export const TextInput = (props) => {
         }
       }
     }
-    props.onUserInput(props.id, value);
+    props.onUserInput(props.name, value);
   };
   /**
    * Renders the React component.
@@ -299,7 +304,7 @@ export const TextInput = (props) => {
   return (
     <>
       {props.label &&
-        <label className="label" htmlFor={props.id}>
+        <label className="label" htmlFor={props.name}>
           <b>
             {props.label} {props.required ?
               <span className="red">*</span> :
@@ -313,7 +318,7 @@ export const TextInput = (props) => {
       }
       <input
         type='text'
-        id={props.id}
+        id={props.name}
         name={props.name}
         value={props.value}
         onChange={handleChange}
@@ -325,7 +330,7 @@ export const TextInput = (props) => {
         <label
           className="input-error"
           style={{paddingLeft: '10px'}}
-          htmlFor={props.id}
+          htmlFor={props.name}
         >
           {props.error}
         </label>
@@ -338,7 +343,6 @@ TextInput.defaultProps = {
   required: false,
 };
 TextInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   required: PropTypes.bool,
   label: PropTypes.string,
@@ -371,7 +375,7 @@ export const RadioInput = (props) => {
    */
   const handleChange = (event) => {
     props.onUserInput(
-        props.id,
+        props.name,
         event.target.value,
     );
   };
@@ -410,14 +414,14 @@ export const RadioInput = (props) => {
             <span style={{cursor: 'pointer'}}>
               <input
                 type='radio'
-                id={`${props.id}_${key}`}
+                id={`${props.name}_${key}`}
                 name={`${props.name}_${key}`}
                 value={key}
                 checked={props.checked === key}
                 onChange={handleChange}
                 style={styleInput}
               />
-              <label htmlFor={`${props.id}_${key}`}
+              <label htmlFor={`${props.name}_${key}`}
                 style={styleLabel}
               >
                 {props.options[key]}
@@ -427,7 +431,7 @@ export const RadioInput = (props) => {
       );
     }
     return <div key={props.name + '_key'} style={styleRow}>
-      <label className="label" htmlFor={props.id}>
+      <label className="label" htmlFor={props.name}>
         <b>
           {props.label} {props.required ?
             <span className="red">*</span> :
@@ -455,7 +459,6 @@ RadioInput.defaultProps = {
   required: false,
 };
 RadioInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   required: PropTypes.bool,
   label: PropTypes.string,
@@ -477,7 +480,7 @@ export const SelectInput = (props) => {
    */
   const handleChange = (event) => {
     props.onUserInput(
-        props.id,
+        props.name,
         event.target.value,
     );
   };
@@ -509,7 +512,7 @@ export const SelectInput = (props) => {
     return (
       <>
         {props.label &&
-          <label className="label" htmlFor={props.id}>
+          <label className="label" htmlFor={props.name}>
             <b>
               {props.label} {props.required ?
                 <span className="red">*</span> :
@@ -522,7 +525,7 @@ export const SelectInput = (props) => {
           </label>
         }
         <select
-          id={props.id}
+          id={props.name}
           name={props.name}
           value={props.value || ''}
           onChange={handleChange}
@@ -531,11 +534,13 @@ export const SelectInput = (props) => {
           {emptyOptionHTML}
           {optionList}
         </select>
-        {props.error &&
-          <label className="input-error" htmlFor={props.id}>
-            {props.error}
-          </label>
-        }
+        <div>
+          {props.error &&
+            <label className="input-error" htmlFor={props.name}>
+              {props.error}
+            </label>
+          }
+        </div>
       </>
     );
   };
@@ -550,7 +555,6 @@ export const SelectInput = (props) => {
   );
 };
 SelectInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
   value: PropTypes.string,
@@ -572,7 +576,7 @@ export const NumberInput = (props) => {
    */
   const handleChange = (event) => {
     props.onUserInput(
-        props.id,
+        props.name,
         event.target.value,
     );
   };
@@ -582,7 +586,7 @@ export const NumberInput = (props) => {
    */
   return (
     <>
-      <label className="label" htmlFor={props.id}>
+      <label className="label" htmlFor={props.name}>
         <b>{props.label}</b>
         {props.help &&
           <i className='fas fa-question-circle' data-tip={props.help}></i>
@@ -590,7 +594,7 @@ export const NumberInput = (props) => {
       </label>
       <input
         type='number'
-        id={props.id}
+        id={props.name}
         name={props.name}
         value={props.value}
         onChange={handleChange}
@@ -600,7 +604,6 @@ export const NumberInput = (props) => {
   );
 };
 NumberInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
   value: PropTypes.string,
@@ -634,7 +637,7 @@ export const TextareaInput = (props) => {
     <>
       <label
         className="label"
-        htmlFor={props.id}
+        htmlFor={props.name}
         style={{paddingBottom: '10px'}}
       >
         <b>
@@ -652,7 +655,7 @@ export const TextareaInput = (props) => {
         rows={props.rows}
         className="form-control"
         name={props.name}
-        id={props.id}
+        id={props.name}
         value={props.value || ''}
         onChange={handleChange}
       >
@@ -665,7 +668,6 @@ TextareaInput.propTypes = {
   name: PropTypes.string.isRequired,
   label: PropTypes.string,
   value: PropTypes.string,
-  id: PropTypes.string,
   required: PropTypes.bool,
   rows: PropTypes.number,
   cols: PropTypes.number,

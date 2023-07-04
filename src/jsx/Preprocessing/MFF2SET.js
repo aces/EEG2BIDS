@@ -1,8 +1,11 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import Modal from '../elements/modal';
 import ConversionFlags from '../../ConversionFlags';
 import {SocketContext} from '../socket.io';
 import {AppContext} from '../../context';
+import {
+  FileInput,
+} from '../elements/inputs';
 
 /**
  * MFF2SET - the MFF2SET component.
@@ -16,8 +19,40 @@ const MFF2SET = () => {
   const [mffModalVisible, setMffModalVisible] = useState(false);
   const [convertionComplete, setConvertionComplete] = useState(false);
 
+  const initState = {
+    imageFile: [],
+    validationFlags: {errors: [], success: []},
+    flags: {},
+    mffFiles: [],
+    inputFileFormat: 'mff',
+    acceptedFormats: {
+      mff: 'EGI MFF (.mff)',
+      ...state.acceptedFormats,
+    },
+  };
+
+  useEffect(() => {
+    // Init state
+    Object.keys(initState).map(
+        (stateKey) => setState({[stateKey]: initState[stateKey]}),
+    );
+  }, []);
+
+  const checkPhotoError = () => {
+    if (state.imageFile?.length === 0) {
+      // setError(true);
+      return 'Image files are required.';
+    }
+    const filename = `${state.filePrefix}_EEG.zip`;
+    if (state.imageFile?.[0].name !== filename) {
+      // setError(true);
+      return 'File should have naming format ' +
+        `${state.filePrefix}` + '_EEG.zip';
+    }
+  };
+
   const convertMFFtoSET = async () => {
-    if (socketContext && state.fileFormatUploaded === 'mff') {
+    if (socketContext && state.inputFileFormat === 'mff') {
       setMffModalVisible(true);
       setConvertionComplete(false);
       const updateMessage = (msg) => {
@@ -58,13 +93,12 @@ const MFF2SET = () => {
 
       setState({exclude: exclude});
       const mffFiles = dirs.map((dir) => dir.path);
-      mffFiles.push(state.image_file[0].path);
+      mffFiles.push(state.imageFile[0].path);
       setState({mffFiles: mffFiles});
 
       const callback = (success, message, files, flags, bidsDir) => {
         if (success) {
           setState({bidsDirectory: bidsDir});
-          setState({outputFilename: `${state.filePrefix}_bids`});
           setState({flags: flags});
 
           if (files.length === dirs.length) {
@@ -112,6 +146,20 @@ const MFF2SET = () => {
   return (
     <>
       <div className='info'>
+        <div className='small-pad'>
+          <FileInput
+            required={true}
+            name='imageFile'
+            label='Placement Photos'
+            accept='.zip'
+            onUserInput={(_, value) => setState({imageFile: value})}
+            help='For photos taken with iPad of cap placement'
+            placeholder={
+              state.imageFile?.map((file) => file['name']).join(', ')
+            }
+            error={checkPhotoError()}
+          />
+        </div>
         <div className='small-pad info'>
           <input type='button'
             className='start_task primary-btn'

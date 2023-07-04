@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../../context';
 import {SocketContext} from '../socket.io';
+import ReactTooltip from 'react-tooltip';
 
 import {
   SelectInput,
@@ -18,33 +19,14 @@ const RecordingDetails = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const initState = {
-    siteID: 'n/a',
-    projectID: 'n/a',
-    subprojectID: 'n/a',
+    siteID: '',
+    projectID: '',
+    subprojectID: '',
     session: '',
     siteOptions: [],
     projectOptions: [],
     subprojectOptions: [],
     sessionOptions: [],
-  };
-
-  /**
-   * Get age at visit
-   *
-   * @param {Date} birthDate
-   * @param {Date} visitDate
-   *
-   * @return {Number}
-   */
-  const getAge = (birthDate, visitDate) => {
-    if (!birthDate || !visitDate) return;
-
-    let age = visitDate.getFullYear() - birthDate.getFullYear();
-    const m = visitDate.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && visitDate.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
   };
 
   useEffect(() => {
@@ -78,7 +60,7 @@ const RecordingDetails = () => {
   };
 
   /**
-   * onUserInput - input change by user.
+   * onUserInput - input clfnge by user.
    * @param {string} name - element name
    * @param {object|string|boolean} value - element value
    */
@@ -106,13 +88,6 @@ const RecordingDetails = () => {
 
   useEffect(() => {
     if (socketContext) {
-      socketContext.on('loris_visit', (visit) => {
-        if (!visit?.error) {
-          const age = getAge(state.participantDOB, visit?.Stages?.Visit.Date);
-          setState({participantAge: age});
-        }
-      });
-
       socketContext.on('loris_projects', (projects) => {
         if (projects?.error) {
           setError('projectID', projects.error);
@@ -158,76 +133,77 @@ const RecordingDetails = () => {
       </span>
       <div className='container'>
         <div className='info' style={{width: '100%'}}>
+          {state.useLoris &&
+            <>
+              <div className='small-pad'>
+                <TextInput
+                  name='siteID'
+                  label='Site'
+                  required={true}
+                  placeholder='n/a'
+                  value={state.siteID}
+                  readonly={state.useLoris}
+                  onUserInput={onUserInput}
+                  error={errors?.siteID}
+                  help='Study Centre'
+                />
+              </div>
+              <div className='small-pad'>
+                <TextInput
+                  name='projectID'
+                  label='Project'
+                  required={true}
+                  placeholder='n/a'
+                  readonly={state.useLoris}
+                  value={state.projectID}
+                  onUserInput={onUserInput}
+                  error={errors?.projectID}
+                  help='Study'
+                />
+              </div>
+              <div className='small-pad'>
+                <TextInput
+                  name='subprojectID'
+                  label='Subproject'
+                  required={true}
+                  placeholder='n/a'
+                  readonly={state.useLoris}
+                  value={state.subprojectID}
+                  onUserInput={onUserInput}
+                  error={errors?.subprojectID}
+                  help='Subproject or population cohort'
+                />
+              </div>
+            </>
+          }
           <div className='small-pad'>
-            <label className="label" htmlFor='#siteID'>
-              <b>
-                Site <span className="red">*</span>
-                <i
-                  className='fas fa-question-circle'
-                  data-tip='Study Centre'
-                ></i>
-              </b>
-            </label>
-            <div className='comboField'>
-              <TextInput id='siteID'
-                name='siteID'
-                label=''
-                placeholder='n/a'
-                value={state.siteID}
-                readonly={true}
-                onUserInput={onUserInput}
-                error={errors?.siteID}
-              />
-            </div>
-          </div>
-          <div className='small-pad'>
-            <label className="label" htmlFor='#projectID'>
-              <b>
-                Project <span className="red">*</span>
-                <i
-                  className='fas fa-question-circle'
-                  data-tip='Study'
-                ></i>
-              </b>
-            </label>
-            <div className='comboField'>
-              <TextInput id='projectID'
-                name='projectID'
-                label=''
-                placeholder='n/a'
-                readonly={true}
-                value={state.projectID}
-                onUserInput={onUserInput}
-                error={errors?.projectID}
-              />
-            </div>
-          </div>
-          <div className='small-pad'>
-            <label className="label" htmlFor='#session'>
-              <b>
-                Session <span className="red">*</span>
-                <i
-                  className='fas fa-question-circle'
-                  data-tip='Visit or TimePoint Label'
-                ></i>
-              </b>
-              <div><small>(LORIS Visit Label)</small></div>
-            </label>
-            <div className='comboField'>
-              <SelectInput id='session'
+            {state.useLoris ?
+              <SelectInput
                 name='session'
-                label=''
+                label={state.useLoris ? 'LORIS Visit Label' : 'Session'}
                 required={true}
                 value={state.session}
                 emptyOption='Select One'
                 options={arrayToObject(state.sessionOptions)}
                 onUserInput={onUserInput}
                 error={errors?.session}
+                help='Visit or TimePoint Label'
+              /> :
+              <TextInput
+                name='session'
+                label={state.useLoris ? 'LORIS Visit Label' : 'Session'}
+                required={true}
+                placeholder='n/a'
+                value={state.session}
+                onUserInput={onUserInput}
+                error={errors?.session}
+                help='Visit or TimePoint Label'
               />
-            </div>
+            }
           </div>
         </div>
       </div>
+      <ReactTooltip />
     </>
   );
 };

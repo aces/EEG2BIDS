@@ -11,6 +11,13 @@ import {name, version} from '../../package.json';
  */
 const Welcome = (props) => {
   /**
+   * openBIDS - Navigate browser to EEG2BIDS Wizard.
+   */
+  const openBIDS = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitBIDS();
+  };
+  /**
    * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
   const openGitHub = () => {
@@ -39,10 +46,6 @@ const Welcome = (props) => {
     myAPI.visitMCIN();
   };
 
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return (
     <div style={{
       display: props.visible ? 'block' : 'none',
@@ -50,7 +53,42 @@ const Welcome = (props) => {
       <span className='title'>
         Welcome to <b>EEG2BIDS Wizard</b>
       </span>
-      <div className='info'>
+      <div className='info' style={{display: 'flex'}}>
+        <div className='info' style={{
+          justifyContent: 'center',
+          margin: '0 auto',
+        }}>
+          <p>
+            <b>EEG2BIDS Wizard</b> is a tool for de-identification of EEG data
+            and conversion to BIDS format for data sharing.
+          </p>
+          <p>This software is designed to run on EEGLAB files
+            (EEG or stereo iEEG) for one recording from one subject at a time.
+            Events and metadata such as a LORIS ProjectID and Visit Label
+            can be included.
+          </p>
+          <p>For more information about BIDS, visit <a
+            className='open-source' onClick={openBIDS}>
+              bids.neuroimaging.io
+          </a></p>
+          <p>
+            - Important - Please back up your data before beginning.
+          </p>
+        </div>
+        <div className='footer'>
+          Powered by
+          <a className='open-source' onClick={openGitHub}>
+            open source software
+          </a> and
+          <a className='open-source' onClick={openMNE}>
+            MNE-BIDS
+          </a>.<br/>
+          <a className='open-source' onClick={openIssues}>
+            Contact us
+          </a> with your feedback.<br/>
+          Copyright © 2021 <a className='mcin' onClick={openMCIN}>
+          MCIN</a>.
+        </div>
         <AuthenticationCredentials/>
       </div>
       <div className='footer'>

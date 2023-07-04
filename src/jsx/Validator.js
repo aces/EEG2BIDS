@@ -19,7 +19,7 @@ import {debug} from './socket.io/utils';
 const Validator = (props) => {
   // React Context
   const socketContext = useContext(SocketContext);
-  const {state} = useContext(AppContext);
+  const {state, config} = useContext(AppContext);
 
   // React State
   const [validator, setValidator] = useState({});
@@ -33,7 +33,8 @@ const Validator = (props) => {
     mode: 'loading',
     title: {
       loading: '⏱ Task in Progress!',
-      success: '⭐ Task Finished!',
+      uploadSuccess: '⭐ Task Finished!',
+      compressSuccess: '⭐ Task Finished!',
       error: '❌ Task Error!',
     },
     message: {
@@ -44,9 +45,13 @@ const Validator = (props) => {
           😴
         </span>
       </span>,
-      success: <span>
+      uploadSuccess: <span>
         <span className='bids-success'>
           Success Uploading files! <a className='checkmark'> &#x2714;</a>
+        </span></span>,
+      compressSuccess: <span>
+        <span className='bids-success'>
+          Success Compressing files! <a className='checkmark'> &#x2714;</a>
         </span></span>,
       error: '',
     },
@@ -116,7 +121,7 @@ const Validator = (props) => {
         bidsDirectory: bidsDirectory,
         metaData: metaData,
         candID: state.participantCandID,
-        pscid: state.participantPSCID,
+        pscid: state.participantID,
         visit: state.session,
         mffFiles: state.mffFiles,
         filePrefix: state.filePrefix,
@@ -127,7 +132,10 @@ const Validator = (props) => {
       setModalVisible(true);
       setPackaging(true);
 
-      socketContext.emit('tarfile_bids', data);
+      state.useLoris ?
+        socketContext.emit('upload_tarfile_bids', data) :
+        socketContext.emit('tarfile_bids', data);
+
       monitorProgress();
     }
   };
@@ -166,7 +174,7 @@ const Validator = (props) => {
   useEffect(() => {
     setValidator({});
 
-    if (validationMode == 'lastRun') {
+    if (validationMode == 'lastRun' && config.autoStartPackagingStep) {
       packageBIDS();
     }
   }, [validationMode, bidsDirectory]);
@@ -224,9 +232,13 @@ const Validator = (props) => {
             message: prevMessage,
           };
         }
-        return {...prevState, ['mode']: 'success'};
+        return {...prevState, ['mode']: 'uploadSuccess'};
       });
       setPackaging(false);
+    } else if (message['type'] === 'compress') {
+      setModalText((prevState) => {
+        return {...prevState, ['mode']: 'compressSuccess'};
+      });
     }
   };
 
@@ -237,7 +249,7 @@ const Validator = (props) => {
       </span>
       <div className='info'>
         <div className='small-pad'>
-          <RadioInput id='validationMode'
+          <RadioInput
             name='validationMode'
             label='BIDS files to validate:'
             onUserInput={(_, value) => setValidationMode(value)}
@@ -245,10 +257,10 @@ const Validator = (props) => {
               state.outputTime ?
               {
                 folder: 'Select a folder',
-                lastRun: `Current recording:
-                  ${state.participantID || state.participantPSCID}
+                lastRun: `Current session:
+                  ${state.participantID}
                   ${state.session}
-                  ${state.taskName}`,
+                `,
               } :
               {
                 folder: 'Select a folder',
@@ -259,7 +271,7 @@ const Validator = (props) => {
         </div>
         {validationMode == 'folder' &&
           <div className='small-pad'>
-            <DirectoryInput id='bidsDirectory'
+            <DirectoryInput
               name='bidsDirectory'
               required={validationMode == 'folder'}
               label='BIDS folder'

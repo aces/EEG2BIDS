@@ -1,49 +1,60 @@
 import Papa from 'papaparse';
+import ReactTooltip from 'react-tooltip';
 import {useContext, useEffect} from 'react';
 import {AppContext} from '../../context';
 import {SocketContext} from '../socket.io';
 import {
+  SelectInput,
+  TextInput,
   FileInput,
 } from '../elements/inputs';
+
+const recordingMetadata = [
+  {
+    name: 'reference',
+    label: 'Reference',
+    default: 'n/a',
+  },
+  {
+    name: 'powerLineFreq',
+    label: 'PowerLine Frequency',
+    default: 'n/a',
+    options: {
+      '50': '50',
+      '60': '60',
+    },
+  },
+];
 
 /**
  * Recording Metadata - the Recording Metadata component.
  * @param {object} props
  * @return {JSX.Element}
  */
-const RecordingMetadata = (props) => {
-  const {state, setState} = useContext(AppContext);
+const RecordingMetadata = () => {
+  const {state, setState, config} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
+
+  /**
+   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   */
+  const openTemplates = () => {
+    const myAPI = window['myAPI'];
+    myAPI.visitTemplates();
+  };
 
   useEffect(() => {
     // Init state
     setState({bidsMetadataFile: []});
     setState({bidsMetadata: null});
-    // setState({invalidBidsMetadataFile: []});
+    setState({invalidBidsMetadataFile: []});
     setState({eventFiles: []});
-    // setState({invalidEventFiles: []});
+    setState({invalidEventFiles: []});
+
+    recordingMetadata
+        .filter((field) => config?.recordingMetadata?.[field.name])
+        .forEach((field) => setState({[field.name]: ''}));
   }, []);
-
-  const capitalize = (str) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
-
-  const isFileNameValid = (edfFiles, file, suffix, extension) => {
-    edfFiles.find(
-        (edfFile) => {
-          const edfFileName = edfFile.toLowerCase()
-              .replace(/(_i?eeg)?\.edf/i, '');
-
-          const edfFileNameAlt = edfFile.toLowerCase()
-              .replace('.edf', '');
-
-          const fileName = file.toLowerCase()
-              .replace('/(_' + suffix + ')?.' + extension + '/i', '');
-
-          return edfFileName === fileName || edfFileNameAlt === fileName;
-        },
-    );
-  };
 
   const validateJSON = (jsons) => {
     const promisesArray = [];
@@ -99,8 +110,7 @@ const RecordingMetadata = (props) => {
     validateJSON(state.bidsMetadataFile)
         .then((result) => {
           setState(
-              'invalidBidsMetadataFile',
-              result.filter((el) => el != null),
+              {invalidBidsMetadataFile: result.filter((el) => el != null)},
           );
         });
   }, [state.bidsMetadataFile]);
@@ -111,63 +121,6 @@ const RecordingMetadata = (props) => {
         .then((result) => {
           setState({invalidEventFiles: result.filter((el) => el != null)});
         });
-  }, [state.eventFiles]);
-
-  const validateMetadataFiles = (
-      metadataFiles,
-      invalidFiles,
-      suffix,
-      extension,
-  ) => {
-    if (!metadataFiles || Object.keys(metadataFiles)?.length < 1) {
-      return ({
-        status: 'warning',
-        msg: `No ${suffix}.${extension} selected`,
-      });
-    }
-
-    // check if any file is invalid (syntax/format)
-    if (invalidFiles?.length > 0) {
-      return ({
-        status: 'error',
-        msg: `${capitalize(suffix)} file(s) ${invalidFiles.join(', ')}
-        are not valid ${extension.toUpperCase()} file(s).`,
-      });
-    }
-
-    const edfFileNames = state.edfData.files?.map(
-        (edfFile) => edfFile['name'],
-    );
-
-    // Check that the files are appropriatly named
-    const invalidNames = metadataFiles
-        .filter((file) => {
-          !isFileNameValid(edfFileNames, file['name'], suffix, extension);
-        })
-        .map((file) => file['name']);
-
-    if (invalidNames?.length > 0) {
-      return ({
-        status: 'error',
-        msg: `${capitalize(suffix)} file(s) ${invalidNames.join(', ')} 
-        are not matching any edf file names.`,
-      });
-    }
-
-    return ({
-      status: 'pass',
-      msg: `${capitalize(suffix)} ${extension.toUpperCase()} file(s): ` +
-      metadataFiles.map((file) => file['name']).join(', '),
-    });
-  };
-
-  useEffect(() => {
-    validateMetadataFiles(
-        state.eventFiles,
-        state.invalidEventFiles,
-        'events',
-        'tsv',
-    );
   }, [state.eventFiles]);
 
   /**
@@ -213,8 +166,38 @@ const RecordingMetadata = (props) => {
       </span>
       <div className='container'>
         <div className='info half'>
+          {recordingMetadata
+              .filter((field) => config?.recordingMetadata?.[field.name])
+              .map((field) =>
+                <div
+                  className='small-pad'
+                  key={field.name}
+                >
+                  {field.options ?
+                    <SelectInput
+                      name={field.name}
+                      label={field.label}
+                      required={true}
+                      value={state[field.name]}
+                      emptyOption='n/a'
+                      options={field.options}
+                      onUserInput={onUserInput}
+                    /> :
+                    <TextInput
+                      name={field.name}
+                      label={field.label}
+                      placeholder={field.default}
+                      required={true}
+                      value={state[field.name] || ''}
+                      onUserInput={onUserInput}
+                    />
+                  }
+                </div>,
+              )}
+        </div>
+        <div className='info half'>
           <div className='small-pad'>
-            <FileInput id='bidsMetadataFile'
+            <FileInput
               name='bidsMetadataFile'
               accept='.json'
               placeholder={
@@ -224,15 +207,20 @@ const RecordingMetadata = (props) => {
               }
               label='Recording Parameters (json)'
               onUserInput={onUserInput}
-              help='Used to contribute non-required fields to *.json BIDS
-              parameter file. See BIDS spec and template available with
-              this release. Blank fields ignored.'
+              help='Used to contribute fields to *.json BIDS
+              parameter file. Blank fields ignored.'
             />
+            <div>
+              <a
+                className='open-source'
+                onClick={openTemplates}
+              >
+                Download template
+              </a>
+            </div>
           </div>
-        </div>
-        <div className='info half'>
           <div className='small-pad'>
-            <FileInput id='eventFiles'
+            <FileInput
               name='eventFiles'
               multiple={true}
               accept='.tsv'
@@ -252,8 +240,10 @@ const RecordingMetadata = (props) => {
           </div>
         </div>
       </div>
+      <ReactTooltip />
     </>
   );
 };
 
+export {recordingMetadata};
 export default RecordingMetadata;

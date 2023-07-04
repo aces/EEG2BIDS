@@ -1,0 +1,974 @@
+Warning: Impedances check failed, maybe impedances were not saved
+> In hbcdImportFlagchecks_11_08 (line 154)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsignal (line 43)
+  In mff_import (line 95)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Signal Block Version Number: 1
+Signal Block Data Size: 823536
+Signal Block Header size. 1076
+Number of Signals: 129
+Signal Block Samples: 1596
+Sample Rate: 1000
+Signal Depth: 32
+---------------------------------
+Optional Header type: 1
+Optional Header number of blocks total: 48
+Optional Header number of Samples total: 187397
+Optional Header number of Signals: 129
+------------------------------------------
+Cannot find option file 
+eeg_checkset note: upper time limit (xmax) adjusted so (xmax-xmin)*srate+1 = number of frames
+Make sure you to use the MFF ressource path name not the relative path (crash often related to that issue) ******
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 127)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 128)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Calibrating data...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfo (line 30)
+  In mff_import (line 149)
+  In hbcdImportFlagchecks_11_08 (line 160)
+MFF Version: 3
+File's Recording Time: 2023-06-28T02:24:11.906626-04:00
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsensorlayout (line 31)
+  In mff_import (line 150)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsubject (line 31)
+  In mff_import (line 151)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcoordinates (line 32)
+  In mff_import (line 166)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Coordinate acquisition Time: 2006-03-01T09:33:00.000000-08:00
+Coordinate acquisition Method: An Average of Many Data Sets
+Coordinate Layout Name: HydroCel GSN 128 1.0
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importpnsset (line 31)
+  In mff_import (line 171)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Cannot find option file 
+Note for expert users: Nose direction is now set from '+Y' to default +X in EEG.chanlocs
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importevents (line 39)
+  In mff_import (line 212)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing 1 events from file Events_8 DINs.xml...
+Importing 9 events from file Events_ECI TCP-IP 55513.xml...
+Importing 2 events from file Events_User Markup.xml...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importepochs (line 30)
+  In mff_import (line 219)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing epoch.xml ressource: 2 data segments
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcategories (line 31)
+  In mff_import (line 222)
+  In hbcdImportFlagchecks_11_08 (line 160)
+IMPORTANT Warning: cannot import trials of different length
+  importing as segmented data (trial/category info will be lost)
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'description' made uniform
+eeg_checkset note: event field format 'begintime' made uniform
+eeg_checkset note: event field format 'classid' made uniform
+eeg_checkset note: event field format 'code' made uniform
+eeg_checkset note: event field format 'label' made uniform
+eeg_checkset note: event field format 'sourcedevice' made uniform
+eeg_checkset note: event field format 'name' made uniform
+eeg_checkset note: event field format 'tracktype' made uniform
+eeg_checkset note: event field format 'mffkey_gidx' made uniform
+eeg_checkset note: event field format 'mffkey_cidx' made uniform
+eeg_checkset note: event field format 'mffkey_age_' made uniform
+eeg_checkset note: event field format 'mffkey_exp_' made uniform
+eeg_checkset note: event field format 'mffkey_hand' made uniform
+eeg_checkset note: event field format 'mffkey_sex_' made uniform
+eeg_checkset note: event field format 'mffkey_subj' made uniform
+eeg_checkset note: event field format 'mffkey_cel' made uniform
+eeg_checkset note: event field format 'mffkey_obs' made uniform
+eeg_checkset note: event field format 'mffkey_spc' made uniform
+eeg_checkset note: event field format 'mffkey_pos' made uniform
+eeg_checkset note: event field format 'mffkey_argu' made uniform
+eeg_checkset note: event field format 'mffkey_rsp' made uniform
+eeg_checkset note: event field format 'mffkey_eval' made uniform
+eeg_checkset note: event field format 'mffkey_rtim' made uniform
+eeg_checkset note: event field format 'mffkey_trl' made uniform
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field 'mffkey_eval' not deleted from urevent structure
+pop_editeventfield() warning: field 'code' not deleted from urevent structure
+pop_editeventfield() warning: field 'sourcedevice' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeys' not deleted from urevent structure
+pop_editeventfield() warning: field 'description' not deleted from urevent structure
+pop_editeventfield() warning: field 'begintime' not deleted from urevent structure
+pop_editeventfield() warning: field 'label' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeysbackup' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_exp_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_age_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_sex_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_subj' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_spc' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_obs' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rtim' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rsp' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_argu' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_pos' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_hand' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_gidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_cidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'classid' not deleted from urevent structure
+pop_editeventfield() warning: field 'relativebegintime' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: name not found for rename
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_race'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_img'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_background'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'Duration'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'response_time'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'sample'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'onset'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'value'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Task'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'MMN_soundfile'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Block'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+Event resorted by increasing latencies.
+Cannot find option file 
+pop_editeventfield() warning: field 'duration' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'value' made uniform
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+Warning: Impedances check failed, maybe impedances were not saved
+> In hbcdImportFlagchecks_11_08 (line 154)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsignal (line 43)
+  In mff_import (line 95)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Signal Block Version Number: 1
+Signal Block Data Size: 888552
+Signal Block Header size. 1076
+Number of Signals: 129
+Signal Block Samples: 1722
+Sample Rate: 1000
+Signal Depth: 32
+---------------------------------
+Optional Header type: 1
+Optional Header number of blocks total: 175
+Optional Header number of Samples total: 694665
+Optional Header number of Signals: 129
+------------------------------------------
+Cannot find option file 
+eeg_checkset note: upper time limit (xmax) adjusted so (xmax-xmin)*srate+1 = number of frames
+Make sure you to use the MFF ressource path name not the relative path (crash often related to that issue) ******
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 127)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 128)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Calibrating data...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfo (line 30)
+  In mff_import (line 149)
+  In hbcdImportFlagchecks_11_08 (line 160)
+MFF Version: 3
+File's Recording Time: 2023-06-28T02:28:16.102626-04:00
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsensorlayout (line 31)
+  In mff_import (line 150)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsubject (line 31)
+  In mff_import (line 151)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcoordinates (line 32)
+  In mff_import (line 166)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Coordinate acquisition Time: 2006-03-01T09:33:00.000000-08:00
+Coordinate acquisition Method: An Average of Many Data Sets
+Coordinate Layout Name: HydroCel GSN 128 1.0
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importpnsset (line 31)
+  In mff_import (line 171)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Cannot find option file 
+Note for expert users: Nose direction is now set from '+Y' to default +X in EEG.chanlocs
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importevents (line 39)
+  In mff_import (line 212)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing 667 events from file Events_8 DINs.xml...
+Importing 2007 events from file Events_ECI TCP-IP 55513.xml...
+Importing 2 events from file Events_User Markup.xml...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importepochs (line 30)
+  In mff_import (line 219)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing epoch.xml ressource: 2 data segments
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcategories (line 31)
+  In mff_import (line 222)
+  In hbcdImportFlagchecks_11_08 (line 160)
+IMPORTANT Warning: cannot import trials of different length
+  importing as segmented data (trial/category info will be lost)
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'description' made uniform
+eeg_checkset note: event field format 'begintime' made uniform
+eeg_checkset note: event field format 'classid' made uniform
+eeg_checkset note: event field format 'code' made uniform
+eeg_checkset note: event field format 'label' made uniform
+eeg_checkset note: event field format 'sourcedevice' made uniform
+eeg_checkset note: event field format 'name' made uniform
+eeg_checkset note: event field format 'tracktype' made uniform
+eeg_checkset note: event field format 'mffkey_gidx' made uniform
+eeg_checkset note: event field format 'mffkey_cidx' made uniform
+eeg_checkset note: event field format 'mffkey_age_' made uniform
+eeg_checkset note: event field format 'mffkey_exp_' made uniform
+eeg_checkset note: event field format 'mffkey_hand' made uniform
+eeg_checkset note: event field format 'mffkey_sex_' made uniform
+eeg_checkset note: event field format 'mffkey_subj' made uniform
+eeg_checkset note: event field format 'mffkey_cel' made uniform
+eeg_checkset note: event field format 'mffkey_obs' made uniform
+eeg_checkset note: event field format 'mffkey_spc' made uniform
+eeg_checkset note: event field format 'mffkey_pos' made uniform
+eeg_checkset note: event field format 'mffkey_argu' made uniform
+eeg_checkset note: event field format 'mffkey_rsp' made uniform
+eeg_checkset note: event field format 'mffkey_eval' made uniform
+eeg_checkset note: event field format 'mffkey_rtim' made uniform
+eeg_checkset note: event field format 'mffkey_trl' made uniform
+eeg_checkset note: event field format 'mffkey_blk1' made uniform
+Event resorted by increasing latencies.
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field 'mffkey_eval' not deleted from urevent structure
+pop_editeventfield() warning: field 'code' not deleted from urevent structure
+pop_editeventfield() warning: field 'sourcedevice' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeys' not deleted from urevent structure
+pop_editeventfield() warning: field 'description' not deleted from urevent structure
+pop_editeventfield() warning: field 'begintime' not deleted from urevent structure
+pop_editeventfield() warning: field 'label' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeysbackup' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_exp_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_age_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_sex_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_subj' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_spc' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_obs' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rtim' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rsp' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_argu' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_pos' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_hand' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_gidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_cidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'classid' not deleted from urevent structure
+pop_editeventfield() warning: field 'relativebegintime' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_race'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_img'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_background'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'Duration'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'response_time'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'sample'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'onset'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'value'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Task'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'MMN_soundfile'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+Event resorted by increasing latencies.
+Cannot find option file 
+pop_editeventfield() warning: field 'duration' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'value' made uniform
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+Warning: Impedances check failed, maybe impedances were not saved
+> In hbcdImportFlagchecks_11_08 (line 154)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsignal (line 43)
+  In mff_import (line 95)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Signal Block Version Number: 1
+Signal Block Data Size: 913320
+Signal Block Header size. 1076
+Number of Signals: 129
+Signal Block Samples: 1770
+Sample Rate: 1000
+Signal Depth: 32
+---------------------------------
+Optional Header type: 1
+Optional Header number of blocks total: 78
+Optional Header number of Samples total: 309687
+Optional Header number of Signals: 129
+------------------------------------------
+Cannot find option file 
+eeg_checkset note: upper time limit (xmax) adjusted so (xmax-xmin)*srate+1 = number of frames
+Make sure you to use the MFF ressource path name not the relative path (crash often related to that issue) ******
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 127)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 128)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Calibrating data...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfo (line 30)
+  In mff_import (line 149)
+  In hbcdImportFlagchecks_11_08 (line 160)
+MFF Version: 3
+File's Recording Time: 2023-06-28T02:41:09.838626-04:00
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsensorlayout (line 31)
+  In mff_import (line 150)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsubject (line 31)
+  In mff_import (line 151)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcoordinates (line 32)
+  In mff_import (line 166)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Coordinate acquisition Time: 2006-03-01T09:33:00.000000-08:00
+Coordinate acquisition Method: An Average of Many Data Sets
+Coordinate Layout Name: HydroCel GSN 128 1.0
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importpnsset (line 31)
+  In mff_import (line 171)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Cannot find option file 
+Note for expert users: Nose direction is now set from '+Y' to default +X in EEG.chanlocs
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importevents (line 39)
+  In mff_import (line 212)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing 200 events from file Events_8 DINs.xml...
+Importing 1007 events from file Events_ECI TCP-IP 55513.xml...
+Importing 2 events from file Events_User Markup.xml...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importepochs (line 30)
+  In mff_import (line 219)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing epoch.xml ressource: 2 data segments
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcategories (line 31)
+  In mff_import (line 222)
+  In hbcdImportFlagchecks_11_08 (line 160)
+IMPORTANT Warning: cannot import trials of different length
+  importing as segmented data (trial/category info will be lost)
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'description' made uniform
+eeg_checkset note: event field format 'begintime' made uniform
+eeg_checkset note: event field format 'classid' made uniform
+eeg_checkset note: event field format 'code' made uniform
+eeg_checkset note: event field format 'label' made uniform
+eeg_checkset note: event field format 'sourcedevice' made uniform
+eeg_checkset note: event field format 'name' made uniform
+eeg_checkset note: event field format 'tracktype' made uniform
+eeg_checkset note: event field format 'mffkey_gidx' made uniform
+eeg_checkset note: event field format 'mffkey_cidx' made uniform
+eeg_checkset note: event field format 'mffkey_age_' made uniform
+eeg_checkset note: event field format 'mffkey_exp_' made uniform
+eeg_checkset note: event field format 'mffkey_hand' made uniform
+eeg_checkset note: event field format 'mffkey_sex_' made uniform
+eeg_checkset note: event field format 'mffkey_subj' made uniform
+eeg_checkset note: event field format 'mffkey_cel' made uniform
+eeg_checkset note: event field format 'mffkey_obs' made uniform
+eeg_checkset note: event field format 'mffkey_spc' made uniform
+eeg_checkset note: event field format 'mffkey_pos' made uniform
+eeg_checkset note: event field format 'mffkey_argu' made uniform
+eeg_checkset note: event field format 'mffkey_rsp' made uniform
+eeg_checkset note: event field format 'mffkey_eval' made uniform
+eeg_checkset note: event field format 'mffkey_rtim' made uniform
+eeg_checkset note: event field format 'mffkey_trl' made uniform
+eeg_checkset note: event field format 'mffkey_imag' made uniform
+eeg_checkset note: event field format 'mffkey_bgim' made uniform
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field 'mffkey_eval' not deleted from urevent structure
+pop_editeventfield() warning: field 'code' not deleted from urevent structure
+pop_editeventfield() warning: field 'sourcedevice' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeys' not deleted from urevent structure
+pop_editeventfield() warning: field 'description' not deleted from urevent structure
+pop_editeventfield() warning: field 'begintime' not deleted from urevent structure
+pop_editeventfield() warning: field 'label' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeysbackup' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_exp_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_age_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_sex_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_subj' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_spc' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_obs' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rtim' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rsp' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_argu' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_pos' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_hand' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_gidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_cidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'classid' not deleted from urevent structure
+pop_editeventfield() warning: field 'relativebegintime' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: name not found for rename
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_race'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'Duration'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'response_time'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'sample'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'onset'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'value'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Task'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'MMN_soundfile'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Block'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+Event resorted by increasing latencies.
+Cannot find option file 
+pop_editeventfield() warning: field 'duration' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'value' made uniform
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+Warning: Impedances check failed, maybe impedances were not saved
+> In hbcdImportFlagchecks_11_08 (line 154)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsignal (line 43)
+  In mff_import (line 95)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Signal Block Version Number: 1
+Signal Block Data Size: 868428
+Signal Block Header size. 1076
+Number of Signals: 129
+Signal Block Samples: 1683
+Sample Rate: 1000
+Signal Depth: 32
+---------------------------------
+Optional Header type: 1
+Optional Header number of blocks total: 18
+Optional Header number of Samples total: 68225
+Optional Header number of Signals: 129
+------------------------------------------
+Cannot find option file 
+eeg_checkset note: upper time limit (xmax) adjusted so (xmax-xmin)*srate+1 = number of frames
+Make sure you to use the MFF ressource path name not the relative path (crash often related to that issue) ******
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 127)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfon (line 31)
+  In mff_import (line 128)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Calibrating data...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importinfo (line 30)
+  In mff_import (line 149)
+  In hbcdImportFlagchecks_11_08 (line 160)
+MFF Version: 3
+File's Recording Time: 2023-06-28T02:47:22.669626-04:00
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsensorlayout (line 31)
+  In mff_import (line 150)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importsubject (line 31)
+  In mff_import (line 151)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcoordinates (line 32)
+  In mff_import (line 166)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Coordinate acquisition Time: 2006-03-01T09:33:00.000000-08:00
+Coordinate acquisition Method: An Average of Many Data Sets
+Coordinate Layout Name: HydroCel GSN 128 1.0
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importpnsset (line 31)
+  In mff_import (line 171)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Cannot find option file 
+Note for expert users: Nose direction is now set from '+Y' to default +X in EEG.chanlocs
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importevents (line 39)
+  In mff_import (line 212)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing 120 events from file Events_8 DINs.xml...
+Importing 243 events from file Events_ECI TCP-IP 55513.xml...
+Importing 2 events from file Events_User Markup.xml...
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importepochs (line 30)
+  In mff_import (line 219)
+  In hbcdImportFlagchecks_11_08 (line 160)
+Importing epoch.xml ressource: 2 data segments
+Warning: "C:\Users\Lae\AppData\Local\Temp\Lae\mcrCache9.3\HBCDim0\Desktop\eeglab2021.0\plugins\MFFMatlabIO4.0\MFF-1.2.2-jar-with-dependencies.jar" is already specified on static java path.
+> In javaclasspath
+  In javaclasspath
+  In javaclasspath
+  In javaaddpath (line 71)
+  In mff_path (line 25)
+  In mff_importcategories (line 31)
+  In mff_import (line 222)
+  In hbcdImportFlagchecks_11_08 (line 160)
+IMPORTANT Warning: cannot import trials of different length
+  importing as segmented data (trial/category info will be lost)
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'description' made uniform
+eeg_checkset note: event field format 'begintime' made uniform
+eeg_checkset note: event field format 'classid' made uniform
+eeg_checkset note: event field format 'code' made uniform
+eeg_checkset note: event field format 'label' made uniform
+eeg_checkset note: event field format 'sourcedevice' made uniform
+eeg_checkset note: event field format 'name' made uniform
+eeg_checkset note: event field format 'tracktype' made uniform
+eeg_checkset note: event field format 'mffkey_gidx' made uniform
+eeg_checkset note: event field format 'mffkey_cidx' made uniform
+eeg_checkset note: event field format 'mffkey_age_' made uniform
+eeg_checkset note: event field format 'mffkey_exp_' made uniform
+eeg_checkset note: event field format 'mffkey_hand' made uniform
+eeg_checkset note: event field format 'mffkey_sex_' made uniform
+eeg_checkset note: event field format 'mffkey_subj' made uniform
+eeg_checkset note: event field format 'mffkey_cel' made uniform
+eeg_checkset note: event field format 'mffkey_obs' made uniform
+eeg_checkset note: event field format 'mffkey_spc' made uniform
+eeg_checkset note: event field format 'mffkey_pos' made uniform
+eeg_checkset note: event field format 'mffkey_argu' made uniform
+eeg_checkset note: event field format 'mffkey_rsp' made uniform
+eeg_checkset note: event field format 'mffkey_eval' made uniform
+eeg_checkset note: event field format 'mffkey_rtim' made uniform
+eeg_checkset note: event field format 'mffkey_trl' made uniform
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field 'mffkey_eval' not deleted from urevent structure
+pop_editeventfield() warning: field 'code' not deleted from urevent structure
+pop_editeventfield() warning: field 'sourcedevice' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeys' not deleted from urevent structure
+pop_editeventfield() warning: field 'description' not deleted from urevent structure
+pop_editeventfield() warning: field 'begintime' not deleted from urevent structure
+pop_editeventfield() warning: field 'label' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkeysbackup' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_exp_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_age_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_sex_' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_subj' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_spc' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_obs' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rtim' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_rsp' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_argu' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_pos' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_hand' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_gidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'mffkey_cidx' not deleted from urevent structure
+pop_editeventfield() warning: field 'classid' not deleted from urevent structure
+pop_editeventfield() warning: field 'relativebegintime' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield() warning: name not found for rename
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_race'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_img'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'face_background'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+pop_editeventfield(): creating new field 'Duration'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'response_time'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'sample'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'onset'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'value'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Task'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'MMN_soundfile'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+pop_editeventfield(): creating new field 'Block'
+pop-editeventfield(): updating urevent structure
+pop_editeventfield(): problem while updating urevent structure
+Cannot find option file 
+Cannot find option file 
+Event resorted by increasing latencies.
+Cannot find option file 
+pop_editeventfield() warning: field 'duration' not deleted from urevent structure
+Cannot find option file 
+Cannot find option file 
+eeg_checkset note: event field format 'value' made uniform
+pop_editeventfield() warning: field name not renamed in urevent structure
+Cannot find option file 
+Cannot find option file 

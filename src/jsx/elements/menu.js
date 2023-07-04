@@ -45,13 +45,13 @@ const Menu = (props) => {
 
   return props.visible ? (
     <div className='root'>
-      <AuthenticationMessage />
+      {state.useLoris && <AuthenticationMessage />}
       <div className='menu'>
         {props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
             title={tab.title}
-            disabled={!state.isAuthenticated && index > 0}
+            disabled={!state.isAuthenticated && state.useLoris && index > 0}
             active={state.appMode === tab.id}
             onClick={() => setState({appMode: tab.id})}
           />

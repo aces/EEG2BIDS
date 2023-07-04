@@ -13,15 +13,31 @@ import Validator from './Validator';
 // Socket.io
 import {SocketContext} from './socket.io';
 
+const BIDSFileFormats = {
+  set: 'EEGLAB (.set)',
+  edf: 'European Data Format (.edf)',
+};
+
 /**
  * Main - the main window.
  * @return {JSX.Element}
  */
 const Main = () => {
   // React State
-  const {state, setState} = useContext(AppContext);
+  const {state, setState, config} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
   const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    const filteredFormats = {};
+    config.BIDSFileFormats
+        .filter((format) => BIDSFileFormats[format])
+        .map((format) =>
+          filteredFormats[format] = BIDSFileFormats[format],
+        );
+    setState({acceptedFormats: filteredFormats});
+    setState({inputFileFormat: Object.keys(filteredFormats)?.[0] || ''});
+  }, []);
 
   useEffect(() => {
     if (socketContext) {
@@ -94,4 +110,5 @@ const Main = () => {
   );
 };
 
+export {BIDSFileFormats};
 export default Main;

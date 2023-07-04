@@ -1,10 +1,9 @@
 import React, {useState, useEffect, useContext} from 'react';
 import PropTypes from 'prop-types';
 import styles from '../../css/Authentication.module.css';
-
 import {AppContext} from '../../context';
-// Socket.io
 import {SocketContext} from '../socket.io';
+import Switch from 'react-switch';
 
 /**
  * PasswordInput - the input type='text' component.
@@ -18,7 +17,7 @@ const PasswordInput = (props) => {
    * @param {object} event - input event
    */
   const handleChange = (event) => {
-    props.onUserInput(props.id, event.target.value);
+    props.onUserInput(props.name, event.target.value);
   };
   /**
    * handleVisibility - handles visibility of password.
@@ -39,33 +38,39 @@ const PasswordInput = (props) => {
     }}>
       <input
         type={hidden ? 'password' : 'text'}
-        id={props.id}
+        id={props.name}
         name={props.name}
         value={props.value}
         onChange={handleChange}
         className={styles.input}
         placeholder={props.placeholder}
+        disabled={props.disabled}
       />
       {props.label &&
         <label className={styles.label}
-          htmlFor={props.id}>
+          htmlFor={props.name}>
           {props.label}
         </label>
       }
       <span
-        className={styles['eye-' + (hidden ? 'close' : 'open')]}
+        className={
+          `${styles.eye} ${styles['eye-' + (hidden ? 'close' : 'open')]}`
+        }
         onClick={handleVisibility}
       />
     </div>
   );
 };
 PasswordInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
   value: PropTypes.string,
   onUserInput: PropTypes.func,
   placeholder: PropTypes.string,
+  disabled: PropTypes.bool,
+};
+PasswordInput.defaultProps = {
+  disabled: false,
 };
 
 /**
@@ -79,7 +84,7 @@ const AuthInput = (props) => {
    * @param {object} event - input event
    */
   const handleChange = (event) => {
-    props.onUserInput(props.id, event.target.value);
+    props.onUserInput(props.name, event.target.value);
   };
   /**
    * Renders the React component.
@@ -94,16 +99,17 @@ const AuthInput = (props) => {
     }}>
       <input
         type='text'
-        id={props.id}
+        id={props.name}
         name={props.name}
         value={props.value}
         onChange={handleChange}
         className={styles.input}
         placeholder={' '}
+        disabled={props.disabled}
       />
       {props.label &&
         <label className={styles.label}
-          htmlFor={props.id}>
+          htmlFor={props.name}>
           {props.label}
         </label>
       }
@@ -111,7 +117,6 @@ const AuthInput = (props) => {
   );
 };
 AuthInput.propTypes = {
-  id: PropTypes.string,
   name: PropTypes.string,
   label: PropTypes.string,
   value: PropTypes.oneOfType([
@@ -123,6 +128,10 @@ AuthInput.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]),
+  disabled: PropTypes.bool,
+};
+AuthInput.defaultProps = {
+  disabled: false,
 };
 
 export const AuthenticationMessage = (props) => {
@@ -166,7 +175,7 @@ export const AuthenticationMessage = (props) => {
 export const AuthenticationCredentials = (props) => {
   // React Context
   const socketContext = useContext(SocketContext);
-  const {setState} = useContext(AppContext);
+  const {state, setState, config} = useContext(AppContext);
 
   // React state
   const [lorisURL, setLorisURL] = useState('');
@@ -200,6 +209,7 @@ export const AuthenticationCredentials = (props) => {
 
   useEffect(() => {
     setState({isAuthenticated: false});
+    setState({useLoris: config.useLoris});
   }, []);
 
   useEffect(async () => {
@@ -265,36 +275,66 @@ export const AuthenticationCredentials = (props) => {
 
   return (
     <div className={styles.authCredentialsContent}>
-      {error && (<div className={styles.authError}>
-        {errorMessage}
-      </div>)}
-      <AuthInput id='lorisURL'
+      {error && (
+        <div className={styles.authError}>
+          {errorMessage}
+        </div>
+      )}
+      <label style={{
+        fontSize: '16px',
+        verticalAlign: 'middle',
+        margin: '20px 0',
+        alignSelf: 'flex-end',
+      }}>
+        <Switch
+          className='react-switch'
+          onColor="#86d3ff"
+          onHandleColor="#2693e6"
+          handleDiameter={20}
+          uncheckedIcon={false}
+          checkedIcon={false}
+          boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+          activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+          height={15}
+          width={40}
+          name='anonymize'
+          onChange={(checked) => setState({useLoris: checked})}
+          checked={state.useLoris ?? true}
+        />
+        <span>Import data into LORIS</span>
+      </label>
+      <AuthInput
         name='lorisURL'
         label='LORIS URL: (Example: https://demo.loris.ca)'
         placeholder='Example: https://demo.loris.ca'
         value={lorisURL}
         onUserInput={onUserInput}
+        disabled={!state.useLoris}
       />
-      <AuthInput id='lorisUsername'
+      <AuthInput
         name='lorisUsername'
         label='Username'
         placeholder='Username'
         value={lorisUsername}
         onUserInput={onUserInput}
+        disabled={!state.useLoris}
       />
-      <PasswordInput id='lorisPassword'
+      <PasswordInput
         name='lorisPassword'
         label='Password'
         placeholder=' '
         value={lorisPassword}
         onUserInput={onUserInput}
+        disabled={!state.useLoris}
       />
       <div className={styles.authSubmitContainer}>
         <input
           type='button'
           value='Submit'
           onClick={onSubmit}
-          className={styles.authSubmitButton}/>
+          className={styles.authSubmitButton}
+          disabled={!state.useLoris}
+        />
       </div>
     </div>
   );

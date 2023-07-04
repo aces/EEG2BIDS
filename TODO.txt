@@ -1,0 +1,3 @@
+TODO
+// Clean parameters in socketContext.emit('eeg_to_bids') (Converter)
+// API next stage + create visit: config option (endpoint may not exist)

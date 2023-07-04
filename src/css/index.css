@@ -73,7 +73,7 @@ input {
 }
 .comboField {
     display: inline-block;
-    max-width: calc(100% - 260px);
+    max-width: calc(100% - 250px);
     vertical-align: top;
 }
 .alert {

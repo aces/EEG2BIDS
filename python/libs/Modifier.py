@@ -2,7 +2,6 @@ import os
 import csv
 import json
 import re
-import shutil
 from python.libs.iEEG import metadata as metadata_fields
 
 class Modifier:
@@ -117,7 +116,7 @@ class Modifier:
         for i in range(1, len(rows)):
             rows[i][1] = self.data['age']
             rows[i][2] = self.data['sex']
-            rows[i][3] = self.data['hand']
+            rows[i][3] = self.data['handedness']
             rows[i].extend([
                 self.data['site_id'],
                 self.data['sub_project_id'],
@@ -166,21 +165,10 @@ class Modifier:
 
                 # Open user supplied events.tsv and grab data.
                 with open(eegRun['eventFile'], mode='r', newline='') as tsv_file:
-                    tsv_file.readline()
                     reader = csv.reader(tsv_file, delimiter='\t')
-                    rows = list(reader)
+                    tsvheader = next(reader)
+                    eventsaddrows = list(reader)
                     tsv_file.close()
-
-                for line in rows:
-                    try:
-                        onset, duration, trial_type, value, sample = line
-                        output.append([onset, duration, trial_type, value, sample])
-                    except ValueError:
-                        try:
-                            onset, duration, trial_type = line
-                            output.append([onset, duration, trial_type, 'n/a', 'n/a'])
-                        except ValueError:
-                            print('error: ValueError')
 
                 path_event_files = ''
                 # We search for the events.tsv file.
@@ -194,37 +182,42 @@ class Modifier:
                 if path_event_files:
                     try:
                         with open(path_event_files, mode='r', newline='') as tsv_file:
-                            tsv_file.readline()
                             reader = csv.reader(tsv_file, delimiter='\t')
-                            rows = list(reader)
+                            header = next(reader)
+                            eventsrows = list(reader)
                             tsv_file.close()
 
-                        for line in rows:
-                            try:
-                                onset, duration, trial_type, value, sample = line
-                                output.append([onset, duration, trial_type, value, sample])
-                            except ValueError:
+                        if header == tsvheader:
+                            print('Overiding events.tsv file')
+                            for line in eventsrows:
                                 try:
-                                    onset, duration, trial_type = line
-                                    output.append([onset, duration, trial_type, 'n/a', 'n/a'])
+                                    output.append(line)
                                 except ValueError:
                                     print('error: ValueError')
+
+                            for line in eventsaddrows:
+                                try:
+                                    output.append(line)
+                                except ValueError:
+                                    print('error: ValueError')
+
                     except:
                         print('No events.tsv found in the BIDS folder.')
                 else:
                     path_event_files = self.get_eeg_path() + '/' + eegRun['eegBIDSBasename'] + '_events.tsv'
 
-                # output is an array of arrays
-                # sort by first element in array
-                output.sort(key=lambda x: float(x[0]))
+                if header == tsvheader:
+                    # output is an array of arrays
+                    # sort by first element in array
+                    # output.sort(key=lambda x: float(x[0]))
 
-                # overwrite BIDS events.tsv with collected data.
-                with open(path_event_files, mode='a+', newline='') as tsv_file:
-                    headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
-                    writer = csv.writer(tsv_file, delimiter='\t')
-                    writer.writerow(headers)
-                    writer.writerows(output)
-                    tsv_file.close()
+                    # overwrite BIDS events.tsv with collected data.
+                    with open(path_event_files, mode='a+', newline='') as tsv_file:
+                        headers = tsvheader
+                        writer = csv.writer(tsv_file, delimiter='\t')
+                        writer.writerow(headers)
+                        writer.writerows(output)
+                        tsv_file.close()
 
 
     def modify_eeg_json(self):
@@ -236,7 +229,6 @@ class Modifier:
             try:
                 with open(file_path, "r") as fp:
                     file_data = json.load(fp)
-                    file_data["RecordingType"] = self.data['recording_type']
 
                     if (self.data["modality"] == 'ieeg'):
                         referenceField = 'iEEGReference'

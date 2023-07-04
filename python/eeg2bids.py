@@ -102,6 +102,20 @@ def get_progress(sid):
 @sio.event
 def tarfile_bids(sid, data):
     print('tarfile_bids:', data)
+    tar_handler.set_stage('compressing')
+    tar_handler.package(data['bidsDirectory'])
+
+    resp = {
+        'type': 'compress',
+        'code': '200'
+    }
+    sio.emit('response', resp)
+
+
+@sio.event
+def upload_tarfile_bids(sid, data):
+    print('upload_tarfile_bids:', data)
+
     try:
         response = eventlet.tpool.execute(tarfile_bids_thread, data)
 
@@ -178,7 +192,7 @@ def set_loris_credentials(sid, data):
             if isinstance(resp, dict) and resp.get('error'):
                 sio.emit('loris_login_response', {'error': resp.get('error')})
                 return
-        
+
         sio.emit('loris_login_response', {
             'success': 200,
             'lorisUsername': data['lorisUsername'],
@@ -274,60 +288,57 @@ def get_edf_data(sid, data):
     # data = { files: 'EDF files (array of {path, name})' }
 
     if 'files' not in data or not data['files']:
-        msg = 'No EDF file selected.'
-        print(msg)
-        response = {'error': msg}
-        sio.emit('edf_data', response)
-        return
+        response = {'error': 'No EDF file selected.'}
+    else:
+        headers = []
+        try:
+            for file in data['files']:
+                anonymize = iEEG.Anonymize(file['path'])
+                metadata = anonymize.get_header()
+                year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
+                date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
+                                        metadata[0]['minute'], metadata[0]['second'])
 
-    headers = []
-    try:
-        for file in data['files']:
-            anonymize = iEEG.Anonymize(file['path'])
-            metadata = anonymize.get_header()
-            year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
-            date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
-                                     metadata[0]['minute'], metadata[0]['second'])
+                headers.append({
+                    'file': file,
+                    'metadata': metadata,
+                    'date': str(date)
+                })
 
-            headers.append({
-                'file': file,
-                'metadata': metadata,
-                'date': str(date)
-            })
+            multipleRecordings = False
+            for i in range(1, len(headers)):
+                if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
+                    multipleRecordings = True
+                    break
+                    
+            if multipleRecordings:
+                response = {'error': 'The files selected contain more than one recording.'}
+            else:
+                # sort the recording per date
+                headers = sorted(headers, key=lambda k: k['date'])
 
-        for i in range(1, len(headers)):
-            if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
-                msg = 'The files selected contain more than one recording.'
-                print(msg)
+                # return the first split metadata and date
                 response = {
-                    'error': msg,
+                    'files': [header['file'] for header in headers],
+                    'subjectID': headers[0]['metadata'][0]['subject_id'],
+                    'recordingID': headers[0]['metadata'][0]['recording_id'],
+                    'date': headers[0]['date'],
+                    'fileFormat': 'edf',
                 }
-                sio.emit('edf_data', response)
-                return
+               
+        except ReadError as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Cannot read file - ' + str(e)
+            }
+        except Exception as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Failed to retrieve EDF header information',
+            }
 
-        # sort the recording per date
-        headers = sorted(headers, key=lambda k: k['date'])
-
-        # return the first split metadata and date
-        response = {
-            'files': [header['file'] for header in headers],
-            'subjectID': headers[0]['metadata'][0]['subject_id'],
-            'recordingID': headers[0]['metadata'][0]['recording_id'],
-            'date': headers[0]['date']
-        }
-
-    except ReadError as e:
-        print(traceback.format_exc())
-        response = {
-            'error': 'Cannot read file - ' + str(e)
-        }
-    except Exception as e:
-        print(traceback.format_exc())
-        response = {
-            'error': 'Failed to retrieve EDF header information',
-        }
     print(response)
-    sio.emit('edf_data', response)
+    sio.emit('eeg_data', response)
 
 
 @sio.event
@@ -336,38 +347,31 @@ def get_set_data(sid, data):
     print('get_set_data:', data)
 
     if 'files' not in data or not data['files']:
-        msg = 'No SET file selected.'
-        print(msg)
-        response = {'error': msg}
-        sio.emit('set_data', response)
-        return
-
-    headers = []
-    try:
-        for file in data['files']:
-            headers.append({
-                'file': file,
-            })
-
-        # date will be anonymized to this value during bids step
-        date = datetime.datetime(2000, 1, 1, 0, 0)
-
-        # return the first split metadata and date
         response = {
-            'files': [header['file'] for header in headers],
-            'subjectID': '',
-            'recordingID': '',
-            'date': str(date)
+            'error': 'No SET file selected.'
         }
+    else:
+        try:
+            # date will be anonymized to this value during bids step
+            date = datetime.datetime(2000, 1, 1, 0, 0)
 
-    except Exception as e:
-        print(traceback.format_exc())
-        response = {
-            'error': 'Failed to retrieve SET file information',
-        }
+            # return the first split metadata and date
+            response = {
+                'files': data['files'],
+                'subjectID': '',
+                'recordingID': '',
+                'date': str(date),
+                'fileFormat': 'set',
+            }
+
+        except Exception as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Failed to retrieve SET file information',
+            }
 
     print(response)
-    sio.emit('set_data', response)
+    sio.emit('eeg_data', response)
 
 
 @sio.event
@@ -415,7 +419,7 @@ def get_bids_metadata(sid, data):
 def eeg_to_bids_thread(data):
     print('eeg_to_bids_thread:', data)
     error_messages = []
-    debug_path = data['bids_directory']
+
     if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
         error_messages.append('No eeg file(s) to convert.')
     if 'bids_directory' not in data or not data['bids_directory']:
@@ -423,10 +427,6 @@ def eeg_to_bids_thread(data):
         debug_path = os.path.expanduser('~')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
-
-    f = open(debug_path + "\debug.log", "a")
-    f.write(str(data))
-    f.close()
 
     if not error_messages:
         time = iEEG.Time()
@@ -462,10 +462,6 @@ def eeg_to_bids_thread(data):
             'error': error_messages
         }
 
-    f = open(data['bids_directory'] + "\debug.log", "a")
-    f.write('\n\n')
-    f.write(str(response))
-    f.close()
     print(response)
     return eventlet.tpool.Proxy(response)
 

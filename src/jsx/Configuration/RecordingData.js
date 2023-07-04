@@ -1,9 +1,14 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../../context';
+import {SocketContext} from '../socket.io';
+import ReactTooltip from 'react-tooltip';
+import {BIDSFileFormats} from '../Main';
+import EEGRun from '../types/EEGRun';
 
 import {
-  MultiDirectoryInput,
-  FileInput,
+  TaskRunInput,
+  RadioInput,
+  DirectoryInput,
 } from '../elements/inputs';
 
 /**
@@ -14,15 +19,38 @@ import {
 const RecordingData = () => {
   const {state, setState, config} = useContext(AppContext);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [filteredModalities, setFilteredModalities] = useState([]);
+  const socketContext = useContext(SocketContext);
+
+  const modalities = {
+    ieeg: 'Stereo iEEG',
+    eeg: 'EEG',
+  };
+
+  useEffect(() => {
+    const _filteredModalities = {};
+    config.modalities.map(
+        (modality) =>
+          _filteredModalities[modality] = modalities[modality],
+    );
+    setFilteredModalities({..._filteredModalities});
+  }, []);
+
+  const emptyTaskFiles = {
+    ...Object.fromEntries(config.tasks.map((task) =>
+      [task.key, [{path: '', exclude: false}]],
+    )),
+  };
 
   const initState = {
-    image_file: [],
-    mffDirectories: {
-      ...Object.fromEntries(config.tasks.map((task) =>
-        [task.key, [{path: '', name: '', exclude: false}]],
-      )),
-    },
+    eegData: [],
+    eegFileNames: [],
+    eegRuns: null,
+    taskFiles: emptyTaskFiles,
     tasks: config.tasks,
+    filePrefix: '',
+    modality: 'eeg',
+    bidsDirectory: null,
   };
 
   useEffect(() => {
@@ -40,149 +68,224 @@ const RecordingData = () => {
     if (undefStateKeys.length === 0) setIsLoaded(true);
   }, Object.keys(initState).map((stateKey) => state[stateKey]));
 
-  /**
-   * onUserInput - input change by user.
-   * @param {string} name - element name
-   * @param {object|string|boolean} value - element value
-   */
-  const onUserInput = (name, value) => {
-    if (typeof value === 'string') {
-      value = value.trim();
-    }
+  useEffect(() => {
+    setState({taskFiles: emptyTaskFiles});
+  }, [state.inputFileFormat]);
 
-    // Update the state of Configuration.
-    if (name in state) {
-      setState({[name]: value});
-    }
-  };
+  useEffect(() => {
+    if (socketContext) {
+      if (!Object.keys(BIDSFileFormats)
+          .includes(state.inputFileFormat)
+      ) return;
 
-  const checkPhotoError = () => {
-    if (state.image_file.length === 0) {
-      // setError(true);
-      return 'Image files are required.';
-    }
-    const filename = `${state.filePrefix}_EEG.zip`;
-    if (state.image_file[0].name !== filename) {
-      // setError(true);
-      return 'File should have naming format ' +
-              '[PSCID]_[DCCID]_[VisitLabel]_EEG.zip';
-    }
-  };
+      /* if (state.inputFileFormat === 'edf') {
+        console.info('edf file selected');
+        socketContext.emit('get_edf_data', {
+          files: state.eegFiles,
+        });
+      } */
 
-  const getFileName = (file) => file.path?.split(/(\\|\/)/g).pop();
+      if (state.inputFileFormat === 'set') {
+        console.info('set file selected');
+        socketContext.emit('get_set_data', {
+          files: Object.entries(state.taskFiles)
+              .filter((_, taskRuns) => !taskRuns?.[0]?.exclude)
+              .map(([taskName, taskRuns]) =>
+                taskRuns.map((taskRun, i) =>
+                  ({
+                    path: taskRun.path,
+                    task: taskName,
+                    run: i+1,
+                  }),
+                ),
+              )
+              .flat(),
+        });
+      }
+    }
+  }, [state.taskFiles]);
+
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('eeg_data', (data) => {
+        if (data['error']) {
+          console.error(data['error']);
+        }
+
+        if (data['date']) {
+          data['date'] = new Date(data['date']);
+        }
+
+        setState({subjectID: data?.['subjectID'] || ''});
+        setState({eegData: data});
+        setState({fileFormat: data?.['fileFormat'] || 'set'});
+      });
+    }
+  }, [socketContext]);
+
+  useEffect(() => {
+    if (!state.eegData?.files) return;
+
+    const eegFileNames = state.eegData?.files
+        ?.filter((file) => file.path)
+        .map((file) => file.path?.split(/[\\/]/).pop());
+    setState({eegFileNames: eegFileNames});
+
+    if (eegFileNames.length > 0) {
+      const eegRuns = [];
+      const eventFiles = [...state.eventFiles];
+
+      state.eegData?.files
+          .filter((file) => file.path)
+          .map((eegFile) => {
+            const eegRun = new EEGRun();
+            eegRun.eegFile = eegFile.path;
+            eegRun.task = eegFile.task;
+            eegRun.run = eegFile.run;
+
+            // Check if we do have a matching event file
+            const eventFileIndex = eventFiles.findIndex((eventFile) => {
+              const eegRegex = new RegExp(
+                  '(_i?eeg)?\\.' + state.inputFileFormat,
+                  'i',
+              );
+              const eegFilePrefix = eegFile.path
+                  ?.split(/[\\/]/).pop()
+                  .replace(eegRegex, '');
+
+              const eventRegex = new RegExp(
+                  eegFilePrefix + '(_events)?\\.tsv',
+                  'i',
+              );
+              return eventFile['name'].match(eventRegex);
+            });
+
+            if (eventFileIndex > -1) {
+              eegRun.eventFile = eventFiles[eventFileIndex]['path'];
+            }
+
+            eegRuns.push(eegRun);
+          });
+
+      setState({eegRuns: eegRuns});
+    }
+  }, [state.eegData, state.eventFiles]);
+
+  const getFileName = (file) => file.path?.split(/[\\/]/).pop();
 
   const checkFileError = (task) => {
     // Need to split file path based on `/`
-    const substring = `${state.filePrefix}_${task}`;
-    if (state.mffDirectories[task].length > 1) {
-      const nameError = Array(state.mffDirectories[task].length);
-      state.mffDirectories[task].forEach((file, idx) => {
+    const filePrefix = `${state.filePrefix}_${task}`;
+    if (state.taskFiles[task].length > 1) {
+      const nameError = Array(state.taskFiles[task].length);
+      state.taskFiles[task].forEach((file, idx) => {
         if (file.path === '') {
           // setError(true);
           nameError[idx] = 'Please provide file or remove run.';
-        } else if (getFileName(file) !== `${substring}_run-${idx + 1}.mff`) {
-          // setError(true);
-          nameError[idx] = 'File should have naming format ' +
-            `[PSCID]_[DCCID]_[VisitLabel]_[taskName]_[run-${idx + 1}].mff`;
+        } else {
+          const $filename =
+            `${filePrefix}_run-${idx + 1}.${state.inputFileFormat}`;
+          if (getFileName(file) !== $filename) {
+            // setError(true);
+            nameError[idx] = 'File should have naming format ' + $filename;
+          }
         }
       });
       return nameError;
-    } else if (state.mffDirectories[task][0].exclude) {
-      if (state.mffDirectories[task][0].reason === '') {
+    } else if (state.taskFiles[task][0].exclude) {
+      if (state.taskFiles[task][0].reason === '') {
         // setError(true);
         return ['Exclusion reason is required.'];
       }
-    } else if (state.mffDirectories[task][0].path === '') {
+    } else if (state.taskFiles[task][0].path === '') {
       // setError(true);
       return ['Please provide file or reason for exclusion.'];
     } else if (
-      getFileName(state.mffDirectories[task][0]) !== `${substring}.mff`
+      getFileName(state.taskFiles[task][0]) !==
+      `${filePrefix}.${state.inputFileFormat}`
     ) {
       // setError(true);
-      return ['File should have naming format ' +
-              '[PSCID]_[DCCID]_[VisitLabel]_[taskName].mff'];
+      return [
+        `File should have naming format ${filePrefix}.${state.inputFileFormat}`,
+      ];
     }
   };
 
   /**
-   * Remove an MFF directory entry from the form
+   * Remove an task entry from the form
    *
    * @param {String} task - the task to update
    * @param {Number} index - index of the directory to delete
    *
    * @return {function}
    */
-  const removeMFFDirectory = (task, index) => {
+  const removeTask = (task, index) => {
     return () => {
-      setState({mffDirectories: {
-        ...state.mffDirectories,
+      setState({taskFiles: {
+        ...state.taskFiles,
         [task]: [
-          ...state.mffDirectories[task].slice(0, index),
-          ...state.mffDirectories[task].slice(index+1),
+          ...state.taskFiles[task].slice(0, index),
+          ...state.taskFiles[task].slice(index+1),
         ],
       }});
     };
   };
 
   /**
-   * Add an MFF directory entry to the form
+   * Add a task entry to the form
+   *
    * @param {Sting} task the task to add run to
    */
-  const addMFFDirectory = (task) => {
-    setState({mffDirectories: {
-      ...state.mffDirectories,
+  const addTask = (task) => {
+    setState({taskFiles: {
+      ...state.taskFiles,
       [task]: [
-        ...state.mffDirectories[task],
-        {
-          path: '',
-          name: '',
-        },
+        ...state.taskFiles[task],
+        {path: '', exclude: false},
       ],
     }});
   };
 
   /**
+   * Exclude a task entry from the form
    *
    * @param {string} task the task to update
    * @param {boolean} exclude exclusion flag
    * @param {string} reason reason why excluded
    */
-  const excludeMFFDirectory = (task, exclude, reason) => {
+  const excludeTask = (task, exclude, reason) => {
     let taskList = [];
-    if (state.mffDirectories[task][0]['exclude'] != exclude) {
-      taskList = [{path: '', name: '', exclude: exclude, reason: reason}];
+    if (state.taskFiles[task][0]['exclude'] != exclude) {
+      taskList = [{path: '', exclude: exclude, reason: reason}];
     } else if (exclude) {
       taskList = [{
-        ...state.mffDirectories[task][0],
+        ...state.taskFiles[task][0],
         reason: reason,
       }];
     }
 
-    setState({mffDirectories: {
-      ...state.mffDirectories,
+    setState({taskFiles: {
+      ...state.taskFiles,
       [task]: taskList,
     }});
   };
 
   /**
-   * Update an investigator entry
+   * Update an task entry
    *
    * @param {string} task - the task to update
    * @param {Number} index - index of the dir to update
    * @param {string} value - the value to update
    *
    */
-  const updateMFFDirectory = (task, index, value) => {
+  const updateTask = (task, index, value) => {
     if (value) {
-      setState({mffDirectories: {
-        ...state.mffDirectories,
+      setState({taskFiles: {
+        ...state.taskFiles,
         [task]: [
-          ...state.mffDirectories[task].slice(0, index),
-          {
-            path: value,
-            name: value.replace(/\.[^/.]+$/, ''),
-          },
-          ...state.mffDirectories[task].slice(index+1),
+          ...state.taskFiles[task].slice(0, index),
+          {path: value, exclude: false},
+          ...state.taskFiles[task].slice(index+1),
         ],
       }});
     }
@@ -191,26 +294,58 @@ const RecordingData = () => {
   return isLoaded && (
     <>
       <span className='header'>
-        Recording data
+        Recordings data
       </span>
       <div className='info'>
+        <div className='small-pad'>
+          <RadioInput
+            name='fileFormat'
+            label='Recordings format:'
+            onUserInput={(_, value) => setState({inputFileFormat: value})}
+            options={state.acceptedFormats}
+            checked={state.inputFileFormat}
+          />
+        </div>
+        <div className='small-pad'>
+          <RadioInput
+            name='modality'
+            label='Data Modality'
+            onUserInput={(_, value) => setState({modality: value})}
+            options={filteredModalities}
+            checked={state.modality}
+            help='If any intracranial (stereo) channels, select Stereo iEEG'
+          />
+        </div>
+        <div className='small-pad'>
+          <DirectoryInput
+            name='bidsDirectory'
+            required={true}
+            label='BIDS output folder'
+            placeholder={state.bidsDirectory}
+            onUserInput={(_, value) => setState({bidsDirectory: value})}
+            help='Where the BIDS-compliant folder will be created'
+          />
+        </div>
         {state.tasks.map((task) =>
           <div key={task.key} className='small-pad'>
-            <MultiDirectoryInput
-              id='mffDirectories'
-              name='mffDirectories'
+            <TaskRunInput
+              name='taskFile'
               multiple={true}
               required={true}
               taskName={task.key}
               label={task.label}
-              updateDirEntry={updateMFFDirectory}
-              removeDirEntry={removeMFFDirectory}
-              addDirEntry={addMFFDirectory}
-              excludeMFFDirectory={excludeMFFDirectory}
-              value={state.mffDirectories[task.key]}
+              update={updateTask}
+              remove={removeTask}
+              add={addTask}
+              exclude={excludeTask}
+              value={state.taskFiles[task.key]}
               help={'Folder name(s) must be formatted correctly: ' +
-                `e.g. ${state.filePrefix}_${task.key}[_run-X].mff`}
+                `e.g. ${state.filePrefix}_${task.key}[_run-X].` +
+                state.inputFileFormat
+              }
               error={checkFileError(task.key)}
+              accept={Object.keys(state.acceptedFormats)}
+              browseDir={false}
             />
           </div>,
         )}
@@ -227,23 +362,8 @@ const RecordingData = () => {
             </button>
           </div>
         }
-
-        <div className='small-pad'>
-          <FileInput
-            id='image_file'
-            required={true}
-            name='image_file'
-            label='Placement Photos'
-            accept='.zip'
-            onUserInput={onUserInput}
-            help='For photos taken with iPad of cap placement'
-            placeholder={
-              state.image_file.map((file) => file['name']).join(', ')
-            }
-            error={checkPhotoError()}
-          />
-        </div>
       </div>
+      <ReactTooltip />
     </>
   );
 };

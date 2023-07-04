@@ -23,34 +23,9 @@ const App = () => {
   const [errors, setErrors] = useState({});
 
   const initialState = {
-    eegRuns: null,
-    modality: 'eeg',
-    eventFiles: [],
-    bidsDirectory: null,
-    lineFreq: 'n/a',
-    taskName: '',
-    reference: 'n/a',
-    recordingType: 'n/a',
-    participantID: '',
-    participantDOB: null,
-    participantAge: 'n/a',
     subjectID: '',
-    preparedBy: '',
-    outputTime: '',
-    reasons: {},
-    eegData: [],
     exclude: {},
-    mffFiles: [],
     outputFilename: '',
-    flags: {},
-    validationFlags: {
-      errors: [],
-      success: [],
-    },
-    fileFormat: 'mff',
-    fileFormatUploaded: 'mff',
-    eegFiles: [],
-    filePrefix: '',
   };
 
   const reducer = (state, values) => {

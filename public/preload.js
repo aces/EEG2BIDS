@@ -31,6 +31,9 @@ contextBridge.exposeInMainWorld('myAPI', {
   visitMCIN: () => {
     shell.openExternal('https://mcin.ca');
   },
+  visitTemplates: () => {
+    shell.openExternal('https://github.com/aces/EEG2BIDS/tree/main/templates');
+  },
   getLorisAuthenticationCredentials: async () => {
     const credentials = await ipcRenderer.invoke(
         'getLorisAuthenticationCredentials',

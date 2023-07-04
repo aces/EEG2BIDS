@@ -1,9 +1,15 @@
 {
-    "recordingMetadata": false,
+    "useLoris": false,
+    "displayRecordingMetadata": true,
+    "recordingMetadata": {
+        "reference": true,
+        "powerLineFreq": true
+    },
     "participantMetadata": {
         "species": false,
+        "age": true,
         "sex": true,
-        "handedness": true,
+        "handedness": false,
         "strain": false,
         "strain_rrid": false,
         "additional": [
@@ -20,6 +26,20 @@
                 "default": "n/a",
                 "help": false,
                 "display": false
+            },
+            {
+                "name": "project",
+                "label":  "Project",
+                "default": "n/a",
+                "help": false,
+                "display": true
+            },
+            {
+                "name": "cohort",
+                "label":  "Cohort",
+                "default": "n/a",
+                "help": false,
+                "display": true
             }
         ]
     },
@@ -29,17 +49,13 @@
             "label": "Resting state/baseline"
         },
         {
-            "key": "MMN",
-            "label": "MMN"
-        },
-        {
             "key": "FACE",
-            "label": "Face processing"
-        },
-        {
-            "key": "VEP",
-            "label": "Visual Evoked Potential"
+            "label": "Face"
         }
     ],
-    "allowAdditionalTask": true
+    "allowAdditionalTask": false,
+    "recordingConverter": "",
+    "BIDSFileFormats": ["set"],
+    "modalities": ["eeg"],
+    "autoStartPackagingStep": false
 }

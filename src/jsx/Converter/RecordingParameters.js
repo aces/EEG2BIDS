@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../../context';
 
 /**
@@ -6,7 +6,23 @@ import {AppContext} from '../../context';
  * @return {JSX.Element}
  */
 const RecordingParameters = () => {
-  const {state} = useContext(AppContext);
+  const {state, setState} = useContext(AppContext);
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    setResults([
+      ...validateRecordingParameters(),
+    ]);
+  }, [
+    state.bidsMetadata,
+    state.invalidBidsMetadataFile,
+  ]);
+
+  useEffect(() => {
+    results.filter(({status}) => status === 'error').length > 0 ?
+      setState({RecordingParameterValid: false}) :
+      setState({RecordingParameterValid: true});
+  }, [results]);
 
   const validateRecordingParameters = () => {
     if (!state.bidsMetadata) {
@@ -73,10 +89,6 @@ const RecordingParameters = () => {
 
     return output;
   };
-
-  const results = [
-    ...validateRecordingParameters(),
-  ];
 
   return (
     <div className='small-pad'>

@@ -202,7 +202,7 @@ class Converter:
     m_info = None
 
     # data = { file_path: '', bids_directory: '', read_only: false,
-    # event_files: '', line_freq: '', site_id: '', project_id: '',
+    # event_files: '', powerLineFreq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
     def __init__(self, data):
         print('- Converter: init started.')
@@ -227,7 +227,7 @@ class Converter:
                 run=((eegRun['run']) if eegRun['run'] != -1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
-                line_freq=data['line_freq'],
+                line_freq=data['powerLineFreq'],
                 outputFilename=data['outputFilename']
             )
 

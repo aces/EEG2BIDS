@@ -104,7 +104,7 @@ app.on('ready', async () => {
   createMainWindow();
   const updateCredential = async (event, credentials) => {
     credentials?.lorisURL && store.set('lorisURL', credentials?.lorisURL);
-    credentials?.lorisUsername && store.set('lorisUsername');
+    credentials?.lorisUsername && store.set('lorisUsername', credentials?.lorisUsername);
     store.set('lorisToken', credentials?.lorisToken || '');
   };
 

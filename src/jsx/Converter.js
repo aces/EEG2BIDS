@@ -1,13 +1,21 @@
 import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
-import EEGRun from './types/EEGRun';
 import {TextInput, TextareaInput} from './elements/inputs';
 import PropTypes from 'prop-types';
 import Modal from './elements/modal';
 import ReactTooltip from 'react-tooltip';
+import {participantMetadata} from './Configuration/ParticipantDetails';
+import {recordingMetadata} from './Configuration/RecordingMetadata';
 
 // Socket.io
 import {SocketContext} from './socket.io';
+
+import '../css/Converter.css';
+
+import RecordingData from './Converter/RecordingData';
+import RecordingDetails from './Converter/RecordingDetails';
+import ParticipantDetails from './Converter/ParticipantDetails';
+import RecordingParameters from './Converter/RecordingParameters';
 
 /**
  * Converter - the EDF to BIDS component.
@@ -16,7 +24,7 @@ import {SocketContext} from './socket.io';
  */
 const Converter = (props) => {
   const socketContext = useContext(SocketContext);
-  const {state, setState} = useContext(AppContext);
+  const {state, setState, config} = useContext(AppContext);
 
   const [successMessage, setSuccessMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,6 +50,12 @@ const Converter = (props) => {
     },
   });
 
+  useEffect(() => {
+    // Init state
+    setState({preparedBy: ''});
+    setState({reasons: {}});
+  }, []);
+
   const reasonUpdate = (name, value) =>
     setState({reasons: {
       ...state.reasons,
@@ -59,47 +73,82 @@ const Converter = (props) => {
 
     setModalVisible(true);
 
-    if (state.eegData?.['files']?.length > 0) {
+    if (state.eegFileNames?.length > 0) {
       socketContext.emit('eeg_to_bids', {
         eegData: state.eegData ?? [],
-        fileFormat: state.fileFormat ?? '',
+        fileFormat: state.fileFormat ?? 'set',
         eegRuns: state.eegRuns ?? [],
         modality: state.modality ?? 'eeg',
         bids_directory: state.bidsDirectory ?? '',
         read_only: false,
         event_files: state.eventFiles.length > 0 ?
           state.eventFiles[0]['path'] : '',
-        bidsMetadata: state.bidsMetadata ?? '',
+
+        // group
         site_id: state.siteID ?? '',
         project_id: state.projectID ?? '',
         sub_project_id: state.subprojectID ?? '',
         session: state.session ?? '',
-        participantID: state.participantID || state.participantPSCID || '',
-        age: state.participantAge ?? '',
-        hand: state.participantHand ?? '',
-        sex: state.participantSex ?? '',
+
+        participantID: state.participantID || '',
+
         preparedBy: state.preparedBy ?? '',
-        line_freq: state.lineFreq || 'n/a',
-        recording_type: state.recordingType ?? 'n/a',
-        taskName: state.taskName ?? '',
-        reference: state.reference ?? '',
+
+        // group
+        bidsMetadata: state.bidsMetadata ?? '',
+
+        ...(recordingMetadata
+            .filter((field) => config?.recordingMetadata?.[field.name])
+            .reduce(
+                (obj, field) => Object.assign(
+                    obj,
+                    {[field.name]: state[field.name] || field.default},
+                ),
+                {},
+            )
+        ),
+
         subject_id: state.subjectID ?? '',
         outputFilename: state.outputFilename ?? '',
+
+        ...(participantMetadata
+            .filter((field) => config?.participantMetadata?.[field.name])
+            .reduce(
+                (obj, field) => Object.assign(
+                    obj,
+                    {[field.name]: state[field.name] || field.default},
+                ),
+                {},
+            )
+        ),
+
+        ...(config?.participantMetadata?.additional
+            .filter((field) => field?.display)
+            .reduce(
+                (obj, field) => Object.assign(
+                    obj,
+                    {[field.name]: state[field.name] || field.default},
+                ),
+                {},
+            )
+        ),
       });
     }
   };
 
-  const reviewSuccessFlags = () => {
-    const listItems = state.validationFlags.success.map((err) => {
-      return formatPass(err.label, err.flag);
-    });
-    return (
-      <div className='small-pad'>
-        <b>Review your success flags:</b>
-        {listItems}
-      </div>
-    );
-  };
+  const reviewSuccessFlags = state.inputFileFormat == 'mff' ?
+    () => {
+      const listItems = state?.validationFlags?.success?.map((err) => {
+        return formatPass(err.label, err.flag);
+      });
+      return (
+        <div className='small-pad'>
+          <b>Review your success flags:</b>
+          {listItems}
+        </div>
+      );
+    } :
+    () => {};
 
   const formatPass = (msg, key) =>
     <div className='flags' key={key}>
@@ -130,53 +179,42 @@ const Converter = (props) => {
     );
   };
 
-  const reviewWarnings = () => {
-    if (state.validationFlags.errors.length === 0) {
-      return null;
-    }
-
-    const listItems = state.validationFlags.errors.map((err) => {
-      if (err.reason) {
-        return formatError(err.label, err.flag);
-      } else {
-        return formatWarning(err.label, err.flag);
+  const reviewWarnings = state.inputFileFormat == 'mff' ?
+    () => {
+      if (state?.validationFlags?.errors?.length === 0) {
+        return null;
       }
-    });
 
-    const value = state.reasons['additional'] || '';
-    return (
-      <div className='small-pad'>
-        <b>Review your warning flags:</b>
-        {listItems}
-        <div className='flags'>
-          <TextareaInput
-            name='additional'
-            label={'Optional: Please provide additional reasoning ' +
-              'as to why issues happened if not already defined above:'}
-            value={value}
-            onUserInput={reasonUpdate}
-          />
+      const listItems = state?.validationFlags?.errors?.map((err) => {
+        if (err.reason) {
+          return formatError(err.label, err.flag);
+        } else {
+          return formatWarning(err.label, err.flag);
+        }
+      });
+
+      const value = state.reasons['additional'] || '';
+      return (
+        <div className='small-pad'>
+          <b>Review your warning flags:</b>
+          {listItems}
+          <div className='flags'>
+            <TextareaInput
+              name='additional'
+              label={'Optional: Please provide additional reasoning ' +
+                'as to why issues happened if not already defined above:'}
+              value={value}
+              onUserInput={reasonUpdate}
+            />
+          </div>
         </div>
-      </div>
-    );
-  };
-
-  const validate = () => {
-    if (state.eegData?.files?.length > 0) {
-      const eegRuns = [];
-      state.eegData?.files.map(
-          (eegFile) => {
-            const eegRun = new EEGRun();
-            eegRun.eegFile = eegFile['path'];
-            eegRun.task = eegFile['task'];
-            eegRun.run = eegFile['run'];
-            eegRuns.push(eegRun);
-          },
       );
+    } :
+    () => {};
 
-      setState({eegRuns: eegRuns});
-    }
-  };
+  useEffect(() => {
+    setState({outputTime: ''});
+  }, []);
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -224,26 +262,31 @@ const Converter = (props) => {
     }
   }, [socketContext]);
 
-  useEffect(() => {
-    validate();
-  }, [state.eegData]);
-
   return props.visible ? (
     <>
       <span className='header'>
-        MFF to BIDS
+        EEG to BIDS
       </span>
       <div className='info report'>
-        {state.eegData?.files?.length > 0 ?
+        {state.eegFileNames?.length > 0 ?
           <>
+            <RecordingData/>
+            <RecordingDetails/>
+            <ParticipantDetails/>
+            <RecordingParameters/>
             {reviewWarnings()}
             {reviewSuccessFlags()}
-            {error ?
-              <div className="alert alert-danger" role="alert">
-                &#x274C; Please correct the above errors.
-              </div> :
+            {
+              state.ParticipantDetailsValid &&
+              state.RecordingDataValid &&
+              state.RecordingDetailsValid &&
+              state.RecordingParameterValid ?
+
               <div className="alert alert-success" role="alert">
                 &#x2714; Ready to proceed
+              </div> :
+              <div className="alert alert-danger" role="alert">
+                &#x274C; Please correct the above errors.
               </div>
             }
           </> :
@@ -255,7 +298,7 @@ const Converter = (props) => {
         <hr/>
 
         <div className='small-pad'>
-          <TextInput id='preparedBy'
+          <TextInput
             name='preparedBy'
             required={true}
             label='Prepared by'
@@ -279,7 +322,7 @@ const Converter = (props) => {
             disabled={
               !state.preparedBy ||
               error ||
-              state.eegData?.files?.length < 1
+              state.eegFileNames?.length < 1
             }
           />
           {successMessage}

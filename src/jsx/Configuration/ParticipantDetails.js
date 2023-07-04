@@ -1,6 +1,7 @@
 import React, {useContext, useEffect} from 'react';
 import {AppContext} from '../../context';
 import {SocketContext} from '../socket.io';
+import ReactTooltip from 'react-tooltip';
 
 import {
   SelectInput,
@@ -66,23 +67,86 @@ const ParticipantDetails = () => {
   const {state, setState, errors, setError, config} = useContext(AppContext);
   const socketContext = useContext(SocketContext);
 
+  let participantIDs = {
+    participantID: 'Participant ID',
+  };
+
+  /* -----------------------------------
+   * LORIS specificities
+   * ----------------------------------- */
+  if (state.useLoris) {
+    participantIDs = {
+      participantID: 'LORIS PSCID',
+      participantCandID: 'LORIS DCCID',
+    };
+  }
+  /* ----------------------------------- */
+
   useEffect(() => {
     // Init state
-    participantMetadata.forEach((field) => {
-      if (config?.participantMetadata?.[field.name]) {
-        setState({[field.name]: field.default});
-      }
-    });
+    participantMetadata
+        .filter((field) => config?.participantMetadata?.[field.name])
+        .forEach((field) => setState({[field.name]: ''}));
 
-    config?.participantMetadata?.additional.forEach((field) => {
-      if (field?.display) {
-        setState({[field.name]: field.default});
-      }
-    });
+    config?.participantMetadata?.additional
+        .filter((field) => field?.display)
+        .forEach((field) => setState({[field.name]: ''}));
 
-    setState({participantPSCID: ''});
-    setState({participantCandID: ''});
+    Object.keys(participantIDs).forEach(
+        (participantID) => setState({[participantID]: ''}),
+    );
+
+    setState({participantDOB: null});
+    setState({age: null});
   }, []);
+
+  useEffect(() => {
+    const filePrefix = (state.participantID ||
+      (state.useLoris ? '[PSCID]' : '[ParticipantID]')) + '_' +
+    (state.useLoris ?
+      ((state.participantCandID || '[DCCID]') + '_' ) : '') +
+    (state.session || '[VisitLabel]');
+
+    setState({filePrefix: filePrefix});
+
+    if (
+      state.participantID &&
+      (!state.useLoris || state.participantCandID) &&
+      state.session
+    ) {
+      setState({outputFilename: `${filePrefix}_bids`});
+    }
+  }, [state.participantID, state.participantCandID, state.session]);
+
+  useEffect(() => {
+    if (socketContext) {
+      socketContext.on('loris_visit', (visit) => {
+        if (!visit?.error) {
+          const age = getAge(state.participantDOB, visit?.Stages?.Visit.Date);
+          setState({age: age});
+        }
+      });
+    }
+  }, [socketContext]);
+
+  /**
+   * Get age at visit
+   *
+   * @param {Date} birthDate
+   * @param {Date} visitDate
+   *
+   * @return {Number}
+   */
+  const getAge = (birthDate, visitDate) => {
+    if (!birthDate || !visitDate) return;
+
+    let age = visitDate.getFullYear() - birthDate.getFullYear();
+    const m = visitDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && visitDate.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
   /**
    * onUserInput - input change by user.
@@ -111,49 +175,49 @@ const ParticipantDetails = () => {
   }, [state.participantCandID]);
 
   useEffect(() => {
-    if (!state.participantPSCID) {
+    if (!state.participantID) {
       setError(
-          'participantPSCID',
-          'LORIS PSCID is not specified',
+          'participantID',
+          `${participantIDs.participantID} is not specified`,
       );
     } else {
-      setError('participantPSCID', null);
+      setError('participantID', null);
     }
-  }, [state.participantPSCID]);
+  }, [state.participantID]);
 
   useEffect(() => {
-    if (state.participantPSCID && state.participantCandID) {
+    if (state.participantID && state.participantCandID) {
       // Collect the participant PSCID, sex, age...
       socketContext?.emit('get_participant_data', {
         candID: state.participantCandID,
       });
     }
-  }, [state.participantCandID, state.participantPSCID]);
+  }, [state.participantCandID, state.participantID]);
 
   useEffect(() => {
     socketContext?.on('participant_data', (data) => {
       if (data?.error) {
         setError('participantCandID', data.error);
       } else {
-        if (data.Meta.PSCID !== state.participantPSCID) {
+        if (data.Meta.PSCID !== state.participantID) {
           setError(
-              'participantPSCID',
+              'participantID',
               'The PSCID/DDCID pair you provided does ' +
               'not match an existing candidate.',
           );
         } else {
           setError('participantCandID', null);
-          setError('participantPSCID', null);
+          setError('participantID', null);
 
           setState({participantDoB: new Date(data.Meta.DoB)});
-          setState({participantSex: data.Meta.Sex});
+          setState({sex: data.Meta.Sex});
           setState({projectID: data.Meta.Project});
           setState({siteID: data.Meta.Site});
           setState({sessionOptions: data.Visits});
         }
       }
     });
-  }, [socketContext, state.participantPSCID]);
+  }, [socketContext, state.participantID]);
 
   useEffect(() => {
     socketContext?.on('new_candidate_created', (data) => {
@@ -165,7 +229,7 @@ const ParticipantDetails = () => {
 
       if (data['CandID'] && data['PSCID']) {
         console.info('candidate created');
-        setState({participantPSCID: data['PSCID']});
+        setState({participantID: data['PSCID']});
         setState({participantCandID: data['CandID']});
       }
     });
@@ -178,55 +242,49 @@ const ParticipantDetails = () => {
       </span>
       <div className='info'>
         <>
-          <div className='small-pad'>
-            <TextInput id='participantPSCID'
-              name='participantPSCID'
-              label='LORIS PSCID'
-              required={true}
-              value={state.participantPSCID || ''}
-              onUserInput={onUserInput}
-              error={errors?.participantPSCID}
-            />
-          </div>
-          <div className='small-pad'>
-            <TextInput id='participantCandID'
-              name='participantCandID'
-              label='LORIS DCCID'
-              required={true}
-              value={state.participantCandID || ''}
-              onUserInput={onUserInput}
-              error={errors?.participantCandID}
-            />
-          </div>
-          {participantMetadata.map(
-              (field) =>
-                config?.participantMetadata?.[field.name] &&
-                  <div
-                    className='small-pad'
-                    key={field.name}
-                  >
-                    {field.options ?
-                      <SelectInput
-                        name={field.name}
-                        label={field.label}
-                        value={state[field.name]}
-                        emptyOption='n/a'
-                        options={field.options}
-                        onUserInput={onUserInput}
-                        help={field.help}
-                      /> :
-                      <TextInput
-                        name={field.name}
-                        label={field.label}
-                        value={state[field.name] || field.default}
-                        onUserInput={onUserInput}
-                        help={field.help}
-                      />
-                    }
-                  </div>,
+          {Object.keys(participantIDs).map((participantID) =>
+            <div className='small-pad' key={participantID}>
+              <TextInput id={participantID}
+                name={participantID}
+                label={participantIDs[participantID]}
+                required={true}
+                value={state[participantID] || ''}
+                onUserInput={onUserInput}
+                error={errors?.[participantID]}
+              />
+            </div>,
           )}
-          {config?.participantMetadata?.additional.map(
-              (field) => field?.display &&
+          {participantMetadata
+              .filter((field) => config?.participantMetadata?.[field.name])
+              .map((field) =>
+                <div
+                  className='small-pad'
+                  key={field.name}
+                >
+                  {field.options ?
+                    <SelectInput
+                      name={field.name}
+                      label={field.label}
+                      value={state[field.name]}
+                      emptyOption='n/a'
+                      options={field.options}
+                      onUserInput={onUserInput}
+                      help={field.help}
+                    /> :
+                    <TextInput
+                      name={field.name}
+                      label={field.label}
+                      placeholder={field.default}
+                      value={state[field.name] || ''}
+                      onUserInput={onUserInput}
+                      help={field.help}
+                    />
+                  }
+                </div>,
+              )}
+          {config?.participantMetadata?.additional
+              .filter((field) => field?.display)
+              .map((field) =>
                 <div
                   className='small-pad'
                   key={field.name}
@@ -234,16 +292,19 @@ const ParticipantDetails = () => {
                   <TextInput
                     name={field.name}
                     label={field.label}
-                    value={state[field.name] || field.default}
+                    placeholder={field.default}
+                    value={state[field.name] || ''}
                     onUserInput={onUserInput}
                     help={field.help}
                   />
                 </div>,
-          )}
+              )}
         </>
       </div>
+      <ReactTooltip />
     </>
   );
 };
 
+export {participantMetadata};
 export default ParticipantDetails;
