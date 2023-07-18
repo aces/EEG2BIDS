@@ -25,43 +25,45 @@ module.exports = class EEG2BIDSService {
   async startup() {
     let pathToService;
 
-    kill(7301)
-        .then(() => {
-          if (process.env.DEV) {
-            pathToService = path.join(
-                __dirname,
-                '..',
-                this.platform === 'win32' ?
-                  'start-server.ps1' :
-                  'start-server.sh',
-            );
-            this.platform === 'win32' ?
-              this.process = spawn('powershell.exe', [pathToService]) :
-              this.process = spawn('bash', [pathToService])
-          } else {
-            pathToService = path.join(
-              __dirname,
-              '..',
-            this.platform === 'win32' ?
-              'dist/eeg2bids-service-windows/eeg2bids-service-windows.exe' :
-              'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
-            );
-            this.process = spawn(pathToService, []);
-          }
+    try {
+      await kill(7301);
+    } catch (error) {
+      console.error(error);
+    }
 
-          this.process.stdout.on('data', function (data) {
-            pythonLog.info('stdout: ' + data.toString());
-          });
+    if (process.env.DEV) {
+      pathToService = path.join(
+          __dirname,
+          '..',
+          this.platform === 'win32' ?
+            'start-server.ps1' :
+            'start-server.sh',
+      );
+      this.platform === 'win32' ?
+        this.process = spawn('powershell.exe', [pathToService]) :
+        this.process = spawn('bash', [pathToService])
+    } else {
+      pathToService = path.join(
+        __dirname,
+        '..',
+      this.platform === 'win32' ?
+        'dist/eeg2bids-service-windows/eeg2bids-service-windows.exe' :
+        'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
+      );
+      this.process = spawn(pathToService, []);
+    }
 
-          this.process.stderr.on('data', function (data) {
-            pythonLog.error('sterr: ' + data.toString());
-          });
+    this.process.stdout.on('data', function (data) {
+      pythonLog.info('stdout: ' + data.toString());
+    });
 
-          this.process.on('exit', function (code) {
-            pythonLog.info('Python process exited');
-          });
-        })
-        .catch(console.log);
+    this.process.stderr.on('data', function (data) {
+      pythonLog.error('sterr: ' + data.toString());
+    });
+
+    this.process.on('exit', function (code) {
+      pythonLog.info('Python process exited');
+    });
   }
 
   /**
@@ -83,7 +85,11 @@ module.exports = class EEG2BIDSService {
           callback();
         });
       } else if(os.platform() !== 'darwin'){
-        this.process.kill();
+        try {
+          this.process.kill();
+        } catch (error) {
+          console.error(error);
+        }
         callback();
       }
 

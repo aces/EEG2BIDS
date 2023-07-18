@@ -2,12 +2,10 @@
     font-size: 18px;
     padding-right: 10px;
     color: #43a243;
-    font-family: Segoe UI Symbol, serif;
 }
 .warning {
     padding-right: 10px;
     color: #FF8C00;
-    font-family: Segoe UI Symbol, serif;
 }
 .error {
     padding-right: 10px;

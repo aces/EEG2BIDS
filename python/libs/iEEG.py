@@ -296,7 +296,7 @@ class Converter:
                 # for set files, the nasion, lpa and rpa landmarks are not properly read from
                 # EEGLAB files so manually editing them
                 # RAS montage
-                nasion_coord, lpa_coord, rpa_coord = self._populate_back_landmarks(raw, file)
+                # nasion_coord, lpa_coord, rpa_coord = self._populate_back_landmarks(raw, file)
 
                 m_info = raw.info
                 self.set_m_info(m_info)
@@ -361,24 +361,25 @@ class Converter:
                             f.seek(8)  # id_info field starts 8 bytes in
                             f.write(bytes("X X X X".ljust(80), 'ascii'))
 
-                    if fileFormat == 'set':
+
+                    # if fileFormat == 'set':
+                    if False:
                         # Create additional electrode file in ALS format
                         ch_names = raw.ch_names
                         ch_locs = _get_als_coords_from_chs(raw.info['chs'])
                         ch_pos = dict(zip(ch_names, ch_locs.tolist()))
 
                         als_montage = mne.channels.make_dig_montage(
-                        ch_pos=ch_pos,
-                        coord_frame='ctf_head',
-                        nasion=nasion_coord,
-                        lpa=lpa_coord,
-                        rpa=rpa_coord
+                            ch_pos=ch_pos,
+                            coord_frame='ctf_head',
+                            nasion=nasion_coord,
+                            lpa=lpa_coord,
+                            rpa=rpa_coord
                         )
                         _write_dig_bids(bids_basename, raw, als_montage, False, False)
 
                         # Regenerate the event files with original data
                         self._regenerate_events_file(bids_basename, file)
-
 
                 except Exception as ex:
                     print('Exception ex:')

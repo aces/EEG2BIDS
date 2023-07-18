@@ -33,9 +33,7 @@ const MFF2SET = () => {
 
   useEffect(() => {
     // Init state
-    Object.keys(initState).map(
-        (stateKey) => setState({[stateKey]: initState[stateKey]}),
-    );
+    setState(initState);
   }, []);
 
   const checkPhotoError = () => {

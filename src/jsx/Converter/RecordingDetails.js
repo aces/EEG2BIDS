@@ -26,7 +26,7 @@ const RecordingDetails = () => {
     state.projectID,
     state.subprojectID,
     state.session,
-    state.lineFreq,
+    state.powerLineFreq,
     state.reference,
   ]);
 
@@ -97,7 +97,7 @@ const RecordingDetails = () => {
   };
 
   const validateLineFreq = () => {
-    if (!state.lineFreq) {
+    if (!state.powerLineFreq) {
       return ({
         status: 'warning',
         msg: 'Powerline frequency is not specified',
@@ -105,7 +105,7 @@ const RecordingDetails = () => {
     }
     return ({
       status: 'pass',
-      msg: `Powerline Frequency: ${state.lineFreq}`,
+      msg: `Powerline Frequency: ${state.powerLineFreq}`,
     });
   };
 

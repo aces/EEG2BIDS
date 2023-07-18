@@ -53,11 +53,13 @@ const RecordingData = () => {
     bidsDirectory: null,
   };
 
+  if (config.allowAdditionalTask) {
+    initState['taskname'] = '';
+  }
+
   useEffect(() => {
     // Init state
-    Object.keys(initState).map(
-        (stateKey) => setState({[stateKey]: initState[stateKey]}),
-    );
+    setState(initState);
   }, []);
 
   useEffect(() => {
@@ -85,21 +87,27 @@ const RecordingData = () => {
         });
       } */
 
-      if (state.inputFileFormat === 'set') {
+      const files = Object.entries(state.taskFiles)
+      // only consider the non-excluded and non-empty tasks
+          .filter((_, taskRuns) =>
+            !taskRuns?.[0]?.exclude,
+          )
+          .map(([taskName, taskRuns]) =>
+            taskRuns.map((taskRun, i) =>
+              ({
+                path: taskRun.path,
+                task: taskName,
+                run: i+1,
+              }),
+            ),
+          )
+          .flat()
+          .filter((run) => run.path);
+
+      if (files.length && state.inputFileFormat === 'set') {
         console.info('set file selected');
         socketContext.emit('get_set_data', {
-          files: Object.entries(state.taskFiles)
-              .filter((_, taskRuns) => !taskRuns?.[0]?.exclude)
-              .map(([taskName, taskRuns]) =>
-                taskRuns.map((taskRun, i) =>
-                  ({
-                    path: taskRun.path,
-                    task: taskName,
-                    run: i+1,
-                  }),
-                ),
-              )
-              .flat(),
+          files: files,
         });
       }
     }
@@ -183,11 +191,11 @@ const RecordingData = () => {
           // setError(true);
           nameError[idx] = 'Please provide file or remove run.';
         } else {
-          const $filename =
+          const filename =
             `${filePrefix}_run-${idx + 1}.${state.inputFileFormat}`;
-          if (getFileName(file) !== $filename) {
+          if (getFileName(file) !== filename) {
             // setError(true);
-            nameError[idx] = 'File should have naming format ' + $filename;
+            nameError[idx] = 'File should have naming format ' + filename;
           }
         }
       });
@@ -212,14 +220,14 @@ const RecordingData = () => {
   };
 
   /**
-   * Remove an task entry from the form
+   * Remove an run entry from the form
    *
    * @param {String} task - the task to update
    * @param {Number} index - index of the directory to delete
    *
    * @return {function}
    */
-  const removeTask = (task, index) => {
+  const removeRun = (task, index) => {
     return () => {
       setState({taskFiles: {
         ...state.taskFiles,
@@ -234,9 +242,9 @@ const RecordingData = () => {
   /**
    * Add a task entry to the form
    *
-   * @param {Sting} task the task to add run to
+   * @param {String} task the task to add run to
    */
-  const addTask = (task) => {
+  const addRun = (task) => {
     setState({taskFiles: {
       ...state.taskFiles,
       [task]: [
@@ -270,6 +278,14 @@ const RecordingData = () => {
     }});
   };
 
+  const addTask = (taskname) => {
+    setState({taskFiles: {
+      ...state.taskFiles,
+      [taskname]: [{path: '', exclude: false}],
+    }});
+    setState({tasks: [...state.tasks, {key: taskname, label: taskname}]});
+  };
+
   /**
    * Update an task entry
    *
@@ -290,6 +306,23 @@ const RecordingData = () => {
       }});
     }
   };
+
+  const validateTaskname = (taskname) => {
+    if (
+      taskname?.indexOf('-') > -1 ||
+      taskname?.indexOf('_') > -1 ||
+      taskname?.indexOf('/') > -1
+    ) {
+      return 'Task name has invalid characters: (-, /, _)';
+    }
+
+    const taskKeys = state.tasks?.map((taskData) => taskData.key);
+    if (taskKeys?.includes(taskname)) {
+      return 'Task name already exists';
+    }
+  };
+
+  const taskNameError = validateTaskname(state.taskname);
 
   return isLoaded && (
     <>
@@ -335,8 +368,8 @@ const RecordingData = () => {
               taskName={task.key}
               label={task.label}
               update={updateTask}
-              remove={removeTask}
-              add={addTask}
+              remove={removeRun}
+              add={addRun}
               exclude={excludeTask}
               value={state.taskFiles[task.key]}
               help={'Folder name(s) must be formatted correctly: ' +
@@ -352,14 +385,28 @@ const RecordingData = () => {
 
         {config.allowAdditionalTask &&
           <div className='small-pad'>
+            <input
+              type='text'
+              id='taskname'
+              name='taskname'
+              value={state.taskname}
+              style={{marginRight: '10px'}}
+              onChange={(event) => setState({taskname: event.target.value})}
+              placeholder='Task name'
+            />
             <button
               type="button"
               className='btn'
-              onClick={() => {}}
-              style={{marginRight: '10px'}}
+              onClick={() => {
+                addTask(state.taskname);
+                setState({taskname: ''});
+              }}
+              style={{marginRight: '10px', padding: '2px 10px'}}
+              disabled={taskNameError || !state.taskname}
             >
               Add Task
             </button>
+            <div className="input-error">{taskNameError}</div>
           </div>
         }
       </div>

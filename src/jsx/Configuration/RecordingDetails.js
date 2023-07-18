@@ -31,9 +31,7 @@ const RecordingDetails = () => {
 
   useEffect(() => {
     // Init state
-    Object.keys(initState).map(
-        (stateKey) => setState({[stateKey]: initState[stateKey]}),
-    );
+    setState(initState);
   }, []);
 
   // Wait for state to be updated

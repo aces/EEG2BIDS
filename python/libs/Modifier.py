@@ -114,9 +114,9 @@ class Modifier:
         rows[0].extend(['site', 'subproject', 'project'])
 
         for i in range(1, len(rows)):
-            rows[i][1] = self.data['age']
-            rows[i][2] = self.data['sex']
-            rows[i][3] = self.data['handedness']
+            rows[i][1] = self.data.get('age')
+            rows[i][2] = self.data.get('sex')
+            rows[i][3] = self.data.get('handedness')
             rows[i].extend([
                 self.data['site_id'],
                 self.data['sub_project_id'],

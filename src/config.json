@@ -47,13 +47,9 @@
         {
             "key": "RS",
             "label": "Resting state/baseline"
-        },
-        {
-            "key": "FACE",
-            "label": "Face"
         }
     ],
-    "allowAdditionalTask": false,
+    "allowAdditionalTask": true,
     "recordingConverter": "",
     "BIDSFileFormats": ["set"],
     "modalities": ["eeg"],

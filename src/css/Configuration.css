@@ -26,6 +26,11 @@
     border-radius: .25rem;
     padding: .275rem .5rem;
 }
+.btn:disabled {
+    border: 1px solid #777;
+    color: #777;
+    background: #ddd;
+}
 textarea {
     vertical-align: top;
     font-family: Arial;
