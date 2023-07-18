@@ -235,6 +235,9 @@ class Converter:
 
             if line_freq.isnumeric():
                 line_freq = int(line_freq)
+            else:
+                line_freq = None
+
             raw.info['line_freq'] = line_freq
 
             raw._init_kwargs = {
