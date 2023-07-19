@@ -201,10 +201,10 @@ const RecordingData = () => {
       });
       return nameError;
     } else if (state.taskFiles[task][0].exclude) {
-      if (state.taskFiles[task][0].reason === '') {
+      /* if (state.taskFiles[task][0].reason === '') {
         // setError(true);
         return ['Exclusion reason is required.'];
-      }
+      }*/
     } else if (state.taskFiles[task][0].path === '') {
       // setError(true);
       return ['Please provide file or reason for exclusion.'];

@@ -9,6 +9,10 @@ class Modifier:
         self.data = data
         print(self.data)
 
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        f = open(os.path.join(dirname, '..', '..', 'src','config.json'))
+        self.config = json.load(f)
+
         print('- Modifier: init started.')
 
         self.modify_dataset_description_json()
@@ -111,17 +115,21 @@ class Modifier:
             rows = list(reader)
             tsv_file.close()
 
-        rows[0].extend(['site', 'subproject', 'project'])
+        metadata_config = self.config['participantMetadata']
+        enabled_metadata = list(filter(lambda k: k != 'additional' and metadata_config[k], metadata_config.keys()))
+        add_metadata = list(map(lambda row: row['name'],
+            filter(
+                lambda row: row['display'],
+                metadata_config['additional']
+            )
+        ))
+        metadata = enabled_metadata + add_metadata
 
+        rows[0] = [rows[0][0]] + metadata
         for i in range(1, len(rows)):
-            rows[i][1] = self.data.get('age')
-            rows[i][2] = self.data.get('sex')
-            rows[i][3] = self.data.get('handedness')
-            rows[i].extend([
-                self.data['site_id'],
-                self.data['sub_project_id'],
-                self.data['project_id']
-            ])
+            rows[i] = [rows[i][0]]
+            for k in metadata:
+                rows[i].append(self.data[k])
 
         with open(file_path, mode='w', newline='') as tsv_file:
             writer = csv.writer(tsv_file, delimiter='\t')

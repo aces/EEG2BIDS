@@ -165,6 +165,10 @@ export const TaskRunInput = (props) => {
   if (props.value[0].exclude) {
     return (
       <div>
+        <label className="label" htmlFor={props.name}>
+          <b>{props.label}</b>
+        </label>
+        {/*
         <TextareaInput
           name={props.name}
           label={`${props.label} exclusion reason`}
@@ -172,20 +176,21 @@ export const TaskRunInput = (props) => {
             props.exclude(props.taskName, true, value)}
           value={props.value[0].reason}
         />
+        */}
         {props.error &&
           <div className="input-error">
             {props.error}
           </div>
         }
-        <div>
-          <button
-            type="button"
-            className='btn'
-            onClick={() => props.exclude(props.taskName, false, '')}
-          >
-            Include
-          </button>
-        </div>
+        {/* <div> */}
+        <button
+          type="button"
+          className='btn'
+          onClick={() => props.exclude(props.taskName, false, '')}
+        >
+          Include
+        </button>
+        {/* </div> */}
       </div>
     );
   }

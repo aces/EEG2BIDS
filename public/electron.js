@@ -81,9 +81,9 @@ const createMainWindow = () => {
       nativeWindowOpen: true,
     },
     width: 1050,
-    height: 880,
+    height: 700,
     minWidth: 1050,
-    minHeight: 880,
+    minHeight: 700,
     backgroundColor: '#094580',
   });
 
