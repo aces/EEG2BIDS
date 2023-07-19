@@ -285,7 +285,10 @@ class Converter:
                 try:
                     raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
                 except Exception as ex:
-                    raise ReadError(ex)
+                    try:
+                        raw = mne.io.read_epochs_eeglab(input_fname=file, verbose=True)
+                    except Exception as ex:
+                        raise ReadError(ex)
 
                 # anonymize -- 
                 # info['meas_date'], will be set to January 1ˢᵗ, 2000
