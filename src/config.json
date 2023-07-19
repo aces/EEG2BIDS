@@ -44,10 +44,6 @@
         ]
     },
     "tasks": [
-        {
-            "key": "RS",
-            "label": "Resting state/baseline"
-        }
     ],
     "allowAdditionalTask": true,
     "recordingConverter": "",
