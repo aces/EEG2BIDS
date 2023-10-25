@@ -1,7 +1,7 @@
 {
   "name": "eeg2bids",
   "description": "EEG/iEEG to BIDS format Wizard",
-  "version": "1.0.6",
+  "version": "1.0.5",
   "dependencies": {
     "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.1",
@@ -49,15 +49,12 @@
     "electron-build-linux": "electron-builder --linux -c.extraMetadata.main=build/electron.js",
     "electron-build-windows": "electron-builder --win -c.extraMetadata.main=build/electron.js",
     "electron-build-mac": "electron-builder --mac -c.extraMetadata.main=build/electron.js",
-    "build-linux": "npm run clean-linux && npm run react-build && npm run electron-build-linux",
-    "build-windows": "npm run clean-windows && npm run react-build && npm run electron-build-windows",
-    "build-mac": "npm run clean-linux && npm run react-build && npm run electron-build-mac",
-    "build": "npm run clean && npm run react-build && npm run electron-build-linux && npm run electron-build-windows & npm run electron-build-mac",
+    "build-linux": "npm run react-build && npm run electron-build-linux",
+    "build-windows": "npm run react-build && npm run electron-build-windows",
+    "build-mac": "npm run react-build && npm run electron-build-mac",
+    "build": "npm run react-build && npm run electron-build-linux && npm run electron-build-windows & npm run electron-build-mac",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "clean": "npm run clean-windows && npm run clean-linux",
-    "clean-windows": "node -e \"if (process.platform === 'win32') process.exit(1)\" || , if exist dist rmdir /Q /S dist",
-    "clean-linux": "node -e \"if (process.platform !== 'win32') process.exit(1)\" || rm -rf dist"
+    "eject": "react-scripts eject"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css,md}": [
