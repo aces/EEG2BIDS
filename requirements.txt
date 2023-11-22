@@ -1,9 +1,8 @@
 greenlet~=1.1.3
 eventlet~=0.31.0
-mne==1.2.0
-#mne-bids==0.12
-git+https://github.com/laemtl/mne-bids@copyfile_eeglab_type_conflict#egg=mne_bids
-numpy~=1.20.3
+mne==1.4.0
+mne-bids==0.14
+numpy~=1.22
 mne-features~=0.1
 python-socketio~=5.0.4
 python-engineio~=4.0.0
