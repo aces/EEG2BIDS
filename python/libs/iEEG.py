@@ -357,9 +357,11 @@ class Converter:
                 )
 
                 try:
-                    write_raw_bids(raw, bids_basename, allow_preload=False, overwrite=False, verbose=False)
+                    if fileFormat == 'set':
+                        write_raw_bids(raw, bids_basename, allow_preload=True, overwrite=False, format="EEGLAB", verbose=False)
                     
                     if fileFormat == 'edf':
+                        write_raw_bids(raw, bids_basename, allow_preload=False, overwrite=False, verbose=False)
                         with open(bids_basename, 'r+b') as f:
                             f.seek(8)  # id_info field starts 8 bytes in
                             f.write(bytes("X X X X".ljust(80), 'ascii'))
