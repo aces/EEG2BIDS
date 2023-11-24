@@ -71,6 +71,7 @@
     min-height: 80px;
     padding: 30px;
     -webkit-overflow-scrolling: touch;
+    word-break: break-word;
 }
 .bids-errors {
     font-size: 12pt;
