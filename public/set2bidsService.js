@@ -8,9 +8,9 @@ pythonLog.transports.file.fileName = 'python.log';
 pythonLog.transports.file.archiveLog = archiveLog;
 
 /**
- * EEG2BIDS Wizard Service
+ * SET2BIDS Wizard Service
  */
-module.exports = class EEG2BIDSService {
+module.exports = class SET2BIDSService {
   /**
    * constructor
    */
@@ -47,8 +47,8 @@ module.exports = class EEG2BIDSService {
         __dirname,
         '..',
       this.platform === 'win32' ?
-        'dist/eeg2bids-service-windows/eeg2bids-service-windows.exe' :
-        'dist/eeg2bids-service.app/Contents/MacOS/eeg2bids-service',
+        'dist/set2bids-service-windows/set2bids-service-windows.exe' :
+        'dist/set2bids-service.app/Contents/MacOS/set2bids-service',
       );
       this.process = spawn(pathToService, []);
     }
@@ -71,7 +71,7 @@ module.exports = class EEG2BIDSService {
    */
   shutdown(callback) {
     if (this.process) {
-      pythonLog.info('[SHUTDOWN of eeg2bidsService]');
+      pythonLog.info('[SHUTDOWN of set2bidsService]');
 
       if(os.platform() === 'win32'){
         exec('taskkill /pid ' + this.process.pid + ' /T /F', (error, stdout, stderr) => {

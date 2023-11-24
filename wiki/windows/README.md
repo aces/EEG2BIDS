@@ -21,10 +21,10 @@ npm run start
 py -m venv .
 Scripts\activate
 python -m pip install -r .\requirements.txt
-python -m python.eeg2bids
+python -m python.set2bids
 ```
 
-**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
+**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for SET2BIDS Wizard to successfully function in development!
 
 [Recommended Intellij IDEA Ultimate Guide for development build](intellij/README.md)
 
@@ -39,14 +39,14 @@ Inside project root using your "Windows PowerShell" type the following,
 # first follow the Development Build guide
 # then paste the following commands:
 python -m pip install pyinstaller
-pyinstaller eeg2bids-service-windows.spec --clean
+pyinstaller set2bids-service-windows.spec --clean
 # Visit the /dist for the "python-service" build.
 ```
-To generate the eeg2bids-service-windows.spec file:
+To generate the set2bids-service-windows.spec file:
 ```
 chmod +x build.ps1
 .\build.ps1
-# Open eeg2bids-service.spec and add on the first line
+# Open set2bids-service.spec and add on the first line
 import sys
 sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 ```

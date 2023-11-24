@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 
 /**
- * EEG2BIDS Wizard Service
+ * SET2BIDS Wizard Service
  */
 module.exports = class MFFToSETService {
   /**

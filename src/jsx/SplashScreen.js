@@ -19,7 +19,7 @@ const SplashScreen = (props) => {
   return props.visible ? (
     <>
       <p className='loader-font'>
-        EEG2BIDS Wizard is loading ...
+        SET2BIDS Wizard is loading ...
       </p>
       <span
         className='loader centered'

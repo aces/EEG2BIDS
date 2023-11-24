@@ -36,7 +36,7 @@ const RecordingMetadata = () => {
   const socketContext = useContext(SocketContext);
 
   /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   * openGitHub - Navigate browser to SET2BIDS Wizard.
    */
   const openTemplates = () => {
     const myAPI = window['myAPI'];

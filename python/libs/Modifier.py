@@ -73,7 +73,7 @@ class Modifier:
 
 
     def modify_dataset_description_json(self):
-        # EEG2BIDS Wizard version
+        # SET2BIDS Wizard version
         appVersion = 'unknown'
         
         try:
@@ -93,7 +93,7 @@ class Modifier:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
                 file_data['PreparedBy'] = self.data['preparedBy']
-                file_data['Eeg2bidsVersion'] = appVersion
+                file_data['Set2bidsVersion'] = appVersion
                 file_data['Name'] = self.data['participantID'] + '_' + self.data['session']
 
                 with open(file_path, "w") as fp:

@@ -1,6 +1,6 @@
 
 import numpy as np
-
+import mne.io.eeglab.eeglab as eeglab
 from mne.utils import (
     logger,
     verbose,
@@ -9,13 +9,11 @@ from mne.utils import (
     _check_fname
 )
 from mne.annotations import read_annotations
-from mne.io.eeglab.eeglab import RawEEGLAB, _check_load_mat, _handle_montage_units, _get_info, _check_eeglab_fname, _check_boundary, _set_dig_montage_in_init, _check_latencies
 
 # just fix the scaling for now, EEGLAB doesn't seem to provide this info
 CAL = 1e-6
 
-@fill_doc
-class RawEEGLABOveride(RawEEGLAB):
+class RawEEGLABOveride(eeglab.RawEEGLAB):
     r"""Raw object from EEGLAB .set file.
 
     Parameters
@@ -55,17 +53,17 @@ class RawEEGLABOveride(RawEEGLAB):
         verbose=None,
     ):  # noqa: D102
         input_fname = str(_check_fname(input_fname, "read", True, "input_fname"))
-        eeg = _check_load_mat(input_fname, uint16_codec)
+        eeg = eeglab._check_load_mat(input_fname, uint16_codec)
         last_samps = [eeg.pnts - 1]
-        scale_units = _handle_montage_units(montage_units)
-        info, eeg_montage, _ = _get_info(eeg, eog=eog, scale_units=scale_units)
+        scale_units = eeglab._handle_montage_units(montage_units)
+        info, eeg_montage, _ = eeglab._get_info(eeg, eog=eog, scale_units=scale_units)
 
         # read the data
         if isinstance(eeg.data, str):
-            data_fname = _check_eeglab_fname(input_fname, eeg.data)
+            data_fname = eeglab._check_eeglab_fname(input_fname, eeg.data)
             logger.info("Reading %s" % data_fname)
 
-            super(RawEEGLAB, self).__init__(
+            super(eeglab.RawEEGLAB, self).__init__(
                 info,
                 preload,
                 filenames=[data_fname],
@@ -94,7 +92,7 @@ class RawEEGLABOveride(RawEEGLAB):
                 data = np.empty((n_chan, n_times), dtype=float)
             data[:n_chan] = eeg.data
             data *= CAL
-            super(RawEEGLAB, self).__init__(
+            super(eeglab.RawEEGLAB, self).__init__(
                 info,
                 data,
                 filenames=[input_fname],
@@ -106,9 +104,9 @@ class RawEEGLABOveride(RawEEGLAB):
         # create event_ch from annotations
         annot = read_annotations(input_fname)
         self.set_annotations(annot)
-        _check_boundary(annot, None)
+        eeglab._check_boundary(annot, None)
 
-        _set_dig_montage_in_init(self, eeg_montage)
+        eeglab._set_dig_montage_in_init(self, eeg_montage)
 
         latencies = np.round(annot.onset * self.info["sfreq"])
-        _check_latencies(latencies)
+        eeglab._check_latencies(latencies)

@@ -4,12 +4,12 @@
 
 # Development Introduction
 
- * EEG2BIDS/src - contains the frontend code:
+ * SET2BIDS/src - contains the frontend code:
    * Electron used for Multi-OS window rendering.
    * React.js used for GUI components.
    * Socket.io used for messages to python.
- * EEG2BIDS/python - contains the backend code:
-   * The main app logic starts in eeg2bids.py.
+ * SET2BIDS/python - contains the backend code:
+   * The main app logic starts in set2bids.py.
      * EEG to BIDS libraries used.
      * APIs to a LORIS instance.
    * Socket.io used for messages to the GUI.

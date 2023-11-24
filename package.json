@@ -1,7 +1,7 @@
 {
-  "name": "eeg2bids",
+  "name": "set2bids",
   "description": "EEG/iEEG to BIDS format Wizard",
-  "version": "1.0.17",
+  "version": "1.0.0",
   "dependencies": {
     "@electron/remote": "^1.1.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
@@ -90,7 +90,7 @@
   },
   "build": {
     "appId": "mni.aces.eeg2bids",
-    "productName": "eeg2bids",
+    "productName": "set2bids",
     "copyright": "Open Source",
     "asar": false,
     "linux": {
@@ -143,11 +143,11 @@
             ]
           }
         ],
-        "NSDesktopFolderUsageDescription": "EEG2BIDS Wizard wants to access the Desktop folder.",
-        "NSDocumentsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Documents folder.",
-        "NSDownloadsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Downloads folder.",
-        "NSFileProviderDomainUsageDescription": "EEG2BIDS Wizard wants to access files managed by a file provider.",
-        "NSSystemAdministrationUsageDescription": "The operation being performed by EEG2BIDS Wizard requires elevated permission."
+        "NSDesktopFolderUsageDescription": "SET2BIDS Wizard wants to access the Desktop folder.",
+        "NSDocumentsFolderUsageDescription": "SET2BIDS Wizard wants to access the Documents folder.",
+        "NSDownloadsFolderUsageDescription": "SET2BIDS Wizard wants to access the Downloads folder.",
+        "NSFileProviderDomainUsageDescription": "SET2BIDS Wizard wants to access files managed by a file provider.",
+        "NSSystemAdministrationUsageDescription": "The operation being performed by SET2BIDS Wizard requires elevated permission."
       }
     },
     "nsis": {
@@ -164,7 +164,7 @@
       "python/**/*",
       "python/tools/mff_to_set.exe",
       "dist",
-      "dist/eeg2bids-service.app",
+      "dist/set2bids-service.app",
       "public/*",
       "package.json"
     ],

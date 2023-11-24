@@ -26,17 +26,17 @@ const {app} = electron;
 const {BrowserWindow} = electron;
 const nativeImage = electron.nativeImage;
 
-const EEG2BIDSService = process.env.DEV ?
-  require('./eeg2bidsService') :
-  require(path.join(__dirname, '../build/eeg2bidsService'));
+const SET2BIDSService = process.env.DEV ?
+  require('./set2bidsService') :
+  require(path.join(__dirname, '../build/set2bidsService'));
 
 // Launch python service.
-const eeg2bidsService = new EEG2BIDSService();
-eeg2bidsService.startup().then((error) => {
+const set2bidsService = new SET2BIDSService();
+set2bidsService.startup().then((error) => {
   if (error) {
-    console.info('[SERVICE] eeg2bids-service failed');
+    console.info('[SERVICE] set2bids-service failed');
   } else {
-    console.info('[SERVICE] eeg2bids-service success');
+    console.info('[SERVICE] set2bids-service success');
   }
 });
 
@@ -123,7 +123,7 @@ app.on('window-all-closed', () => {
   // Wait for shutdown to stop
   // the service and quit the app
   if (process.platform !== 'darwin') {
-    eeg2bidsService.shutdown(() => app.quit());
+    set2bidsService.shutdown(() => app.quit());
   }
 });
 

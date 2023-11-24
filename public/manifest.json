@@ -1,6 +1,6 @@
 {
-  "short_name": "eeg2bids",
-  "name": "eeg2bids",
+  "short_name": "set2bids",
+  "name": "set2bids",
   "icons": [
     {
       "src": "favicon.ico",

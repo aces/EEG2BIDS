@@ -84,7 +84,7 @@ const Help = (props) => {
       <h3>2) Configuration</h3>
       The LORIS login is optional and allows the following:
       <ul>
-        <li>Safely store LORIS credentials in EEG2BIDS</li>
+        <li>Safely store LORIS credentials in SET2BIDS</li>
         <li>Automatically retrieve LORIS data in Configuration</li>
         <li>
           LORIS credentials are deleted by clearing the username and password!

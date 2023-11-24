@@ -21,7 +21,7 @@ sudo apt-get install python3-venv
 npm run start-server
 ```
 
-**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for EEG2BIDS Wizard to successfully function in development!
+**Note:** Both the "python-service" & the "electron-app" need to be running simultaneously for SET2BIDS Wizard to successfully function in development!
 
 ## Production
 
@@ -36,14 +36,14 @@ python-service build:
 pip install pyinstaller
 sudo apt-get install python3-dev
 sudo apt-get install binutils
-pyinstaller eeg2bids-service.spec --clean
+pyinstaller set2bids-service.spec --clean
 # Visit the /dist for the "python-service" build.
 ```
-To generate the eeg2bids-service.spec file:
+To generate the set2bids-service.spec file:
 ```
 chmod +x build.sh
 ./build.sh
-# Open eeg2bids-service.spec and add on the first line
+# Open set2bids-service.spec and add on the first line
 import sys
 sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 ```

@@ -4,9 +4,9 @@
 
 # React Development
 
- * EEG2BIDS/src/App.js is the starting point of react.
- * EEG2BIDS/src/jsx is where the main view components of the app exist.
- * EEG2BIDS/src/jsx/elements is where useful components exist for repeated tasks.
+ * SET2BIDS/src/App.js is the starting point of react.
+ * SET2BIDS/src/jsx is where the main view components of the app exist.
+ * SET2BIDS/src/jsx/elements is where useful components exist for repeated tasks.
 
 ## Things to remember:
 

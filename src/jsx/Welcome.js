@@ -11,21 +11,21 @@ import {name, version} from '../../package.json';
  */
 const Welcome = (props) => {
   /**
-   * openBIDS - Navigate browser to EEG2BIDS Wizard.
+   * openBIDS - Navigate browser to SET2BIDS Wizard.
    */
   const openBIDS = () => {
     const myAPI = window['myAPI'];
     myAPI.visitBIDS();
   };
   /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   * openGitHub - Navigate browser to SET2BIDS Wizard.
    */
   const openGitHub = () => {
     const myAPI = window['myAPI'];
     myAPI.visitGitHub();
   };
   /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   * openGitHub - Navigate browser to SET2BIDS Wizard.
    */
   const openIssues = () => {
     const myAPI = window['myAPI'];
@@ -51,7 +51,7 @@ const Welcome = (props) => {
       display: props.visible ? 'block' : 'none',
     }}>
       <span className='title'>
-        Welcome to <b>EEG2BIDS Wizard</b>
+        Welcome to <b>SET2BIDS Wizard</b>
       </span>
       <div className='info' style={{display: 'flex'}}>
         <div className='info' style={{
@@ -59,7 +59,7 @@ const Welcome = (props) => {
           margin: '0 auto',
         }}>
           <p>
-            <b>EEG2BIDS Wizard</b> is a tool for de-identification of EEG data
+            <b>SET2BIDS Wizard</b> is a tool for de-identification of EEG data
             and conversion to BIDS format for data sharing.
           </p>
           <p>This software is designed to run on EEGLAB files

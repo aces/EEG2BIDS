@@ -19,7 +19,7 @@ Alternative IDE Downloads:
 
 1) Inside IntelliJ IDEA Ultimate open the "Select Run/Debug Configuration" dropdown
 2) Click the "Add New Configuration" and select Python
-3) Set "Script path" to python\eeg2bids.py
+3) Set "Script path" to python\set2bids.py
 4) Set "Python interpreter" to Python 3.8.5 that you've already installed.
 5) See the image below for an example:
 
@@ -33,7 +33,7 @@ Alternative IDE Downloads:
 ![Example Run/Debug Configuration for npm](../../images/windows/intellij_run_debug_config_npm.png)
 
 10) Make sure to "APPLY" your changes and click "OK"
-11) Now launch debug mode of python "EEG2BIDS Wizard" (see image below) 
+11) Now launch debug mode of python "SET2BIDS Wizard" (see image below) 
 
 ![Example Run/Debug Configuration for npm](../../images/windows/intellij_run_eeg2bids_green_arrow.png)
 
