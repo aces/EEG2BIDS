@@ -2,7 +2,6 @@ import os
 import csv
 import json
 import re
-from python.libs.iEEG import metadata as metadata_fields
 
 class Modifier:
     def __init__(self, data):

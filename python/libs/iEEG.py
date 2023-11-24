@@ -1,25 +1,17 @@
 import csv
 import os
-import math
 import mne
 import pymatreader
 from python.libs import EDF
 from mne_bids import write_raw_bids, BIDSPath
 from python.libs import tarfile_progress as tarfile
-from os.path import dirname, join as pjoin
 import numpy as np
-from eeglabio.utils import cart_to_eeglab
-from numpy.core.records import fromarrays
-from scipy.io import savemat
-from mne.io.eeglab.eeglab import _check_load_mat
-import mne
 from mne.export._eeglab import _get_als_coords_from_chs
-from mne.utils.check import _check_fname
 import pymatreader
-import scipy.io as sio
 from mne_bids import BIDSPath, write_raw_bids
 from mne_bids.dig import _write_dig_bids
 import shutil
+from python.libs.mne.eeglab import RawEEGLABOveride
 
 class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
@@ -283,12 +275,16 @@ class Converter:
             
             if fileFormat == 'set':
                 try:
-                    raw = mne.io.read_raw_eeglab(input_fname=file, preload=False, verbose=True)
+                    raw = RawEEGLABOveride(
+                        input_fname=file,
+                        preload=False,
+                        eog=(),
+                        uint16_codec=None,
+                        montage_units="mm",
+                        verbose=True,
+                    )
                 except Exception as ex:
-                    try:
-                        raw = mne.io.read_epochs_eeglab(input_fname=file, verbose=True)
-                    except Exception as ex:
-                        raise ReadError(ex)
+                    raise ReadError(ex)
 
                 # anonymize -- 
                 # info['meas_date'], will be set to January 1ˢᵗ, 2000
