@@ -7,8 +7,6 @@ from mne_bids import write_raw_bids, BIDSPath
 from python.libs import tarfile_progress as tarfile
 import numpy as np
 from mne.export._eeglab import _get_als_coords_from_chs
-import pymatreader
-from mne_bids import BIDSPath, write_raw_bids
 from mne_bids.dig import _write_dig_bids
 import shutil
 from python.libs.mne.eeglab import RawEEGLABOveride
@@ -16,7 +14,6 @@ from python.libs.mne.eeglab import RawEEGLABOveride
 class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
     pass
-
 
 class WriteError(PermissionError):
     """Raised when a PermissionError is thrown while writing a file"""

@@ -1,4 +1,4 @@
-source bin/activate
+source python/bin/activate
 pyi-makespec --paths=python python/set2bids.py -w -D \
 --name set2bids-service \
 --add-data 'python/libs/bids_validator/rules/top_level_rules.json:bids_validator/rules' \
