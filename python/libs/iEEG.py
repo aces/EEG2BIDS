@@ -1,17 +1,26 @@
 import csv
 import os
-import mne
 import pymatreader
-from python.libs import EDF
-from mne_bids import write_raw_bids, BIDSPath
-from python.libs import tarfile_progress as tarfile
 import numpy as np
-from mne.export._eeglab import _get_als_coords_from_chs
-import pymatreader
-from mne_bids import BIDSPath, write_raw_bids
-from mne_bids.dig import _write_dig_bids
 import shutil
-from python.libs.mne.eeglab import RawEEGLABOveride
+
+from python.libs import (
+    EDF,
+    tarfile_progress as tarfile
+)
+
+from mne_bids.write import write_raw_bids
+from mne_bids.path import BIDSPath
+from mne_bids.dig import _write_dig_bids
+
+from mne.export._eeglab import _get_als_coords_from_chs
+from mne.io import (
+    read_raw_edf,
+    read_raw_eeglab
+)
+from mne.channels import (
+    make_dig_montage
+)
 
 class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
@@ -261,7 +270,7 @@ class Converter:
                 m_info, c_info = reader.open(fname=file)
                 self.set_m_info(m_info)
 
-                raw = mne.io.read_raw_edf(input_fname=file)
+                raw = read_raw_edf(input_fname=file)
 
                 raw._init_kwargs = {
                     'input_fname': file,
@@ -275,12 +284,9 @@ class Converter:
             
             if fileFormat == 'set':
                 try:
-                    raw = RawEEGLABOveride(
+                    raw = read_raw_eeglab(
                         input_fname=file,
                         preload=False,
-                        eog=(),
-                        uint16_codec=None,
-                        montage_units="mm",
                         verbose=True,
                     )
                 except Exception as ex:
@@ -370,7 +376,7 @@ class Converter:
                         ch_locs = _get_als_coords_from_chs(raw.info['chs'])
                         ch_pos = dict(zip(ch_names, ch_locs.tolist()))
 
-                        als_montage = mne.channels.make_dig_montage(
+                        als_montage = make_dig_montage(
                             ch_pos=ch_pos,
                             coord_frame='ctf_head',
                             nasion=nasion_coord,
@@ -445,7 +451,7 @@ class Converter:
         ]
 
         # create the new montage with the channels positions and the landmark coordinates
-        new_montage = mne.channels.make_dig_montage(
+        new_montage = make_dig_montage(
             ch_pos=raw.get_montage().get_positions()['ch_pos'],
             coord_frame='head',
             nasion=nasion_coord,

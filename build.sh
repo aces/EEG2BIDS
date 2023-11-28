@@ -10,6 +10,7 @@ pyi-makespec --paths=python python/set2bids.py -w -D \
 --add-data 'python/libs/bids_validator/tsv/non_custom_columns.json:bids_validator/tsv' \
 --add-data 'python/lib/python3.8/site-packages/mne/:mne' \
 --add-data 'python/lib/python3.8/site-packages/mne_bids/:mne_bids' \
+--add-data 'src/config.json/:src' \
 --hidden-import=eventlet.hubs.epolls \
 --hidden-import=eventlet.hubs.kqueue \
 --hidden-import=eventlet.hubs.selects \

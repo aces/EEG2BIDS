@@ -14,7 +14,7 @@ import Validator from './Validator';
 import {SocketContext} from './socket.io';
 
 const BIDSFileFormats = {
-  set: 'EEGLAB (.set & .fdt) (unaccompanied set files not supported)',
+  set: 'EEGLAB',
   edf: 'European Data Format (.edf)',
 };
 

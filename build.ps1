@@ -36,6 +36,7 @@ pyinstaller --paths=python python/set2bids.py -D `
 --add-data 'python/libs/mne/channels/data/montages/standard_primed.elc;./mne/channels/data/montages' `
 --add-data 'Lib/site-packages/mne;mne' `
 --add-data 'Lib/site-packages/mne_bids;mne_bids' `
+--add-data 'src/config.json;src' `
 --hidden-import=eventlet.hubs.epolls `
 --hidden-import=eventlet.hubs.kqueue `
 --hidden-import=eventlet.hubs.selects `
