@@ -26,7 +26,6 @@ class ReadError(PermissionError):
     """Raised when a PermissionError is thrown while reading a file"""
     pass
 
-
 class WriteError(PermissionError):
     """Raised when a PermissionError is thrown while writing a file"""
     pass

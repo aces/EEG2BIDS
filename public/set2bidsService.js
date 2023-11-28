@@ -48,7 +48,9 @@ module.exports = class SET2BIDSService {
         '..',
       this.platform === 'win32' ?
         'dist/set2bids-service-windows/set2bids-service-windows.exe' :
-        'dist/set2bids-service.app/Contents/MacOS/set2bids-service',
+      this.platform === 'darwin' ?
+        'dist/set2bids-service.app/Contents/MacOS/set2bids-service' :
+        'dist/set2bids-service/set2bids-service',
       );
       this.process = spawn(pathToService, []);
     }
