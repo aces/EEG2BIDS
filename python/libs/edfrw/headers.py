@@ -95,7 +95,7 @@ class EdfSubjectId:
     @dob.setter
     def dob(self, dob):
         '''
-        If DOB is not known it must be an empy string '' or 'X'. If it
+        If DOB is not known it must be an empty string '' or 'X'. If it
         is known, it must be entered as
 
         (a) a string in EDF format 'dd-MMM-yy', as in '30-DEC-1999';

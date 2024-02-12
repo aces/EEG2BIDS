@@ -110,7 +110,7 @@ class EdfReader(object):
                 self.header.number_of_bytes_in_header)
         self._f.seek(pointer)
         # Data are saved as int16, so the number of bytes to read is
-        # twice the number of samles requested.
+        # twice the number of samples requested.
         nsamples = self.header.number_of_samples_in_data_record * 2
         samples = self._f.read(nsamples)
         samples = np.frombuffer(samples, 'int16')

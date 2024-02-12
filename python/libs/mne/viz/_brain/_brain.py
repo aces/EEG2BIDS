@@ -2268,7 +2268,7 @@ class Brain(object):
             (away from the true border) along the cortical mesh to include
             as part of the border definition.
         hemi : str | None
-            If None, it is assumed to belong to the hemipshere being
+            If None, it is assumed to belong to the hemisphere being
             shown.
         subdir : None | str
             If a label is specified as name, subdir can be used to indicate
@@ -2685,7 +2685,7 @@ class Brain(object):
         name : str
             Internal name to use.
         hemi : str | None
-            If None, it is assumed to belong to the hemipshere being
+            If None, it is assumed to belong to the hemisphere being
             shown. If two hemispheres are being shown, an error will
             be thrown.
         resolution : int
@@ -2922,7 +2922,7 @@ class Brain(object):
             as part of the border definition.
         %(alpha)s Default is 1.
         hemi : str | None
-            If None, it is assumed to belong to the hemipshere being
+            If None, it is assumed to belong to the hemisphere being
             shown. If two hemispheres are being shown, data must exist
             for both hemispheres.
         remove_existing : bool
