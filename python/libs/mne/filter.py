@@ -805,7 +805,7 @@ def filter_data(data, sfreq, l_freq, h_freq, picks=None, filter_length='auto',
 
     .. note:: If n_jobs > 1, more memory is required as
               ``len(picks) * n_times`` additional time points need to
-              be temporaily stored in memory.
+              be temporarily stored in memory.
 
     For more information, see the tutorials
     :ref:`disc-filtering` and :ref:`tut-filter-resample` and
@@ -1997,7 +1997,7 @@ class FilterMixin(object):
 
         .. note:: If n_jobs > 1, more memory is required as
                   ``len(picks) * n_times`` additional time points need to
-                  be temporaily stored in memory.
+                  be temporarily stored in memory.
 
         For more information, see the tutorials
         :ref:`disc-filtering` and :ref:`tut-filter-resample` and
@@ -2146,7 +2146,7 @@ class FilterMixin(object):
         If envelope=False, more memory is required since the original raw data
         as well as the analytic signal have temporarily to be stored in memory.
         If n_jobs > 1, more memory is required as ``len(picks) * n_times``
-        additional time points need to be temporaily stored in memory.
+        additional time points need to be temporarily stored in memory.
 
         Also note that the ``n_fft`` parameter will allow you to pad the signal
         with zeros before performing the Hilbert transform. This padding

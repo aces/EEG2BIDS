@@ -74,10 +74,10 @@ class EdfWriter(object):
         Signals are allowed to be acquired at different sampling rates.
         The data are saved in data blocks (named 'data records' in the
         specification). The total number of samples in the block is thus
-        determined by adding the sizes of the individiual signals
+        determined by adding the sizes of the individual signals
         (`signal.number_of_samples_in_data_record`).
 
-        Each data block holds all data aquired during a time interval of
+        Each data block holds all data acquired during a time interval of
         `header.duration_of_data_record` seconds, and the total number
         of data records in the file are `header.number_of_data_records`.
 

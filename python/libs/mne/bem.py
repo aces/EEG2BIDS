@@ -1131,7 +1131,7 @@ def make_watershed_bem(subject, subjects_dir=None, overwrite=False,
     if op.isfile(T1_mgz):
         new_info = _extract_volume_info(T1_mgz) if has_nibabel() else dict()
         if not new_info:
-            warn('nibabel is not available or the volumn info is invalid.'
+            warn('nibabel is not available or the volume info is invalid.'
                  'Volume info not updated in the written surface.')
         surfs = ['brain', 'inner_skull', 'outer_skull', 'outer_skin']
         for s in surfs:
