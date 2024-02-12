@@ -901,7 +901,7 @@ def _parse_impedance(settings, recording_date=None):
     Parameters
     ----------
     settings : list
-        The header settings lines fom the VHDR file.
+        The header settings lines from the VHDR file.
     recording_date : datetime.datetime | None
         The date of the recording as extracted from the VMRK file.
 
@@ -963,7 +963,7 @@ def _parse_impedance_ranges(settings):
     Parameters
     ----------
     settings : list
-        The header settings lines fom the VHDR file.
+        The header settings lines from the VHDR file.
 
     Returns
     -------
