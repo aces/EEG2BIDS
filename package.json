@@ -42,7 +42,7 @@
   },
   "scripts": {
     "rebuild": "rebuild --runtime=electron --target=11.2.1",
-    "react-start": "cross-env BROWSER=NONE react-scripts start",
+    "react-start": "cross-env BROWSER=NONE react-scripts --openssl-legacy-provider start",
     "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently \"npm run react-start\" \"wait-on http://127.0.0.1:3000/ && npm run electron-start\"",
     "start-server": "./start-server.sh",

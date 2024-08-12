@@ -6,6 +6,7 @@ const pythonLog = require('electron-log');
 const kill = require('kill-port');
 pythonLog.transports.file.fileName = 'python.log';
 pythonLog.transports.file.archiveLog = archiveLog;
+// app.commandLine.appendSwitch('openssl-legacy-provider');
 
 /**
  * SET2BIDS Wizard Service

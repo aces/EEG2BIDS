@@ -7,7 +7,7 @@ const path = require('path');
 const MFFToSETService = process.env.DEV ?
   require('./mffToSetService') :
   require(path.join(__dirname, '../build/mffToSetService'));
-
+// app.commandLine.appendSwitch('openssl-legacy-provider');
 jsLog.transports.file.fileName = 'js.log';
 jsLog.transports.file.archiveLog = archiveLog;
 
