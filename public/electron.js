@@ -3,7 +3,7 @@ const path = require('path');
 const url = require('url');
 const Store = require('electron-store');
 const {ipcMain} = require('electron');
-
+// app.commandLine.appendSwitch('openssl-legacy-provider');
 // Set data in electron-store (not secure)
 const store = new Store({
   schema: {
