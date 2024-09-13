@@ -5,7 +5,7 @@ import pymatreader
 import numpy as np
 import shutil
 from datetime import datetime
-from python.libs import (
+from libs import (
     EDF,
     tarfile_progress as tarfile
 )
@@ -123,7 +123,7 @@ class Time:
     def __init__(self):
         now = datetime.now()
         self.latest_output = now.strftime("%Y-%m-%d-%Hh%Mm%Ss")
-        
+
 class BaseHandler(abc.ABC):
     def __init__(self, data):
         self.data = data
@@ -393,3 +393,11 @@ class SETHandler(BaseHandler):
             tsv_columns = ["trial_type" if name == "type" else name for name in event_dict.keys()]
             writer.writerow(tsv_columns)
             writer.writerows(zip(*event_dict.values()))
+
+
+
+    
+
+if __name__ == '__main__':
+    # Any standalone execution logic here
+    pass
