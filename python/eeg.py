@@ -208,7 +208,9 @@ class EDFHandler(BaseHandler):
 
         for i, eegRun in enumerate(data['eegRuns']):
             raw = self.read_file(eegRun['eegFile'])
+            # pass raw as arguments 
             eegRun['eegBIDSBasename'] = self.to_bids(
+                raw = raw,
                 fileFormat='edf',
                 eeg_run=eegRun,
                 ch_type='eeg',
@@ -296,6 +298,7 @@ class SETHandler(BaseHandler):
         for i, eegRun in enumerate(data['eegRuns']):
             raw = self.read_file(eegRun['eegFile'])
             eegRun['eegBIDSBasename'] = self.to_bids(
+                raw=raw,
                 fileFormat='set',
                 eeg_run=eegRun,
                 ch_type='eeg',
@@ -317,7 +320,7 @@ class SETHandler(BaseHandler):
             ch_types = {}
             for ch in raw.ch_names:
                 ch_name = ch.lower()
-                ch_types[ch] = next((ctype for key, ctype in channel_map.items() if key in ch_name), ch_type)
+                ch_types[ch] = next((ctype for key, ctype in channel_map.items() if key in ch_name), ch_types)
 
             raw.set_channel_types(ch_types)
 

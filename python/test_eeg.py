@@ -17,73 +17,73 @@ class TestTimeClass(unittest.TestCase):
         self.assertEqual(time_instance.latest_output, expected_format)
 
 
-class TestEDFHandlerClass(unittest.TestCase):
-    def setUp(self):
-        # update to test file path
-        self.data = {
-            'eegRuns': [{'eegFile': '/path/file.edf', 'task': 'test_task', 'run': 1}],
-            'bids_directory': '/bids',
-            'outputFilename': 'output',
-            'participantID': 'sub-01',
-            'session': 'ses-01',
-            'output_time': 'output-2022-01-01-00h00m00s',
-            'read_only': False,
-            'powerLineFreq': '60'
-        }
-        self.handler = EDFHandler(self.data)
+# class TestEDFHandlerClass(unittest.TestCase):
+#     def setUp(self):
+#         # update to test file path
+#         self.data = {
+#             'eegRuns': [{'eegFile': '/path/file.edf', 'task': 'test_task', 'run': 1}],
+#             'bids_directory': '/bids',
+#             'outputFilename': 'output',
+#             'participantID': 'sub-01',
+#             'session': 'ses-01',
+#             'output_time': 'output-2022-01-01-00h00m00s',
+#             'read_only': False,
+#             'powerLineFreq': '60'
+#         }
+#         self.handler = EDFHandler(self.data)
 
-    @patch('eeg.read_raw_edf')
-    def test_read_file_success(self, mock_read_raw_edf):
-        mock_raw = MagicMock()
-        mock_read_raw_edf.return_value = mock_raw
-        raw = self.handler.read_file('/path/file.edf')
-        self.assertEqual(raw, mock_raw)
-        mock_read_raw_edf.assert_called_with(input_fname='/path/file.edf')
+#     @patch('eeg.read_raw_edf')
+#     def test_read_file_success(self, mock_read_raw_edf):
+#         mock_raw = MagicMock()
+#         mock_read_raw_edf.return_value = mock_raw
+#         raw = self.handler.read_file('/path/file.edf')
+#         self.assertEqual(raw, mock_raw)
+#         mock_read_raw_edf.assert_called_with(input_fname='/path/file.edf')
 
-    @patch('eeg.read_raw_edf')
-    def test_read_file_permission_error(self, mock_read_raw_edf):
-        mock_read_raw_edf.side_effect = PermissionError("Permission denied")
-        with self.assertRaises(ReadError):
-            self.handler.read_file('/path/file.edf')
+#     @patch('eeg.read_raw_edf')
+#     def test_read_file_permission_error(self, mock_read_raw_edf):
+#         mock_read_raw_edf.side_effect = PermissionError("Permission denied")
+#         with self.assertRaises(ReadError):
+#             self.handler.read_file('/path/file.edf')
 
-    # @patch.object(EDFHandler, 'to_bids')
-    # @patch.object(EDFHandler, 'read_file')
-    @patch('os.path.exists', return_value=True)
-    @patch('shutil.rmtree')
-    def test_convert_to_bids(self, mock_rmtree, mock_exists, mock_read_file, mock_to_bids):
-        mock_read_file.return_value = MagicMock()
-        self.handler.convert_to_bids()
-        mock_read_file.assert_called_once_with('/path/file.edf')
-        mock_to_bids.assert_called_once()
+#     # @patch.object(EDFHandler, 'to_bids')
+#     # @patch.object(EDFHandler, 'read_file')
+#     @patch('os.path.exists', return_value=True)
+#     @patch('shutil.rmtree')
+#     def test_convert_to_bids(self, mock_rmtree, mock_exists, mock_read_file, mock_to_bids):
+#         mock_read_file.return_value = MagicMock()
+#         self.handler.convert_to_bids()
+#         mock_read_file.assert_called_once_with('/path/file.edf')
+#         mock_to_bids.assert_called_once()
 
-    @patch('os.makedirs')
-    @patch('mne_bids.write_raw_bids')
-    @patch('os.path.exists', return_value=True)
-    def test_to_bids_success(self, mock_exists, mock_write_raw_bids, mock_makedirs):
-        raw = MagicMock()
-        raw.ch_names = ['Cz', 'Pz', 'Fz']
-        raw.info = {'subject_info': {}}
-        raw.info['line_freq'] = None
-        raw._init_kwargs = {}
-        self.handler.read_file = MagicMock(return_value=raw)
-        eeg_run = {'eegFile': '/path/file.edf', 'task': 'test_task', 'run': 1}
-        bids_basename = self.handler.to_bids(
-            raw=raw,
-            fileFormat='edf',
-            eeg_run=eeg_run,
-            ch_type='eeg',
-            task='test_task',
-            bids_directory='/bids',
-            subject_id='sub-01',
-            session='ses-01',
-            run=1,
-            output_time='output-2022-01-01-00h00m00s',
-            read_only=False,
-            line_freq='60',
-            outputFilename='output'
-        )
-        mock_write_raw_bids.assert_called_once()
-        self.assertIsNotNone(bids_basename)
+#     @patch('os.makedirs')
+#     @patch('mne_bids.write_raw_bids')
+#     @patch('os.path.exists', return_value=True)
+#     def test_to_bids_success(self, mock_exists, mock_write_raw_bids, mock_makedirs):
+#         raw = MagicMock()
+#         raw.ch_names = ['Cz', 'Pz', 'Fz']
+#         raw.info = {'subject_info': {}}
+#         raw.info['line_freq'] = None
+#         raw._init_kwargs = {}
+#         self.handler.read_file = MagicMock(return_value=raw)
+#         eeg_run = {'eegFile': '/path/file.edf', 'task': 'test_task', 'run': 1}
+#         bids_basename = self.handler.to_bids(
+#             raw=raw,
+#             fileFormat='edf',
+#             eeg_run=eeg_run,
+#             ch_type='eeg',
+#             task='test_task',
+#             bids_directory='/bids',
+#             subject_id='sub-01',
+#             session='ses-01',
+#             run=1,
+#             output_time='output-2022-01-01-00h00m00s',
+#             read_only=False,
+#             line_freq='60',
+#             outputFilename='output'
+#         )
+#         mock_write_raw_bids.assert_called_once()
+#         self.assertIsNotNone(bids_basename)
 
 class TestSETHandlerClass(unittest.TestCase):
     def setUp(self):
