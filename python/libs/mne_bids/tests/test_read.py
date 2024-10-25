@@ -396,7 +396,7 @@ def test_get_head_mri_trans(tmp_path):
 
     # bids_path without datatype is deprecated
     bids_path = electrophys_bids_path.copy().update(datatype=None)
-    with pytest.raises(FileNotFoundError):  # defaut location is all wrong!
+    with pytest.raises(FileNotFoundError):  # default location is all wrong!
         with pytest.warns(DeprecationWarning, match='no datatype'):
             get_head_mri_trans(
                 bids_path=bids_path,
@@ -407,7 +407,7 @@ def test_get_head_mri_trans(tmp_path):
 
     # bids_path without suffix is deprecated
     bids_path = electrophys_bids_path.copy().update(suffix=None)
-    with pytest.raises(FileNotFoundError):  # defaut location is all wrong!
+    with pytest.raises(FileNotFoundError):  # default location is all wrong!
         with pytest.warns(DeprecationWarning, match='no datatype'):
             get_head_mri_trans(
                 bids_path=bids_path,

@@ -1104,7 +1104,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
 
         .. note:: If n_jobs > 1, more memory is required as
                   ``len(picks) * n_times`` additional time points need to
-                  be temporaily stored in memory.
+                  be temporarily stored in memory.
 
         For details, see :func:`mne.filter.notch_filter`.
         """
@@ -2052,7 +2052,7 @@ def _get_ch_factors(inst, units, picks_idxs):
     Returns
     -------
     ch_factors : ndarray of floats, shape(len(picks),)
-        The sacling factors for each channel, ordered according
+        The scaling factors for each channel, ordered according
         to picks.
 
     """

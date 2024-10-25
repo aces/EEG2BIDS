@@ -1184,7 +1184,7 @@ def compute_depth_prior(forward, info, exp=0.8, limit=10.0,
           prior dependent only on the sensor geometry (and relationship
           to the sources).
     * ``'whiten'``
-          Compute a whitener and apply it to the gain matirx before computing
+          Compute a whitener and apply it to the gain matrix before computing
           the depth prior. In this case ``noise_cov`` must not be None.
           Whitening the gain matrix makes the depth prior
           depend on both sensor geometry and the data of interest captured
@@ -1256,7 +1256,7 @@ def compute_depth_prior(forward, info, exp=0.8, limit=10.0,
         ws = np.sort(w)
         weight_limit = limit ** 2
         if limit_depth_chs is False:
-            # match old mne-python behavor
+            # match old mne-python behavior
             # we used to do ind = np.argmin(ws), but this is 0 by sort above
             n_limit = 0
             limit = ws[0] * weight_limit

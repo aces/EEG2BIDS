@@ -388,7 +388,7 @@ def _write_dig_bids(bids_path, raw, montage=None, acpc_aligned=False,
 
     if montage is None:
         montage = raw.get_montage()
-    else:  # assign montage to raw but supress any coordinate transforms
+    else:  # assign montage to raw but suppress any coordinate transforms
         montage = montage.copy()  # don't modify original
         montage_coord_frame = montage.get_positions()['coord_frame']
         fids = [d for d in montage.dig  # save to add back

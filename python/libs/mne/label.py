@@ -1512,7 +1512,7 @@ def stc_to_label(stc, src=None, smooth=True, connected=False,
 
 
 def _verts_within_dist(graph, sources, max_dist):
-    """Find all vertices wihin a maximum geodesic distance from source.
+    """Find all vertices within a maximum geodesic distance from source.
 
     Parameters
     ----------

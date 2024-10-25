@@ -697,7 +697,7 @@ def _get_vhdr_info(vhdr_fname, eog, misc, scale):
                 highpass = [float(filt) if filt not in ('NaN', 'Off', 'DC')
                             else np.Inf for filt in highpass]
                 info['highpass'] = np.max(np.array(highpass, dtype=np.float64))
-                # Coveniently enough 1 / np.Inf = 0.0, so this works for
+                # Conveniently enough 1 / np.Inf = 0.0, so this works for
                 # DC / no highpass filter
                 # filter time constant t [secs] to Hz conversion: 1/2*pi*t
                 info['highpass'] = 1. / (2 * np.pi * info['highpass'])
@@ -901,7 +901,7 @@ def _parse_impedance(settings, recording_date=None):
     Parameters
     ----------
     settings : list
-        The header settings lines fom the VHDR file.
+        The header settings lines from the VHDR file.
     recording_date : datetime.datetime | None
         The date of the recording as extracted from the VMRK file.
 
@@ -963,7 +963,7 @@ def _parse_impedance_ranges(settings):
     Parameters
     ----------
     settings : list
-        The header settings lines fom the VHDR file.
+        The header settings lines from the VHDR file.
 
     Returns
     -------
