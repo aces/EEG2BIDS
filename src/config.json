@@ -47,7 +47,7 @@
     ],
     "allowAdditionalTask": true,
     "recordingConverter": "",
-    "BIDSFileFormats": ["set"],
+    "BIDSFileFormats": ["edf","set"],
     "modalities": ["eeg"],
     "autoStartPackagingStep": false
 }

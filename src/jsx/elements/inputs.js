@@ -162,7 +162,7 @@ export const TaskRunInput = (props) => {
     props.update(props.taskName, index, path.filePaths[0]);
   };
 
-  if (props.value[0].exclude) {
+  if (props.value.length && props.value[0].exclude) {
     return (
       <div>
         <label className="label" htmlFor={props.name}>

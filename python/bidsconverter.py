@@ -1,5 +1,3 @@
-# bids_convertor.py
-
 import logging
 import os
 import traceback
@@ -31,11 +29,11 @@ from python.libs import BIDS
 from python.libs.loris_api import LorisAPI
 
 # Initialize LORIS credentials (optional, can be set via events)
-lorisCredentials = {
-    'lorisURL': '',
-    'lorisUsername': '',
-    'lorisPassword': '',
-}
+# lorisCredentials = {
+#     'lorisURL': '',
+#     'lorisUsername': '',
+#     'lorisPassword': '',
+# }
 
 # Create socket listener with comprehensive settings
 sio = socketio.Server(
@@ -60,6 +58,15 @@ log.setLevel(logging.DEBUG)
 # Override print to flush immediately
 print = functools.partial(print, flush=True)
 
+# Define the custom WSGI log handler
+class WsgiLogHandler:
+    def write(self, message):
+        message = message.strip()
+        if message:
+            log.info(message)
+    def flush(self):
+        pass
+
 @sio.event
 def connect(sid, environ):
     try:
@@ -75,7 +82,10 @@ def connect(sid, environ):
 
 @sio.event
 def disconnect(sid):
-    print('Client disconnected:', sid)
+    try:
+        print('Client disconnected:', sid)
+    except:
+        pass
 
 @sio.event
 def set_loris_credentials(sid, data):
@@ -160,14 +170,12 @@ def get_loris_visits(sid, subproject):
 @sio.event
 def get_loris_visit(sid, data):
     try:
-        candID = data.get('candID')
-        visit = data.get('visit')
-        if not candID or not visit:
-            error_msg = 'candID and visit are required.'
-            sio.emit('server_error', {'error': error_msg}, to=sid)
+        if 'candID' not in data or not data['candID']:
+            sio.emit('candID and visit are required.')
             return
-        visit_data = loris_api.get_visit(candID, visit)
-        sio.emit('loris_visit', visit_data, to=sid)
+        if 'visit' not in data or not data['visit']:
+            sio.emit('candID and visit are required.')
+            return
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
         print(traceback.format_exc())
@@ -271,123 +279,6 @@ def tarfile_bids_thread(data):
         print(traceback.format_exc())
         return eventlet.tpool.Proxy(error_response)
 
-def edf_to_bids_thread(data):
-    """
-    Converts EDF data to BIDS format using EDFHandler.
-    """
-    print('edf_to_bids_thread:', data)
-    error_messages = []
-
-    # Validate input data
-    if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
-        error_messages.append('No EEG file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
-        error_messages.append('The BIDS output folder is missing.')
-    if not data.get('session'):
-        error_messages.append('The LORIS Visit Label is missing.')
-
-    if not error_messages:
-        try:
-            # Instantiate the EDFHandler with data
-            handler = EDFHandler(data)
-            
-            # Perform the conversion
-            handler.convert_to_bids()
-
-            # Prepare the response
-            response = {
-                'output_time': data['output_time']
-            }
-            return eventlet.tpool.Proxy(response)
-        except ReadError as e:
-            error_messages.append(f'Cannot read file: {str(e)}')
-            print(traceback.format_exc())
-        except WriteError as e:
-            error_messages.append(f'Cannot write file: {str(e)}')
-            print(traceback.format_exc())
-        except Exception as e:
-            error_messages.append(f'Unknown error: {str(e)}')
-            print(traceback.format_exc())
-
-    # Return errors if any
-    response = {
-        'error': error_messages
-    }
-    print(response)
-    return eventlet.tpool.Proxy(response)
-
-def set_to_bids_thread(data):
-    """
-    Converts SET data to BIDS format using SETHandler.
-    """
-    print('set_to_bids_thread:', data)
-    error_messages = []
-
-    # Validate input data
-    if 'setData' not in data or 'files' not in data['setData'] or not data['setData']['files']:
-        error_messages.append('No SET file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
-        error_messages.append('The BIDS output folder is missing.')
-    if not data.get('session'):
-        error_messages.append('The LORIS Visit Label is missing.')
-
-    if not error_messages:
-        try:
-            # Instantiate the SETHandler with data
-            handler = SETHandler(data)
-            
-            # Perform the conversion
-            handler.convert_to_bids()
-
-            # Prepare the response
-            response = {
-                'output_time': data['output_time']
-            }
-            return eventlet.tpool.Proxy(response)
-        except ReadError as e:
-            error_messages.append(f'Cannot read file: {str(e)}')
-            print(traceback.format_exc())
-        except WriteError as e:
-            error_messages.append(f'Cannot write file: {str(e)}')
-            print(traceback.format_exc())
-        except Exception as e:
-            error_messages.append(f'Unknown error: {str(e)}')
-            print(traceback.format_exc())
-
-    # Return errors if any
-    response = {
-        'error': error_messages
-    }
-    print(response)
-    return eventlet.tpool.Proxy(response)
-
-@sio.event
-def convert_eeg_to_bids(sid, data):
-    """
-    Handles conversion of EEG data (both EDF and SET) to BIDS format.
-    The data should include a 'file_format' key indicating 'edf' or 'set'.
-    """
-    try:
-        print('Conversion requested:', data)
-        file_format = data.get('file_format')
-
-        if file_format == 'edf':
-            response = tpool.execute(edf_to_bids_thread, data)
-            event_name = 'edf_bids_response'
-        elif file_format == 'set':
-            response = tpool.execute(set_to_bids_thread, data)
-            event_name = 'set_bids_response'
-        else:
-            response = {'error': 'Unsupported file format. Use "edf" or "set".'}
-            event_name = 'bids_response'
-
-        print('Conversion response:', response)
-
-        sio.emit(event_name, response.copy(), to=sid)
-    except Exception as e:
-        sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
-
 @sio.event
 def get_progress(sid):
     """
@@ -421,35 +312,6 @@ def get_progress(sid):
         sio.emit('server_error', {'error': str(e)}, to=sid)
         print(traceback.format_exc())
 
-@sio.event
-def validate_bids(sid, bids_directory):
-    """
-    Validates the BIDS directory structure.
-    """
-    try:
-        print('validate_bids request:', bids_directory)
-        error_messages = []
-        if not bids_directory:
-            error_messages.append('The BIDS output directory is missing.')
-
-        if not error_messages:
-            try:
-                BIDS.Validate(bids_directory)
-                response = {
-                    'file_paths': BIDS.Validate.file_paths,
-                    'result': BIDS.Validate.result
-                }
-            except Exception as e:
-                error_messages.append(f'Validation failed: {str(e)}')
-                response = {'error': error_messages}
-        else:
-            response = {'error': error_messages}
-
-        print('BIDS Validation Response:', response)
-        sio.emit('response', response, to=sid)
-    except Exception as e:
-        sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
 
 @sio.event
 def tarfile_bids(sid, data):
@@ -500,12 +362,186 @@ def tarfile_bids(sid, data):
         sio.emit('server_error', {'error': str(e)}, to=sid)
         print(traceback.format_exc())
 
+@sio.event
+def eeg_to_bids_thread(data):
+    print('eeg_to_bids_thread:', data)
+    error_messages = []
+
+    # Validate input data
+    if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
+        error_messages.append('No EEG file(s) to convert.')
+    if 'bids_directory' not in data or not data['bids_directory']:
+        error_messages.append('The BIDS output folder is missing.')
+    if not data.get('session'):
+        error_messages.append('The LORIS Visit Label is missing.')
+
+    if not error_messages:
+        time = iEEG.Time()
+        data['output_time'] = 'output-' + time.latest_output
+
+        try:
+            # Determine file format from data
+            file_format = data.get('file_format')
+            if file_format == 'edf':
+                handler = EDFHandler(data)
+            elif file_format == 'set':
+                handler = SETHandler(data)
+            else:
+                error_messages.append('Unsupported file format.')
+                response = {'error': error_messages}
+                return eventlet.tpool.Proxy(response)
+            # Perform the conversion
+            handler.convert_to_bids()
+
+            # Store subject_id for Modifier
+            data['subject_id'] = handler.m_info['subject_info']['his_id']
+            Modifier(data)  # Modifies data of BIDS format
+
+            # Prepare the response
+            response = {
+                'output_time': data['output_time']
+            }
+            return eventlet.tpool.Proxy(response)
+        except ReadError as e:
+            response = {
+                'error': 'Cannot read file - ' + str(e)
+            }
+            print(traceback.format_exc())
+        except WriteError as e:
+            response = {
+                'error': 'Cannot write file - ' + str(e)
+            }
+            print(traceback.format_exc())
+        except Exception as e:
+            response = {
+                'error': 'Unknown error: ' + str(e)
+            }
+            print(traceback.format_exc())
+    else:
+        response = {
+            'error': error_messages
+        }
+
+    print(response)
+    return eventlet.tpool.Proxy(response)
+
+
+@sio.event
+def get_set_data(sid, data):
+    """
+    Event handler for processing SET files when they are selected.
+    """
+    print('get_set_data:', data)
+
+    if 'files' not in data or not data['files']:
+        response = {
+            'error': 'No SET file selected.'
+        }
+    else:
+        try:
+            # Use a fixed date since SET files are anonymized during the BIDS conversion
+            date = datetime.datetime(2000, 1, 1, 0, 0)
+
+            # Prepare the response data
+            response = {
+                'files': data['files'],
+                'subjectID': '',
+                'recordingID': '',
+                'date': str(date),
+                'fileFormat': 'set',
+            }
+
+        except Exception as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Failed to retrieve SET file information',
+            }
+
+    print('Emitting eeg_data:', response)
+    sio.emit('eeg_data', response, to=sid)
+
+
+@sio.event
+def get_edf_data(sid, data):
+    print('get_edf_data',data)
+    # data = { files: 'EDF files (array of {path, name})' }
+
+
+    if 'files' not in data or not data['files']:
+        response = {'error': 'No EDF file selected.'}
+    else:
+        headers = []
+        try:
+            for file in data['files']:
+                anonymize = iEEG.Anonymize(file['path'])
+                metadata = anonymize.get_header()
+                year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
+                date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
+                                        metadata[0]['minute'], metadata[0]['second'])
+
+                headers.append({
+                    'file': file,
+                    'metadata': metadata,
+                    'date': str(date)
+                })
+
+            multipleRecordings = False
+            for i in range(1, len(headers)):
+                if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
+                    multipleRecordings = True
+                    break
+                    
+            if multipleRecordings:
+                response = {'error': 'The files selected contain more than one recording.'}
+            else:
+                # sort the recording per date
+                headers = sorted(headers, key=lambda k: k['date'])
+
+                # return the first split metadata and date
+                response = {
+                    'files': [header['file'] for header in headers],
+                    'subjectID': headers[0]['metadata'][0]['subject_id'],
+                    'recordingID': headers[0]['metadata'][0]['recording_id'],
+                    'date': headers[0]['date'],
+                    'fileFormat': 'edf',
+                }
+               
+        except ReadError as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Cannot read file - ' + str(e)
+            }
+        except Exception as e:
+            print(traceback.format_exc())
+            response = {
+                'error': 'Failed to retrieve EDF header information',
+            }
+
+    print(response)
+    sio.emit('eeg_data', response)
+
+
+
+@sio.event
+def convert_eeg_to_bids(sid, data):
+    """
+    Handles conversion of EEG data to BIDS format.
+    """
+    print('BIDS Conversion - START')
+    print('convert_eeg_to_bids:', data)
+    response = eventlet.tpool.execute(eeg_to_bids_thread, data)
+    print('Conversion response:', response)
+    print('BIDS Conversion - END')
+    sio.emit('bids', response.copy(), to=sid)
+
 def main():
     try:
+        # Create an instance of the custom log handler
+        wsgi_log_handler = WsgiLogHandler()
         eventlet.wsgi.server(
             eventlet.listen(('127.0.0.1', 7301)),
             app,
-            log=log,
+            log=wsgi_log_handler,
             log_output=True
         )
     except Exception as e:

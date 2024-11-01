@@ -416,6 +416,9 @@ class EDFHandler(BaseHandler):
 
             try:
                 write_raw_bids(raw, bids_basename, allow_preload=False, overwrite=False, verbose=False)
+                with open(bids_basename, 'r+b') as f:
+                        f.seek(8)  # id_info field starts 8 bytes in
+                        f.write(bytes("X X X X".ljust(80), 'ascii'))
                 logging.info(f"Wrote BIDS file: {bids_basename.fpath}")
                 # Removed potentially corrupting byte manipulation
                 return bids_basename.basename

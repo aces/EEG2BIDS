@@ -1,5 +1,5 @@
 {
-  "name": "set2bids",
+  "name": "set2bids", 
   "description": "EEG/iEEG to BIDS format Wizard",
   "version": "1.0.0",
   "dependencies": {
@@ -9,7 +9,7 @@
     "electron-store": "^8.0.0",
     "fs": "0.0.1-security",
     "keytar": "^7.7.0",
-    "kill-port": "^2.0.1",
+    "-port": "^2.0.1",
     "papaparse": "^5.3.1",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
