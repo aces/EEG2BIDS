@@ -225,8 +225,10 @@ def get_loris_subprojects(sid, project):
 @sio.event
 def get_loris_visit(sid, data):
     if 'candID' not in data or not data['candID']:
+        sio.emit('candID and visit are required.')
         return
     if 'visit' not in data or not data['visit']:
+        sio.emit('candID and visit are required.')
         return
     sio.emit('loris_visit', loris_api.get_visit(data['candID'], data['visit']))
 

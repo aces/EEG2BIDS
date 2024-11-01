@@ -80,13 +80,12 @@ const RecordingData = () => {
           .includes(state.inputFileFormat)
       ) return;
 
-      /* if (state.inputFileFormat === 'edf') {
-        console.info('edf file selected');
-        socketContext.emit('get_edf_data', {
-          files: state.eegFiles,
-        });
-      } */
-
+      // if (state.inputFileFormat === 'edf') {
+      //   console.info('edf file selected');
+      //   socketContext.emit('get_edf_data', {
+      //     files: state.eegFiles,
+      //   });
+      // }
       const files = Object.entries(state.taskFiles)
       // only consider the non-excluded and non-empty tasks
           .filter((_, taskRuns) =>
@@ -105,13 +104,19 @@ const RecordingData = () => {
           .filter((run) => run.path);
 
       if (files.length && state.inputFileFormat === 'set') {
-        console.info('set file selected');
+        console.info('set file selected, called in RecordingData.js');
         socketContext.emit('get_set_data', {
+          files: files,
+        });
+      } else if (files.length && state.inputFileFormat === 'edf') {
+        console.info('EDF file selected, called in RecordingData.js');
+        socketContext.emit('get_edf_data', {
           files: files,
         });
       }
     }
   }, [state.taskFiles]);
+
 
   useEffect(() => {
     if (socketContext) {
@@ -184,7 +189,13 @@ const RecordingData = () => {
   const checkFileError = (task) => {
     // Need to split file path based on `/`
     const filePrefix = `${state.filePrefix}_${task}`;
-    if (state.taskFiles[task].length > 1) {
+    if (!Object.keys(state.taskFiles).includes(task)) {
+      return;
+    }
+    if (
+      Object.keys(state.taskFiles).includes(task) &&
+      state.taskFiles[task].length > 1
+    ) {
       const nameError = Array(state.taskFiles[task].length);
       state.taskFiles[task].forEach((file, idx) => {
         if (file.path === '') {
@@ -334,7 +345,11 @@ const RecordingData = () => {
           <RadioInput
             name='fileFormat'
             label='Recordings format:'
-            onUserInput={(_, value) => setState({inputFileFormat: value})}
+            onUserInput={(_, value) => {
+              setState({inputFileFormat: value});
+              setState({tasks: config.tasks});
+              setState({taskFiles: emptyTaskFiles});
+            }}
             options={state.acceptedFormats}
             checked={state.inputFileFormat}
           />
