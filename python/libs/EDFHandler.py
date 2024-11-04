@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import tarfile
 import logging
-
+import shutil
 from python.libs.BaseHandler import BaseHandler, ReadError, WriteError, channel_map
 from mne.io import read_raw_edf
 from mne_bids.write import write_raw_bids
@@ -35,8 +35,66 @@ class EDFWriter:
         self.calibrate = None
         self.offset = None
         self.n_records = 0
+        self.file_path = ''
+        self.header = []
         if fname:
             self.open(fname)
+
+    # Anonymization methods from the Anonymize class
+
+    def load_edf_header(self, file_path):
+        """
+        Load the EDF header from the specified file path.
+        """
+        self.file_path = file_path
+        try:
+            # Read EDF file from file_path
+            file_in = EDFReader(fname=self.file_path)
+            # Read header of EDF file
+            self.header = file_in.readHeader()
+            file_in.close()
+            logging.info(f"Loaded EDF header from {self.file_path}")
+        except PermissionError as ex:
+            logging.error(f"Permission denied when accessing {self.file_path}: {ex}")
+            raise ReadError(ex)
+
+    def get_header(self):
+        """
+        Return the loaded EDF header.
+        """
+        return self.header
+
+    def set_header(self, key, value):
+        """
+        Set a specific key-value pair in the EDF header.
+        """
+        if self.header:
+            self.header[0][key] = value
+            logging.info(f"Set header key '{key}' to '{value}'")
+        else:
+            logging.warning("Header is not loaded. Cannot set header key.")
+
+    def make_copy(self, new_file):
+        """
+        Create a copy of the EDF file with the current header.
+        """
+        if not self.header:
+            logging.error("Header is not loaded. Cannot make a copy.")
+            return
+
+        header = self.get_header()
+        file_in = EDFReader(fname=self.file_path)
+        file_out = EDFWriter()
+        file_out.open(new_file)
+        file_out.writeHeader(header)
+        meas_info = header[0]
+        for i in range(meas_info['n_records']):
+            data = file_in.readBlock(i)
+            file_out.writeBlock(data)
+        file_in.close()
+        file_out.close()
+        logging.info(f"Created anonymized copy at {new_file}")
+
 
     def open(self, fname):
         with open(fname, 'wb') as fid:
@@ -70,6 +128,7 @@ class EDFWriter:
         self.calibrate = None
         self.offset = None
         self.n_records = 0
+        return
 
     def writeHeader(self, header):
         """
@@ -137,6 +196,17 @@ class EDFWriter:
                 fid.write((' ' * 32).encode('utf-8'))  # Reserved
 
             meas_info['data_offset'] = fid.tell()
+        
+        self.meas_info = meas_info
+        self.chan_info = chan_info
+        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min']) / (
+                chan_info['digital_max'] - chan_info['digital_min']);
+        self.offset = chan_info['physical_min'] - self.calibrate * chan_info['digital_min'];
+        channels = list(range(meas_info['nchan']))
+        for ch in channels:
+            if self.calibrate[ch] < 0:
+                self.calibrate[ch] = 1
+                self.offset[ch] = 0
 
     def writeBlock(self, data):
             """
@@ -283,6 +353,17 @@ class EDFReader:
                 # If n_records is not updated, estimate it
                 tot_samps = (os.path.getsize(self.fname) - meas_info['data_offset']) / meas_info['data_size']
                 meas_info['n_records'] = tot_samps / sum(n_samps)
+        self.calibrate = (chan_info['physical_max'] - chan_info['physical_min']) / (
+                chan_info['digital_max'] - chan_info['digital_min']);
+        self.offset = chan_info['physical_min'] - self.calibrate * chan_info['digital_min'];
+        for ch in channels:
+            if self.calibrate[ch] < 0:
+                self.calibrate[ch] = 1;
+                self.offset[ch] = 0;
+
+        self.meas_info = meas_info
+        self.chan_info = chan_info
+        return (meas_info, chan_info)
 
     def readBlock(self, block):
             """
@@ -320,6 +401,7 @@ class EDFReader:
             return data[begsample:(endsample + 1)]
 
         # Helper functions to mimic python-edf behavior
+    
     def getSignalTextLabels(self):
             return [str(x) for x in self.chan_info['ch_names']]
 
@@ -342,6 +424,7 @@ class EDFHandler(BaseHandler):
     Handler class for EDF EEG data.
     """
     def read_file(self, file):
+        logging.info("Reading EDF File")
         try:
             raw = read_raw_edf(input_fname=file, preload=False, verbose=False)
             self.set_m_info(raw.info)
@@ -372,9 +455,9 @@ class EDFHandler(BaseHandler):
                 session=data['session'],
                 run=(eegRun.get('run') if eegRun.get('run') != -1 else None),
                 output_time=data['output_time'],
-                read_only=data.get('read_only', False),
-                line_freq=data.get('powerLineFreq', 'n/a'),
-                outputFilename=data.get('outputFilename', 'bids_output')
+                read_only=data['read_only'],
+                line_freq=data['powerLineFreq'],
+                outputFilename=data['outputFilename']
             )
 
     def to_bids(self, **kwargs):

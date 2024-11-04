@@ -25,11 +25,11 @@ module.exports = class SET2BIDSService {
   async startup() {
     let pathToService;
 
-    // try {
-    //   await kill(7301);
-    // } catch (error) {
-    //   console.error(error);
-    // }
+    try {
+      await kill(7301);
+    } catch (error) {
+      console.error(error);
+    }
 
     if (process.env.DEV) {
       pathToService = path.join(

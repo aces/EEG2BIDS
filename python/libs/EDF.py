@@ -147,8 +147,8 @@ class EDFWriter():
         channels = list(range(meas_info['nchan']))
         for ch in channels:
             if self.calibrate[ch] < 0:
-                self.calibrate[ch] = 1;
-                self.offset[ch] = 0;
+                self.calibrate[ch] = 1
+                self.offset[ch] = 0
 
     def writeBlock(self, data):
         meas_info = self.meas_info

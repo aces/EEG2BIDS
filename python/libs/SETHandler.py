@@ -4,7 +4,7 @@ import pymatreader
 import numpy as np
 import warnings
 import logging
-
+import shutil
 from python.libs.BaseHandler import BaseHandler, ReadError, WriteError, channel_map
 from mne.io import read_raw_eeglab
 from mne_bids.write import write_raw_bids
@@ -77,7 +77,7 @@ class SETHandler(BaseHandler):
             raw.info['line_freq'] = line_freq
 
             # Populate landmarks before writing
-            self._populate_back_landmarks(raw, file)
+            # self._populate_back_landmarks(raw, file)
 
             root = os.path.join(kwargs['bids_directory'], kwargs['outputFilename'])
             os.makedirs(root, exist_ok=True)
@@ -95,7 +95,7 @@ class SETHandler(BaseHandler):
             try:
                 write_raw_bids(raw, bids_basename, allow_preload=True, overwrite=False, format="EEGLAB", verbose=False)
                 # Regenerate events file after writing
-                self._regenerate_events_file(bids_basename, file)
+                # self._regenerate_events_file(bids_basename, file)
                 logging.info(f"Wrote BIDS file: {bids_basename.fpath}")
                 return bids_basename.basename
             except Exception as ex:
@@ -104,47 +104,65 @@ class SETHandler(BaseHandler):
         else:
             logging.error(f"File not found or is not a file: {file}")
 
-    def _populate_back_landmarks(self, raw, file):
+
+    @staticmethod
+    def _populate_back_landmarks(raw, file):
         """
-        Correctly set the nasion, lpa, and rpa landmarks in the montage.
+        This function is used to circumvent a bug in the mne.read_raw_eeglab function present across
+        all version of mne, including 1.0.0 (latest version tested). For some reason, the landmarks
+        (nasion, left periauricular point, right periauricular point) are not being properly read
+        from the EEGLAB structure. This function fetches directly those landmark coordinates via
+        the pymatreader library and reinsert them into the raw MNE structure.
+
+        See development on https://github.com/mne-tools/mne-python/issues/10474 for more information
+
+        :param raw: MNE-PYTHON raw object
+        :param file: path to the EEG.set file
         """
-        try:
-            eeg_mat = pymatreader.read_mat(file)
-            urchanlocs_dict = eeg_mat.get('EEG', {}).get('urchanlocs', eeg_mat.get('urchanlocs'))
 
-            nasion_index = urchanlocs_dict['description'].index('Nasion')
-            lpa_index = urchanlocs_dict['description'].index('Left periauricular point')
-            rpa_index = urchanlocs_dict['description'].index('Right periauricular point')
+        # read the EEG matlab structure to get the nasion, lpa and rpa locations
+        eeg_mat = pymatreader.read_mat(file)
+        urchanlocs_dict = None
+        if 'EEG' in eeg_mat.keys() and 'urchanlocs' in eeg_mat['EEG'].keys():
+            urchanlocs_dict = eeg_mat['EEG']['urchanlocs']
+        elif 'urchanlocs' in eeg_mat.keys():
+            urchanlocs_dict = eeg_mat['urchanlocs']
 
-            nasion_coord = [
-                urchanlocs_dict['X'][nasion_index],
-                urchanlocs_dict['Y'][nasion_index],
-                urchanlocs_dict['Z'][nasion_index]
-            ]
-            lpa_coord = [
-                urchanlocs_dict['X'][lpa_index],
-                urchanlocs_dict['Y'][lpa_index],
-                urchanlocs_dict['Z'][lpa_index]
-            ]
-            rpa_coord = [
-                urchanlocs_dict['X'][rpa_index],
-                urchanlocs_dict['Y'][rpa_index],
-                urchanlocs_dict['Z'][rpa_index]
-            ]
+        # get the indices that should be used to fetch the coordinates of the different landmarks
+        nasion_index = urchanlocs_dict['description'].index('Nasion')
+        lpa_index = urchanlocs_dict['description'].index('Left periauricular point')
+        rpa_index = urchanlocs_dict['description'].index('Right periauricular point')
 
-            new_montage = make_dig_montage(
-                ch_pos=raw.get_montage().get_positions()['ch_pos'],
-                coord_frame='head',
-                nasion=nasion_coord,
-                lpa=lpa_coord,
-                rpa=rpa_coord
-            )
-            raw.set_montage(new_montage)
-            logging.info(f"Set montage landmarks for file: {file}")
-            return nasion_coord, lpa_coord, rpa_coord
-        except Exception as e:
-            logging.error(f"Error populating back landmarks for file {file}: {e}")
-            raise WriteError(e)
+        # fetch the coordinates of the different landmarks
+        nasion_coord = [
+            urchanlocs_dict['X'][nasion_index],
+            urchanlocs_dict['Y'][nasion_index],
+            urchanlocs_dict['Z'][nasion_index]
+        ]
+        lpa_coord = [
+            urchanlocs_dict['X'][lpa_index],
+            urchanlocs_dict['Y'][lpa_index],
+            urchanlocs_dict['Z'][lpa_index]
+        ]
+        rpa_coord = [
+            urchanlocs_dict['X'][rpa_index],
+            urchanlocs_dict['Y'][rpa_index],
+            urchanlocs_dict['Z'][rpa_index]
+        ]
+
+        # create the new montage with the channels positions and the landmark coordinates
+        new_montage = make_dig_montage(
+            ch_pos=raw.get_montage().get_positions()['ch_pos'],
+            coord_frame='head',
+            nasion=nasion_coord,
+            lpa=lpa_coord,
+            rpa=rpa_coord
+        )
+        raw.set_montage(new_montage)  # set the new montage in the raw object
+
+        return nasion_coord, lpa_coord, rpa_coord
+
+
 
     def _regenerate_events_file(self, bids_basename, file):
         """

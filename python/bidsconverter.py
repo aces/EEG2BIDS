@@ -1,10 +1,13 @@
+import datetime
+import json
 import logging
 import os
-import traceback
-import functools
 import sys
-import json
-import datetime
+import traceback
+
+import eventlet
+from eventlet import tpool
+import socketio
 
 # Add the 'python' directory to the Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,29 +16,37 @@ python_lib_path = os.path.join(current_dir, 'python')
 if python_lib_path not in sys.path:
     sys.path.append(python_lib_path)
 
-from python.libs.BaseHandler import ReadError, WriteError
+from python.libs.BaseHandler import ReadError, WriteError, Time, metadata as metadata_fields
 from python.libs.EDFHandler import EDFHandler
 from python.libs.SETHandler import SETHandler
+from python.libs.Modifier import Modifier
+from python.libs.BIDS import Validate
+from python.libs import iEEG
+from python.libs.loris_api import LorisAPI
+from python.libs.TarFile import TarFile
+from python.libs.Anonymize import Anonymize
 
+# Set environment variable for Eventlet
 os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
 
-import eventlet
-from eventlet import tpool
-import socketio
-from python.libs import iEEG
-from python.libs.iEEG import ReadError as iEEGReadError, WriteError as iEEGWriteError, metadata as metadata_fields
-from python.libs.Modifier import Modifier
-from python.libs import BIDS
-from python.libs.loris_api import LorisAPI
-
 # Initialize LORIS credentials (optional, can be set via events)
-# lorisCredentials = {
-#     'lorisURL': '',
-#     'lorisUsername': '',
-#     'lorisPassword': '',
-# }
+lorisCredentials = {
+    'lorisURL': '',
+    'lorisUsername': '',
+    'lorisPassword': '',
+}
 
-# Create socket listener with comprehensive settings
+# Configure logging
+log = logging.getLogger()
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+handler.setFormatter(formatter)
+log.addHandler(handler)
+log.setLevel(logging.DEBUG)
+
+# Initialize Socket.IO server
 sio = socketio.Server(
     async_mode='eventlet',
     ping_timeout=60000,
@@ -43,20 +54,13 @@ sio = socketio.Server(
 )
 app = socketio.WSGIApp(sio)
 
-# Create Loris API handler
+# Create Loris API and TarFile handlers
 loris_api = LorisAPI()
-tar_handler = iEEG.TarFile()
+tar_handler = TarFile()
 
-# Configure logging
-log = logging.getLogger()
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-log.addHandler(handler)
-log.setLevel(logging.DEBUG)
+# Initialize file format, needed for upload_tarfile_bids()
+file_format = 'set'
 
-# Override print to flush immediately
-print = functools.partial(print, flush=True)
 
 # Define the custom WSGI log handler
 class WsgiLogHandler:
@@ -64,40 +68,63 @@ class WsgiLogHandler:
         message = message.strip()
         if message:
             log.info(message)
+
     def flush(self):
         pass
+
 
 @sio.event
 def connect(sid, environ):
     try:
-        print('Client connected:', sid)
-        if environ.get('REMOTE_ADDR') != '127.0.0.1':
-            print(f"Rejected connection from {environ.get('REMOTE_ADDR')}")
-            return False  # Reject non-local connections
+        log.info(f'Client connected: {sid}')
+        remote_addr = environ.get('REMOTE_ADDR')
+        if remote_addr != '127.0.0.1':
+            log.warning(f"Rejected connection from {remote_addr}")
+            return False
         else:
-            print(f"Accepted connection from {environ.get('REMOTE_ADDR')}")
+            log.info(f"Accepted connection from {remote_addr}")
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def disconnect(sid):
+    log.info(f'Client disconnected: {sid}')
+
+@sio.event
+def get_participant_data(sid, data):
+    """
+    Event handler to retrieve participant data based on candID.
+    """
+    log.info(f'get_participant_data: {data}')
+    cand_id = data.get('candID')
+
+    if not cand_id:
+        error_msg = 'candID is required.'
+        log.error(error_msg)
+        sio.emit('server_error', {'error': error_msg}, to=sid)
+        return
+
     try:
-        print('Client disconnected:', sid)
-    except:
-        pass
+        candidate = loris_api.get_candidate(cand_id)
+        sio.emit('participant_data', candidate, to=sid)
+    except Exception as e:
+        log.error('Error retrieving participant data.', exc_info=True)
+        sio.emit('server_error', {'error': str(e)}, to=sid)
 
 @sio.event
 def set_loris_credentials(sid, data):
     try:
-        print('Setting LORIS credentials:', data)
-        if 'lorisURL' not in data:
+        log.info(f'Setting LORIS credentials: {data}')
+        loris_url = data.get('lorisURL')
+        if not loris_url:
             error_msg = 'lorisURL is required.'
-            print(error_msg)
+            log.error(error_msg)
             sio.emit('loris_login_response', {'error': error_msg}, to=sid)
             return
 
-        loris_api.url = data['lorisURL'].rstrip('/') + '/api/v0.0.4-dev/'
+        loris_api.url = loris_url.rstrip('/') + '/api/v0.0.4-dev/'
         loris_api.username = data.get('lorisUsername', '')
         loris_api.password = data.get('lorisPassword', '')
         loris_api.token = data.get('lorisToken', '')
@@ -119,7 +146,7 @@ def set_loris_credentials(sid, data):
             'lorisURL': loris_api.url,
             'lorisToken': loris_api.token,
         }
-        print('LORIS credentials set successfully.')
+        log.info('LORIS credentials set successfully.')
         sio.emit('loris_login_response', response, to=sid)
 
         # Optionally emit sites and projects
@@ -129,7 +156,8 @@ def set_loris_credentials(sid, data):
         error_msg = 'Connection refused.'
         sio.emit('loris_login_response', {'error': error_msg}, to=sid)
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def get_loris_sites(sid):
@@ -138,7 +166,8 @@ def get_loris_sites(sid):
         sio.emit('loris_sites', sites, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def get_loris_projects(sid):
@@ -147,7 +176,8 @@ def get_loris_projects(sid):
         sio.emit('loris_projects', projects, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def get_loris_subprojects(sid, project):
@@ -156,7 +186,8 @@ def get_loris_subprojects(sid, project):
         sio.emit('loris_subprojects', subprojects, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def get_loris_visits(sid, subproject):
@@ -165,98 +196,124 @@ def get_loris_visits(sid, subproject):
         sio.emit('loris_visits', visits, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def get_loris_visit(sid, data):
     try:
-        if 'candID' not in data or not data['candID']:
-            sio.emit('candID and visit are required.')
+        cand_id = data.get('candID')
+        visit = data.get('visit')
+        if not cand_id or not visit:
+            error_msg = 'candID and visit are required.'
+            log.error(error_msg)
+            sio.emit(error_msg)
             return
-        if 'visit' not in data or not data['visit']:
-            sio.emit('candID and visit are required.')
-            return
+        sio.emit('loris_visit', loris_api.get_visit(cand_id, visit))
+
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def create_visit(sid, data):
     try:
-        print('Creating visit:', data)
+        log.info(f'Creating visit: {data}')
         loris_api.create_visit(
-            candID=data['candID'],
-            visit=data['visit'],
-            site=data['site'],
-            project=data['project'],
-            subproject=data['subproject']
+            data['candID'],
+            data['visit'],
+            data['site'],
+            data['project'],
+            data['subproject']
         )
         loris_api.start_next_stage(
-            candID=data['candID'],
-            visit=data['visit'],
-            site=data['site'],
-            subproject=data['subproject'],
-            project=data['project'],
-            date=data['date']
+            data['candID'],
+            data['visit'],
+            data['site'],
+            data['subproject'],
+            data['project'],
+            data['date']
         )
         response = {'success': 'Visit created and stage started.'}
         sio.emit('response', response, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 @sio.event
 def create_candidate_and_visit(sid, data):
     try:
-        print('Creating candidate and visit:', data)
+        log.info(f'Creating candidate and visit: {data}')
         new_candidate = loris_api.create_candidate(
-            project=data['project'],
-            dob=data['dob'],
-            sex=data['sex'],
-            site=data['site'],
+            data['project'],
+            data['dob'],
+            data['sex'],
+            data['site'],
         )
 
         if new_candidate.get('CandID'):
             loris_api.create_visit(
-                candID=new_candidate['CandID'],
-                visit=data['visit'],
-                site=data['site'],
-                project=data['project'],
-                subproject=data['subproject']
+                new_candidate['CandID'],
+                data['visit'],
+                data['site'],
+                data['project'],
+                data['subproject']
             )
             visit_started = loris_api.start_next_stage(
-                candID=new_candidate['CandID'],
-                visit=data['visit'],
-                site=data['site'],
-                subproject=data['subproject'],
-                project=data['project'],
-                date=data['date']
+                new_candidate['CandID'],
+                data['visit'],
+                data['site'],
+                data['subproject'],
+                data['project'],
+                data['date']
             )
             if visit_started.get('error'):
-                new_candidate['error'] = f"Candidate {new_candidate['CandID']} created, but cannot start visit: {visit_started.get('error')}"
+                new_candidate['error'] = (
+                    f"Candidate {new_candidate['CandID']} created, "
+                    f"but cannot start visit: {visit_started.get('error')}"
+                )
         else:
             new_candidate['error'] = 'Failed to create candidate.'
 
         sio.emit('new_candidate_created', new_candidate, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
 
-def tarfile_bids_thread(data):
+
+def tarfile_edf_bids_thread(data):
+    log.info(f'tarfile_edf_bids_thread: {data}')
+    try:
+        tar_handler.package(data['bidsDirectory'])
+        response = {
+            'compression_time': 'example_5mins'
+        }
+        return eventlet.tpool.Proxy(response)
+    except Exception as e:
+        error_response = {
+            'error': f'Unknown error: {str(e)}'
+        }
+        log.error(traceback.format_exc())
+        return eventlet.tpool.Proxy(error_response)
+
+
+def tarfile_set_bids_thread(data):
     """
     Handles packaging PII, uploading PII, compressing BIDS directory, and uploading EEG data to LORIS.
     """
-    print('tarfile_bids_thread:', data)
+    log.info(f'tarfile_set_bids_thread: {data}')
     try:
         tar_handler.set_stage('packaging PII')
-        pii_tar = tar_handler.package_pii(data['mffFiles'], data['filePrefix'])
+        pii_tar = tar_handler.packagePII(data['mffFiles'], data['filePrefix'])
 
         tar_handler.set_stage('upload PII')
         pii_response = loris_api.upload_pii(pii_tar)
 
         tar_handler.set_stage('compressing')
         tar_handler.package(data['bidsDirectory'])
-        output_filename = data['bidsDirectory'] + '.tar.gz'
+        output_filename = f"{data['bidsDirectory']}.tar.gz"
 
         tar_handler.set_stage('loris_upload')
         loris_response = loris_api.upload_eeg(
@@ -276,8 +333,9 @@ def tarfile_bids_thread(data):
         error_response = {
             'error': f'Unknown error: {str(e)}'
         }
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
         return eventlet.tpool.Proxy(error_response)
+
 
 @sio.event
 def get_progress(sid):
@@ -310,17 +368,42 @@ def get_progress(sid):
         sio.emit('progress', progress_info, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
 
 
 @sio.event
 def tarfile_bids(sid, data):
+    log.info(f'tarfile_bids: {data}')
+    try:
+        tar_handler.set_stage('compressing')
+        tar_handler.package(data['bidsDirectory'])
+
+        resp = {
+            'type': 'compress',
+            'code': '200'
+        }
+        sio.emit('response', resp, to=sid)
+    except Exception as e:
+        sio.emit('server_error', {'error': str(e)}, to=sid)
+        log.error(traceback.format_exc())
+
+
+@sio.event
+def upload_tarfile_bids(sid, data):
     """
     Handles the process of packaging PII, compressing BIDS directory, and uploading to LORIS.
     """
     try:
-        print('tarfile_bids request:', data)
-        response = tpool.execute(tarfile_bids_thread, data)
+        log.info(f'tarfile_bids request: {data}')
+        global file_format
+        if not file_format:
+            response = {'error': 'fileFormat not specified in data'}
+        elif file_format == 'edf':
+            response = tpool.execute(tarfile_edf_bids_thread, data)
+        elif file_format == 'set':
+            response = tpool.execute(tarfile_set_bids_thread, data)
+        else:
+            response = {'error': f"Unsupported file format: {file_format}"}
 
         if 'error' in response:
             resp = {
@@ -330,22 +413,31 @@ def tarfile_bids(sid, data):
                     'errors': [response['error']]
                 }
             }
-        elif response.get('pii', {}).get('status_code', 0) >= 400 or response.get('loris', {}).get('status_code', 0) >= 400:
+        elif (
+            response.get('pii', {}).get('status_code', 0) >= 400
+            or response.get('loris', {}).get('status_code', 0) >= 400
+        ):
             errors = []
             if response.get('pii', {}).get('status_code', 0) >= 400:
-                print(response['pii'])
-                errors.append('PII Error: ' + response['pii'].get('reason', 'Unknown PII upload error'))
+                log.error(response['pii'])
+                errors.append(
+                    'PII Error: '
+                    + response['pii'].get('reason', 'Unknown PII upload error')
+                )
             if response.get('loris', {}).get('status_code', 0) >= 400:
                 try:
                     error = response['loris'].json().get('error', 'Unknown LORIS upload error')
-                    print(error)
+                    log.error(error)
                     errors.append('LORIS Error: ' + error)
                 except json.decoder.JSONDecodeError:
                     error = response['loris'].get('reason', 'Unknown LORIS upload error')
                     errors.append('LORIS Error: ' + error)
             resp = {
                 'type': 'upload',
-                'code': max(response['pii'].get('status_code', 0), response['loris'].get('status_code', 0)),
+                'code': max(
+                    response['pii'].get('status_code', 0),
+                    response['loris'].get('status_code', 0)
+                ),
                 'body': {
                     'errors': errors
                 }
@@ -360,37 +452,46 @@ def tarfile_bids(sid, data):
         sio.emit('response', resp, to=sid)
     except Exception as e:
         sio.emit('server_error', {'error': str(e)}, to=sid)
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
 
-@sio.event
+
 def eeg_to_bids_thread(data):
-    print('eeg_to_bids_thread:', data)
+    log.info(f'eeg_to_bids_thread: {data}')
     error_messages = []
 
     # Validate input data
-    if 'eegData' not in data or 'files' not in data['eegData'] or not data['eegData']['files']:
+    eeg_data = data.get('eegData', {})
+    files = eeg_data.get('files', [])
+    bids_directory = data.get('bids_directory')
+    session = data.get('session')
+
+    if not files or not eeg_data:
         error_messages.append('No EEG file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
+    if not bids_directory:
         error_messages.append('The BIDS output folder is missing.')
-    if not data.get('session'):
+    if not session:
         error_messages.append('The LORIS Visit Label is missing.')
 
     if not error_messages:
-        time = iEEG.Time()
-        data['output_time'] = 'output-' + time.latest_output
+        time_instance = Time()
+        data['output_time'] = f'output-{time_instance.latest_output}'
 
         try:
             # Determine file format from data
-            file_format = data.get('file_format')
-            if file_format == 'edf':
+            file_format_local = data.get('fileFormat')
+            if file_format_local == 'edf':
+                log.info("Selected EDF File, setting EDF Handler")
                 handler = EDFHandler(data)
-            elif file_format == 'set':
+            elif file_format_local == 'set':
+                log.info("Selected SET File, setting SET Handler")
                 handler = SETHandler(data)
             else:
                 error_messages.append('Unsupported file format.')
                 response = {'error': error_messages}
                 return eventlet.tpool.Proxy(response)
+
             # Perform the conversion
+            log.info("Calling the SET/EDF File Handler")
             handler.convert_to_bids()
 
             # Store subject_id for Modifier
@@ -404,25 +505,25 @@ def eeg_to_bids_thread(data):
             return eventlet.tpool.Proxy(response)
         except ReadError as e:
             response = {
-                'error': 'Cannot read file - ' + str(e)
+                'error': f'Cannot read file - {str(e)}'
             }
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
         except WriteError as e:
             response = {
-                'error': 'Cannot write file - ' + str(e)
+                'error': f'Cannot write file - {str(e)}'
             }
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
         except Exception as e:
             response = {
-                'error': 'Unknown error: ' + str(e)
+                'error': f'Unknown error: {str(e)}'
             }
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
     else:
         response = {
             'error': error_messages
         }
 
-    print(response)
+    log.error(response)
     return eventlet.tpool.Proxy(response)
 
 
@@ -431,9 +532,10 @@ def get_set_data(sid, data):
     """
     Event handler for processing SET files when they are selected.
     """
-    print('get_set_data:', data)
+    log.info(f'get_set_data: {data}')
 
-    if 'files' not in data or not data['files']:
+    files = data.get('files', [])
+    if not files:
         response = {
             'error': 'No SET file selected.'
         }
@@ -444,7 +546,7 @@ def get_set_data(sid, data):
 
             # Prepare the response data
             response = {
-                'files': data['files'],
+                'files': files,
                 'subjectID': '',
                 'recordingID': '',
                 'date': str(date),
@@ -452,32 +554,42 @@ def get_set_data(sid, data):
             }
 
         except Exception as e:
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
             response = {
                 'error': 'Failed to retrieve SET file information',
             }
 
-    print('Emitting eeg_data:', response)
+    log.info(f'Emitting eeg_data: {response}')
     sio.emit('eeg_data', response, to=sid)
 
 
 @sio.event
 def get_edf_data(sid, data):
-    print('get_edf_data',data)
+    log.info(f'get_edf_data: {data}')
     # data = { files: 'EDF files (array of {path, name})' }
 
-
-    if 'files' not in data or not data['files']:
+    files = data.get('files', [])
+    if not files:
         response = {'error': 'No EDF file selected.'}
     else:
         headers = []
         try:
-            for file in data['files']:
-                anonymize = iEEG.Anonymize(file['path'])
+            for file in files:
+                anonymize = Anonymize(file['path'])
                 metadata = anonymize.get_header()
-                year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
-                date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
-                                        metadata[0]['minute'], metadata[0]['second'])
+                year = (
+                    f"20{metadata[0]['year']}"
+                    if metadata[0]['year'] < 85
+                    else f"19{metadata[0]['year']}"
+                )
+                date = datetime.datetime(
+                    int(year),
+                    metadata[0]['month'],
+                    metadata[0]['day'],
+                    metadata[0]['hour'],
+                    metadata[0]['minute'],
+                    metadata[0]['second']
+                )
 
                 headers.append({
                     'file': file,
@@ -485,54 +597,144 @@ def get_edf_data(sid, data):
                     'date': str(date)
                 })
 
-            multipleRecordings = False
+            multiple_recordings = False
             for i in range(1, len(headers)):
                 if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
-                    multipleRecordings = True
+                    multiple_recordings = True
                     break
-                    
-            if multipleRecordings:
+
+            if multiple_recordings:
                 response = {'error': 'The files selected contain more than one recording.'}
             else:
-                # sort the recording per date
-                headers = sorted(headers, key=lambda k: k['date'])
+                # Sort the recordings by date
+                headers_sorted = sorted(headers, key=lambda k: k['date'])
 
-                # return the first split metadata and date
+                # Return the first split metadata and date
+                first_header = headers_sorted[0]
                 response = {
-                    'files': [header['file'] for header in headers],
-                    'subjectID': headers[0]['metadata'][0]['subject_id'],
-                    'recordingID': headers[0]['metadata'][0]['recording_id'],
-                    'date': headers[0]['date'],
+                    'files': [first_header['file']],
+                    'subjectID': first_header['metadata'][0]['subject_id'],
+                    'recordingID': first_header['metadata'][0]['recording_id'],
+                    'date': first_header['date'],
                     'fileFormat': 'edf',
                 }
-               
+
         except ReadError as e:
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
             response = {
-                'error': 'Cannot read file - ' + str(e)
+                'error': f'Cannot read file - {str(e)}'
             }
         except Exception as e:
-            print(traceback.format_exc())
+            log.error(traceback.format_exc())
             response = {
                 'error': 'Failed to retrieve EDF header information',
             }
 
-    print(response)
-    sio.emit('eeg_data', response)
-
+    log.info(f'Response: {response}')
+    sio.emit('eeg_data', response, to=sid)
 
 
 @sio.event
-def convert_eeg_to_bids(sid, data):
+def eeg_to_bids(sid, data):
     """
     Handles conversion of EEG data to BIDS format.
     """
-    print('BIDS Conversion - START')
-    print('convert_eeg_to_bids:', data)
-    response = eventlet.tpool.execute(eeg_to_bids_thread, data)
-    print('Conversion response:', response)
-    print('BIDS Conversion - END')
+    log.info('BIDS Conversion - START')
+    log.info(f'convert_eeg_to_bids: {data}')
+    response = tpool.execute(eeg_to_bids_thread, data)
+    log.info(f'Conversion response: {response}')
+    log.info('BIDS Conversion - END')
     sio.emit('bids', response.copy(), to=sid)
+
+
+@sio.event
+def validate_bids(sid, bids_directory):
+    log.info(f'validate_bids: {bids_directory}')
+    try:
+        error_messages = []
+        if not bids_directory:
+            error_messages.append('The BIDS output directory is missing.')
+
+        if not error_messages:
+            Validate(bids_directory)
+            response = {
+                'file_paths': Validate.file_paths,
+                'result': Validate.result
+            }
+        else:
+            response = {
+                'error': error_messages
+            }
+
+        log.info(f'Response: {response}')
+        sio.emit('response', response, to=sid)
+    except Exception as e:
+        sio.emit('server_error', {'error': str(e)}, to=sid)
+        log.error(traceback.format_exc())
+
+
+@sio.event
+def get_bids_metadata(sid, data):
+    """
+    Event handler to retrieve BIDS metadata from a specified file.
+    """
+    log.info(f'get_bids_metadata: {data}')
+
+    file_path = data.get('file_path')
+    modality = data.get('modality')
+
+    if not file_path:
+        error_msg = 'No metadata file selected.'
+        log.error(error_msg)
+        response = {'error': error_msg}
+        sio.emit('bids_metadata', response, to=sid)
+        return
+
+    if modality not in ['ieeg', 'eeg']:
+        error_msg = 'No valid modality found.'
+        log.error(error_msg)
+        response = {'error': error_msg}
+        sio.emit('bids_metadata', response, to=sid)
+        return
+
+    try:
+        with open(file_path, 'r') as fd:
+            metadata = json.load(fd)
+    except IOError:
+        log.error('Could not read the metadata file.', exc_info=True)
+        response = {'error': 'Could not read the metadata file.'}
+        sio.emit('bids_metadata', response, to=sid)
+        return
+    except ValueError:
+        log.error('Metadata file format is not valid.', exc_info=True)
+        response = {'error': 'Metadata file format is not valid.'}
+        sio.emit('bids_metadata', response, to=sid)
+        return
+
+    # List of keys with empty string values
+    empty_values = [
+        k for k, v in metadata.items()
+        if isinstance(v, str) and v.strip() == ''
+    ]
+
+    # Difference between metadata keys and expected fields, excluding empty values
+    diff = list(
+        set(metadata.keys()) -
+        set(metadata_fields.get(modality, [])) -
+        set(empty_values)
+    )
+
+    # Keys to be ignored (empty values and unexpected fields)
+    ignored_keys = empty_values + diff
+
+    response = {
+        'metadata': metadata,
+        'ignored_keys': ignored_keys,
+    }
+
+    log.info(f'Response: {response}')
+    sio.emit('bids_metadata', response, to=sid)
+
 
 def main():
     try:
@@ -546,7 +748,8 @@ def main():
         )
     except Exception as e:
         sio.emit('server_error', {'error': str(e)})
-        print(traceback.format_exc())
+        log.error(traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()
