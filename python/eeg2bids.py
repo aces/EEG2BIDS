@@ -66,6 +66,14 @@ def get_participant_data(sid, data):
 def set_loris_credentials(sid, data):
     global lorisCredentials
     lorisCredentials = data
+    # todo - all login logic should be inside the loris_api
+    #  including error cases. All loris_api methods should check
+    #  if token is not empty AND token is valid before proceeding
+    #  for robustness.
+    loris_api.token = ''
+    loris_api.url = ''
+    loris_api.username = ''
+    loris_api.password = ''
     if 'lorisURL' not in lorisCredentials:
         print('error with credentials:', data)
         return
