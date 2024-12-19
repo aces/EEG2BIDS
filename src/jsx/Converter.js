@@ -25,7 +25,6 @@ import RecordingParameters from './Converter/RecordingParameters';
 const Converter = (props) => {
   const socketContext = useContext(SocketContext);
   const {state, setState, config} = useContext(AppContext);
-  console.log(state);
   const [successMessage, setSuccessMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalText, setModalText] = useState({
