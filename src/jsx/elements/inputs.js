@@ -89,8 +89,7 @@ export const DirectoryInput = (props) => {
    */
   const handleClick = async () => {
     // Send directory to parent component
-    const dialog = await myAPI.dialog();
-    const path = await dialog.showOpenDialog({
+    const path = await myAPI.dialog({
       properties: ['openDirectory'],
     });
     props.onUserInput(props.name, path.filePaths[0]);
@@ -149,8 +148,7 @@ export const TaskRunInput = (props) => {
    */
   const handleClick = async (index) => {
     // Send directory to parent component
-    const dialog = await myAPI.dialog();
-    const path = await dialog.showOpenDialog({
+    const path = await myAPI.dialog({
       properties: props.browseDir ? ['openDirectory'] : ['openFile'],
       filters: [
         {
@@ -162,7 +160,7 @@ export const TaskRunInput = (props) => {
     props.update(props.taskName, index, path.filePaths[0]);
   };
 
-  if (props.value[0].exclude) {
+  if (props.value.length && props.value[0].exclude) {
     return (
       <div>
         <label className="label" htmlFor={props.name}>

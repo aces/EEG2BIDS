@@ -12,8 +12,6 @@ const options = {
   transports: ['websocket'],
 };
 
-Object.assign(console, window.myAPI.logger.functions);
-
 /**
  * App - the main window.
  * @return {JSX.Element}
@@ -61,8 +59,8 @@ const App = () => {
     }
   };
 
-  useEffect(async () => {
-    const isAvailable = () => {
+  useEffect( () => {
+    const isAvailable = async () => {
       const timeout = new Promise((_, reject) => {
         setTimeout(reject, 300, 'Request timed out');
       });
@@ -70,12 +68,13 @@ const App = () => {
           uri + '/socket.io/?EIO=4&transport=polling',
           {mode: 'no-cors'},
       );
-      return Promise
+      await Promise
           .race([timeout, request])
           .then(() => {
             setServerUp(true);
-            console.info('Server up');
             clearInterval(loop);
+            window['myAPI'].setLogger();
+            console.info('Server up');
           })
           .catch(() => console.error('Python server not reachable'));
     };

@@ -1,10 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import './css/index.css';
 import ViewManager from './ViewManager';
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(<ViewManager/>, document.getElementById('root'));
+const root = createRoot(document.getElementById('root'));
+root.render(<ViewManager/>);
+
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

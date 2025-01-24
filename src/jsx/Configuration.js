@@ -34,7 +34,6 @@ const Configuration = (props) => {
       );
     }
   }, []);
-
   return (
     <div style={{
       display: props.visible ? 'block' : 'none',

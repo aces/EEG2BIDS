@@ -109,6 +109,10 @@ const RecordingData = () => {
         socketContext.emit('get_set_data', {
           files: files,
         });
+      } else if (files.length && state.inputFileFormat === 'edf') {
+        socketContext.emit('get_edf_data', {
+          files: files,
+        });
       }
     }
   }, [state.taskFiles]);
@@ -184,7 +188,13 @@ const RecordingData = () => {
   const checkFileError = (task) => {
     // Need to split file path based on `/`
     const filePrefix = `${state.filePrefix}_${task}`;
-    if (state.taskFiles[task].length > 1) {
+    if (!Object.keys(state.taskFiles).includes(task)) {
+      return;
+    }
+    if (
+      Object.keys(state.taskFiles).includes(task) &&
+      state.taskFiles[task].length > 1
+    ) {
       const nameError = Array(state.taskFiles[task].length);
       state.taskFiles[task].forEach((file, idx) => {
         if (file.path === '') {
@@ -334,7 +344,11 @@ const RecordingData = () => {
           <RadioInput
             name='fileFormat'
             label='Recordings format:'
-            onUserInput={(_, value) => setState({inputFileFormat: value})}
+            onUserInput={(_, value) => {
+              setState({inputFileFormat: value});
+              setState({tasks: config.tasks});
+              setState({taskFiles: emptyTaskFiles});
+            }}
             options={state.acceptedFormats}
             checked={state.inputFileFormat}
           />

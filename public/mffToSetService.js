@@ -18,7 +18,7 @@ module.exports = class MFFToSETService {
   /**
    * startup the service process
    */
-    async startup(mffDirectory, callback) {
+    async startup(mffDirectory) {
         const pathToService = path.join(
             __dirname,
             '..',
@@ -31,13 +31,12 @@ module.exports = class MFFToSETService {
         //     -> not running windows and
         //     -> matlab v93 is not set as an environement variable
         if (this.platform !== 'win32' && !process.env.PATH.includes('v93')) {
-            callback(
-                false,
-                'Environment not configured for processing MFF files.',
-                {}
-            );
             this.process = null;
-            return;
+            return {
+                success: false,
+                message: 'Environment not configured for processing MFF files.',
+                files: {},
+            };
         }
 
         const mffDir = path.dirname(mffDirectory[0].path);
@@ -55,7 +54,7 @@ module.exports = class MFFToSETService {
         } catch (e) {
             console.error(e);
         }
-        
+
         this.process = execFile(pathToService, [mffDir, mffDir, jsonFile], (error, stdout, stderr) => {
             const setFiles = [];
             let conversionError = false;
@@ -74,26 +73,26 @@ module.exports = class MFFToSETService {
             }
 
             if (conversionError) {
-                callback(
-                    false,
-                    {error: ['Could not convert MFF file.', error, stdout, stderr]},
-                    [],
-                    {},
-                    ''
-                );
+                 return {
+                    success: false,
+                    message: {error: ['Could not convert MFF file.', error, stdout, stderr]},
+                    files: [],
+                    flags: {},
+                    bidsDir: '',
+                 };
             } else {
                 let flags = {};
                 fs.readFile(`${mffDir}/flagchecks.json`, 'utf8',
                     (err, jsonString) => {
                         console.info('read file', jsonString, err);
                         flags = JSON.parse(jsonString);
-                         callback(
-                            true,
-                            'SET file created!',
-                            setFiles,
-                            flags,
-                            mffDir
-                        );
+                         return {
+                            success: true,
+                            message: 'SET file created!',
+                            files: setFiles,
+                            flags: flags,
+                            bidsDir: mffDir
+                         };
                     });
 
             }
