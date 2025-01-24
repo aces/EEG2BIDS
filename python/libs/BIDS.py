@@ -16,10 +16,10 @@ class Validate:
                 if filename == '.bidsignore':
                     continue
 
-                if filename.endswith('_annotations.tsv'):
+                if filename.endswith('_events.tsv'):
                     continue
 
-                if filename.endswith('_annotations.json'):
+                if filename.endswith('_events.json'):
                     continue
                 temp = os.path.join(path, filename)
                 file_paths.append(temp[len(bids_directory):len(temp)])
