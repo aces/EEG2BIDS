@@ -80,12 +80,12 @@ const RecordingData = () => {
           .includes(state.inputFileFormat)
       ) return;
 
-      // if (state.inputFileFormat === 'edf') {
-      //   console.info('edf file selected');
-      //   socketContext.emit('get_edf_data', {
-      //     files: state.eegFiles,
-      //   });
-      // }
+      /* if (state.inputFileFormat === 'edf') {
+        console.info('edf file selected');
+        socketContext.emit('get_edf_data', {
+          files: state.eegFiles,
+        });
+      }*/
       const files = Object.entries(state.taskFiles)
       // only consider the non-excluded and non-empty tasks
           .filter((_, taskRuns) =>
@@ -104,12 +104,11 @@ const RecordingData = () => {
           .filter((run) => run.path);
 
       if (files.length && state.inputFileFormat === 'set') {
-        console.info('set file selected, called in RecordingData.js');
+        console.info('set file selected');
         socketContext.emit('get_set_data', {
           files: files,
         });
       } else if (files.length && state.inputFileFormat === 'edf') {
-        console.info('EDF file selected, called in RecordingData.js');
         socketContext.emit('get_edf_data', {
           files: files,
         });
