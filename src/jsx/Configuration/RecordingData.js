@@ -85,7 +85,8 @@ const RecordingData = () => {
         socketContext.emit('get_edf_data', {
           files: state.eegFiles,
         });
-      }*/
+      } */
+
       const files = Object.entries(state.taskFiles)
       // only consider the non-excluded and non-empty tasks
           .filter((_, taskRuns) =>
@@ -115,7 +116,6 @@ const RecordingData = () => {
       }
     }
   }, [state.taskFiles]);
-
 
   useEffect(() => {
     if (socketContext) {
