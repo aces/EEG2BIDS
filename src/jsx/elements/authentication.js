@@ -189,7 +189,7 @@ export const AuthenticationCredentials = (props) => {
     if (isCredentialsLoaded) return;
 
     const credentials =
-      await window['myAPI'].getLorisAuthenticationCredentials();
+        await window['myAPI'].getLorisAuthenticationCredentials();
 
     credentials?.lorisURL &&
       setLorisURL(credentials.lorisURL);
@@ -212,7 +212,7 @@ export const AuthenticationCredentials = (props) => {
     setState({useLoris: config.useLoris});
   }, []);
 
-  useEffect(async () => {
+  useEffect( () => {
     if (socketContext) {
       socketContext.on('loris_login_response', (data) => {
         if (data.error) {

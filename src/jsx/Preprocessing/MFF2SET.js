@@ -137,7 +137,14 @@ const MFF2SET = () => {
       };
 
       const myAPI = window['myAPI']; // from public/preload.js
-      await myAPI.convertMFFToSET(dirs, callback);
+      const result = await myAPI.convertMFFToSET(dirs);
+      callback(
+          result.success,
+          result.message,
+          result.files,
+          result.flags,
+          result.bidsDir
+      );
     }
   };
 

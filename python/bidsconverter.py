@@ -21,7 +21,7 @@ from python.libs.EDFHandler import EDFHandler
 from python.libs.SETHandler import SETHandler
 from python.libs.Modifier import Modifier
 from python.libs.BIDS import Validate
-from python.libs import iEEG
+# from python.libs import iEEG
 from python.libs.loris_api import LorisAPI
 from python.libs.TarFile import TarFile
 from python.libs.Anonymize import Anonymize

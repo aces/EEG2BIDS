@@ -1,8 +1,17 @@
-const electron = require('electron');
+const {
+  ipcMain,
+  dialog,
+  shell,
+  app,
+  BrowserWindow,
+  nativeImage,
+} = require('electron');
+
 const path = require('path');
 const url = require('url');
 const Store = require('electron-store');
-const {ipcMain} = require('electron');
+const jsLog = require('electron-log');
+const {archiveLog} = require('./logs');
 
 // Set data in electron-store (not secure)
 const store = new Store({
@@ -21,10 +30,6 @@ const store = new Store({
 
 // [security] Used for inputs.js (dialog call) to succeed.
 require('@electron/remote/main').initialize();
-
-const {app} = electron;
-const {BrowserWindow} = electron;
-const nativeImage = electron.nativeImage;
 
 const SET2BIDSService = process.env.DEV ?
   require('./set2bidsService') :
@@ -91,6 +96,9 @@ const createMainWindow = () => {
   // mainWindow.maximize();
   mainWindow.show();
 
+  require('@electron/remote/main').enable(mainWindow.webContents);
+
+
   mainWindow.loadURL(startUrl).then(() => {
     if (process.env.DEV) mainWindow.webContents.openDevTools();
   });
@@ -116,6 +124,31 @@ app.on('ready', async () => {
       lorisUsername: store.get('lorisUsername') ?? '',
       lorisToken: store.get('lorisToken') ?? '',
     };
+  });
+  ipcMain.handle('open-dialog', async (event, props) => {
+    return await dialog.showOpenDialog(props);
+  });
+  ipcMain.handle('shell-external', async (event, url) => {
+    return await shell.openExternal(url);
+  });
+  ipcMain.handle('set-logger', async (event) => {
+    jsLog.transports.file.fileName = 'js.log';
+    jsLog.transports.file.archiveLog = archiveLog;
+    Object.assign(console, jsLog.functions);
+  });
+  ipcMain.handle('mff-to-set-service', async (event, mffDirectory) => {
+    const MFFToSETService = process.env.DEV ?
+      require('./mffToSetService') :
+      require(path.join(__dirname, '../build/mffToSetService'));
+    const mffToSetService = new MFFToSETService();
+    return await mffToSetService.startup(mffDirectory).then((result) => {
+       if (!result.success) {
+          console.info('[SERVICE] mffToSet-service failed');
+        } else {
+          console.info('[SERVICE] mffToSet-service success');
+        }
+        return result;
+    });
   });
 });
 

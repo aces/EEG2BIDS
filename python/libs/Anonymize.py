@@ -1,4 +1,4 @@
-from python.libs import EDF
+from python.libs import EDFHandler
 from python.libs.BaseHandler import ReadError
 # Anonymize - scrubs edf header data.
 class Anonymize:
@@ -9,7 +9,7 @@ class Anonymize:
 
         try:
             # read EDF file from file_path,
-            file_in = EDF.EDFReader(fname=self.file_path)
+            file_in = EDFHandler.EDFReader(fname=self.file_path)
             # read header of EDF file.
             self.header = file_in.readHeader()
             file_in.close()
