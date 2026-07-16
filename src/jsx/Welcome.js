@@ -44,14 +44,6 @@ const Welcome = (props) => {
     myAPI.visitMCIN();
   };
   /**
-   * openSettings - Open EEG2BIDS Wizard settings.
-   */
-  const openSettings = () => {
-    const myAPI = window['myAPI'];
-    myAPI.openSettings();
-  };
-
-  /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
@@ -114,9 +106,6 @@ const Welcome = (props) => {
           You may wish to edit the dataset_description.json
           after generating your BIDS dataset.
         </p>
-      </div>
-      <div>
-        {/*<input value={'Settings'} type={'button'} onClick={openSettings}/>*/}
       </div>
       <div className='footer'>
         Powered by <a className='open-source' onClick={openGitHub}>
