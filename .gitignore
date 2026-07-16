@@ -19,3 +19,9 @@ Scripts/
 Lib/
 Include/
 share/
+
+# workflow tools
+.agents
+.claude
+skills-lock.json
+
