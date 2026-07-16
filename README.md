@@ -1,48 +1,30 @@
 ![EEG2BIDS Wizard](wiki/images/logo/EEG2bIDS_Wizard_(converter_tool).jpg)
 
-EEG2BIDS Wizard is a GUI interface for iEEG to BIDS format and used with LORIS (Longitudinal Online Research and Imaging System). Users can use their LORIS credentials with a LORIS URL and automatically retrieve LORIS data for the EEG to BIDS format. Becareful to remove your login credentials after using EEG2BIDS on a shared computer!
+# EEG2BIDS Wizard
 
-## Installation
+EEG2BIDS Wizard is a GUI for de-identifying EDF data and converting EEG or
+iEEG recordings to BIDS. It can use LORIS credentials to retrieve metadata.
+Remove saved credentials after using EEG2BIDS on a shared computer.
 
-#### System Requirements
+## Project status
 
- * Linux, macOS, Windows
- * 1 GB of disk space
+The development environment is being modernized for Linux in [#135](https://github.com/aces/EEG2BIDS/issues/135), [#137](https://github.com/aces/EEG2BIDS/issues/137), and [#136](https://github.com/aces/EEG2BIDS/issues/136).
+
+Production packages, installers, and embedded Python artifacts are currently
+**unsupported**. The former PyInstaller and Electron Builder paths have been
+retired; no replacement packaging workflow exists yet. Windows and macOS are
+not currently supported development targets.
+
+Dependency versions are defined by `package.json`, `package-lock.json`, and
+`requirements.txt`. The Python manifest is transitional and will be replaced
+as part of #135.
 
 ## Development
 
-#### Development Requirements
+There is not yet a complete supported development startup workflow. `npm start`
+starts the React and Electron development processes, but backend startup still
+requires the process-management work tracked in #135 and #137. Do not use the
+removed packaging scripts as a development environment.
 
- * [Node.js](https://nodejs.org/en/download/current) == 16.15.1 LTS
- * [NPM](https://www.npmjs.com) >= 8.12.1 (included with Node.js)
- * [Python](https://www.python.org/downloads/) == 3.10.5
-
-#### Development Build guides
-
- * [macOS: build instructions](./wiki/macOS/README.md)
-
- * [Ubuntu 20.04.2: build instructions](./wiki/ubuntu/README.md)
-
- * [Windows 10: build instructions](./wiki/windows/README.md)
-
-#### Development documentation
-
-* [Introduction](wiki/dev_notes/README.md)
-  
-* [React Development](wiki/dev_notes/react/README.md)
-
-## Dependencies
-
-#### Python Dependencies Requirements
-
- * PyInstaller >= 4.2
- * eventlet ~= 0.31.0
- * mne ~= 0.23.0
- * mne-bids ~= 0.8
- * mne-features ~= 0.1
- * numpy ~= 1.19.5
- * python-socketio ~= 5.0.4
- * python-engineio ~= 4.0.0
- * bids-validator ~= 1.6.0
- * pybv ~= 0.4
- * requests ~= 2.25.0
+Development documentation that remains applicable is under
+[`wiki/dev_notes/`](wiki/dev_notes/README.md).

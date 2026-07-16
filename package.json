@@ -5,13 +5,11 @@
   "dependencies": {
     "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.1",
-    "electron-log": "^4.4.7",
     "electron-store": "^8.0.1",
     "keytar": "^7.9.0",
     "papaparse": "^5.3.2",
     "prop-types": "^15.8.1",
     "react": "^18.1.0",
-    "react-color": "^2.19.3",
     "react-datepicker": "^4.8.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
@@ -26,7 +24,6 @@
     "concurrently": "^7.2.1",
     "cross-env": "^7.0.3",
     "electron": "^22.3.25",
-    "electron-builder": "^23.0.3",
     "electron-devtools-installer": "^3.2.0",
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
@@ -39,20 +36,9 @@
     "wait-on": "^6.0.1"
   },
   "scripts": {
-    "rebuild": "rebuild --runtime=electron --target=18.0.0",
     "react-start": "cross-env BROWSER=NONE react-scripts start",
     "electron-start": "cross-env DEV=1 electron .",
     "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
-    "start-server": "./start-server.sh",
-    "react-build": "cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
-    "pack": "electron-builder --dir -c.extraMetadata.main=build/electron.js",
-    "electron-build-linux": "electron-builder --linux -c.extraMetadata.main=build/electron.js",
-    "electron-build-windows": "electron-builder --win -c.extraMetadata.main=build/electron.js",
-    "electron-build-mac": "electron-builder --mac -c.extraMetadata.main=build/electron.js",
-    "build-linux": "npm run react-build && npm run electron-build-linux",
-    "build-windows": "npm run react-build && npm run electron-build-windows",
-    "build-mac": "npm run react-build && npm run electron-build-mac",
-    "build": "npm run react-build && npm run electron-build-linux && npm run electron-build-windows & npm run electron-build-mac",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -84,89 +70,5 @@
     "name": "Loris Team",
     "email": "loris-dev@bic.mni.mcgill.ca",
     "url": "https://github.com/aces/eeg2bids"
-  },
-  "build": {
-    "appId": "mni.aces.eeg2bids",
-    "productName": "eeg2bids",
-    "copyright": "Open Source",
-    "asar": false,
-    "linux": {
-      "target": [
-        "deb",
-        "snap"
-      ],
-      "category": "Utility"
-    },
-    "snap": {
-      "confinement": "classic"
-    },
-    "win": {
-      "icon": "./public/logo512.png",
-      "target": [
-        "nsis"
-      ],
-      "legalTrademarks": "Open Source",
-      "signingHashAlgorithms": [
-        "sha1",
-        "sha256"
-      ]
-    },
-    "mac": {
-      "target": [
-        "default"
-      ],
-      "icon": "./public/logo512.icns",
-      "category": "public.app-category.medical",
-      "gatekeeperAssess": false,
-      "extendInfo": {
-        "CFBundleDocumentTypes": [
-          {
-            "CFBundleTypeName": "Folders",
-            "CFBundleTypeRole": "Viewer",
-            "LSHandlerRank": "Alternate",
-            "LSItemContentTypes": [
-              "public.folder",
-              "com.apple.bundle",
-              "com.apple.package",
-              "com.apple.resolvable"
-            ]
-          },
-          {
-            "CFBundleTypeName": "UnixExecutables",
-            "CFBundleTypeRole": "Shell",
-            "LSHandlerRank": "Alternate",
-            "LSItemContentTypes": [
-              "public.unix-executable"
-            ]
-          }
-        ],
-        "NSDesktopFolderUsageDescription": "EEG2BIDS Wizard wants to access the Desktop folder.",
-        "NSDocumentsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Documents folder.",
-        "NSDownloadsFolderUsageDescription": "EEG2BIDS Wizard wants to access the Downloads folder.",
-        "NSFileProviderDomainUsageDescription": "EEG2BIDS Wizard wants to access files managed by a file provider.",
-        "NSSystemAdministrationUsageDescription": "The operation being performed by EEG2BIDS Wizard requires elevated permission."
-      }
-    },
-    "nsis": {
-      "oneClick": true,
-      "artifactName": "${productName}-Setup-${version}.${ext}"
-    },
-    "files": [
-      "build/index.html/*",
-      "build/**/*",
-      "node_modules/**/*",
-      "utils/**/*",
-      "python/**/*",
-      "dist",
-      "dist/eeg2bids-service.app",
-      "public/*",
-      "package.json"
-    ],
-    "extraResources": [
-      "public/preload.js"
-    ],
-    "directories": {
-      "buildResources": "public"
-    }
   }
 }
