@@ -45,6 +45,7 @@ const registerIpcHandlers = () => {
   handle('links:open-external', (event, url) => openExternal(url));
 
   handle('backend:get-status', () => backendService.getStatus());
+  handle('backend:restart', () => backendService.restart());
 
   handle('credentials:get', () => credentials.get());
   handle('credentials:set', (event, values) => credentials.set(values));

@@ -15,6 +15,7 @@ const options = {
 // Main components
 import Menu from './jsx/elements/menu';
 import Help from './jsx/elements/help';
+import BackendStatus from './jsx/elements/backendStatus';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
@@ -59,6 +60,7 @@ const App = () => {
         },
       }}>
         <>
+          <BackendStatus/>
           {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
           <Menu visible={appMode !== 'SplashScreen'}
             tabs={[

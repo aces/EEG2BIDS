@@ -165,4 +165,23 @@ const stop = () => new Promise((resolve) => {
   }
 });
 
-module.exports = {start, stop, getStatus, isRunning};
+/**
+ * Restart the owned backend: stop the current process (if any) and start a
+ * fresh one. Does nothing when the backend is externally managed, since this
+ * process does not own it.
+ * @return {Promise<object>} {restarted, reason?}
+ */
+const restart = async () => {
+  if (status.state === 'external') {
+    console.info(
+        '[backend] restart ignored: the backend is externally managed',
+    );
+    return {restarted: false, reason: 'external'};
+  }
+  console.info('[backend] restart requested');
+  await stop();
+  await start();
+  return {restarted: true};
+};
+
+module.exports = {start, stop, restart, getStatus, isRunning};

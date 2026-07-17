@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('eeg2bids', {
     ipcRenderer.invoke('credentials:remove'),
   openSettings: () => ipcRenderer.send('settings:open-window'),
   getBackendStatus: () => ipcRenderer.invoke('backend:get-status'),
+  restartBackend: () => ipcRenderer.invoke('backend:restart'),
   onBackendStatusChange: (callback) => {
     ipcRenderer.on('backend:status', (event, status) => callback(status));
   },
