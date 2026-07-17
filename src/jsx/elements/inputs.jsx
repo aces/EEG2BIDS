@@ -44,7 +44,7 @@ export const FileInput = (props) => {
             null
           }
           {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
+            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
           }
         </b>
       </label>
@@ -114,7 +114,7 @@ export const DirectoryInput = (props) => {
             null
           }
           {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
+            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
           }
         </b>
       </label>
@@ -175,7 +175,7 @@ export const TextInput = (props) => {
               null
             }
             {props.help &&
-              <i className='fas fa-question-circle' data-tip={props.help}></i>
+              <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
             }
           </b>
         </label>
@@ -291,7 +291,7 @@ export const RadioInput = (props) => {
             null
           }
           {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
+            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
           }
         </b>
       </label>
@@ -385,7 +385,7 @@ export const SelectInput = (props) => {
                 null
               }
               {props.help &&
-                <i className='fas fa-question-circle' data-tip={props.help}></i>
+                <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
               }
             </b>
           </label>
@@ -449,7 +449,7 @@ export const NumberInput = (props) => {
       <label className="label" htmlFor={props.id}>
         <b>{props.label}</b>
         {props.help &&
-          <i className='fas fa-question-circle' data-tip={props.help}></i>
+          <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
         }
       </label>
       <input
@@ -503,7 +503,7 @@ export const TextareaInput = (props) => {
             null
           }
           {props.help &&
-            <i className='fas fa-question-circle' data-tip={props.help}></i>
+            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
           }
         </b>
       </label>
