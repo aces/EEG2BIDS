@@ -16,11 +16,11 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.3",
-    "concurrently": "^7.2.1",
+    "concurrently": "^10.0.3",
     "electron": "^43.1.1",
-    "eslint": "^8.17.0",
+    "eslint": "^10.7.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-react": "^7.30.0",
+    "eslint-plugin-react": "^7.37.5",
     "lint-staged": "17.0.8",
     "vite": "^8.1.5",
     "wait-on": "^9.0.10"
