@@ -217,6 +217,19 @@ wheels = [
 ]
 
 [[package]]
+name = "edfio"
+version = "0.4.14"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/74/17fede8457db772e60a7663ddb6c47744af465515099d520ca77e56ec18c/edfio-0.4.14.tar.gz", hash = "sha256:2951675e297dd4435baae18e965360aeddff9f5f3b20cc09ddc317326dbc3432", size = 27618, upload-time = "2026-07-15T10:57:25.241Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/ee/8bb87fbcd04d4819197d1f8e2e4069b68debab0cfa73f48211824ed9c810/edfio-0.4.14-py3-none-any.whl", hash = "sha256:dbb682ba79ef7821bf58c220925c65ef1f7c0f43f621670cda90d5f7268eab50", size = 30629, upload-time = "2026-07-15T10:57:24.219Z" },
+]
+
+[[package]]
 name = "eeg2bids"
 version = "1.0.5"
 source = { editable = "." }
@@ -234,6 +247,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+dev = [
+    { name = "edfio" },
+]
 packaging = [
     { name = "pyinstaller" },
 ]
@@ -252,6 +268,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+dev = [{ name = "edfio", specifier = ">=0.4" }]
 packaging = [{ name = "pyinstaller", specifier = ">=6" }]
 
 [[package]]

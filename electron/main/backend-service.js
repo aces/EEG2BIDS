@@ -103,6 +103,10 @@ const start = async () => {
     cwd: REPO_ROOT,
     detached: true, // own process group, so stop() reaches python too
     stdio: ['ignore', 'pipe', 'pipe'],
+    // The backend watches this pid and exits when it disappears, so it is
+    // never orphaned even when Electron dies without running will-quit
+    // (e.g. a terminal Ctrl+C killing the whole foreground process group).
+    env: {...process.env, EEG2BIDS_OWNER_PID: String(process.pid)},
   });
   logOutput(child.stdout, 'stdout');
   logOutput(child.stderr, 'stderr');
@@ -161,4 +165,23 @@ const stop = () => new Promise((resolve) => {
   }
 });
 
-module.exports = {start, stop, getStatus, isRunning};
+/**
+ * Restart the owned backend: stop the current process (if any) and start a
+ * fresh one. Does nothing when the backend is externally managed, since this
+ * process does not own it.
+ * @return {Promise<object>} {restarted, reason?}
+ */
+const restart = async () => {
+  if (status.state === 'external') {
+    console.info(
+        '[backend] restart ignored: the backend is externally managed',
+    );
+    return {restarted: false, reason: 'external'};
+  }
+  console.info('[backend] restart requested');
+  await stop();
+  await start();
+  return {restarted: true};
+};
+
+module.exports = {start, stop, restart, getStatus, isRunning};

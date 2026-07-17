@@ -16,6 +16,16 @@ export const FileInput = (props) => {
     // Send current file to parent component
     const files = event.target.files ? Array.from(event.target.files) : [];
 
+    // Chromium File objects no longer include Electron's historical `path`
+    // property. Keep the File itself (callers use FileReader for metadata),
+    // but add the native path obtained through the sandboxed preload bridge.
+    for (const file of files) {
+      Object.defineProperty(file, 'path', {
+        value: window.eeg2bids.getPathForFile(file),
+        enumerable: true,
+      });
+    }
+
     // Clear the input file
     event.target.value = null;
 

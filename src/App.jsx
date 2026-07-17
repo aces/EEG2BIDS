@@ -6,12 +6,16 @@ import './css/App.css';
 import {Socket} from './jsx/socket.io';
 const uri = 'http://127.0.0.1:7301';
 const options = {
-  transports: ['websocket'],
+  // Prefer websocket, but allow long-polling as a fallback: the backend
+  // serves both, and polling keeps the app usable if the websocket
+  // transport is unavailable.
+  transports: ['websocket', 'polling'],
 };
 
 // Main components
 import Menu from './jsx/elements/menu';
 import Help from './jsx/elements/help';
+import BackendStatus from './jsx/elements/backendStatus';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
@@ -56,6 +60,7 @@ const App = () => {
         },
       }}>
         <>
+          <BackendStatus/>
           {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
           <Menu visible={appMode !== 'SplashScreen'}
             tabs={[
