@@ -1,4 +1,4 @@
-![EEG2BIDS Wizard](wiki/images/logo/EEG2bIDS_Wizard_(converter_tool).jpg)
+![EEG2BIDS Wizard](assets/logo.jpg)
 
 # EEG2BIDS Wizard
 
@@ -139,9 +139,6 @@ sudo apparmor_parser -r /etc/apparmor.d/electron-eeg2bids
 ```
 
 Do not work around it with `--no-sandbox`.
-
-Further development documentation is under
-[`wiki/dev_notes/`](wiki/dev_notes/README.md).
 
 ## Packaging
 
