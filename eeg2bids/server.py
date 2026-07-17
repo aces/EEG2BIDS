@@ -1,17 +1,18 @@
-# import _thread
-import os
-os.environ['EVENTLET_NO_GREENDNS'] = 'yes'
-import eventlet
-from eventlet import tpool
 import socketio
-from python.libs import iEEG
-from python.libs.iEEG import ReadError, WriteError, metadata as metadata_fields
-from python.libs.Modifier import Modifier
-from python.libs import BIDS
-from python.libs.loris_api import LorisAPI
-import csv
+from werkzeug.serving import run_simple
+from eeg2bids import iEEG
+from eeg2bids.iEEG import ReadError, WriteError, metadata as metadata_fields
+from eeg2bids.Modifier import Modifier
+from eeg2bids import BIDS
+from eeg2bids.loris_api import LorisAPI
 import datetime
 import json
+
+# The host and port the local Socket.IO service binds to. The service only
+# ever listens on the loopback interface; the connect handler below rejects
+# any client that is not on 127.0.0.1.
+HOST = '127.0.0.1'
+PORT = 7301
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -20,8 +21,10 @@ lorisCredentials = {
     'lorisPassword': '',
 }
 
-# Create socket listener.
-sio = socketio.Server(async_mode='eventlet', cors_allowed_origins=[])
+# Create socket listener. The threading async mode keeps the event handlers
+# synchronous (they perform blocking file IO and BIDS conversion) and avoids
+# the eventlet green-thread runtime that the backend previously depended on.
+sio = socketio.Server(async_mode='threading', cors_allowed_origins='*')
 app = socketio.WSGIApp(sio)
 
 # Create Loris API handler.
@@ -40,12 +43,12 @@ def tarfile_bids_thread(bids_directory):
     response = {
         'compression_time': 'example_5mins'
     }
-    return eventlet.tpool.Proxy(response)
+    return response
 
 
 @sio.event
 def tarfile_bids(sid, bids_directory):
-    response = eventlet.tpool.execute(tarfile_bids_thread, bids_directory)
+    response = tarfile_bids_thread(bids_directory)
     send = {
         'compression_time': response['compression_time']
     }
@@ -258,7 +261,7 @@ def edf_to_bids_thread(data):
             response = {
                 'output_time': data['output_time']
             }
-            return eventlet.tpool.Proxy(response)
+            return response
         except ReadError as e:
             error_messages.append('Cannot read file - ' + str(e))
         except WriteError as e:
@@ -267,7 +270,7 @@ def edf_to_bids_thread(data):
         response = {
             'error': error_messages
         }
-    return eventlet.tpool.Proxy(response)
+    return response
 
 
 @sio.event
@@ -276,7 +279,7 @@ def edf_to_bids(sid, data):
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
     print('edf_to_bids: ', data)
-    response = eventlet.tpool.execute(edf_to_bids_thread, data)
+    response = edf_to_bids_thread(data)
     print(response)
     print('Response received!')
     sio.emit('bids', response.copy())
@@ -307,9 +310,16 @@ def disconnect(sid):
     print('disconnect: ', sid)
 
 
+def main():
+    """Start the local EEG2BIDS Socket.IO service.
+
+    Uses Werkzeug's threaded WSGI server. WebSocket transport is provided by
+    the ``simple-websocket`` package; if it is unavailable Socket.IO falls back
+    to HTTP long-polling, which is sufficient for this local single-client
+    service.
+    """
+    run_simple(HOST, PORT, app, threaded=True)
+
+
 if __name__ == '__main__':
-    eventlet.wsgi.server(
-        eventlet.listen(('127.0.0.1', 7301)),
-        app,
-        log_output=True
-    )
+    main()

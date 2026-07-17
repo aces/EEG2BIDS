@@ -3,7 +3,7 @@ import csv
 import json
 import re
 import shutil
-from python.libs.iEEG import metadata as metadata_fields
+from eeg2bids.iEEG import metadata as metadata_fields
 
 class Modifier:
     def __init__(self, data):
@@ -74,7 +74,7 @@ class Modifier:
         appVersion = 'unknown'
         
         try:
-            with open(os.path.join(os.path.dirname(__file__), '../../package.json'), "r") as fp:
+            with open(os.path.join(os.path.dirname(__file__), '../package.json'), "r") as fp:
                 file_data = json.load(fp)
                 appVersion = file_data['version']
         except IOError as e:
