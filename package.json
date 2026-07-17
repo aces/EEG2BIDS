@@ -3,44 +3,35 @@
   "description": "EEG/iEEG to BIDS format Wizard",
   "version": "1.0.5",
   "dependencies": {
-    "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.1",
-    "electron-store": "^8.0.1",
-    "keytar": "^7.9.0",
     "papaparse": "^5.3.2",
     "prop-types": "^15.8.1",
     "react": "^18.1.0",
     "react-datepicker": "^4.8.0",
     "react-dom": "^18.1.0",
     "react-router-dom": "^6.3.0",
-    "react-scripts": "^5.0.1",
     "react-switch": "^7.0.0",
     "react-tooltip": "^4.2.21",
-    "socket.io-client": "^4.5.1"
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.2",
-    "@babel/eslint-parser": "^7.18.2",
+    "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^7.2.1",
-    "cross-env": "^7.0.3",
-    "electron": "^22.3.25",
-    "electron-devtools-installer": "^3.2.0",
+    "electron": "^43.1.1",
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-babel": "^5.3.1",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsx": "^0.1.0",
-    "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-react": "^7.30.0",
     "lint-staged": "^13.0.0",
-    "wait-on": "^6.0.1"
+    "vite": "^8.1.5",
+    "wait-on": "^9.0.10"
   },
   "scripts": {
-    "react-start": "cross-env BROWSER=NONE react-scripts start",
-    "electron-start": "cross-env DEV=1 electron .",
-    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "concurrently -k --success first -n renderer,electron \"npm run dev:renderer\" \"setsid sh -c 'wait-on http://localhost:3000/ && npm run electron-start'\"",
+    "dev:renderer": "vite",
+    "build": "vite build",
+    "electron-start": "DEV=1 electron .",
+    "start": "npm run dev",
+    "lint": "eslint src electron"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css,md}": [
@@ -48,17 +39,10 @@
       "git add"
     ]
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "main": "electron/main/index.js",
+  "engines": {
+    "node": ">=22.12"
   },
-  "homepage": "./",
-  "main": "public/electron.js",
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ],
   "contributors": [
     "Alizée Wickenheiser",
     "Cécile Madjar",
