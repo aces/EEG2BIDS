@@ -9,39 +9,34 @@ import '../css/Welcome.css';
  */
 const Welcome = (props) => {
   /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   * openBIDS - Navigate browser to the BIDS specification.
    */
   const openBIDS = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitBIDS();
+    window.eeg2bids.openExternal('https://bids.neuroimaging.io');
   };
   /**
    * openGitHub - Navigate browser to EEG2BIDS Wizard.
    */
   const openGitHub = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitGitHub();
+    window.eeg2bids.openExternal('https://github.com/aces/eeg2bids');
   };
   /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
+   * openIssues - Navigate browser to the EEG2BIDS issue tracker.
    */
   const openIssues = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitIssues();
+    window.eeg2bids.openExternal('https://github.com/aces/eeg2bids/issues');
   };
   /**
    * openMNE - Navigate browser to MNE.
    */
   const openMNE = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitMNE();
+    window.eeg2bids.openExternal('https://mne.tools/mne-bids/');
   };
   /**
    * openMCIN - Navigate browser to MCIN.
    */
   const openMCIN = () => {
-    const myAPI = window['myAPI'];
-    myAPI.visitMCIN();
+    window.eeg2bids.openExternal('https://mcin.ca');
   };
   /**
    * Renders the React component.

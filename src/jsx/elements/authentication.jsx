@@ -146,8 +146,8 @@ export const AuthenticationMessage = (props) => {
      * getLorisCredentials - gets the LORIS credentials securely.
      */
     async function getLorisCredentials() {
-      const myAPI = window['myAPI'];
-      const credentials = await myAPI.getLorisAuthenticationCredentials();
+      const credentials =
+        await window.eeg2bids.getLorisAuthenticationCredentials();
       if (credentials &&
         credentials.lorisURL &&
         credentials.lorisUsername &&
@@ -218,8 +218,8 @@ export const AuthenticationCredentials = (props) => {
      * getLorisCredentials - gets the LORIS credentials securely.
      */
     async function getLorisCredentials() {
-      const myAPI = window['myAPI'];
-      const credentials = await myAPI.getLorisAuthenticationCredentials();
+      const credentials =
+        await window.eeg2bids.getLorisAuthenticationCredentials();
       setLorisURL(credentials.lorisURL);
       setLorisUsername(credentials.lorisUsername);
       setLorisPassword(credentials.lorisPassword);
@@ -232,8 +232,7 @@ export const AuthenticationCredentials = (props) => {
    *   but first update (?new) credentials.
    */
   const handleClear = () => {
-    const myAPI = window['myAPI'];
-    myAPI.removeLorisAuthenticationCredentials();
+    window.eeg2bids.removeLorisAuthenticationCredentials();
     setLorisURL('');
     setLorisUsername('');
     setLorisPassword('');
@@ -244,7 +243,6 @@ export const AuthenticationCredentials = (props) => {
    *   but first update (?new) credentials.
    */
   const handleClose = () => {
-    const myAPI = window['myAPI'];
     const credentials = {
       lorisURL: lorisURL,
       lorisUsername: lorisUsername,
@@ -255,7 +253,7 @@ export const AuthenticationCredentials = (props) => {
       credentials.lorisUsername &&
       credentials.lorisPassword
     ) {
-      myAPI.setLorisAuthenticationCredentials(credentials);
+      window.eeg2bids.setLorisAuthenticationCredentials(credentials);
       socketContext.emit('set_loris_credentials', credentials);
     }
     props.close(true);
