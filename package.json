@@ -53,6 +53,9 @@
   },
   "homepage": "./",
   "main": "public/electron.js",
+  "engines": {
+    "node": ">=22.12"
+  },
   "browserslist": [
     ">0.2%",
     "not dead",
