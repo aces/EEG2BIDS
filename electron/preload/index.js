@@ -13,4 +13,8 @@ contextBridge.exposeInMainWorld('eeg2bids', {
   removeLorisAuthenticationCredentials: () =>
     ipcRenderer.invoke('credentials:remove'),
   openSettings: () => ipcRenderer.send('settings:open-window'),
+  getBackendStatus: () => ipcRenderer.invoke('backend:get-status'),
+  onBackendStatusChange: (callback) => {
+    ipcRenderer.on('backend:status', (event, status) => callback(status));
+  },
 });

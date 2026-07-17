@@ -5,6 +5,7 @@ const {
   isAllowedRendererUrl,
 } = require('./windows');
 const {registerIpcHandlers} = require('./ipc');
+const backendService = require('./backend-service');
 
 registerIpcHandlers();
 
@@ -24,11 +25,21 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 app.whenReady().then(() => {
+  backendService.start();
   createMainWindow();
 });
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+// Hold quit until the owned backend process group is terminated, so no
+// python process is ever orphaned.
+app.on('will-quit', (event) => {
+  if (backendService.isRunning()) {
+    event.preventDefault();
+    backendService.stop().then(() => app.quit());
+  }
 });
 
 app.on('activate', () => {

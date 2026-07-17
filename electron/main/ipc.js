@@ -2,6 +2,7 @@ const {BrowserWindow, dialog, ipcMain} = require('electron');
 const {createSettingsWindow} = require('./windows');
 const credentials = require('./credentials');
 const {openExternal} = require('./external-links');
+const backendService = require('./backend-service');
 
 /**
  * Register all IPC channels exposed to the renderer through the preload
@@ -24,6 +25,8 @@ const registerIpcHandlers = () => {
   });
 
   ipcMain.handle('links:open-external', (event, url) => openExternal(url));
+
+  ipcMain.handle('backend:get-status', () => backendService.getStatus());
 
   ipcMain.handle('credentials:get', () => credentials.get());
   ipcMain.handle('credentials:set', (event, values) =>
