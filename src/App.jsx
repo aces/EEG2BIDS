@@ -6,7 +6,10 @@ import './css/App.css';
 import {Socket} from './jsx/socket.io';
 const uri = 'http://127.0.0.1:7301';
 const options = {
-  transports: ['websocket'],
+  // Prefer websocket, but allow long-polling as a fallback: the backend
+  // serves both, and polling keeps the app usable if the websocket
+  // transport is unavailable.
+  transports: ['websocket', 'polling'],
 };
 
 // Main components
