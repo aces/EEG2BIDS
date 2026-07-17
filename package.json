@@ -21,7 +21,7 @@
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.30.0",
-    "lint-staged": "^13.0.0",
+    "lint-staged": "^17.0.8",
     "vite": "^8.1.5",
     "wait-on": "^9.0.10"
   },
