@@ -49,3 +49,12 @@ app.on('activate', () => {
     createMainWindow();
   }
 });
+
+// A terminal Ctrl+C or kill must go through the ordinary quit path, so the
+// detached backend process group is terminated rather than orphaned.
+['SIGINT', 'SIGTERM'].forEach((signal) => {
+  process.on(signal, () => {
+    console.info(`[electron:main] received ${signal}, quitting`);
+    app.quit();
+  });
+});

@@ -1,3 +1,8 @@
+import os
+import sys
+import threading
+import time
+
 import socketio
 from werkzeug.serving import run_simple
 from eeg2bids import iEEG
@@ -312,6 +317,41 @@ def disconnect(sid):
     print('disconnect: ', sid)
 
 
+def _watch_owner_process():
+    """Exit when the process that owns this backend disappears.
+
+    Electron sets EEG2BIDS_OWNER_PID when it spawns the backend. Electron
+    normally terminates the backend's process group itself on quit, but that
+    cannot happen when Electron dies without a graceful shutdown (a terminal
+    Ctrl+C killing the whole foreground process group, or a hard kill). This
+    watchdog is the backstop that keeps the backend from being orphaned.
+    """
+    owner_pid = os.environ.get('EEG2BIDS_OWNER_PID', '')
+    if not owner_pid.isdigit():
+        return
+
+    def watch():
+        while True:
+            time.sleep(2)
+            try:
+                os.kill(int(owner_pid), 0)
+            except OSError:
+                # stderr is a pipe into the (now dead) owner, so this
+                # print may itself fail; exit regardless.
+                try:
+                    print(
+                        f'eeg2bids: owner process {owner_pid} exited, '
+                        'shutting down',
+                        file=sys.stderr,
+                    )
+                except OSError:
+                    pass
+                finally:
+                    os._exit(0)
+
+    threading.Thread(target=watch, daemon=True).start()
+
+
 def main():
     """Start the local EEG2BIDS Socket.IO service.
 
@@ -320,6 +360,9 @@ def main():
     to HTTP long-polling, which is sufficient for this local single-client
     service.
     """
+    _watch_owner_process()
+    # A port collision needs no handling here: Werkzeug prints an actionable
+    # "Port 7301 is in use by another program" message and exits non-zero.
     run_simple(HOST, PORT, app, threaded=True)
 
 

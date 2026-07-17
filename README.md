@@ -62,22 +62,25 @@ The Socket.IO service runs on the standard-threading runtime (Werkzeug +
 ### Running
 
 ```sh
-npm ci     # install frontend dependencies from the lockfile
-npm start  # renderer (Vite on port 3000) + Electron + Python backend
+npm ci       # install frontend dependencies from the lockfile
+npm run dev  # renderer (Vite on port 3000) + Electron + Python backend
 ```
 
-`npm start` is the single top-level development command. Electron owns the
-backend process: it launches `uv run --frozen python -m eeg2bids`, captures
-its output into the terminal with a `[backend]` prefix, reports availability
-to the renderer, and terminates the whole process group on shutdown so no
-Python process is left behind. If something already listens on
-`127.0.0.1:7301` — for example a manually started backend — Electron uses
-the existing service instead of starting its own.
+`npm run dev` is the single top-level development command (`npm start` is an
+alias). It runs the Vite dev server and Electron together; when either side
+exits — including Ctrl+C — the other is shut down with it, so no dev server
+is left behind. Electron owns the backend process: it launches
+`uv run --frozen python -m eeg2bids`, captures its output into the terminal
+with a `[backend]` prefix, reports availability to the renderer, and
+terminates the whole process group on shutdown so no Python process is left
+behind. If something already listens on `127.0.0.1:7301` — for example a
+manually started backend — Electron uses the existing service instead of
+starting its own.
 
 The pieces also run separately:
 
 ```sh
-npm run dev                # Vite dev server only (http://localhost:3000)
+npm run dev:renderer       # Vite dev server only (http://localhost:3000)
 npm run electron-start     # Electron only (expects the dev server)
 npm run build              # renderer production build into build/
 npm run lint               # ESLint over src/ and electron/

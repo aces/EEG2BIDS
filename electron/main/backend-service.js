@@ -103,6 +103,10 @@ const start = async () => {
     cwd: REPO_ROOT,
     detached: true, // own process group, so stop() reaches python too
     stdio: ['ignore', 'pipe', 'pipe'],
+    // The backend watches this pid and exits when it disappears, so it is
+    // never orphaned even when Electron dies without running will-quit
+    // (e.g. a terminal Ctrl+C killing the whole foreground process group).
+    env: {...process.env, EEG2BIDS_OWNER_PID: String(process.pid)},
   });
   logOutput(child.stdout, 'stdout');
   logOutput(child.stderr, 'stderr');
