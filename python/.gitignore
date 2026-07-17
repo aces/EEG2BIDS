@@ -1,8 +1,0 @@
-.DS_Store
-.idea/
-*.spec
-logs/*.log
-VERSION
-venv/
-__pycache__/
-libs/__pycache__/

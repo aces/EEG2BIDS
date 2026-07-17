@@ -212,8 +212,8 @@ class EDFReader():
             meas_info['subject_id'] = fid.read(80).strip().decode()  # subject id
             meas_info['recording_id'] = fid.read(80).strip().decode()  # recording id
 
-            day, month, year = [int(x) for x in re.findall('(\d+)', fid.read(8).decode())]
-            hour, minute, second = [int(x) for x in re.findall('(\d+)', fid.read(8).decode())]
+            day, month, year = [int(x) for x in re.findall(r'(\d+)', fid.read(8).decode())]
+            hour, minute, second = [int(x) for x in re.findall(r'(\d+)', fid.read(8).decode())]
             meas_info['day'] = day
             meas_info['month'] = month
             meas_info['year'] = year
@@ -258,8 +258,8 @@ class EDFReader():
             chan_info['digital_max'] = digital_max = np.array([float(fid.read(8).decode()) for ch in channels])
 
             prefiltering = [fid.read(80).strip().decode() for ch in channels][:-1]
-            highpass = np.ravel([re.findall('HP:\s+(\w+)', filt) for filt in prefiltering])
-            lowpass = np.ravel([re.findall('LP:\s+(\w+)', filt) for filt in prefiltering])
+            highpass = np.ravel([re.findall(r'HP:\s+(\w+)', filt) for filt in prefiltering])
+            lowpass = np.ravel([re.findall(r'LP:\s+(\w+)', filt) for filt in prefiltering])
             high_pass_default = 0.
             if highpass.size == 0:
                 meas_info['highpass'] = high_pass_default

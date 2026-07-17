@@ -1,0 +1,37 @@
+[project]
+name = "eeg2bids"
+version = "1.0.5"
+description = "EEG2BIDS Wizard backend: de-identifies EDF data and converts EEG/iEEG recordings to BIDS."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "mne>=1.7",
+    "mne-bids>=0.14",
+    "numpy>=1.26",
+    "pybv>=0.7.5",
+    "python-socketio>=5.11",
+    "simple-websocket>=1.0",
+    "werkzeug>=3.0",
+    "requests>=2.32",
+    "bids-validator>=1.14",
+]
+
+[project.scripts]
+eeg2bids = "eeg2bids.server:main"
+
+[dependency-groups]
+# Optional group for a future standalone-binary build. The packaged
+# PyInstaller/Electron workflow is not maintained in this branch (see #135 /
+# #136 / #137); this declaration keeps PyInstaller a declared, resolvable build
+# dependency so the freeze step is not blocked when packaging is revisited.
+packaging = [
+    "pyinstaller>=6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["eeg2bids"]
