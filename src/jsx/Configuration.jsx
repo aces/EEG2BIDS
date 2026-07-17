@@ -1,7 +1,7 @@
 import React, {useContext, useState, useEffect} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -1521,7 +1521,7 @@ const Configuration = (props) => {
                     <b>
                       Site <span className="red">*</span>
                       <i className='fas fa-question-circle'
-                        data-tip='Study Centre'
+                        data-tooltip-content='Study Centre'
                       />
                     </b>
                   </label>
@@ -1551,7 +1551,7 @@ const Configuration = (props) => {
                     <b>
                       Project <span className="red">*</span>
                       <i className='fas fa-question-circle'
-                        data-tip='Study'
+                        data-tooltip-content='Study'
                       />
                     </b>
                   </label>
@@ -1581,7 +1581,7 @@ const Configuration = (props) => {
                     <b>
                       Subproject <span className="red">*</span>
                       <i className="fas fa-question-circle"
-                        data-tip="Subproject or population cohort"
+                        data-tooltip-content="Subproject or population cohort"
                       />
                     </b>
                   </label>
@@ -1613,7 +1613,7 @@ const Configuration = (props) => {
                 <b>
                   Session <span className="red">*</span>
                   <i className='fas fa-question-circle'
-                    data-tip='Visit or TimePoint Label'
+                    data-tooltip-content='Visit or TimePoint Label'
                   />
                 </b>
                 {state.LORIScompliant.get &&
@@ -1943,7 +1943,7 @@ const Configuration = (props) => {
           close={hideAuthCredentials}
           width='500px'
         />
-        <ReactTooltip/>
+        <Tooltip anchorSelect='[data-tooltip-content]'/>
       </>
     );
   } else if (props.appMode === 'Converter') {
@@ -2049,7 +2049,7 @@ const Configuration = (props) => {
         >
           {modalText.message[modalText.mode]}
         </Modal>
-        <ReactTooltip/>
+        <Tooltip anchorSelect='[data-tooltip-content]'/>
       </>
     );
   } else {
