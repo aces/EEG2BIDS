@@ -12,7 +12,7 @@
     "react-router-dom": "^6.3.0",
     "react-switch": "^7.0.0",
     "react-tooltip": "^4.2.21",
-    "socket.io-client": "^4.5.1"
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.3",
