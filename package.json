@@ -3,7 +3,6 @@
   "description": "EEG/iEEG to BIDS format Wizard",
   "version": "1.0.5",
   "dependencies": {
-    "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.1",
     "electron-store": "^8.0.1",
     "keytar": "^7.9.0",
@@ -20,8 +19,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^7.2.1",
-    "electron": "^22.3.25",
-    "electron-devtools-installer": "^3.2.0",
+    "electron": "^43.1.1",
     "eslint": "^8.17.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.30.0",
@@ -34,7 +32,7 @@
     "build": "vite build",
     "electron-start": "DEV=1 electron .",
     "start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
-    "lint": "eslint src"
+    "lint": "eslint src electron"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css,md}": [
@@ -42,7 +40,7 @@
       "git add"
     ]
   },
-  "main": "public/electron.js",
+  "main": "electron/main/index.js",
   "engines": {
     "node": ">=22.12"
   },

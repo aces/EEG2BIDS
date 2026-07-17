@@ -81,17 +81,15 @@ FileInput.propTypes = {
  * @return {JSX.Element}
  */
 export const DirectoryInput = (props) => {
-  const myAPI = window['myAPI']; // from public/preload.js
   /**
    * handleClick - button by user.
    */
   const handleClick = async () => {
     // Send directory to parent component
-    const dialog = await myAPI.dialog();
-    const path = await dialog.showOpenDialog({
-      properties: ['openDirectory'],
-    });
-    props.onUserInput(props.id, path.filePaths[0]);
+    const path = await window.eeg2bids.selectDirectory();
+    if (path !== null) {
+      props.onUserInput(props.id, path);
+    }
   };
   /**
    * Renders the React component.
