@@ -31,4 +31,4 @@ share/
 .claude
 skills-lock.json
 AGENTS.md
-docs
+docs/agents/

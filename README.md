@@ -49,6 +49,10 @@ The Socket.IO service runs on the standard-threading runtime (Werkzeug +
 
 ## Development
 
+See [docs/development.md](docs/development.md) for the full workflow:
+debugging tools, logging, backend connection states, generating synthetic
+development data, and the manual verification procedure.
+
 ### Requirements
 
 - **Node.js 24** (declared in `.nvmrc`; anything satisfying the `engines`

@@ -104,6 +104,7 @@ def set_loris_credentials(sid, data):
         print('set_loris_credentials: could not load LORIS metadata:', e)
 
 
+@sio.event
 def get_loris_sites(sid):
     sio.emit('loris_sites', loris_api.get_sites())
 
@@ -288,9 +289,10 @@ def edf_to_bids_thread(data):
 
 @sio.event
 def edf_to_bids(sid, data):
-    # data = { file_paths: [], bids_directory: '', read_only: false,
-    # event_files: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', session: '', subject_id: ''}
+    # data = { edfData: {files: [{path, name}]}, eegRuns: [], modality: '',
+    # bids_directory: '', read_only: false, session: '', participantID: '',
+    # taskName: '', line_freq: '', site_id: '', project_id: '',
+    # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
     print('edf_to_bids: ', data)
     response = edf_to_bids_thread(data)
     print(response)
