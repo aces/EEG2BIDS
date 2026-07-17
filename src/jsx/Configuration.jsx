@@ -26,7 +26,7 @@ import Switch from 'react-switch';
 import DatePicker from 'react-datepicker';
 
 // Socket.io
-import {SocketContext} from './socket.io';
+import {SocketContext, useSocketStatus} from './socket.io';
 
 import '../css/Converter.css';
 
@@ -42,6 +42,7 @@ const Configuration = (props) => {
   // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
+  const socketStatus = useSocketStatus();
 
   // React State
   const initialState = {
@@ -140,6 +141,21 @@ const Configuration = (props) => {
   const beginBidsCreation = () => {
     if (!preparedBy) {
       setDisplayErrors(true);
+      return;
+    }
+
+    if (socketStatus !== 'connected') {
+      setModalText((prevState) => {
+        prevState.message['error'] = (
+          <span style={{padding: '40px'}}>
+            <span className='error'>&#x274C;</span> The backend is not
+            connected, so the conversion cannot run. Wait for it to reconnect
+            or use “Restart backend”, then try again.
+          </span>
+        );
+        return {...prevState, ['mode']: 'error'};
+      });
+      setModalVisible(true);
       return;
     }
 

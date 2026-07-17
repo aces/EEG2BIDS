@@ -10,29 +10,38 @@ class LorisAPI:
     token = ''
 
     def login(self):
-        resp = requests.post(
-            url=self.url + 'login',
-            json={
-                'username': self.username,
-                'password': self.password
-            },
-            verify=False
-        )
+        # A LORIS instance is optional; an unreachable or slow URL must not
+        # hang the login flow, so the request has a timeout and any network
+        # failure is turned into a visible error rather than an exception.
+        try:
+            resp = requests.post(
+                url=self.url + 'login',
+                json={
+                    'username': self.username,
+                    'password': self.password
+                },
+                verify=False,
+                timeout=10
+            )
+        except requests.exceptions.RequestException:
+            return {'error': 'Could not reach the LORIS server. Check the '
+                             'LORIS URL and your network connection.'}
 
-        print(resp)
-
+        # Never print the login response or token: this output is forwarded
+        # into the development logs by the Electron main process.
         login_succeeded = {}
         if resp.status_code == 405:
             login_succeeded = {'error': 'User credentials error!'}
             print('User credentials error!')
         else:
-            resp_json = json.loads(resp.content.decode('ascii'))
-            print(resp_json)
+            try:
+                resp_json = json.loads(resp.content.decode('ascii'))
+            except (ValueError, UnicodeDecodeError):
+                return {'error': 'Unexpected response from the LORIS server.'}
             if resp_json.get('error'):
                 login_succeeded = {'error': resp_json.get('error')}
             else:
                 self.token = resp_json.get('token')
-                print(self.token)
         return login_succeeded
 
     def get_projects(self):
