@@ -10,6 +10,9 @@ venv/
 .venv/
 __pycache__/
 .pytest_cache/
+
+# generated development fixtures (see tools/make_dev_data.py)
+dev-data/
 build/
 dist/
 lib/

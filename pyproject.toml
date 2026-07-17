@@ -21,6 +21,13 @@ dependencies = [
 eeg2bids = "eeg2bids.server:main"
 
 [dependency-groups]
+# Development-only tools. `edfio` is the EDF export backend used by
+# tools/make_dev_data.py to generate synthetic development fixtures; it is
+# not needed at runtime. Install with: uv sync --group dev
+dev = [
+    "edfio>=0.4",
+]
+
 # Optional group for a future standalone-binary build. The packaged
 # PyInstaller/Electron workflow is not maintained in this branch (see #135 /
 # #136 / #137); this declaration keeps PyInstaller a declared, resolvable build
