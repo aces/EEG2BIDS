@@ -24,7 +24,23 @@ const rendererUrl = (query) => {
 const webPreferences = {
   nodeIntegration: false,
   contextIsolation: true,
+  sandbox: true,
   preload: path.join(__dirname, '../preload/index.js'),
+};
+
+/**
+ * Whether a navigation target is one of our own renderer URLs. Anything
+ * else (external sites, arbitrary files) must not load in a window.
+ * @param {string} targetUrl - the URL a window is trying to navigate to
+ * @return {boolean} true if navigation is allowed
+ */
+const isAllowedRendererUrl = (targetUrl) => {
+  if (process.env.DEV) {
+    return targetUrl.startsWith('http://localhost:3000/');
+  }
+  return targetUrl.startsWith(
+      url.pathToFileURL(path.join(__dirname, '../../build/index.html')).href,
+  );
 };
 
 /**
@@ -93,4 +109,9 @@ const createSettingsWindow = () => {
  */
 const getMainWindow = () => mainWindow;
 
-module.exports = {createMainWindow, createSettingsWindow, getMainWindow};
+module.exports = {
+  createMainWindow,
+  createSettingsWindow,
+  getMainWindow,
+  isAllowedRendererUrl,
+};
