@@ -248,31 +248,24 @@ class Converter:
                 bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, run=run)
                 bids_basename.update(session=session)
 
-                try:
-                    # write_raw_bids returns the BIDSPath of the file it
-                    # actually wrote (with datatype/suffix/extension resolved).
-                    written_path = write_raw_bids(
-                        raw, bids_basename, overwrite=False, verbose=False)
+                # write_raw_bids returns the BIDSPath of the file it
+                # actually wrote (with datatype/suffix/extension resolved).
+                written_path = write_raw_bids(
+                    raw, bids_basename, overwrite=False, verbose=False)
 
-                    # write_raw_bids does not anonymize by default, so scrub the
-                    # subject identification field from the copied EDF header.
-                    if written_path.extension == '.edf':
-                        with open(written_path.fpath, 'r+b') as f:
-                            f.seek(8)  # id_info field starts 8 bytes in
-                            f.write(bytes("X X X X".ljust(80), 'ascii'))
-                except Exception as ex:
-                    print('Exception ex:')
-                    print(ex)
+                # write_raw_bids does not anonymize by default, so scrub the
+                # subject identification field from the copied EDF header.
+                if written_path.extension == '.edf':
+                    with open(written_path.fpath, 'r+b') as f:
+                        f.seek(8)  # id_info field starts 8 bytes in
+                        f.write(bytes("X X X X".ljust(80), 'ascii'))
 
                 print('finished')
 
                 return bids_basename.basename
 
             except PermissionError as ex:
-                raise WriteError(ex)
-
-            except Exception as ex:
-                print(ex)
+                raise WriteError(ex) from ex
         else:
             print('File not found or is not file: %s', file)
 
