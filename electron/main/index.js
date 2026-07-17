@@ -25,6 +25,7 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 app.whenReady().then(() => {
+  console.info('[electron:main] app ready, starting backend and main window');
   backendService.start();
   createMainWindow();
 });
@@ -37,6 +38,7 @@ app.on('window-all-closed', () => {
 // python process is ever orphaned.
 app.on('will-quit', (event) => {
   if (backendService.isRunning()) {
+    console.info('[electron:main] quitting, stopping the backend process');
     event.preventDefault();
     backendService.stop().then(() => app.quit());
   }

@@ -69,8 +69,10 @@ def get_participant_data(sid, data):
 def set_loris_credentials(sid, data):
     global lorisCredentials
     lorisCredentials = data
+    # Never print the credentials payload: it contains the LORIS password
+    # and this output is forwarded into the development logs.
     if 'lorisURL' not in lorisCredentials:
-        print('error with credentials:', data)
+        print('set_loris_credentials: lorisURL missing from credentials payload')
         return
 
     if lorisCredentials['lorisURL'].endswith('/'):

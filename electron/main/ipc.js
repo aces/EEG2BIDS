@@ -5,6 +5,24 @@ const {openExternal} = require('./external-links');
 const backendService = require('./backend-service');
 
 /**
+ * Register an invokable IPC channel. Failures are logged in the launching
+ * terminal before propagating to the renderer, so handler errors are
+ * visible during development without opening DevTools.
+ * @param {string} channel - the IPC channel name
+ * @param {Function} handler - the channel handler
+ */
+const handle = (channel, handler) => {
+  ipcMain.handle(channel, async (event, ...args) => {
+    try {
+      return await handler(event, ...args);
+    } catch (error) {
+      console.error(`[electron:main] ipc ${channel} failed:`, error);
+      throw error;
+    }
+  });
+};
+
+/**
  * Register all IPC channels exposed to the renderer through the preload
  * bridge. Inputs and results are plain serializable values only.
  */
@@ -13,7 +31,7 @@ const registerIpcHandlers = () => {
     createSettingsWindow();
   });
 
-  ipcMain.handle('dialog:select-directory', async (event) => {
+  handle('dialog:select-directory', async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     const result = await dialog.showOpenDialog(window, {
       properties: ['openDirectory'],
@@ -24,14 +42,13 @@ const registerIpcHandlers = () => {
     return result.filePaths[0];
   });
 
-  ipcMain.handle('links:open-external', (event, url) => openExternal(url));
+  handle('links:open-external', (event, url) => openExternal(url));
 
-  ipcMain.handle('backend:get-status', () => backendService.getStatus());
+  handle('backend:get-status', () => backendService.getStatus());
 
-  ipcMain.handle('credentials:get', () => credentials.get());
-  ipcMain.handle('credentials:set', (event, values) =>
-    credentials.set(values));
-  ipcMain.handle('credentials:remove', () => credentials.remove());
+  handle('credentials:get', () => credentials.get());
+  handle('credentials:set', (event, values) => credentials.set(values));
+  handle('credentials:remove', () => credentials.remove());
 };
 
 module.exports = {registerIpcHandlers};
