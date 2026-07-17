@@ -4,9 +4,11 @@
 
 # React Development
 
- * EEG2BIDS/src/App.js is the starting point of react.
+ * EEG2BIDS/index.html is the Vite entry; it loads EEG2BIDS/src/index.jsx,
+   which renders the app starting at EEG2BIDS/src/App.jsx.
  * EEG2BIDS/src/jsx is where the main view components of the app exist.
  * EEG2BIDS/src/jsx/elements is where useful components exist for repeated tasks.
+ * Components containing JSX use the .jsx extension (required by Vite).
 
 ## Things to remember:
 
