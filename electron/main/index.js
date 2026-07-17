@@ -25,6 +25,7 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 app.whenReady().then(() => {
+  console.info('[electron:main] app ready, starting backend and main window');
   backendService.start();
   createMainWindow();
 });
@@ -37,6 +38,7 @@ app.on('window-all-closed', () => {
 // python process is ever orphaned.
 app.on('will-quit', (event) => {
   if (backendService.isRunning()) {
+    console.info('[electron:main] quitting, stopping the backend process');
     event.preventDefault();
     backendService.stop().then(() => app.quit());
   }
@@ -46,4 +48,13 @@ app.on('activate', () => {
   if (!getMainWindow()) {
     createMainWindow();
   }
+});
+
+// A terminal Ctrl+C or kill must go through the ordinary quit path, so the
+// detached backend process group is terminated rather than orphaned.
+['SIGINT', 'SIGTERM'].forEach((signal) => {
+  process.on(signal, () => {
+    console.info(`[electron:main] received ${signal}, quitting`);
+    app.quit();
+  });
 });

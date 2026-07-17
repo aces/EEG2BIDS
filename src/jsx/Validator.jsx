@@ -7,7 +7,7 @@ import '../css/Validator.css';
 import Modal from './elements/modal';
 
 // Socket.io
-import {Event, SocketContext} from './socket.io';
+import {Event, SocketContext, useSocketStatus} from './socket.io';
 import {DirectoryInput, RadioInput} from './elements/inputs';
 
 /**
@@ -19,6 +19,7 @@ const Validator = (props) => {
   // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
+  const socketStatus = useSocketStatus();
 
   // React State
   const [validator, setValidator] = useState({});
@@ -89,11 +90,35 @@ const Validator = (props) => {
    * validateBIDS - get validated BIDS format.
    *   Sent by socket to python: validate_bids.
    */
+  /**
+   * showDisconnectedError - display the backend-disconnected error modal.
+   * @return {boolean} true when the backend is connected, false otherwise
+   */
+  const requireBackend = () => {
+    if (socketStatus === 'connected') {
+      return true;
+    }
+    setModalText((prevState) => {
+      prevState.message['error'] = (
+        <span style={{padding: '40px'}}>
+          <span className='red'>&#x274C;</span> The backend is not connected.
+          Wait for it to reconnect or use “Restart backend”, then try again.
+        </span>
+      );
+      return {...prevState, ['mode']: 'error'};
+    });
+    setModalVisible(true);
+    return false;
+  };
+
   const validateBIDS = () => {
     console.info('validateBIDS();');
 
     const bidsDirectory = getBIDSDir();
     if (bidsDirectory) {
+      if (!requireBackend()) {
+        return;
+      }
       socketContext.emit('validate_bids', bidsDirectory);
     }
   };
@@ -107,6 +132,9 @@ const Validator = (props) => {
 
     const bidsDirectory = getBIDSDir();
     if (bidsDirectory) {
+      if (!requireBackend()) {
+        return;
+      }
       setModalText((prevState) => {
         return {...prevState, ['mode']: 'loading'};
       });
