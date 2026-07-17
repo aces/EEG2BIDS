@@ -26,7 +26,8 @@ Frontend dependency versions are defined by `package.json` and
 `package-lock.json`; the supported Node.js version by `.nvmrc` and the
 `engines` field. The Python backend is defined solely by `pyproject.toml`
 and `uv.lock`; these are the only authoritative Python dependency
-definitions.
+definitions. See the [dependency inventory and audit guide](docs/dependencies.md)
+for runtime/development classification and security-check commands.
 
 ## Backend (Python)
 
