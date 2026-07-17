@@ -64,6 +64,13 @@ const createMainWindow = () => {
     if (process.env.DEV) {
       mainWindow.webContents.openDevTools();
     }
+  }).catch((error) => {
+    console.error(
+        `[electron:main] could not load the renderer from ` +
+        `${rendererUrl()}: ${error.message}.` +
+        (process.env.DEV ?
+          ' Is the Vite dev server running (npm run dev)?' : ''),
+    );
   });
 
   mainWindow.on('closed', () => {
@@ -96,6 +103,11 @@ const createSettingsWindow = () => {
     if (process.env.DEV) {
       settingsWindow.webContents.openDevTools();
     }
+  }).catch((error) => {
+    console.error(
+        `[electron:main] could not load the settings renderer: ` +
+        error.message,
+    );
   });
 
   settingsWindow.on('closed', () => {
