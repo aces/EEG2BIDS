@@ -89,13 +89,19 @@ def set_loris_credentials(sid, data):
 
     if resp.get('error'):
         sio.emit('loris_login_response', {'error': resp.get('error')})
-    else:
-        sio.emit('loris_login_response', {
-            'success': 200,
-            'lorisUsername': loris_api.username
-        })
+        return
+
+    sio.emit('loris_login_response', {
+        'success': 200,
+        'lorisUsername': loris_api.username
+    })
+    # Login succeeded, but a later metadata request could still fail; that
+    # must not raise out of the handler and leave the renderer waiting.
+    try:
         sio.emit('loris_sites', loris_api.get_sites())
         sio.emit('loris_projects', loris_api.get_projects())
+    except Exception as e:
+        print('set_loris_credentials: could not load LORIS metadata:', e)
 
 
 def get_loris_sites(sid):
