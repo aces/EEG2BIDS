@@ -81,6 +81,47 @@ def default_output_format(source_path):
     return _PRESERVE_FORMAT_BY_EXT.get(ext, 'EDF')
 
 
+# User-selectable output formats for EEG/iEEG, keyed by a case-insensitive
+# request token and mapped to the exact MNE-BIDS writer name. 'auto' (preserve
+# the source format) is handled separately. FIF is intentionally excluded: it
+# is a MEG format and not BIDS-valid for EEG/iEEG.
+_OUTPUT_FORMATS = {
+    'edf': 'EDF',
+    'brainvision': 'BrainVision',
+    'eeglab': 'EEGLAB',
+}
+
+
+def is_supported_output_format(requested):
+    """True when ``requested`` is ``'auto'`` or a known EEG/iEEG output format."""
+    token = (requested or '').lower()
+    return token == 'auto' or token in _OUTPUT_FORMATS
+
+
+def resolve_write_kwargs(raw, source_path, requested_format):
+    """Extra ``write_raw_bids`` kwargs that honor the requested output format.
+
+    ``'auto'`` preserves the source: a lazily-read source (e.g. EDF) is copied
+    file-as-is (no extra kwargs, so the byte-for-byte EDF path is unchanged); a
+    source whose reader preloads (e.g. EEGLAB) is re-written in its own
+    BIDS-compatible format. An explicit format forces that format, loading the
+    data and converting when it differs from the source.
+    """
+    token = (requested_format or 'auto').lower()
+    if token == 'auto':
+        if not raw.preload:
+            return {}
+        return {'allow_preload': True,
+                'format': default_output_format(source_path)}
+
+    target = _OUTPUT_FORMATS[token]
+    if not raw.preload and target == default_output_format(source_path):
+        # The explicit choice already matches the source; copy it as-is.
+        return {}
+    raw.load_data()
+    return {'allow_preload': True, 'format': target}
+
+
 metadata = {
     'eeg': [
         'TaskName',
@@ -236,7 +277,8 @@ class Converter:
                 run=((i + 1) if len(data['recordingData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
-                line_freq=data['line_freq']
+                line_freq=data['line_freq'],
+                output_format=data.get('outputFormat', 'auto')
             )
 
     @staticmethod
@@ -261,7 +303,8 @@ class Converter:
                 run=None,
                 ch_type='seeg',
                 read_only=False,
-                line_freq='n/a'):
+                line_freq='n/a',
+                output_format='auto'):
         file = eeg_run['recordingFile']
 
         if self.validate(file):
@@ -303,18 +346,23 @@ class Converter:
                 bids_directory = bids_directory + os.path.sep + output_time
                 bids_root = bids_directory
 
-                bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, run=run)
+                # Name the datatype explicitly (eeg/ieeg) rather than letting
+                # MNE-BIDS infer it; inference is ambiguous when the recording
+                # carries multiple data-class channel types (e.g. eeg + emg).
+                datatype = 'eeg' if ch_type == 'eeg' else 'ieeg'
+
+                bids_basename = BIDSPath(subject=subject, task=task, root=bids_root,
+                                         acquisition=ch_type, run=run, datatype=datatype)
                 bids_basename.update(session=session)
 
-                # write_raw_bids returns the BIDSPath of the file it
-                # actually wrote (with datatype/suffix/extension resolved).
+                # write_raw_bids returns the BIDSPath of the file it actually
+                # wrote (with datatype/suffix/extension resolved). The output
+                # format (preserve source vs. convert) is resolved from the
+                # user's selection; a preserved lazily-read source is copied
+                # file-as-is.
                 write_kwargs = {'overwrite': False, 'verbose': False}
-                if raw.preload:
-                    # A reader that preloads data (e.g. EEGLAB) means MNE-BIDS
-                    # re-writes rather than copies the source, so it needs an
-                    # explicit output format. Default to preserving the source.
-                    write_kwargs['allow_preload'] = True
-                    write_kwargs['format'] = default_output_format(file)
+                write_kwargs.update(
+                    resolve_write_kwargs(raw, file, output_format))
                 written_path = write_raw_bids(
                     raw, bids_basename, **write_kwargs)
 

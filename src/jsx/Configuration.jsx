@@ -50,6 +50,7 @@ const Configuration = (props) => {
     recordingData: [],
     recordingFiles: [],
     modality: 'ieeg',
+    outputFormat: 'auto',
     eventFiles: [],
     invalidEventFiles: [],
     annotationsTSV: [],
@@ -169,6 +170,7 @@ const Configuration = (props) => {
         recordingData: appContext.getFromTask('recordingData') ?? [],
         eegRuns: state.eegRuns.get ?? [],
         modality: appContext.getFromTask('modality') ?? 'ieeg',
+        outputFormat: appContext.getFromTask('outputFormat') ?? 'auto',
         bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
         read_only: false,
         event_files: appContext.getFromTask('eventFiles').length > 0 ?
@@ -411,6 +413,15 @@ const Configuration = (props) => {
       modalityStatus = formatError('No modality selected');
     }
     result.push(<div key='modalityStatus'>{modalityStatus}</div>);
+
+    // Output format
+    const outputFormat = appContext.getFromTask('outputFormat') ?? 'auto';
+    result.push(
+        <div key='outputFormatStatus'>
+          {formatPass(`Output format: ${outputFormat === 'auto' ?
+            'Auto (keep source, EDF when converting)' : outputFormat}`)}
+        </div>,
+    );
 
     // events
     let eventsStatus = '';
@@ -1401,6 +1412,22 @@ const Configuration = (props) => {
               }}
               checked={state.modality.get}
               help='If any intracranial (stereo) channels, select Stereo iEEG'
+            />
+          </div>
+          <div className='small-pad'>
+            <SelectInput id='outputFormat'
+              name='outputFormat'
+              label='Output format'
+              value={state.outputFormat.get}
+              options={{
+                auto: 'Auto (keep source, EDF when converting)',
+                EDF: 'EDF',
+                BrainVision: 'BrainVision',
+                EEGLAB: 'EEGLAB',
+              }}
+              onUserInput={onUserInput}
+              help='Auto preserves a BIDS-compatible source format and
+              recommends EDF when the recording must be converted'
             />
           </div>
           <div className='small-pad'>

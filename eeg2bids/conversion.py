@@ -96,6 +96,10 @@ def convert_recording(data):
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
+    if not iEEG.is_supported_output_format(data.get('outputFormat', 'auto')):
+        error_messages.append(
+            "Unsupported output format '{}'. Choose Auto, EDF, BrainVision, "
+            'or EEGLAB.'.format(data.get('outputFormat')))
 
     if error_messages:
         return {'error': error_messages}
