@@ -10,8 +10,6 @@ an ``error`` key with an actionable message (a string, or a list of strings
 for the multi-validation conversion path); the caller owns transport.
 """
 
-import mne
-
 from eeg2bids import iEEG
 from eeg2bids.iEEG import ReadError, WriteError
 from eeg2bids.Modifier import Modifier
@@ -54,7 +52,7 @@ def inspect_recording(files):
     recordings = []
     try:
         for file in files:
-            raw = mne.io.read_raw(file['path'], verbose='ERROR')
+            raw = iEEG.read_raw_recording(file['path'])
             recordings.append({
                 'file': file,
                 'raw': raw,
@@ -77,12 +75,9 @@ def inspect_recording(files):
             'recordingID': 'n/a',
             'date': recordings[0]['date'] or '',
         }
-    except PermissionError as e:
+    except ReadError as e:
         print(e)
-        return {'error': 'Cannot read file - ' + str(e)}
-    except Exception as e:
-        print(e)
-        return {'error': 'Cannot read recording - ' + str(e)}
+        return {'error': str(e)}
 
 
 def convert_recording(data):

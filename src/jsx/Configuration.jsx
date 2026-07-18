@@ -1360,7 +1360,7 @@ const Configuration = (props) => {
             <FileInput id='edfFiles'
               name='edfFiles'
               multiple={true}
-              accept='.edf,.EDF'
+              accept='.edf,.EDF,.set,.SET'
               placeholder={
                 state.edfFiles.get.map((edfFile) => edfFile['name']).join(', ')
               }

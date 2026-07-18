@@ -4,10 +4,11 @@ This produces representative inputs and outputs for local debugging without
 any real clinical data. Everything is deterministic (fixed RNG seed) and
 small. The generated ``dev-data/`` directory is gitignored.
 
-Run it with the dev dependency group (provides the EDF export backend):
+The EDF/EEGLAB export backends it uses (edfio, eeglabio) are regular runtime
+dependencies, so a plain sync is all that is needed:
 
-    uv sync --group dev
-    uv run --group dev python tools/make_dev_data.py
+    uv sync --frozen
+    uv run python tools/make_dev_data.py
 
 Outputs (under ``dev-data/`` by default):
 

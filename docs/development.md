@@ -88,11 +88,12 @@ appearing to succeed.
 ## Development data
 
 There is no real clinical data in the repository. Generate synthetic,
-non-sensitive fixtures with the `dev` dependency group:
+non-sensitive fixtures (the EDF/EEGLAB export backends they need are regular
+runtime dependencies, so no extra group is required):
 
 ```sh
-uv sync --group dev
-uv run --group dev python tools/make_dev_data.py
+uv sync --frozen
+uv run python tools/make_dev_data.py
 ```
 
 This writes to the gitignored `dev-data/` directory:
