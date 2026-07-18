@@ -2,12 +2,15 @@
 
 # EEG2BIDS Wizard
 
-EEG2BIDS Wizard is a GUI for de-identifying EDF data and converting EEG or
-iEEG recordings to BIDS. It can use LORIS credentials to retrieve metadata.
+EEG2BIDS Wizard is a GUI for converting continuous EEG and iEEG recordings to
+BIDS. Recordings are opened through MNE-Python's `mne.io.read_raw()`, so any
+continuous format MNE can read may work; **EDF and continuous EEGLAB SET**
+(embedded-data `.set` and `.set`/`.fdt` pairs) are the verified formats. It can
+also de-identify EDF headers and use LORIS credentials to retrieve metadata.
 Remove saved credentials after using EEG2BIDS on a shared computer.
 
-See the [user guide](docs/user-guide.md) for recording, metadata, annotation,
-validation, and optional LORIS workflows.
+See the [user guide](docs/user-guide.md) for supported formats, recording,
+metadata, annotation, validation, and optional LORIS workflows.
 
 ## Project status
 

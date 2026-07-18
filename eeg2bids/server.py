@@ -6,11 +6,10 @@ import time
 import socketio
 from werkzeug.serving import run_simple
 from eeg2bids import iEEG
-from eeg2bids.iEEG import ReadError, WriteError, metadata as metadata_fields
-from eeg2bids.Modifier import Modifier
+from eeg2bids.iEEG import metadata as metadata_fields
+from eeg2bids import conversion
 from eeg2bids import BIDS
 from eeg2bids.loris_api import LorisAPI
-import datetime
 import json
 
 # The host and port the local Socket.IO service binds to. The service only
@@ -149,64 +148,12 @@ def create_candidate_and_visit(sid, data):
 
 
 @sio.event
-def get_edf_data(sid, data):
-    # data = { files: 'EDF files (array of {path, name})' }
-    print('get_edf_data:', data)
-
-    if 'files' not in data or not data['files']:
-        msg = 'No EDF file selected.'
-        print(msg)
-        response = {'error': msg}
-        sio.emit('edf_data', response)
-        return
-
-    headers = []
-    try:
-        for file in data['files']:
-            anonymize = iEEG.Anonymize(file['path'])
-            metadata = anonymize.get_header()
-            year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 else '19' + str(metadata[0]['year'])
-            date = datetime.datetime(int(year), metadata[0]['month'], metadata[0]['day'], metadata[0]['hour'],
-                                     metadata[0]['minute'], metadata[0]['second'])
-
-            headers.append({
-                'file': file,
-                'metadata': metadata,
-                'date': str(date)
-            })
-
-        for i in range(1, len(headers)):
-            if set(headers[i - 1]['metadata'][1]['ch_names']) != set(headers[i]['metadata'][1]['ch_names']):
-                msg = 'The files selected contain more than one recording.'
-                print(msg)
-                response = {
-                    'error': msg,
-                }
-                sio.emit('edf_data', response)
-                return
-
-        # sort the recording per date
-        headers = sorted(headers, key=lambda k: k['date'])
-
-        # return the first split metadata and date
-        response = {
-            'files': [header['file'] for header in headers],
-            'subjectID': headers[0]['metadata'][0]['subject_id'],
-            'recordingID': headers[0]['metadata'][0]['recording_id'],
-            'date': headers[0]['date']
-        }
-
-    except ReadError as e:
-        print(e)
-        response = {
-            'error': 'Cannot read file - ' + str(e)
-        }
-    except Exception as e:
-        print(e)
-        response = {
-            'error': 'Failed to retrieve EDF header information',
-        }
-    sio.emit('edf_data', response)
+def get_recording_data(sid, data):
+    # data = { files: 'recording entry points (array of {path, name})' }
+    print('get_recording_data:', data)
+    files = data.get('files') if isinstance(data, dict) else None
+    response = conversion.inspect_recording(files)
+    sio.emit('recording_data', response)
 
 
 @sio.event
@@ -251,50 +198,14 @@ def get_bids_metadata(sid, data):
     sio.emit('bids_metadata', response)
 
 
-def edf_to_bids_thread(data):
-    print('data is ')
-    print(data)
-    error_messages = []
-    if 'edfData' not in data or 'files' not in data['edfData'] or not data['edfData']['files']:
-        error_messages.append('No .edf file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
-        error_messages.append('The BIDS output folder is missing.')
-    if not data['session']:
-        error_messages.append('The LORIS Visit Label is missing.')
-
-    if not error_messages:
-        time = iEEG.Time()
-        data['output_time'] = 'output-' + time.latest_output
-
-        try:
-            iEEG.Converter(data)  # EDF to BIDS format.
-
-            # store subject_id for Modifier
-            data['subject_id'] = iEEG.Converter.m_info['subject_id']
-            Modifier(data)  # Modifies data of BIDS format
-            response = {
-                'output_time': data['output_time']
-            }
-            return response
-        except ReadError as e:
-            error_messages.append('Cannot read file - ' + str(e))
-        except WriteError as e:
-            error_messages.append('Cannot write file - ' + str(e))
-    else:
-        response = {
-            'error': error_messages
-        }
-    return response
-
-
 @sio.event
-def edf_to_bids(sid, data):
-    # data = { edfData: {files: [{path, name}]}, eegRuns: [], modality: '',
+def recording_to_bids(sid, data):
+    # data = { recordingData: {files: [{path, name}]}, eegRuns: [], modality: '',
     # bids_directory: '', read_only: false, session: '', participantID: '',
     # taskName: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
-    print('edf_to_bids: ', data)
-    response = edf_to_bids_thread(data)
+    print('recording_to_bids: ', data)
+    response = conversion.convert_recording(data)
     print(response)
     print('Response received!')
     sio.emit('bids', response.copy())

@@ -47,7 +47,10 @@ be reviewed for API changes rather than applied with an unreviewed
 The `[project].dependencies` in `pyproject.toml` are installed with the
 backend:
 
-- EEG/BIDS processing: `mne`, `mne-bids`, `numpy`, `pybv`, `bids-validator`
+- EEG/BIDS processing: `mne`, `mne-bids`, `numpy`, `bids-validator`
+- MNE-BIDS export backends: `edfio` (EDF), `eeglabio` (EEGLAB), `pybv`
+  (BrainVision) -- required when writing a recording whose reader preloads
+  data and cannot be copied file-as-is
 - Socket.IO service: `python-socketio`, `simple-websocket`, `werkzeug`
 - LORIS HTTP integration: `requests`
 
@@ -73,13 +76,11 @@ The export is temporary and must not be committed.
 
 ### Optional dependency groups
 
-- `dev`: `edfio`, used only to generate synthetic fixtures in
-  `tools/make_dev_data.py`
 - `packaging`: `pyinstaller`, reserved for future standalone packaging work
 - build system: `hatchling`, used to build the Python package
 
 These groups are not part of the normal application runtime. Audit them when
-changing fixture generation or packaging, respectively.
+changing packaging.
 
 ## Automated updates and CI
 

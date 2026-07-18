@@ -1,6 +1,5 @@
 import os
 import mne
-from eeg2bids import EDF
 from mne_bids import write_raw_bids, BIDSPath
 
 
@@ -12,6 +11,114 @@ class ReadError(PermissionError):
 class WriteError(PermissionError):
     """Raised when a PermissionError is thrown while writing a file"""
     pass
+
+
+def read_raw_recording(path):
+    """Open a continuous recording through MNE's generic reader.
+
+    Format selection and companion-file resolution are delegated to
+    ``mne.io.read_raw``; the backend keeps no per-format reader table. Raises
+    :class:`ReadError` with an actionable message that preserves the underlying
+    MNE cause when the input cannot be read as continuous data -- an epoched
+    recording, a missing companion file, or an unsupported/malformed source.
+    """
+    try:
+        return mne.io.read_raw(path, verbose='ERROR')
+    except PermissionError as ex:
+        raise ReadError(ex) from ex
+    except Exception as ex:
+        message = str(ex)
+        if 'read_epochs' in message or 'must be 1 for raw' in message:
+            raise ReadError(
+                'This recording contains epoched data. EEG2BIDS converts '
+                'continuous EEG/iEEG recordings only. Underlying reader '
+                'message: ' + message
+            ) from ex
+        raise ReadError(message) from ex
+
+
+def infer_channel_type(ch_name):
+    """Best-effort channel type from a channel name, or None when unknown.
+
+    Used only as a fallback for channels MNE left as the generic ``eeg``
+    default; MNE-provided types are preferred (see ``Converter.to_bids``).
+    """
+    name = ch_name.lower()
+    if 'eeg' in name:
+        return 'eeg'
+    if 'eog' in name:
+        return 'eog'
+    if 'ecg' in name or 'ekg' in name:
+        return 'ecg'
+    if 'lflex' in name or 'rflex' in name or 'chin' in name:
+        return 'emg'
+    if 'trigger' in name:
+        return 'stim'
+    return None
+
+
+# BIDS-compatible source formats mapped to the MNE-BIDS writer that preserves
+# them. Used only when the source reader preloads data (so MNE-BIDS re-writes
+# rather than copies); a source not listed here is converted to EDF, the
+# recommended output when conversion is required. User-facing output-format
+# selection is layered on top of this default separately.
+_PRESERVE_FORMAT_BY_EXT = {
+    '.set': 'EEGLAB',
+    '.edf': 'EDF',
+    '.vhdr': 'BrainVision',
+    '.fif': 'FIF',
+}
+
+
+def default_output_format(source_path):
+    """MNE-BIDS output format that preserves ``source_path``'s format.
+
+    Falls back to ``'EDF'`` for sources without a BIDS-compatible in-place
+    format, matching the "recommend EDF when conversion is necessary" default.
+    """
+    ext = os.path.splitext(source_path)[1].lower()
+    return _PRESERVE_FORMAT_BY_EXT.get(ext, 'EDF')
+
+
+# User-selectable output formats for EEG/iEEG, keyed by a case-insensitive
+# request token and mapped to the exact MNE-BIDS writer name. 'auto' (preserve
+# the source format) is handled separately. FIF is intentionally excluded: it
+# is a MEG format and not BIDS-valid for EEG/iEEG.
+_OUTPUT_FORMATS = {
+    'edf': 'EDF',
+    'brainvision': 'BrainVision',
+    'eeglab': 'EEGLAB',
+}
+
+
+def is_supported_output_format(requested):
+    """True when ``requested`` is ``'auto'`` or a known EEG/iEEG output format."""
+    token = (requested or '').lower()
+    return token == 'auto' or token in _OUTPUT_FORMATS
+
+
+def resolve_write_kwargs(raw, source_path, requested_format):
+    """Extra ``write_raw_bids`` kwargs that honor the requested output format.
+
+    ``'auto'`` preserves the source: a lazily-read source (e.g. EDF) is copied
+    file-as-is (no extra kwargs, so the byte-for-byte EDF path is unchanged); a
+    source whose reader preloads (e.g. EEGLAB) is re-written in its own
+    BIDS-compatible format. An explicit format forces that format, loading the
+    data and converting when it differs from the source.
+    """
+    token = (requested_format or 'auto').lower()
+    if token == 'auto':
+        if not raw.preload:
+            return {}
+        return {'allow_preload': True,
+                'format': default_output_format(source_path)}
+
+    target = _OUTPUT_FORMATS[token]
+    if not raw.preload and target == default_output_format(source_path):
+        # The explicit choice already matches the source; copy it as-is.
+        return {}
+    raw.load_data()
+    return {'allow_preload': True, 'format': target}
 
 
 metadata = {
@@ -107,44 +214,6 @@ class TarFile:
         #    subprocess.Popen(['xdg-open', data['bids_directory']])
 
 
-# Anonymize - scrubs edf header data.
-class Anonymize:
-    file_path = ''
-    header = []
-
-    # data = { file_path: 'path to iEEG file' }
-    def __init__(self, file_path):
-        self.file_path = file_path
-
-        try:
-            # read EDF file from file_path,
-            file_in = EDF.EDFReader(fname=self.file_path)
-            # read header of EDF file.
-            self.header = file_in.readHeader()
-            file_in.close()
-        except PermissionError as ex:
-            raise ReadError(ex)
-
-    def get_header(self):
-        return self.header
-
-    def set_header(self, key, value):
-        self.header[0][key] = value
-
-    def make_copy(self, new_file):
-        header = self.get_header()
-        file_in = EDF.EDFReader(fname=self.file_path)
-        file_out = EDF.EDFWriter()
-        file_out.open(new_file)
-        file_out.writeHeader(header)
-        meas_info = header[0]
-        for i in range(meas_info['n_records']):
-            data = file_in.readBlock(i)
-            file_out.writeBlock(data)
-        file_in.close()
-        file_out.close()
-
-
 # Converter - Creates the BIDS output by edf file.
 class Converter:
     m_info = ''
@@ -159,17 +228,18 @@ class Converter:
             modality = 'eeg'
 
         for i, eegRun in enumerate(data['eegRuns']):
-            eegRun['edfBIDSBasename'] = self.to_bids(
+            eegRun['recordingBIDSBasename'] = self.to_bids(
                 eeg_run=eegRun,
                 ch_type=modality,
                 task=data['taskName'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                run=((i + 1) if len(data['edfData']['files']) > 1 else None),
+                run=((i + 1) if len(data['recordingData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
-                line_freq=data['line_freq']
+                line_freq=data['line_freq'],
+                output_format=data.get('outputFormat', 'auto')
             )
 
     @staticmethod
@@ -194,44 +264,36 @@ class Converter:
                 run=None,
                 ch_type='seeg',
                 read_only=False,
-                line_freq='n/a'):
-        file = eeg_run['edfFile']
+                line_freq='n/a',
+                output_format='auto'):
+        file = eeg_run['recordingFile']
 
         if self.validate(file):
-            try:
-                reader = EDF.EDFReader(fname=file)
-            except PermissionError as ex:
-                raise ReadError(ex)
+            # Reading is delegated to MNE's generic dispatcher, which selects
+            # the format reader and resolves companion files from the file
+            # itself.
+            raw = read_raw_recording(file)
 
-            m_info, c_info = reader.open(fname=file)
-            self.set_m_info(m_info)
-
-            raw = mne.io.read_raw_edf(input_fname=file)
+            self.set_m_info({'subject_id': subject_id})
 
             if read_only:
                 return True
 
+            # Preserve the channel types MNE resolved from the source. Only
+            # channels MNE left as the generic 'eeg' default fall back to
+            # name-based inference and, failing that, the user-selected
+            # modality (ch_type).
             ch_types = {}
-            for ch in raw.ch_names:
-                ch_name = ch.lower()
-                if 'eeg' in ch_name:
-                    ch_types[ch] = 'eeg'
-                elif 'eog' in ch_name:
-                    ch_types[ch] = 'eog'
-                elif 'ecg' in ch_name or 'ekg' in ch_name:
-                    ch_types[ch] = 'ecg'
-                elif 'lflex' in ch_name or 'rflex' in ch_name or 'chin' in ch_name:
-                    ch_types[ch] = 'emg'
-                elif 'trigger' in ch_name:
-                    ch_types[ch] = 'stim'
+            for ch, mne_type in zip(raw.ch_names, raw.get_channel_types()):
+                if mne_type != 'eeg':
+                    continue
+                inferred = infer_channel_type(ch)
+                ch_types[ch] = inferred if inferred is not None else ch_type
 
-                else:
-                    ch_types[ch] = ch_type
+            if ch_types:
+                raw.set_channel_types(ch_types)
 
-            raw.set_channel_types(ch_types)
-
-            m_info['subject_id'] = subject_id
-            subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            subject = subject_id.replace('_', '').replace('-', '').replace(' ', '')
 
             if line_freq.isnumeric():
                 line_freq = int(line_freq)
@@ -245,13 +307,25 @@ class Converter:
                 bids_directory = bids_directory + os.path.sep + output_time
                 bids_root = bids_directory
 
-                bids_basename = BIDSPath(subject=subject, task=task, root=bids_root, acquisition=ch_type, run=run)
+                # Name the datatype explicitly (eeg/ieeg) rather than letting
+                # MNE-BIDS infer it; inference is ambiguous when the recording
+                # carries multiple data-class channel types (e.g. eeg + emg).
+                datatype = 'eeg' if ch_type == 'eeg' else 'ieeg'
+
+                bids_basename = BIDSPath(subject=subject, task=task, root=bids_root,
+                                         acquisition=ch_type, run=run, datatype=datatype)
                 bids_basename.update(session=session)
 
-                # write_raw_bids returns the BIDSPath of the file it
-                # actually wrote (with datatype/suffix/extension resolved).
+                # write_raw_bids returns the BIDSPath of the file it actually
+                # wrote (with datatype/suffix/extension resolved). The output
+                # format (preserve source vs. convert) is resolved from the
+                # user's selection; a preserved lazily-read source is copied
+                # file-as-is.
+                write_kwargs = {'overwrite': False, 'verbose': False}
+                write_kwargs.update(
+                    resolve_write_kwargs(raw, file, output_format))
                 written_path = write_raw_bids(
-                    raw, bids_basename, overwrite=False, verbose=False)
+                    raw, bids_basename, **write_kwargs)
 
                 # write_raw_bids does not anonymize by default, so scrub the
                 # subject identification field from the copied EDF header.
@@ -259,6 +333,11 @@ class Converter:
                     with open(written_path.fpath, 'r+b') as f:
                         f.seek(8)  # id_info field starts 8 bytes in
                         f.write(bytes("X X X X".ljust(80), 'ascii'))
+
+                # Record the written extension so post-write steps (e.g. the
+                # annotations IntendedFor) can reference the actual recording
+                # file rather than assuming EDF.
+                eeg_run['recordingBIDSExtension'] = written_path.extension
 
                 print('finished')
 

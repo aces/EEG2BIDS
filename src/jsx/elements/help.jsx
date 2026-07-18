@@ -92,7 +92,7 @@ const Help = (props) => {
       </ul>
     </>,
     Converter: <>
-      <h3>3) EDF to BIDS</h3>
+      <h3>3) Recording to BIDS</h3>
       <p>Create your BIDS output if your configuration is correct!</p>
     </>,
     Validator: <>

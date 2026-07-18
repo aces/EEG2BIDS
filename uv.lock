@@ -235,6 +235,8 @@ version = "1.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "bids-validator" },
+    { name = "edfio" },
+    { name = "eeglabio" },
     { name = "mne" },
     { name = "mne-bids" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -247,9 +249,6 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
-    { name = "edfio" },
-]
 packaging = [
     { name = "pyinstaller" },
 ]
@@ -257,6 +256,8 @@ packaging = [
 [package.metadata]
 requires-dist = [
     { name = "bids-validator", specifier = ">=1.14" },
+    { name = "edfio", specifier = ">=0.4" },
+    { name = "eeglabio", specifier = ">=0.0.2" },
     { name = "mne", specifier = ">=1.7" },
     { name = "mne-bids", specifier = ">=0.14" },
     { name = "numpy", specifier = ">=1.26" },
@@ -268,8 +269,22 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "edfio", specifier = ">=0.4" }]
 packaging = [{ name = "pyinstaller", specifier = ">=6" }]
+
+[[package]]
+name = "eeglabio"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/f9/071281281e7ce4cde8f65ba7b919feef3b10fd9739b53369edb13489e5ea/eeglabio-0.1.3.tar.gz", hash = "sha256:0dbb48ba5a5bc1ebe156acf1b1cc793575928f9a6f73457a05eef567967f9bf3", size = 10113, upload-time = "2026-01-20T18:07:18.901Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/ef/f9f8c900f4b635ae7a2ea9e3e5adca8eb98a079a6965d36f59ed38c0d029/eeglabio-0.1.3-py3-none-any.whl", hash = "sha256:ad979ee0b6a919be90326741bb98597140b908ee60a49abcf096cb42ac685c71", size = 10915, upload-time = "2026-01-20T18:07:17.065Z" },
+]
 
 [[package]]
 name = "fonttools"

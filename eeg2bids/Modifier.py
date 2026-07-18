@@ -46,7 +46,7 @@ class Modifier:
 
 
     def clean_dataset_files(self):
-        if len(self.data['edfData']['files']) > 0:
+        if len(self.data['recordingData']['files']) > 0:
             # for multiple run recording, clean the duplicate _channels.tsv
             channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
             for i in range(1, len(channels_files)):
@@ -190,8 +190,8 @@ class Modifier:
             bidsignore.close()
 
         for eegRun in self.data.get('eegRuns'):
-            edf_file = eegRun['edfBIDSBasename']
-            filename = os.path.join(self.get_eeg_path(), edf_file + '_annotations')
+            recording_file = eegRun['recordingBIDSBasename']
+            filename = os.path.join(self.get_eeg_path(), recording_file + '_annotations')
 
             if eegRun['annotationsTSV']:
                 shutil.copyfile(
@@ -206,7 +206,8 @@ class Modifier:
                 try:
                     with open(eegRun['annotationsJSON'], "r") as fp:
                         file_data = json.load(fp)
-                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), edf_file + '.edf')
+                        recording_ext = eegRun.get('recordingBIDSExtension', '.edf')
+                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), recording_file + recording_ext)
                         # In windows env path will contain \\
                         file_data["IntendedFor"] = file_data["IntendedFor"].replace('\\', '/')
 
@@ -224,8 +225,8 @@ class Modifier:
 
     def copy_event_files(self):
         for eegRun in self.data.get('eegRuns'):
-            edf_file = eegRun['edfBIDSBasename']
-            filename = os.path.join(self.get_eeg_path(), edf_file + '_annotations')
+            recording_file = eegRun['recordingBIDSBasename']
+            filename = os.path.join(self.get_eeg_path(), recording_file + '_annotations')
 
             if eegRun['eventFile']:
                 # events.tsv data collected:
@@ -254,7 +255,7 @@ class Modifier:
                 for path, dirs, files in os.walk(self.get_eeg_path()):
                     for filename in files:
                         temp = os.path.join(path, filename)
-                        if temp.endswith(eegRun['edfBIDSBasename'] + '_events.tsv'):
+                        if temp.endswith(eegRun['recordingBIDSBasename'] + '_events.tsv'):
                             path_event_files = temp
 
                 # We now open BIDS events.tsv file if it exists
@@ -279,7 +280,7 @@ class Modifier:
                     except:
                         print('No events.tsv found in the BIDS folder.')
                 else:
-                    path_event_files = self.get_eeg_path() + '/' + eegRun['edfBIDSBasename'] + '_events.tsv'
+                    path_event_files = self.get_eeg_path() + '/' + eegRun['recordingBIDSBasename'] + '_events.tsv'
 
                 # output is an array of arrays
                 # sort by first element in array

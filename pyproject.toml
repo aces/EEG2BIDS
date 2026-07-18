@@ -8,8 +8,14 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "mne>=1.7",
     "mne-bids>=0.14",
-    "numpy>=1.26",
+    # MNE-BIDS export backends. MNE reads EDF/EEGLAB natively, but writing a
+    # recording whose reader preloads data (e.g. EEGLAB) requires the matching
+    # writer: edfio for EDF output, eeglabio for EEGLAB output, pybv for
+    # BrainVision.
+    "edfio>=0.4",
+    "eeglabio>=0.0.2",
     "pybv>=0.7.5",
+    "numpy>=1.26",
     "python-socketio>=5.11",
     "simple-websocket>=1.0",
     "werkzeug>=3.0",
@@ -21,13 +27,6 @@ dependencies = [
 eeg2bids = "eeg2bids.server:main"
 
 [dependency-groups]
-# Development-only tools. `edfio` is the EDF export backend used by
-# tools/make_dev_data.py to generate synthetic development fixtures; it is
-# not needed at runtime. Install with: uv sync --group dev
-dev = [
-    "edfio>=0.4",
-]
-
 # Optional group for a future standalone-binary build. The packaged
 # PyInstaller/Electron workflow is not maintained in this branch (see #135 /
 # #136 / #137); this declaration keeps PyInstaller a declared, resolvable build
