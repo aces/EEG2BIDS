@@ -49,13 +49,14 @@ const Welcome = (props) => {
       </span>
       <div className='info'>
         <p>
-          <b>EEG2BIDS Wizard</b> is a tool for de-identification of EDF data
-          and conversion to BIDS format for data sharing.
+          <b>EEG2BIDS Wizard</b> converts continuous EEG and iEEG recordings to
+          BIDS format for data sharing, and can de-identify EDF headers.
         </p>
         <p>
-          This software is designed to run on EDF files (EEG or stereo iEEG) for
-          one recording from one subject at a time. Events and metadata such as
-          a LORIS ProjectID and Visit Label can be included.
+          This software converts continuous EEG or stereo-iEEG recordings
+          (EDF and EEGLAB SET are the verified formats) for one recording from
+          one subject at a time. Events and metadata such as a LORIS ProjectID
+          and Visit Label can be included.
         </p>
         <ul>
           <li>
@@ -82,12 +83,12 @@ const Welcome = (props) => {
           <li>Anonymize the EDF header data</li>
         </ul>
         <p>
-          <b>EDF to BIDS tab:</b>
+          <b>Recording to BIDS tab:</b>
         </p>
         <ul>
           <li>Review your configurations</li>
           <li>Review metadata values</li>
-          <li>Review your EDF header data</li>
+          <li>Review your recording details</li>
         </ul>
         <p>
           <b>Validator tab:</b>
