@@ -148,12 +148,12 @@ def create_candidate_and_visit(sid, data):
 
 
 @sio.event
-def get_edf_data(sid, data):
-    # data = { files: 'EDF files (array of {path, name})' }
-    print('get_edf_data:', data)
+def get_recording_data(sid, data):
+    # data = { files: 'recording entry points (array of {path, name})' }
+    print('get_recording_data:', data)
     files = data.get('files') if isinstance(data, dict) else None
     response = conversion.inspect_recording(files)
-    sio.emit('edf_data', response)
+    sio.emit('recording_data', response)
 
 
 @sio.event
@@ -199,12 +199,12 @@ def get_bids_metadata(sid, data):
 
 
 @sio.event
-def edf_to_bids(sid, data):
-    # data = { edfData: {files: [{path, name}]}, eegRuns: [], modality: '',
+def recording_to_bids(sid, data):
+    # data = { recordingData: {files: [{path, name}]}, eegRuns: [], modality: '',
     # bids_directory: '', read_only: false, session: '', participantID: '',
     # taskName: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
-    print('edf_to_bids: ', data)
+    print('recording_to_bids: ', data)
     response = conversion.convert_recording(data)
     print(response)
     print('Response received!')

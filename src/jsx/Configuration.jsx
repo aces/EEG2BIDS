@@ -47,8 +47,8 @@ const Configuration = (props) => {
   // React State
   const initialState = {
     eegRuns: null,
-    edfData: [],
-    edfFiles: [],
+    recordingData: [],
+    recordingFiles: [],
     modality: 'ieeg',
     eventFiles: [],
     invalidEventFiles: [],
@@ -136,7 +136,7 @@ const Configuration = (props) => {
 
   /**
    * beginBidsCreation - create BIDS format.
-   *   Sent by socket to python: edf_to_bids.
+   *   Sent by socket to python: recording_to_bids.
    */
   const beginBidsCreation = () => {
     if (!preparedBy) {
@@ -164,9 +164,9 @@ const Configuration = (props) => {
     });
     setModalVisible(true);
 
-    if (appContext.getFromTask('edfData')?.['files'].length > 0) {
-      socketContext.emit('edf_to_bids', {
-        edfData: appContext.getFromTask('edfData') ?? [],
+    if (appContext.getFromTask('recordingData')?.['files'].length > 0) {
+      socketContext.emit('recording_to_bids', {
+        recordingData: appContext.getFromTask('recordingData') ?? [],
         eegRuns: state.eegRuns.get ?? [],
         modality: appContext.getFromTask('modality') ?? 'ieeg',
         bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
@@ -383,22 +383,22 @@ const Configuration = (props) => {
   const validateData = () => {
     const result = [];
 
-    // edfData
-    let edfDataStatus;
-    if (state.edfData.get?.error) {
-      edfDataStatus = formatError(state.edfData.get.error);
+    // recordingData
+    let recordingDataStatus;
+    if (state.recordingData.get?.error) {
+      recordingDataStatus = formatError(state.recordingData.get.error);
     } else if (
-      state.edfData.get && state.edfData.get?.files?.length > 0
+      state.recordingData.get && state.recordingData.get?.files?.length > 0
     ) {
-      edfDataStatus = formatPass('EDF data file(s): ' +
-        state.edfData.get.files.map(
-            (edfFile) => edfFile['name'],
+      recordingDataStatus = formatPass('Recording file(s): ' +
+        state.recordingData.get.files.map(
+            (recordingFile) => recordingFile['name'],
         ).join(', '),
       );
     } else {
-      edfDataStatus = formatError('No EDF file selected');
+      recordingDataStatus = formatError('No recording file selected');
     }
-    result.push(<div key='edfDataStatus'>{edfDataStatus}</div>);
+    result.push(<div key='recordingDataStatus'>{recordingDataStatus}</div>);
 
 
     // Data modality
@@ -431,20 +431,20 @@ const Configuration = (props) => {
 
         // Check that the events files are appropriately named
         appContext.getFromTask('eventFiles').map((eventFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
+          if (!appContext.getFromTask('recordingData')['files'].find(
+              (recordingFile) => {
+                const recordingFileName = recordingFile['name'].toLowerCase()
                     .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-                const edfFileNameAlt = edfFile['name'].toLowerCase()
+                const recordingFileNameAlt = recordingFile['name'].toLowerCase()
                     .replace('.edf', '');
 
                 const eventFileName = eventFile['name'].toLowerCase()
                     .replace('_events.tsv', '').replace('.tsv', '');
 
                 return (
-                  edfFileName === eventFileName ||
-                  edfFileNameAlt === eventFileName
+                  recordingFileName === eventFileName ||
+                  recordingFileNameAlt === eventFileName
                 );
               },
           )) {
@@ -486,12 +486,12 @@ const Configuration = (props) => {
 
         // Check that the events files are appropriately named
         appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-          if (!appContext.getFromTask('edfData')['files'].find(
-              (edfFile) => {
-                const edfFileName = edfFile['name'].toLowerCase()
+          if (!appContext.getFromTask('recordingData')['files'].find(
+              (recordingFile) => {
+                const recordingFileName = recordingFile['name'].toLowerCase()
                     .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-                const edfFileNameAlt = edfFile['name'].toLowerCase()
+                const recordingFileNameAlt = recordingFile['name'].toLowerCase()
                     .replace('.edf', '');
 
                 const annotationsTSVFileName = annotationsTSVFile['name']
@@ -499,8 +499,8 @@ const Configuration = (props) => {
                     .replace('_annotations.tsv', '').replace('.tsv', '');
 
                 return (
-                  edfFileName === annotationsTSVFileName ||
-                  edfFileNameAlt === annotationsTSVFileName
+                  recordingFileName === annotationsTSVFileName ||
+                  recordingFileNameAlt === annotationsTSVFileName
                 );
               },
           )) {
@@ -545,12 +545,14 @@ const Configuration = (props) => {
         // Check that the events files are appropriately named
         appContext.getFromTask('annotationsJSON')
             .map((annotationsJSONFile) => {
-              if (!appContext.getFromTask('edfData')['files'].find(
-                  (edfFile) => {
-                    const edfFileName = edfFile['name'].toLowerCase()
+              if (!appContext.getFromTask('recordingData')['files'].find(
+                  (recordingFile) => {
+                    const recordingFileName = recordingFile['name']
+                        .toLowerCase()
                         .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-                    const edfFileNameAlt = edfFile['name'].toLowerCase()
+                    const recordingFileNameAlt = recordingFile['name']
+                        .toLowerCase()
                         .replace('.edf', '');
 
                     const annotationsJSONFileName =
@@ -559,8 +561,8 @@ const Configuration = (props) => {
                             .replace('.json', '');
 
                     return (
-                      edfFileName === annotationsJSONFileName ||
-                      edfFileNameAlt === annotationsJSONFileName
+                      recordingFileName === annotationsJSONFileName ||
+                      recordingFileNameAlt === annotationsJSONFileName
                     );
                   },
               )) {
@@ -868,10 +870,10 @@ const Configuration = (props) => {
     /*if (socketContext) {
       if (state.session.get && state.siteID.get &&
           state.projectID.get && state.subprojectID.get &&
-          state.edfData.get?.date && state.participantDOB.get &&
+          state.recordingData.get?.date && state.participantDOB.get &&
           state.participantSex.get
       ) {
-        const visitDate = state.edfData.get['date'] */
+        const visitDate = state.recordingData.get['date'] */
     //        .toISOString().replace(/T.*/, '');
 
     //    const dob = state.participantDOB.get
@@ -891,10 +893,10 @@ const Configuration = (props) => {
 
       if (state.participantCandID.get && state.session.get &&
           state.siteID.get && state.projectID.get &&
-          state.subprojectID.get && state.edfData.get?.date
+          state.subprojectID.get && state.recordingData.get?.date
       ) {
         console.info('start request to create the visit');
-        const visitDate = state.edfData.get['date'] */
+        const visitDate = state.recordingData.get['date'] */
     //        .toISOString().replace(/T.*/, '');
 
     /*    socketContext.emit('create_visit', {
@@ -907,22 +909,22 @@ const Configuration = (props) => {
         });
     } */
 
-    if (state.edfData.get?.files?.length > 0) {
+    if (state.recordingData.get?.files?.length > 0) {
       const eventFiles = [...state.eventFiles.get];
       const annotationsTSVs = [...state.annotationsTSV.get];
       const annotationsJSONs = [...state.annotationsJSON.get];
 
       const eegRuns = [];
 
-      state.edfData.get?.files.map(
-          (edfFile) => {
+      state.recordingData.get?.files.map(
+          (recordingFile) => {
             const eegRun = new EEGRun();
-            eegRun.edfFile = edfFile['path'];
+            eegRun.recordingFile = recordingFile['path'];
 
-            const edfFileName = edfFile['name'].toLowerCase()
+            const recordingFileName = recordingFile['name'].toLowerCase()
                 .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
 
-            const edfFileNameAlt = edfFile['name'].toLowerCase()
+            const recordingFileNameAlt = recordingFile['name'].toLowerCase()
                 .replace('.edf', '');
 
             // Check if we do have a matching event file
@@ -930,8 +932,8 @@ const Configuration = (props) => {
               const eventFileName = eventFile['name'].toLowerCase()
                   .replace('_events.tsv', '').replace('.tsv', '');
               return (
-                edfFileName === eventFileName ||
-                edfFileNameAlt === eventFileName
+                recordingFileName === eventFileName ||
+                recordingFileNameAlt === eventFileName
               );
             });
 
@@ -948,8 +950,8 @@ const Configuration = (props) => {
                       .replace('_annotations.tsv', '').replace('.tsv', '');
 
                   return (
-                    edfFileName === annotationsTSVName ||
-                    edfFileNameAlt === annotationsTSVName
+                    recordingFileName === annotationsTSVName ||
+                    recordingFileNameAlt === annotationsTSVName
                   );
                 },
             );
@@ -969,8 +971,8 @@ const Configuration = (props) => {
                       .replace('.json', '');
 
                   return (
-                    edfFileName === annotationsJSONName ||
-                    edfFileNameAlt === annotationsJSONName
+                    recordingFileName === annotationsJSONName ||
+                    recordingFileNameAlt === annotationsJSONName
                   );
                 },
             );
@@ -1017,9 +1019,9 @@ const Configuration = (props) => {
   useEffect(() => {
     if (!state.participantCandID.get || !state.session.get ||
       !state.siteID.get || !state.projectID.get ||
-      !state.subprojectID.get || !state.edfData.get?.date) return;
+      !state.subprojectID.get || !state.recordingData.get?.date) return;
 
-    const visitDate = state.edfData.get['date']
+    const visitDate = state.recordingData.get['date']
         .toISOString().replace(/T.*/, '');
 
     socketContext.emit('create_visit', {
@@ -1032,7 +1034,7 @@ const Configuration = (props) => {
     });
   }, [state.participantCandID.get, state.session.get,
     state.siteID.get, state.projectID.get, state.subprojectID.get,
-    state.edfData.get]);
+    state.recordingData.get]);
 
   useEffect(() => {
     Object.keys(state).map((key) => appContext.setTask(key, state[key].get));
@@ -1040,15 +1042,15 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (socketContext) {
-      socketContext.emit('get_edf_data', {
-        files: state.edfFiles.get.map((edfFile) =>
+      socketContext.emit('get_recording_data', {
+        files: state.recordingFiles.get.map((recordingFile) =>
           ({
-            path: edfFile['path'],
-            name: edfFile['name'],
+            path: recordingFile['path'],
+            name: recordingFile['name'],
           })),
       });
     }
-  }, [state.edfFiles.get]);
+  }, [state.recordingFiles.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1062,12 +1064,12 @@ const Configuration = (props) => {
   }, [state.bidsMetadataFile.get, state.modality.get]);
 
   useEffect(() => {
-    if (!state.edfData.get?.date || !state.participantDOB.get) return;
+    if (!state.recordingData.get?.date || !state.participantDOB.get) return;
 
-    const age = getAge(state.participantDOB.get, state.edfData.get.date);
+    const age = getAge(state.participantDOB.get, state.recordingData.get.date);
     state.participantAge.set(age);
     appContext.setTask('participantAge', age);
-  }, [state.participantDOB.get, state.edfData.get]);
+  }, [state.participantDOB.get, state.recordingData.get]);
 
   useEffect(() => {
     if (socketContext) {
@@ -1106,7 +1108,7 @@ const Configuration = (props) => {
         state.sessionOptions.set(visitOpts);
       });
 
-      socketContext.on('edf_data', (message) => {
+      socketContext.on('recording_data', (message) => {
         if (message['error']) {
           console.error(message['error']);
         }
@@ -1116,8 +1118,8 @@ const Configuration = (props) => {
         }
 
         state.subjectID.set(message?.['subjectID'] || '');
-        state.edfData.set(message);
-        appContext.setTask('edfData', message);
+        state.recordingData.set(message);
+        appContext.setTask('recordingData', message);
       });
 
       socketContext.on('bids_metadata', (message) => {
@@ -1198,13 +1200,13 @@ const Configuration = (props) => {
         state.LORIScompliant.set(value);
         break;
       case 'recordingID':
-        state.edfData.set((prevState) => {
+        state.recordingData.set((prevState) => {
           return {...prevState, [name]: value};
         });
         appContext.setTask(name, value);
         break;
       case 'subjectID':
-        state.edfData.set((prevState) => {
+        state.recordingData.set((prevState) => {
           return {...prevState, [name]: value};
         });
         state.subjectID.set(value);
@@ -1270,12 +1272,12 @@ const Configuration = (props) => {
         break;
       case 'anonymize':
         if (value) {
-          state.edfData.set((prevState) => {
+          state.recordingData.set((prevState) => {
             return {...prevState, ['subjectID']: 'X X X X'};
           });
           appContext.setTask('subjectID', 'X X X X');
         } else {
-          state.edfData.set((prevState) => {
+          state.recordingData.set((prevState) => {
             return {...prevState, ['subjectID']: state.subjectID.get};
           });
           appContext.setTask('subjectID', state.subjectID.get);
@@ -1357,14 +1359,15 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           <div className='small-pad'>
-            <FileInput id='edfFiles'
-              name='edfFiles'
+            <FileInput id='recordingFiles'
+              name='recordingFiles'
               multiple={true}
               accept='.edf,.EDF,.set,.SET'
               placeholder={
-                state.edfFiles.get.map((edfFile) => edfFile['name']).join(', ')
+                state.recordingFiles.get
+                    .map((recordingFile) => recordingFile['name']).join(', ')
               }
-              label='EDF Recording to convert'
+              label='Recording to convert'
               required={true}
               onUserInput={onUserInput}
               help='Filename(s) must be formatted correctly:
@@ -1372,7 +1375,7 @@ const Configuration = (props) => {
             />
             <div>
               <small>
-                Multiple EDF files can be selected for a single recording
+                Multiple files can be selected for a single recording
               </small>
             </div>
           </div>
@@ -1859,7 +1862,7 @@ const Configuration = (props) => {
           }
         </div>
         <span className='header'>
-          EDF Header Data
+          Recording Details
           <label style={{
             position: 'absolute',
             left: '20px',
@@ -1880,7 +1883,7 @@ const Configuration = (props) => {
               name='anonymize'
               onChange={(checked) => onUserInput('anonymize', checked)}
               checked={state.anonymize.get}
-              disabled={state.edfData.get?.files?.length > 0 ? false : true}
+              disabled={!state.recordingData.get?.files?.length}
             />
             <span>Anonymize</span>
           </label>
@@ -1891,9 +1894,9 @@ const Configuration = (props) => {
               <TextInput id='subjectID'
                 name='subjectID'
                 label='Subject ID'
-                value={state.edfData?.get['subjectID'] || ''}
+                value={state.recordingData?.get['subjectID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length <= 0}
+                readonly={state.recordingData.get?.files?.length <= 0}
               />
               <div>
                 <small>Recommended EDF anonymization: "X X X X"<br/>
@@ -1905,9 +1908,9 @@ const Configuration = (props) => {
               <TextInput id='recordingID'
                 name='recordingID'
                 label='Recording ID'
-                value={state.edfData.get?.['recordingID'] || ''}
+                value={state.recordingData.get?.['recordingID'] || ''}
                 onUserInput={onUserInput}
-                readonly={state.edfData.get?.files?.length <= 0}
+                readonly={state.recordingData.get?.files?.length <= 0}
               />
               <div>
                 <small>(EDF spec: Startdate dd-MMM-yyyy
@@ -1920,7 +1923,7 @@ const Configuration = (props) => {
                 name='recording_date'
                 label='Recording Date'
                 readonly={true}
-                value={state.edfData.get?.['date'] ?
+                value={state.recordingData.get?.['date'] ?
                     new Intl.DateTimeFormat(
                         'en-US',
                         {
@@ -1930,7 +1933,7 @@ const Configuration = (props) => {
                           hour: 'numeric',
                           minute: 'numeric',
                         },
-                    ).format(state.edfData.get['date']) :
+                    ).format(state.recordingData.get['date']) :
                     ''
                 }
               />
@@ -1950,7 +1953,7 @@ const Configuration = (props) => {
     return (
       <>
         <span className='header'>
-          EDF to BIDS
+          Recording to BIDS
         </span>
         <div className='info report'>
           <div className='small-pad'>
@@ -1985,7 +1988,7 @@ const Configuration = (props) => {
                 {appContext.getFromTask('recording_id')}
               </div>
             }
-            {appContext.getFromTask('edfData')?.['date'] &&
+            {appContext.getFromTask('recordingData')?.['date'] &&
               <div>
                 Recording Date:&nbsp;
                 {new Intl.DateTimeFormat(
@@ -1997,7 +2000,7 @@ const Configuration = (props) => {
                       hour: 'numeric',
                       minute: 'numeric',
                     },
-                ).format(appContext.getFromTask('edfData')['date'])}
+                ).format(appContext.getFromTask('recordingData')['date'])}
               </div>
             }
           </div>

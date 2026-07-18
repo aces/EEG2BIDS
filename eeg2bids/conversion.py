@@ -89,9 +89,9 @@ def convert_recording(data):
     more actionable messages.
     """
     error_messages = []
-    if 'edfData' not in data or 'files' not in data['edfData'] \
-            or not data['edfData']['files']:
-        error_messages.append('No .edf file(s) to convert.')
+    if 'recordingData' not in data or 'files' not in data['recordingData'] \
+            or not data['recordingData']['files']:
+        error_messages.append('No recording file(s) to convert.')
     if 'bids_directory' not in data or not data['bids_directory']:
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:

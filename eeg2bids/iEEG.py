@@ -226,14 +226,14 @@ class Converter:
             modality = 'eeg'
 
         for i, eegRun in enumerate(data['eegRuns']):
-            eegRun['edfBIDSBasename'] = self.to_bids(
+            eegRun['recordingBIDSBasename'] = self.to_bids(
                 eeg_run=eegRun,
                 ch_type=modality,
                 task=data['taskName'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                run=((i + 1) if len(data['edfData']['files']) > 1 else None),
+                run=((i + 1) if len(data['recordingData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq']
@@ -262,7 +262,7 @@ class Converter:
                 ch_type='seeg',
                 read_only=False,
                 line_freq='n/a'):
-        file = eeg_run['edfFile']
+        file = eeg_run['recordingFile']
 
         if self.validate(file):
             # Reading is delegated to MNE's generic dispatcher, which selects
