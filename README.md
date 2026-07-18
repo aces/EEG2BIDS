@@ -6,6 +6,9 @@ EEG2BIDS Wizard is a GUI for de-identifying EDF data and converting EEG or
 iEEG recordings to BIDS. It can use LORIS credentials to retrieve metadata.
 Remove saved credentials after using EEG2BIDS on a shared computer.
 
+See the [user guide](docs/user-guide.md) for recording, metadata, annotation,
+validation, and optional LORIS workflows.
+
 ## Project status
 
 **Linux is the only supported development target.** The Python backend was
