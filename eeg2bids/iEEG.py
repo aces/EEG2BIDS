@@ -198,15 +198,15 @@ class Converter:
         file = eeg_run['edfFile']
 
         if self.validate(file):
+            # Route reading through MNE's generic dispatcher; it selects the
+            # format-specific reader from the file itself. EDF resolves to the
+            # same reader used previously.
             try:
-                reader = EDF.EDFReader(fname=file)
+                raw = mne.io.read_raw(file)
             except PermissionError as ex:
                 raise ReadError(ex)
 
-            m_info, c_info = reader.open(fname=file)
-            self.set_m_info(m_info)
-
-            raw = mne.io.read_raw_edf(input_fname=file)
+            self.set_m_info({'subject_id': subject_id})
 
             if read_only:
                 return True
@@ -230,8 +230,7 @@ class Converter:
 
             raw.set_channel_types(ch_types)
 
-            m_info['subject_id'] = subject_id
-            subject = m_info['subject_id'].replace('_', '').replace('-', '').replace(' ', '')
+            subject = subject_id.replace('_', '').replace('-', '').replace(' ', '')
 
             if line_freq.isnumeric():
                 line_freq = int(line_freq)
