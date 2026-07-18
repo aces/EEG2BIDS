@@ -373,6 +373,11 @@ class Converter:
                         f.seek(8)  # id_info field starts 8 bytes in
                         f.write(bytes("X X X X".ljust(80), 'ascii'))
 
+                # Record the written extension so post-write steps (e.g. the
+                # annotations IntendedFor) can reference the actual recording
+                # file rather than assuming EDF.
+                eeg_run['recordingBIDSExtension'] = written_path.extension
+
                 print('finished')
 
                 return bids_basename.basename

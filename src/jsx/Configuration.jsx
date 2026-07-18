@@ -445,10 +445,11 @@ const Configuration = (props) => {
           if (!appContext.getFromTask('recordingData')['files'].find(
               (recordingFile) => {
                 const recordingFileName = recordingFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                    .replace(/_i?eeg\.(edf|set)/i, '')
+                    .replace(/\.(edf|set)/i, '');
 
                 const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                    .replace('.edf', '');
+                    .replace(/\.(edf|set)/i, '');
 
                 const eventFileName = eventFile['name'].toLowerCase()
                     .replace('_events.tsv', '').replace('.tsv', '');
@@ -462,7 +463,7 @@ const Configuration = (props) => {
             match = false;
             eventsStatus = formatError(
                 `Event file ${eventFile['name']}
-                is not matching any edf file names.`,
+                is not matching any recording file names.`,
             );
           }
         });
@@ -500,10 +501,11 @@ const Configuration = (props) => {
           if (!appContext.getFromTask('recordingData')['files'].find(
               (recordingFile) => {
                 const recordingFileName = recordingFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                    .replace(/_i?eeg\.(edf|set)/i, '')
+                    .replace(/\.(edf|set)/i, '');
 
                 const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                    .replace('.edf', '');
+                    .replace(/\.(edf|set)/i, '');
 
                 const annotationsTSVFileName = annotationsTSVFile['name']
                     .toLowerCase()
@@ -518,7 +520,7 @@ const Configuration = (props) => {
             match = false;
             annotationsTSVStatus = formatError(
                 `Annotation file ${annotationsTSVFile['name']}
-                is not matching any edf file names.`,
+                is not matching any recording file names.`,
             );
           }
         });
@@ -560,11 +562,12 @@ const Configuration = (props) => {
                   (recordingFile) => {
                     const recordingFileName = recordingFile['name']
                         .toLowerCase()
-                        .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                        .replace(/_i?eeg\.(edf|set)/i, '')
+                        .replace(/\.(edf|set)/i, '');
 
                     const recordingFileNameAlt = recordingFile['name']
                         .toLowerCase()
-                        .replace('.edf', '');
+                        .replace(/\.(edf|set)/i, '');
 
                     const annotationsJSONFileName =
                         annotationsJSONFile['name'].toLowerCase()
@@ -580,7 +583,7 @@ const Configuration = (props) => {
                 match = false;
                 annotationsJSONStatus = formatError(
                     `Annotation file ${annotationsJSONFile['name']}
-                  is not matching any edf file names.`,
+                  is not matching any recording file names.`,
                 );
               }
             });
@@ -933,10 +936,10 @@ const Configuration = (props) => {
             eegRun.recordingFile = recordingFile['path'];
 
             const recordingFileName = recordingFile['name'].toLowerCase()
-                .replace(/_i?eeg\.edf/i, '').replace('.edf', '');
+                .replace(/_i?eeg\.(edf|set)/i, '').replace(/\.(edf|set)/i, '');
 
             const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                .replace('.edf', '');
+                .replace(/\.(edf|set)/i, '');
 
             // Check if we do have a matching event file
             const eventFileIndex = eventFiles.findIndex((eventFile) => {
@@ -1001,14 +1004,14 @@ const Configuration = (props) => {
       eegRuns.eventErrors = [];
       eventFiles.map((eventFile) => {
         eegRuns.eventErrors.push(`Event file ${eventFile['name']}
-          is not matching any edf file names.`);
+          is not matching any recording file names.`);
       });
 
       eegRuns.annotationsTSVErrors = [];
       annotationsTSVs.map((annotationsTSV) => {
         eegRuns.annotationsTSVErrors.push(
             `Annotation file ${annotationsTSV['name']}
-            is not matching any edf file names.`,
+            is not matching any recording file names.`,
         );
       });
 
@@ -1016,7 +1019,7 @@ const Configuration = (props) => {
       annotationsJSONs.map((annotationsJSON) => {
         eegRuns.annotationsJSONErrors.push(
             `Annotation file  ${annotationsJSON['name']}
-            is not matching any edf file names.`,
+            is not matching any recording file names.`,
         );
       });
 
@@ -1454,7 +1457,7 @@ const Configuration = (props) => {
         </span>
         <div className='info'>
           <small>Annotation and events file names
-          must match one of the EDF file names.</small>
+          must match one of the recording file names.</small>
         </div>
         <div className='container'>
           <div className='info half'>
@@ -1504,8 +1507,8 @@ const Configuration = (props) => {
                 }
                 label='events.tsv (additional)'
                 onUserInput={onUserInput}
-                help='Additional events only. Events embedded in
-                the EDF Annotations signal are automatically extracted.'
+                help='Additional events only. Events embedded in the
+                recording annotations are automatically extracted.'
               />
             </div>
             <div className='small-pad'>

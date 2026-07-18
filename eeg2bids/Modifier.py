@@ -206,7 +206,8 @@ class Modifier:
                 try:
                     with open(eegRun['annotationsJSON'], "r") as fp:
                         file_data = json.load(fp)
-                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), recording_file + '.edf')
+                        recording_ext = eegRun.get('recordingBIDSExtension', '.edf')
+                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), recording_file + recording_ext)
                         # In windows env path will contain \\
                         file_data["IntendedFor"] = file_data["IntendedFor"].replace('\\', '/')
 
