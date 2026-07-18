@@ -10,65 +10,79 @@ an ``error`` key with an actionable message (a string, or a list of strings
 for the multi-validation conversion path); the caller owns transport.
 """
 
-import datetime
+import mne
 
 from eeg2bids import iEEG
 from eeg2bids.iEEG import ReadError, WriteError
 from eeg2bids.Modifier import Modifier
 
 
+def _meas_date_str(raw):
+    """Recording start as 'YYYY-MM-DD HH:MM:SS', or None when MNE has none.
+
+    MNE stores ``meas_date`` as a timezone-aware datetime; the renderer
+    reparses this string with ``new Date(...)``, so the wall-clock components
+    are emitted without a timezone suffix to match the prior format.
+    """
+    meas_date = raw.info.get('meas_date')
+    if meas_date is None:
+        return None
+    return meas_date.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _subject_id(raw):
+    """MNE-provided subject identifier, or 'n/a' when absent."""
+    subject_info = raw.info.get('subject_info') or {}
+    his_id = subject_info.get('his_id')
+    return his_id if his_id else 'n/a'
+
+
 def inspect_recording(files):
     """Inspect the selected recording file(s) and summarize their metadata.
 
     ``files`` is a list of ``{'path': ..., 'name': ...}`` entries describing a
-    single recording (possibly split across several files). Returns a dict
-    with the sorted files plus the subject/recording identifiers and start
-    date, or ``{'error': ...}`` when the recording cannot be read or the
-    selection spans more than one recording.
+    single recording (possibly split across several files). Each entry point is
+    opened through MNE's generic ``read_raw`` dispatcher, so format selection
+    and companion-file resolution are delegated to MNE. Returns a dict with the
+    sorted files plus subject identifier and start date (missing optional
+    values as ``n/a`` / empty), or ``{'error': ...}`` when the recording cannot
+    be read or the selection spans more than one recording.
     """
     if not files:
-        return {'error': 'No EDF file selected.'}
+        return {'error': 'No recording file selected.'}
 
-    headers = []
+    recordings = []
     try:
         for file in files:
-            anonymize = iEEG.Anonymize(file['path'])
-            metadata = anonymize.get_header()
-            year = '20' + str(metadata[0]['year']) if metadata[0]['year'] < 85 \
-                else '19' + str(metadata[0]['year'])
-            date = datetime.datetime(
-                int(year), metadata[0]['month'], metadata[0]['day'],
-                metadata[0]['hour'], metadata[0]['minute'],
-                metadata[0]['second'])
-
-            headers.append({
+            raw = mne.io.read_raw(file['path'], verbose='ERROR')
+            recordings.append({
                 'file': file,
-                'metadata': metadata,
-                'date': str(date)
+                'raw': raw,
+                'date': _meas_date_str(raw),
             })
 
-        for i in range(1, len(headers)):
-            if set(headers[i - 1]['metadata'][1]['ch_names']) \
-                    != set(headers[i]['metadata'][1]['ch_names']):
+        for i in range(1, len(recordings)):
+            if set(recordings[i - 1]['raw'].ch_names) \
+                    != set(recordings[i]['raw'].ch_names):
                 return {'error': 'The files selected contain more than one '
                                  'recording.'}
 
-        # sort the recording splits by date
-        headers = sorted(headers, key=lambda k: k['date'])
+        # sort the recording splits by date (blank dates sort first)
+        recordings = sorted(recordings, key=lambda r: r['date'] or '')
+        first = recordings[0]['raw']
 
-        # return the first split's metadata and date
         return {
-            'files': [header['file'] for header in headers],
-            'subjectID': headers[0]['metadata'][0]['subject_id'],
-            'recordingID': headers[0]['metadata'][0]['recording_id'],
-            'date': headers[0]['date']
+            'files': [r['file'] for r in recordings],
+            'subjectID': _subject_id(first),
+            'recordingID': 'n/a',
+            'date': recordings[0]['date'] or '',
         }
-    except ReadError as e:
+    except PermissionError as e:
         print(e)
         return {'error': 'Cannot read file - ' + str(e)}
     except Exception as e:
         print(e)
-        return {'error': 'Failed to retrieve EDF header information'}
+        return {'error': 'Cannot read recording - ' + str(e)}
 
 
 def convert_recording(data):
