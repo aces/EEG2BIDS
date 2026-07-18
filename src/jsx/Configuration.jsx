@@ -1822,7 +1822,7 @@ const Configuration = (props) => {
                   placeholder='n/a'
                   value={state.participantAge.get}
                   onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
+                  help='Participant age at the time of data acquisition'
                 />
               </div>
               <div className='small-pad'>
