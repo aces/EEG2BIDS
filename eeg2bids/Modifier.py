@@ -106,44 +106,32 @@ class Modifier:
             'participants.tsv'
         )
 
-        with open(file_path, mode='r') as tsv_file:
-            tsv_file.readline()
-            reader = csv.reader(tsv_file, delimiter='\t')
-            rows = list(reader)
-            tsv_file.close()
+        # Read participant_id by column name rather than unpacking a fixed
+        # number of positional columns. mne-bids emits participants.tsv with a
+        # layout that varies by version (e.g. participant_id, age, sex, hand,
+        # weight, height), so the previous positional unpack -- which required
+        # exactly 4 or 7 columns -- raised ValueError on every row, silently
+        # dropped them all, and left participants.tsv with only a header (#145).
+        # The participant_id column is the one stable BIDS column; the remaining
+        # values come from the LORIS-collected data regardless.
+        with open(file_path, mode='r', newline='') as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            participant_ids = [row['participant_id'] for row in reader]
 
         # participants.tsv data collected:
         output = []
-        for line in rows:
-            try:
-                participant_id, age, sex, hand = line
-                output.append(
-                    [
-                        participant_id,
-                        self.data['age'],
-                        self.data['sex'],
-                        self.data['hand'],
-                        self.data['site_id'],
-                        self.data['sub_project_id'],
-                        self.data['project_id']
-                    ]
-                )
-            except ValueError:
-                try:
-                    participant_id, age, sex, hand, site, project, subproject = line
-                    output.append(
-                        [
-                            participant_id,
-                            self.data['age'],
-                            self.data['sex'],
-                            self.data['hand'],
-                            self.data['site_id'],
-                            self.data['sub_project_id'],
-                            self.data['project_id']
-                        ]
-                    )
-                except ValueError:
-                    print('error: ValueError')
+        for participant_id in participant_ids:
+            output.append(
+                [
+                    participant_id,
+                    self.data['age'],
+                    self.data['sex'],
+                    self.data['hand'],
+                    self.data['site_id'],
+                    self.data['sub_project_id'],
+                    self.data['project_id']
+                ]
+            )
 
         with open(file_path, mode='w', newline='') as tsv_file:
             headers = ['participant_id', 'age', 'sex', 'hand', 'site', 'subproject', 'project']
