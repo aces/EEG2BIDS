@@ -4,13 +4,23 @@ Committed source fixtures live under ``tests/fixtures/`` (small, synthetic,
 de-identified inputs; see that directory's README for provenance). Generated
 BIDS output always goes to a pytest ``tmp_path`` and is never committed.
 """
+import json
+import os
+import subprocess
 from pathlib import Path
+from shutil import which
 
 import pytest
 
 from eeg2bids.conversion import convert_recording
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+# The current official dataset-level BIDS Validator is the Deno CLI, pinned here
+# for reproducibility. It is a required part of the suite: the validator tests
+# fail (not skip) when it cannot be run, so a missing validator is a visible
+# failure rather than silently-skipped coverage.
+BIDS_VALIDATOR_SPEC = "jsr:@bids/validator@3.0.0"
 
 
 @pytest.fixture(scope="session")
@@ -79,3 +89,49 @@ def run_conversion():
             root = Path(data["bids_directory"]) / result["output_time"]
         return result, root
     return _run
+
+
+def _find_deno():
+    """Locate the deno executable, on PATH or in the default install dir."""
+    found = which("deno")
+    if found:
+        return found
+    for base in (os.environ.get("DENO_INSTALL"), os.path.expanduser("~/.deno")):
+        if base:
+            candidate = os.path.join(base, "bin", "deno")
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return candidate
+    return None
+
+
+@pytest.fixture(scope="session")
+def bids_validator():
+    """Return a callable that runs the official BIDS Validator on a dataset.
+
+    The callable returns the list of error-severity issues (empty when the
+    dataset is valid; warnings are ignored). Required: fails with an actionable
+    message when deno is unavailable rather than skipping.
+    """
+    deno = _find_deno()
+    if deno is None:
+        pytest.fail(
+            "The official BIDS Validator CLI is required but 'deno' was not "
+            "found. Install it with: curl -fsSL https://deno.land/install.sh "
+            "| sh  (the validator itself is fetched on first use via "
+            f"'{BIDS_VALIDATOR_SPEC}').")
+
+    def _validate(dataset_root):
+        proc = subprocess.run(
+            [deno, "run", "-A", BIDS_VALIDATOR_SPEC, str(dataset_root),
+             "--json"],
+            capture_output=True, text=True)
+        try:
+            report = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError(
+                "BIDS Validator did not return JSON (exit "
+                f"{proc.returncode}).\nstderr tail:\n{proc.stderr[-1500:]}")
+        issues = report["issues"]["issues"]
+        return [i for i in issues if i.get("severity") == "error"]
+
+    return _validate
