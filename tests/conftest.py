@@ -40,11 +40,11 @@ def make_convert_data(fixtures_dir, tmp_path):
     the events/annotation tests).
     """
     def _make(recording, *, modality="eeg", output_format="auto",
-              eeg_runs=None, **overrides):
+              eeg_runs=None, event_file="", **overrides):
         path = str(fixtures_dir / recording)
         default_run = {
             "recordingFile": path,
-            "eventFile": "",
+            "eventFile": event_file,
             "annotationsTSV": "",
             "annotationsJSON": "",
         }

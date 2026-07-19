@@ -245,6 +245,27 @@ def write_test_fixtures(fixtures_dir):
                                            'data).',
                     })
 
+    # Supplied events.tsv fixtures for the #79 regression. The app accepts a
+    # narrow 3-column layout (onset/duration/trial_type, padded to n/a) and a
+    # wide 5-column layout (adds value/sample). 'malformed' mixes valid rows
+    # with unsupported column counts (2 and 6) to pin the defined behavior:
+    # valid rows survive, unsupported rows are dropped -- not silent loss of
+    # the good rows.
+    (fixtures_dir / 'events_narrow.tsv').write_text(
+        'onset\tduration\ttrial_type\n'
+        '0.5\t0.1\tstimulus/A\n'
+        '2.0\t0.3\tstimulus/B\n')
+    (fixtures_dir / 'events_wide.tsv').write_text(
+        'onset\tduration\ttrial_type\tvalue\tsample\n'
+        '0.5\t0.1\tstimulus/A\t1\t128\n'
+        '1.5\t0.2\tstimulus/B\t2\t384\n')
+    (fixtures_dir / 'events_malformed.tsv').write_text(
+        'onset\tduration\ttrial_type\tvalue\tsample\n'
+        '0.5\t0.1\tGOOD_WIDE\t1\t128\n'        # 5 cols: valid
+        '1.0\tBAD_TWO_COL\n'                    # 2 cols: unsupported
+        '2.0\t0.2\tGOOD_NARROW\n'              # 3 cols: valid (padded)
+        '3.0\t0.2\tBAD_SIX_COL\t9\t512\tEXTRA\n')  # 6 cols: unsupported
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
