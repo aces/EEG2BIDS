@@ -1,0 +1,19 @@
+{
+  "InstitutionName": "EEG2BIDS Test Fixture",
+  "InstitutionAddress": "",
+  "Manufacturer": "Synthetic",
+  "ManufacturersModelName": "make_dev_data",
+  "SoftwareVersions": "",
+  "TaskDescription": "Synthetic fixture (not real data).",
+  "Instructions": "",
+  "CogAtlasID": "",
+  "CogPOID": "",
+  "DeviceSerialNumber": "",
+  "HardwareFilters": "",
+  "CapManufacturer": "",
+  "CapManufacturersModelName": "",
+  "EEGGround": "Fpz",
+  "HeadCircumference": "",
+  "EEGPlacementScheme": "10-20",
+  "SubjectArtefactDescription": ""
+}

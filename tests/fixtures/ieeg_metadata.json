@@ -1,0 +1,22 @@
+{
+  "InstitutionName": "EEG2BIDS Test Fixture",
+  "InstitutionAddress": "",
+  "Manufacturer": "Synthetic",
+  "ManufacturersModelName": "make_dev_data",
+  "SoftwareVersions": "",
+  "TaskDescription": "Synthetic iEEG fixture (not real data).",
+  "Instructions": "",
+  "CogAtlasID": "",
+  "CogPOID": "",
+  "DeviceSerialNumber": "",
+  "DCOffsetCorrection": "",
+  "HardwareFilters": "",
+  "ElectrodeManufacturer": "",
+  "ElectrodeManufacturersModelName": "",
+  "iEEGGround": "",
+  "iEEGPlacementScheme": "",
+  "iEEGElectrodeGroups": "",
+  "SubjectArtefactDescription": "",
+  "ElectricalStimulation": false,
+  "ElectricalStimulationParameters": ""
+}
