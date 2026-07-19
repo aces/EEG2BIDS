@@ -109,6 +109,26 @@ def test_sidecar_metadata_reflects_recording(make_convert_data, run_conversion):
     assert sidecar["RecordingType"] == "continuous"
 
 
+def test_eeg_reference_written_under_correct_key(make_convert_data,
+                                                 run_conversion):
+    # The reference goes under 'EEGReference'; guard against the old
+    # 'EGGReference' misspelling that left the value under a stray key.
+    _, root = run_conversion(
+        make_convert_data("eeg_continuous.edf", reference="FCz"))
+    sidecar = _sidecar(root, "eeg")
+    assert sidecar["EEGReference"] == "FCz"
+    assert "EGGReference" not in sidecar
+
+
+def test_ieeg_reference_written_under_correct_key(make_convert_data,
+                                                  run_conversion):
+    _, root = run_conversion(
+        make_convert_data("ieeg_continuous.edf", modality="ieeg",
+                          reference="intracranial-ref"))
+    sidecar = _sidecar(root, "ieeg")
+    assert sidecar["iEEGReference"] == "intracranial-ref"
+
+
 # --- failures propagate rather than being swallowed ----------------------
 
 def test_epoched_set_conversion_reports_error(make_convert_data,

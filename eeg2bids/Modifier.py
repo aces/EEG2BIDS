@@ -309,7 +309,7 @@ class Modifier:
                     if (self.data["modality"] == 'ieeg'):
                         referenceField = 'iEEGReference'
                     else:
-                        referenceField = 'EGGReference'
+                        referenceField = 'EEGReference'
 
                     file_data[referenceField] = " ".join(self.data['reference'].split())
 
