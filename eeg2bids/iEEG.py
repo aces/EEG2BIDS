@@ -1,5 +1,6 @@
 import os
 import mne
+import numpy as np
 from mne_bids import write_raw_bids, BIDSPath
 
 
@@ -292,6 +293,23 @@ class Converter:
 
             if ch_types:
                 raw.set_channel_types(ch_types)
+
+            # Drop a montage that carries no real electrode positions before
+            # writing. An EEGLAB .set always stores a channel-location block, so
+            # MNE reports a montage even for a recording that was never
+            # digitized -- the positions then come back as all-NaN. mne-bids
+            # will not write the BIDS electrodes sidecar for such a montage: it
+            # requires fiducials (nasion + left/right pre-auricular points) that
+            # a positionless recording does not have, and raises instead of
+            # writing (an EDF, which has no location block, never hits this).
+            # EEG2BIDS has no electrode-digitization step, so there are no real
+            # coordinates to preserve here; clearing the empty montage lets the
+            # SET convert. A montage with real positions is left untouched.
+            montage = raw.get_montage()
+            if montage is not None:
+                positions = np.array([ch['loc'][:3] for ch in raw.info['chs']])
+                if np.all(np.isnan(positions)):
+                    raw.set_montage(None)
 
             subject = subject_id.replace('_', '').replace('-', '').replace(' ', '')
 

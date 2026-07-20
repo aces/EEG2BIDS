@@ -1,0 +1,5 @@
+onset	duration	trial_type	value	sample
+0.5	0.1	GOOD_WIDE	1	128
+1.0	BAD_TWO_COL
+2.0	0.2	GOOD_NARROW
+3.0	0.2	BAD_SIX_COL	9	512	EXTRA

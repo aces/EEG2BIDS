@@ -27,6 +27,13 @@ dependencies = [
 eeg2bids = "eeg2bids.server:main"
 
 [dependency-groups]
+# Test-only dependencies. Installed by default with `uv sync`; the backend
+# suite runs with `uv run pytest`. Kept separate from runtime dependencies so
+# the packaged application does not ship the test toolchain.
+dev = [
+    "pytest>=8",
+]
+
 # Optional group for a future standalone-binary build. The packaged
 # PyInstaller/Electron workflow is not maintained in this branch (see #135 /
 # #136 / #137); this declaration keeps PyInstaller a declared, resolvable build
@@ -34,6 +41,13 @@ eeg2bids = "eeg2bids.server:main"
 packaging = [
     "pyinstaller>=6",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# xfail_strict makes an unexpected pass (XPASS) a failure: a regression test
+# marked xfail for a known-open defect (e.g. #145) must be un-marked the moment
+# the defect is fixed, rather than silently masking new behavior.
+xfail_strict = true
 
 [build-system]
 requires = ["hatchling"]
