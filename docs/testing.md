@@ -16,6 +16,7 @@ Use the repository lockfiles to install both stacks:
 ```sh
 uv sync --frozen
 npm ci
+npm run install:electron
 ```
 
 The Python suite also requires [Deno](https://deno.com/) because it runs the
@@ -118,11 +119,13 @@ including direct merges and merge-queue merges — must pass it.
 | --- | --- | --- |
 | `backend` (Python 3.11, 3.12, 3.13) | Lockfile is current, deps install frozen, full backend suite passes, and locked **production** deps have no known vulnerabilities. Package imports and Socket.IO startup are covered by the suite. | `uv lock --check`<br>`uv sync --frozen`<br>`uv run pytest`<br>`uv export --frozen --no-dev --no-emit-project -o requirements-audit.txt && uvx pip-audit -r requirements-audit.txt` |
 | `node` | `package-lock.json` is enforced, no high/critical npm advisories, lint passes, production renderer build succeeds. | `npm ci`<br>`npm audit --audit-level=high`<br>`npm run lint`<br>`npm run build` |
-| `electron` | Full Playwright Electron suite passes headlessly with Chromium sandboxing intact. | `xvfb-run -a npm run test:electron` |
+| `electron` | The locked Electron runtime is installed explicitly, then the full Playwright Electron suite passes headlessly with Chromium sandboxing intact. | `npm run install:electron`<br>`xvfb-run -a npm run test:electron` |
 
 The backend suite requires Deno for BIDS validation (see above); CI installs it.
 The Electron job installs Node **and** the uv-managed Python backend, because the
-app spawns the backend through `uv run --frozen`. It gives Electron's SUID
+app spawns the backend through `uv run --frozen`. Electron 43 and newer require
+an explicit `npm run install:electron` step to download the locked runtime. CI
+then gives Electron's SUID
 `chrome-sandbox` helper root ownership and the setuid bit (verified in the job)
 rather than passing `--no-sandbox` or relaxing AppArmor's unprivileged
 user-namespace restriction.

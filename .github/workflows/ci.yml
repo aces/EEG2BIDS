@@ -141,6 +141,12 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      # Electron 43+ exposes an explicit installer rather than downloading its
+      # runtime during npm's package lifecycle. Install the locked runtime before
+      # configuring its sandbox helper or launching Playwright.
+      - name: Install Electron runtime
+        run: npm run install:electron
+
       # Preserve Chromium sandboxing on the disposable runner: give Electron's
       # SUID sandbox helper root ownership and the setuid bit, and verify it.
       # This is the sanctioned alternative to `--no-sandbox` and to disabling
