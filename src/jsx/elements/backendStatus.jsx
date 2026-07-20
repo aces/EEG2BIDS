@@ -96,6 +96,8 @@ const BackendStatus = () => {
   return (
     <div
       className='backend-status'
+      data-testid='backend-status'
+      data-state={status.key}
       title={backend.error || status.label}
       style={{
         position: 'fixed',

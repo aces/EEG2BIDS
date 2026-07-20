@@ -1,9 +1,17 @@
 const {contextBridge, ipcRenderer, webUtils} = require('electron');
 
+// The main process passes the configured backend port through
+// additionalArguments as "--backend-port=NNNN"; fall back to 7301.
+const backendPortArg = process.argv.find((arg) =>
+  arg.startsWith('--backend-port='));
+const backendPort = backendPortArg ?
+  Number(backendPortArg.split('=')[1]) || 7301 : 7301;
+
 // The only bridge between the renderer and the main process. Every
 // operation goes through a fixed IPC channel and passes plain serializable
 // values; no Electron objects are ever exposed to renderer code.
 contextBridge.exposeInMainWorld('eeg2bids', {
+  getBackendPort: () => backendPort,
   // Electron no longer exposes the native path as File.path. Resolve it in
   // the preload, where webUtils can safely unwrap a renderer File object.
   getPathForFile: (file) => webUtils.getPathForFile(file),

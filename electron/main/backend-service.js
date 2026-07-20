@@ -11,14 +11,30 @@ const path = require('path');
 
 const REPO_ROOT = path.join(__dirname, '../..');
 const BACKEND_HOST = '127.0.0.1';
-const BACKEND_PORT = 7301;
+// The backend port is configurable so tests can reserve a free port rather
+// than assuming 7301 is available; normal use defaults to 7301. The same
+// value is propagated to the spawned Python server and to the renderer.
+const BACKEND_PORT = Number(process.env.EEG2BIDS_BACKEND_PORT) || 7301;
 const STDERR_TAIL_LINES = 20;
 const SIGKILL_TIMEOUT_MS = 3000;
+// The backend is only 'running' once the port actually accepts connections,
+// not merely when the python child has spawned. Poll until it does. The
+// timeout is generous because the first `uv run` may build the environment.
+const READINESS_POLL_INTERVAL_MS = 250;
+const READINESS_TIMEOUT_MS = 120000;
 
 let child = null;
 let stopping = false;
+let timedOut = false;
 let stderrTail = [];
 let status = {state: 'stopped', error: null};
+
+/**
+ * Resolve after the given delay.
+ * @param {number} ms - milliseconds to wait
+ * @return {Promise<void>} resolves when the timer fires
+ */
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Record the new backend state and push it to every window.
@@ -43,6 +59,15 @@ const getStatus = () => status;
  * @return {boolean} true when a child process exists
  */
 const isRunning = () => child !== null;
+
+/**
+ * The pid of the owned backend process, which (because the child is spawned
+ * detached) is also its process-group id. Tests use this to assert the whole
+ * group is gone after a clean shutdown, without inspecting unrelated
+ * processes.
+ * @return {?number} the owned pid, or null when nothing is owned
+ */
+const getOwnedPid = () => (child ? child.pid : null);
 
 /**
  * Probe whether something already listens on the backend port.
@@ -82,6 +107,40 @@ const logOutput = (stream, name) => {
 };
 
 /**
+ * Wait for the owned backend to actually accept connections, then mark it
+ * running. The port opening — not the child merely spawning — is what
+ * 'running' means. Give up and terminate the group if the port never opens
+ * within the generous startup window; a child that exits or errors first is
+ * handled by its own listeners.
+ * @param {ChildProcess} owned - the child this wait belongs to
+ */
+const waitForReady = async (owned) => {
+  const deadline = Date.now() + READINESS_TIMEOUT_MS;
+  while (child === owned && !stopping) {
+    if (await isPortInUse()) {
+      if (child === owned && !stopping) {
+        setStatus('running');
+      }
+      return;
+    }
+    if (Date.now() >= deadline) {
+      timedOut = true;
+      const message = `the backend did not open ${BACKEND_HOST}:` +
+        `${BACKEND_PORT} within ${READINESS_TIMEOUT_MS / 1000}s of starting.`;
+      console.error(`[backend] ${message}`);
+      setStatus('failed', message);
+      try {
+        process.kill(-owned.pid, 'SIGTERM');
+      } catch (error) {
+        // already gone
+      }
+      return;
+    }
+    await delay(READINESS_POLL_INTERVAL_MS);
+  }
+};
+
+/**
  * Start the backend unless one is already owned or externally running.
  */
 const start = async () => {
@@ -98,6 +157,7 @@ const start = async () => {
   }
   stderrTail = [];
   stopping = false;
+  timedOut = false;
   setStatus('starting');
   child = spawn('uv', ['run', '--frozen', 'python', '-m', 'eeg2bids'], {
     cwd: REPO_ROOT,
@@ -106,11 +166,21 @@ const start = async () => {
     // The backend watches this pid and exits when it disappears, so it is
     // never orphaned even when Electron dies without running will-quit
     // (e.g. a terminal Ctrl+C killing the whole foreground process group).
-    env: {...process.env, EEG2BIDS_OWNER_PID: String(process.pid)},
+    env: {
+      ...process.env,
+      EEG2BIDS_OWNER_PID: String(process.pid),
+      EEG2BIDS_BACKEND_PORT: String(BACKEND_PORT),
+    },
   });
   logOutput(child.stdout, 'stdout');
   logOutput(child.stderr, 'stderr');
-  child.on('spawn', () => setStatus('running'));
+  child.on('spawn', () => {
+    console.info(
+        '[backend] python process spawned; waiting for the port to accept ' +
+        'connections',
+    );
+    waitForReady(child);
+  });
   child.on('error', (error) => {
     child = null;
     const message = `could not launch the backend through uv: ` +
@@ -120,6 +190,10 @@ const start = async () => {
   });
   child.on('exit', (code, signal) => {
     child = null;
+    if (timedOut) {
+      // waitForReady already set a clear 'failed' status and killed the group.
+      return;
+    }
     if (stopping) {
       setStatus('stopped');
       return;
@@ -184,4 +258,6 @@ const restart = async () => {
   return {restarted: true};
 };
 
-module.exports = {start, stop, restart, getStatus, isRunning};
+module.exports = {
+  start, stop, restart, getStatus, isRunning, getOwnedPid, BACKEND_PORT,
+};

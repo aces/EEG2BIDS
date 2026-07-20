@@ -26,6 +26,11 @@ Lib/
 Include/
 share/
 
+# playwright electron test output
+test-results/
+playwright-report/
+.playwright/
+
 # workflow tools
 .agents
 .claude
