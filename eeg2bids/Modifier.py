@@ -3,7 +3,7 @@ import csv
 import json
 import re
 import shutil
-from eeg2bids.iEEG import metadata as metadata_fields
+from eeg2bids.converter import metadata as metadata_fields
 
 class Modifier:
     def __init__(self, data):

@@ -11,4 +11,4 @@ def test_package_imports():
 
 
 def test_submodules_import():
-    from eeg2bids import BIDS, Modifier, conversion, iEEG, server  # noqa: F401
+    from eeg2bids import BIDS, Modifier, conversion, converter, server  # noqa: F401

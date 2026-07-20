@@ -8,7 +8,7 @@ format that differs from the source loads the data and re-writes it.
 """
 import pytest
 
-from eeg2bids import iEEG
+from eeg2bids import converter
 
 
 @pytest.mark.parametrize('token, supported', [
@@ -24,7 +24,7 @@ from eeg2bids import iEEG
     ('bogus', False),
 ])
 def test_is_supported_output_format(token, supported):
-    assert iEEG.is_supported_output_format(token) is supported
+    assert converter.is_supported_output_format(token) is supported
 
 
 @pytest.mark.parametrize('source, expected', [
@@ -35,14 +35,14 @@ def test_is_supported_output_format(token, supported):
     ('rec.unknown', 'EDF'),   # fall back to the "recommend EDF" default
 ])
 def test_default_output_format(source, expected):
-    assert iEEG.default_output_format(source) == expected
+    assert converter.default_output_format(source) == expected
 
 
 def _kwargs(fixtures_dir, name, fmt):
     # resolve_write_kwargs may call load_data(), which mutates the Raw; use a
     # fresh read for each resolution.
-    raw = iEEG.read_raw_recording(str(fixtures_dir / name))
-    return iEEG.resolve_write_kwargs(raw, str(fixtures_dir / name), fmt)
+    raw = converter.read_raw_recording(str(fixtures_dir / name))
+    return converter.resolve_write_kwargs(raw, str(fixtures_dir / name), fmt)
 
 
 def test_edf_auto_copies_as_is(fixtures_dir):

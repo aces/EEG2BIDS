@@ -5,8 +5,8 @@ import time
 
 import socketio
 from werkzeug.serving import run_simple
-from eeg2bids import iEEG
-from eeg2bids.iEEG import metadata as metadata_fields
+from eeg2bids import converter
+from eeg2bids.converter import metadata as metadata_fields
 from eeg2bids import conversion
 from eeg2bids import BIDS
 from eeg2bids.loris_api import LorisAPI
@@ -45,7 +45,7 @@ def connect(sid, environ):
 
 
 def tarfile_bids_thread(bids_directory):
-    iEEG.TarFile(bids_directory)
+    converter.TarFile(bids_directory)
     response = {
         'compression_time': 'example_5mins'
     }

@@ -7,7 +7,7 @@ sampling rate.
 """
 import pytest
 
-from eeg2bids.iEEG import infer_channel_type, read_raw_recording
+from eeg2bids.converter import infer_channel_type, read_raw_recording
 
 
 @pytest.mark.parametrize('ch_name, expected', [

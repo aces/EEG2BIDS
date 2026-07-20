@@ -10,8 +10,8 @@ an ``error`` key with an actionable message (a string, or a list of strings
 for the multi-validation conversion path); the caller owns transport.
 """
 
-from eeg2bids import iEEG
-from eeg2bids.iEEG import ReadError, WriteError
+from eeg2bids import converter
+from eeg2bids.converter import ReadError, WriteError
 from eeg2bids.Modifier import Modifier
 
 
@@ -52,7 +52,7 @@ def inspect_recording(files):
     recordings = []
     try:
         for file in files:
-            raw = iEEG.read_raw_recording(file['path'])
+            raw = converter.read_raw_recording(file['path'])
             recordings.append({
                 'file': file,
                 'raw': raw,
@@ -96,7 +96,7 @@ def convert_recording(data):
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
-    if not iEEG.is_supported_output_format(data.get('outputFormat', 'auto')):
+    if not converter.is_supported_output_format(data.get('outputFormat', 'auto')):
         error_messages.append(
             "Unsupported output format '{}'. Choose Auto, EDF, BrainVision, "
             'or EEGLAB.'.format(data.get('outputFormat')))
@@ -104,14 +104,14 @@ def convert_recording(data):
     if error_messages:
         return {'error': error_messages}
 
-    time = iEEG.Time()
+    time = converter.Time()
     data['output_time'] = 'output-' + time.latest_output
 
     try:
-        iEEG.Converter(data)  # source recording to BIDS format.
+        converter.Converter(data)  # source recording to BIDS format.
 
         # store subject_id for Modifier
-        data['subject_id'] = iEEG.Converter.m_info['subject_id']
+        data['subject_id'] = converter.Converter.m_info['subject_id']
         Modifier(data)  # Modifies data of BIDS format
         return {'output_time': data['output_time']}
     except ReadError as e:

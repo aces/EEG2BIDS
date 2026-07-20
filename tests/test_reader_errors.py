@@ -9,7 +9,7 @@ import shutil
 import pytest
 
 from eeg2bids.conversion import convert_recording
-from eeg2bids.iEEG import ReadError, read_raw_recording
+from eeg2bids.converter import ReadError, read_raw_recording
 
 
 def test_epoched_set_reports_continuous_only(fixtures_dir):
