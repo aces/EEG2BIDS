@@ -1,6 +1,7 @@
 const {BrowserWindow, nativeImage} = require('electron');
 const path = require('path');
 const url = require('url');
+const {BACKEND_PORT} = require('./backend-service');
 
 const icon = nativeImage.createFromPath(
     path.join(__dirname, '../../public/logo512.png'),
@@ -26,6 +27,10 @@ const webPreferences = {
   contextIsolation: true,
   sandbox: true,
   preload: path.join(__dirname, '../preload/index.js'),
+  // Carry the configured backend port to the sandboxed renderer. The preload
+  // reads it from process.argv and exposes it; the renderer must not assume
+  // the default 7301.
+  additionalArguments: [`--backend-port=${BACKEND_PORT}`],
 };
 
 /**

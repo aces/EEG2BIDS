@@ -4,7 +4,11 @@ import './css/App.css';
 
 // Socket.io
 import {Socket} from './jsx/socket.io';
-const uri = 'http://127.0.0.1:7301';
+// The backend port is configurable (see electron/main/backend-service.js); the
+// preload bridge exposes the value the main process chose. Fall back to 7301
+// when the bridge is unavailable (e.g. renderer opened outside Electron).
+const backendPort = window.eeg2bids?.getBackendPort?.() ?? 7301;
+const uri = `http://127.0.0.1:${backendPort}`;
 const options = {
   // Prefer websocket, but allow long-polling as a fallback: the backend
   // serves both, and polling keeps the app usable if the websocket

@@ -7,6 +7,14 @@ const {
 const {registerIpcHandlers} = require('./ipc');
 const backendService = require('./backend-service');
 
+// Redirect all user data (settings + encrypted credentials) to an isolated
+// directory when asked. Integration tests point this at a temporary dir so
+// they can never read or modify the real user's credentials. This must run
+// before anything reads app.getPath('userData').
+if (process.env.EEG2BIDS_USER_DATA_DIR) {
+  app.setPath('userData', process.env.EEG2BIDS_USER_DATA_DIR);
+}
+
 registerIpcHandlers();
 
 // Renderer content is untrusted: windows may only show our own renderer,

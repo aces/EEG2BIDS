@@ -11,7 +11,10 @@ const path = require('path');
 
 const REPO_ROOT = path.join(__dirname, '../..');
 const BACKEND_HOST = '127.0.0.1';
-const BACKEND_PORT = 7301;
+// The backend port is configurable so tests can reserve a free port rather
+// than assuming 7301 is available; normal use defaults to 7301. The same
+// value is propagated to the spawned Python server and to the renderer.
+const BACKEND_PORT = Number(process.env.EEG2BIDS_BACKEND_PORT) || 7301;
 const STDERR_TAIL_LINES = 20;
 const SIGKILL_TIMEOUT_MS = 3000;
 
@@ -106,7 +109,11 @@ const start = async () => {
     // The backend watches this pid and exits when it disappears, so it is
     // never orphaned even when Electron dies without running will-quit
     // (e.g. a terminal Ctrl+C killing the whole foreground process group).
-    env: {...process.env, EEG2BIDS_OWNER_PID: String(process.pid)},
+    env: {
+      ...process.env,
+      EEG2BIDS_OWNER_PID: String(process.pid),
+      EEG2BIDS_BACKEND_PORT: String(BACKEND_PORT),
+    },
   });
   logOutput(child.stdout, 'stdout');
   logOutput(child.stderr, 'stderr');
@@ -184,4 +191,4 @@ const restart = async () => {
   return {restarted: true};
 };
 
-module.exports = {start, stop, restart, getStatus, isRunning};
+module.exports = {start, stop, restart, getStatus, isRunning, BACKEND_PORT};

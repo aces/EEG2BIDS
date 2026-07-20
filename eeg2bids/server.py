@@ -14,9 +14,11 @@ import json
 
 # The host and port the local Socket.IO service binds to. The service only
 # ever listens on the loopback interface; the connect handler below rejects
-# any client that is not on 127.0.0.1.
+# any client that is not on 127.0.0.1. The port is configurable through
+# EEG2BIDS_BACKEND_PORT (Electron and the integration tests set it) and
+# defaults to 7301 for normal use.
 HOST = '127.0.0.1'
-PORT = 7301
+PORT = int(os.environ.get('EEG2BIDS_BACKEND_PORT') or 7301)
 
 # LORIS credentials of user
 lorisCredentials = {
@@ -281,7 +283,7 @@ def main():
     """
     _watch_owner_process()
     # A port collision needs no handling here: Werkzeug prints an actionable
-    # "Port 7301 is in use by another program" message and exits non-zero.
+    # "Port <PORT> is in use by another program" message and exits non-zero.
     run_simple(HOST, PORT, app, threaded=True)
 
 
