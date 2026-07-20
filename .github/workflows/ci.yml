@@ -1,0 +1,196 @@
+# Linux CI for the full EEG2BIDS test suite: uv-managed Python backend, the
+# Node/renderer build, and the Playwright Electron integration suite. Every
+# merge into `main` is gated on the `ci-required` check (see docs/testing.md).
+#
+# This workflow is `workflow_call`-able so future release automation can invoke
+# the identical suite for the exact commit/tag being released before publishing
+# — post-release verification is not a substitute for this gate.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # Support GitHub merge queues so the required check cannot strand queued
+  # merges. Harmless if merge queue is not enabled.
+  merge_group:
+  # Callable by a future release workflow: publishing jobs must `needs` a
+  # successful invocation of this suite for the release commit/tag.
+  workflow_call:
+
+# Cancel superseded runs for the same ref so only the latest change is tested.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege default; individual steps do not push or comment.
+permissions:
+  contents: read
+
+jobs:
+  # Platform-independent backend checks, run across the Python support policy
+  # in pyproject.toml (requires-python = ">=3.11,<3.14").
+  backend:
+    name: backend (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv (with cache)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      # The backend suite runs the official dataset-level BIDS Validator through
+      # Deno; those tests fail rather than skip when Deno is unavailable
+      # (tests/conftest.py, tests/test_bids_validator.py).
+      - name: Install Deno (BIDS Validator)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Reject stale lockfile
+        run: uv lock --check
+
+      - name: Install dependencies (frozen)
+        run: uv sync --frozen --python ${{ matrix.python-version }}
+
+      # The complete backend suite. It exercises package imports and Socket.IO
+      # startup, so backend import/startup is verified here (no separate smoke
+      # step needed).
+      - name: Backend suite
+        run: uv run --frozen --python ${{ matrix.python-version }} pytest
+
+      # Audit the locked *production* dependencies. Export to a throwaway
+      # requirements file for the audit only; it is never committed and pyproject
+      # + uv.lock remain the sole authoritative manifest.
+      - name: Audit locked production dependencies
+        run: |
+          uv export --frozen --no-dev --no-emit-project -o requirements-audit.txt
+          uvx pip-audit -r requirements-audit.txt
+
+  # Node/renderer checks, run once (not repeated per Python version).
+  node:
+    name: node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Enforce package-lock.json.
+      - name: Install dependencies
+        run: npm ci
+
+      # Report lower-severity findings without failing the build...
+      - name: Audit (report all severities)
+        run: npm audit || true
+
+      # ...then fail CI for high and critical vulnerabilities.
+      - name: Audit (gate high/critical)
+        run: npm audit --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production renderer build
+        run: npm run build
+
+  # Playwright Electron integration suite, run once. Needs both Node and the
+  # uv-managed Python backend (the app spawns `uv run --frozen python -m
+  # eeg2bids`), plus a virtual display.
+  electron:
+    name: electron
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install uv (with cache)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # The spawned backend may run BIDS validation, which requires Deno.
+      - name: Install Deno (BIDS Validator)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Pre-sync so the app's `uv run --frozen` launch does not resolve or build
+      # the environment on first use.
+      - name: Install Python backend (frozen)
+        run: uv sync --frozen
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # Preserve Chromium sandboxing on the disposable runner: give Electron's
+      # SUID sandbox helper root ownership and the setuid bit, and verify it.
+      # This is the sanctioned alternative to `--no-sandbox` and to disabling
+      # AppArmor's unprivileged-user-namespace restriction, neither of which we
+      # use.
+      - name: Configure and verify Chromium SUID sandbox helper
+        run: |
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+          actual="$(stat -c '%U:%G %a' node_modules/electron/dist/chrome-sandbox)"
+          echo "chrome-sandbox: $actual"
+          test "$actual" = "root:root 4755"
+
+      # The complete stable Electron suite under a virtual display. The launch
+      # fixture (#175) reserves a free backend port and an isolated temporary
+      # userData directory per instance, so tests never touch the fixed dev port
+      # 7301 or real user data/credentials.
+      - name: Electron integration suite
+        run: xvfb-run -a npm run test:electron
+
+      # Preserve actionable Playwright artifacts/traces on failure.
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+  # Single stable check to require in the `main` ruleset. Matrix leg names like
+  # "backend (py3.11)" are not stable to require individually; this job succeeds
+  # only when every upstream job succeeded. `always()` ensures it runs (and can
+  # report failure) even when a dependency fails, rather than being skipped.
+  ci-required:
+    name: ci-required
+    if: always()
+    needs: [backend, node, electron]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all required jobs succeeded
+        run: |
+          echo "backend:  ${{ needs.backend.result }}"
+          echo "node:     ${{ needs.node.result }}"
+          echo "electron: ${{ needs.electron.result }}"
+          if [ "${{ needs.backend.result }}" != "success" ] \
+            || [ "${{ needs.node.result }}" != "success" ] \
+            || [ "${{ needs.electron.result }}" != "success" ]; then
+            echo "One or more required jobs did not succeed."
+            exit 1
+          fi
+          echo "All required jobs succeeded."
