@@ -24,6 +24,43 @@ const reserveFreePort = () => new Promise((resolve, reject) => {
   });
 });
 
+/**
+ * Whether a TCP connection to a loopback port succeeds right now. Used to
+ * verify backend port availability independently of the renderer's Socket.IO
+ * connection.
+ * @param {number} port - the port to probe
+ * @return {Promise<boolean>} true when a connection is accepted
+ */
+const canConnect = (port) => new Promise((resolve) => {
+  const socket = net.connect({host: '127.0.0.1', port});
+  socket.once('connect', () => {
+    socket.destroy();
+    resolve(true);
+  });
+  socket.once('error', () => resolve(false));
+});
+
+/**
+ * Launch the Electron app from the repo root against the production renderer
+ * build, with the isolation env vars set. Callers that use this directly
+ * (rather than the electronApp fixture) own closing the returned app.
+ * @param {object} options - backendPort, userDataDir and optional extra env
+ * @return {Promise<ElectronApplication>} the launched app
+ */
+const launchElectron = ({backendPort, userDataDir, env = {}}) =>
+  electron.launch({
+    // Load the app from the repo root (package.json "main"); no DEV env, so
+    // the production renderer build under build/ is used.
+    args: [REPO_ROOT],
+    cwd: REPO_ROOT,
+    env: {
+      ...process.env,
+      EEG2BIDS_BACKEND_PORT: String(backendPort),
+      EEG2BIDS_USER_DATA_DIR: userDataDir,
+      ...env,
+    },
+  });
+
 // Playwright fixtures that launch the Electron app in isolation: every test
 // gets a freshly reserved backend port and a throwaway userData directory, so
 // tests never assume port 7301 is free and never read or modify the real
@@ -44,17 +81,7 @@ const test = base.extend({
   },
 
   electronApp: async ({backendPort, userDataDir}, use) => {
-    const electronApp = await electron.launch({
-      // Load the app from the repo root (package.json "main"); no DEV env, so
-      // the production renderer build under build/ is used.
-      args: [REPO_ROOT],
-      cwd: REPO_ROOT,
-      env: {
-        ...process.env,
-        EEG2BIDS_BACKEND_PORT: String(backendPort),
-        EEG2BIDS_USER_DATA_DIR: userDataDir,
-      },
-    });
+    const electronApp = await launchElectron({backendPort, userDataDir});
     await use(electronApp);
     await electronApp.close();
   },
@@ -67,4 +94,6 @@ const test = base.extend({
 
 const {expect} = require('@playwright/test');
 
-module.exports = {test, expect, REPO_ROOT, reserveFreePort};
+module.exports = {
+  test, expect, REPO_ROOT, reserveFreePort, canConnect, launchElectron,
+};
