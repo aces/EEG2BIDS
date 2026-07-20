@@ -64,6 +64,13 @@ const App = () => {
         },
       }}>
         <>
+          {/* Stable readiness anchor for integration tests: always present,
+              carries the current app mode, and renders no box of its own. */}
+          <div
+            data-testid='app-root'
+            data-appmode={appMode}
+            style={{display: 'contents'}}
+          />
           <BackendStatus/>
           {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
           <Menu visible={appMode !== 'SplashScreen'}
