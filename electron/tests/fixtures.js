@@ -47,11 +47,12 @@ const canConnect = (port) => new Promise((resolve) => {
  * @param {object} options - backendPort, userDataDir and optional extra env
  * @return {Promise<ElectronApplication>} the launched app
  */
-const launchElectron = ({backendPort, userDataDir, env = {}}) =>
+const launchElectron = ({backendPort, userDataDir, env = {}, args = []}) =>
   electron.launch({
     // Load the app from the repo root (package.json "main"); no DEV env, so
-    // the production renderer build under build/ is used.
-    args: [REPO_ROOT],
+    // the production renderer build under build/ is used. Extra args (e.g.
+    // Chromium switches like --password-store) go after the app path.
+    args: [REPO_ROOT, ...args],
     cwd: REPO_ROOT,
     env: {
       ...process.env,
