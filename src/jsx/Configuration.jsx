@@ -77,7 +77,7 @@ const Configuration = (props) => {
     lineFreq: 'n/a',
     taskName: '',
     reference: 'n/a',
-    recordingType: 'n/a',
+    recordingType: 'continuous',
     participantEntryMode: 'existing_loris',
     participantPSCID: '',
     participantCandID: '',
