@@ -26,6 +26,9 @@ Lib/
 Include/
 share/
 
+# generated dependency audit export (CI: pip-audit only; never authoritative)
+requirements-audit.txt
+
 # playwright electron test output
 test-results/
 playwright-report/

@@ -30,6 +30,7 @@
     "dev": "concurrently -k --success first -n renderer,electron \"npm run dev:renderer\" \"setsid sh -c 'wait-on http://localhost:3000/ && npm run electron-start'\"",
     "dev:renderer": "vite",
     "build": "vite build",
+    "install:electron": "install-electron",
     "electron-start": "DEV=1 electron .",
     "start": "npm run dev",
     "lint": "eslint src electron",
