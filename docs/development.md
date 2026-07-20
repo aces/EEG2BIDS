@@ -1,10 +1,11 @@
 # Development guide
 
 This guide covers the Linux development workflow for EEG2BIDS: launching the
-app, debugging it, generating test data, and the manual verification pass.
-For installation prerequisites (Node, uv, secret service) see the
-[README](../README.md). Linux is the only supported development target;
-production packaging, Windows, and macOS are explicitly out of scope.
+app, debugging it, generating development data, and the current manual sanity
+checks. For installation prerequisites (Node, uv, secret service) see the
+[README](../README.md). For the canonical automated test commands and fixture
+policy, see [Testing](testing.md). Linux is the only supported development
+target; production packaging, Windows, and macOS are explicitly out of scope.
 
 ## Launching
 
@@ -115,7 +116,15 @@ is optional; leaving it blank keeps the app fully usable for conversion and
 validation. A failed or unreachable LORIS produces a visible login error
 (after a 10-second timeout) and does not crash the backend.
 
-## Verifying the Socket.IO integration
+## Provisional manual checks
+
+The checks below predate the automated testing baseline and are retained for
+reference. [Issue #179](https://github.com/aces/EEG2BIDS/issues/179) will review
+them, remove checks that duplicate reliable automation, and establish stable
+manual QA scenarios. They are not part of the automated test requirements in
+the [testing guide](testing.md).
+
+### Verifying the Socket.IO integration
 
 The renderer talks to the Python backend over Socket.IO on
 `127.0.0.1:7301`. To sanity-check the integration:
@@ -133,7 +142,7 @@ The renderer talks to the Python backend over Socket.IO on
 6. **Backend error response** — validate an empty/invalid directory; a visible
    error is returned rather than a hang.
 
-## Manual happy-path procedure
+### Manual happy-path procedure
 
 Run this end-to-end pass on Linux after generating the fixtures. Record any
 defects found as focused follow-up issues unless they block the workflow.
