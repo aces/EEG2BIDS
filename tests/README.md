@@ -1,32 +1,21 @@
 # Backend tests
 
-Run the whole backend suite with:
+The canonical setup, commands, suite-selection guidance, and troubleshooting
+are in the project [testing guide](../docs/testing.md). Run the complete backend
+suite with:
 
-```
-uv sync --frozen
+```sh
 uv run pytest
 ```
 
-## BIDS Validator requirement
+## Backend-specific notes
 
-The dataset-level validation tests (`test_bids_validator.py`) run the current
-official **BIDS Validator** — the Deno CLI, pinned to `jsr:@bids/validator@3.0.0`
-in `conftest.py`. This is a **required** part of the suite: when `deno` is not
-available those tests fail (they do not skip), so missing validation is visible.
+The dataset-level checks in `test_bids_validator.py` run the official BIDS
+Validator through Deno, pinned to `jsr:@bids/validator@3.0.0` in `conftest.py`.
+Validation is required: these tests fail rather than skip when Deno or the
+validator cannot run.
 
-Install Deno once (the validator module itself is fetched on first use, then
-cached):
-
-```
-curl -fsSL https://deno.land/install.sh | sh
-```
-
-The tests find `deno` on `PATH` or in the default install location
-(`~/.deno/bin` / `$DENO_INSTALL/bin`).
-
-## Fixtures
-
-Committed input fixtures live in `fixtures/` and are produced by the
-reproducible generator `tools/make_dev_data.py` — see `fixtures/README.md` for
-provenance. Generated BIDS output is written to pytest `tmp_path` and never
-committed.
+Committed source fixtures live in `fixtures/`. See the
+[fixture README](fixtures/README.md) for their contents, provenance, and
+regeneration details. Generated BIDS output is written to pytest temporary
+directories and is never committed.

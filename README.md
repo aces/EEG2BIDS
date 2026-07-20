@@ -25,8 +25,9 @@ Stabilizing the complete launch workflow is tracked in
 Production packages, installers, and embedded Python artifacts are currently
 **unsupported**. The former PyInstaller and Electron Builder paths have been
 retired; no replacement packaging workflow exists yet. Windows and macOS
-development support, automated tests, and CI are also explicitly deferred to
-separate issues.
+development support and CI are tracked separately. Automated backend and
+Electron integration suites are available for the supported Linux development
+environment; see the [testing guide](docs/testing.md).
 
 Frontend dependency versions are defined by `package.json` and
 `package-lock.json`; the supported Node.js version by `.nvmrc` and the
@@ -100,6 +101,20 @@ uv run python -m eeg2bids  # backend only (127.0.0.1:7301)
 
 Chromium DevTools open automatically in development, and Vite provides hot
 module replacement and renderer source maps.
+
+### Testing
+
+See [docs/testing.md](docs/testing.md) for test dependencies, fixture policy,
+troubleshooting, and guidance on which suites a change requires. The complete
+automated suites run with:
+
+```sh
+uv run pytest
+npm run test:electron
+```
+
+On headless Linux, run the Electron suite with
+`xvfb-run -a npm run test:electron`.
 
 ### Source layout
 
