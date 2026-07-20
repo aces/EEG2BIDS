@@ -23,11 +23,14 @@ test.describe('backend', () => {
     expect(await canConnect(backendPort)).toBe(true);
 
     // The main process considers the backend running (port accepting
-    // connections), not merely spawned.
-    const backend = await mainWindow.evaluate(
-        () => window.eeg2bids.getBackendStatus(),
-    );
-    expect(backend.state).toBe('running');
+    // connections), not merely spawned. Its readiness poll can lag the
+    // renderer's socket connecting by up to one poll interval, so converge.
+    await expect.poll(async () => {
+      const s = await mainWindow.evaluate(
+          () => window.eeg2bids.getBackendStatus(),
+      );
+      return s.state;
+    }, {timeout: 10000}).toBe('running');
   });
 
   test('a failed backend surfaces immediately, not via timeout', async ({
