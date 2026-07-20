@@ -15,6 +15,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^10.0.3",
     "electron": "^43.1.1",
@@ -31,7 +32,8 @@
     "build": "vite build",
     "electron-start": "DEV=1 electron .",
     "start": "npm run dev",
-    "lint": "eslint src electron"
+    "lint": "eslint src electron",
+    "test:electron": "npm run build && playwright test"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css,md}": [
