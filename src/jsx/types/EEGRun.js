@@ -6,12 +6,7 @@ class EEGRun {
   edfBIDSBasename = null;
 
   eventFile = null;
-  annotationsTSV = null;
-  annotationsJSON = null;
-
   eventErrors = null;
-  annotationsTSVErrors = null;
-  annotationsJSONErrors = null;
 }
 
 export default EEGRun;

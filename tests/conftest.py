@@ -36,8 +36,8 @@ def make_convert_data(fixtures_dir, tmp_path):
     Fills every field the pipeline (Converter + Modifier) reads with valid
     defaults for a single-run recording, writing output under the test's
     ``tmp_path``. Pass ``modality`` ('eeg'/'ieeg'), ``output_format``, or any
-    keyword override; pass ``eeg_runs`` to supply custom run entries (used by
-    the events/annotation tests).
+    keyword override; pass ``eeg_runs`` to supply custom run entries used by
+    the events tests.
     """
     def _make(recording, *, modality="eeg", output_format="auto",
               eeg_runs=None, event_file="", **overrides):
@@ -45,8 +45,6 @@ def make_convert_data(fixtures_dir, tmp_path):
         default_run = {
             "recordingFile": path,
             "eventFile": event_file,
-            "annotationsTSV": "",
-            "annotationsJSON": "",
         }
         data = {
             "recordingData": {"files": [{"path": path, "name": recording}]},

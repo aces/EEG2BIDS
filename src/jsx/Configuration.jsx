@@ -53,10 +53,6 @@ const Configuration = (props) => {
     outputFormat: 'auto',
     eventFiles: [],
     invalidEventFiles: [],
-    annotationsTSV: [],
-    invalidAnnotationsTSV: [],
-    annotationsJSON: [],
-    invalidAnnotationsJSON: [],
     bidsDirectory: null,
     LORIScompliant: true,
     siteID: 'n/a',
@@ -175,10 +171,6 @@ const Configuration = (props) => {
         read_only: false,
         event_files: appContext.getFromTask('eventFiles').length > 0 ?
           appContext.getFromTask('eventFiles')[0]['path'] : '',
-        annotations_tsv: appContext.getFromTask('annotationsTSV').length > 0 ?
-          appContext.getFromTask('annotationsTSV')[0]['path'] : '',
-        annotations_json: appContext.getFromTask('annotationsJSON').length > 0 ?
-          appContext.getFromTask('annotationsJSON')[0]['path'] : '',
         bidsMetadata: appContext.getFromTask('bidsMetadata') ?? '',
         site_id: appContext.getFromTask('siteID') ?? '',
         project_id: appContext.getFromTask('projectID') ?? '',
@@ -309,20 +301,6 @@ const Configuration = (props) => {
           state.invalidEventFiles.set(result.filter((el) => el != null));
         });
   }, [state.eventFiles.get]);
-
-  useEffect(() => {
-    validateJSON(state.annotationsJSON.get)
-        .then((result) => {
-          state.invalidAnnotationsJSON.set(result.filter((el) => el != null));
-        });
-  }, [state.annotationsJSON.get]);
-
-  useEffect(() => {
-    validateTSV(state.annotationsTSV.get)
-        .then((result) => {
-          state.invalidAnnotationsTSV.set(result.filter((el) => el != null));
-        });
-  }, [state.annotationsTSV.get]);
 
   useEffect(() => {
     if (props.appMode === 'Converter') {
@@ -478,132 +456,6 @@ const Configuration = (props) => {
       }
     }
     result.push(<div key='eventsStatus'>{eventsStatus}</div>);
-
-
-    // annotations TSV
-    let annotationsTSVStatus = '';
-    if (!appContext.getFromTask('annotationsTSV') ||
-      Object.keys(appContext.getFromTask('annotationsTSV'))?.length < 1
-    ) {
-      annotationsTSVStatus = formatWarning('No annotations.tsv selected');
-    } else {
-      // check if any TSV file is invalid
-      if (state.invalidAnnotationsTSV.get?.length > 0) {
-        annotationsTSVStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsTSV.get.join(', ')}
-            are not valid TSV file(s).`,
-        );
-      } else {
-        let match = true;
-
-        // Check that the events files are appropriately named
-        appContext.getFromTask('annotationsTSV').map((annotationsTSVFile) => {
-          if (!appContext.getFromTask('recordingData')['files'].find(
-              (recordingFile) => {
-                const recordingFileName = recordingFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.(edf|set)/i, '')
-                    .replace(/\.(edf|set)/i, '');
-
-                const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                    .replace(/\.(edf|set)/i, '');
-
-                const annotationsTSVFileName = annotationsTSVFile['name']
-                    .toLowerCase()
-                    .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                return (
-                  recordingFileName === annotationsTSVFileName ||
-                  recordingFileNameAlt === annotationsTSVFileName
-                );
-              },
-          )) {
-            match = false;
-            annotationsTSVStatus = formatError(
-                `Annotation file ${annotationsTSVFile['name']}
-                is not matching any recording file names.`,
-            );
-          }
-        });
-
-        if (match) {
-          annotationsTSVStatus = formatPass('Annotations TSV file(s): ' +
-              appContext.getFromTask('annotationsTSV').map(
-                  (annotationsTSVFile) => annotationsTSVFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(<div key='annotationsTSVStatus'>{annotationsTSVStatus}</div>);
-
-    // annotations JSON
-    let annotationsJSONStatus = '';
-
-    //if (appContext.getFromTask('annotationsTSV') &&
-    //  Object.keys(appContext.getFromTask('annotationsTSV'))?.length > 0
-    //) {
-    if (!appContext.getFromTask('annotationsJSON') ||
-      Object.keys(appContext.getFromTask('annotationsJSON'))?.length < 1
-    ) {
-      annotationsJSONStatus = formatWarning('No annotations.json selected');
-    } else {
-      // check if any JSON file is invalid
-      if (state.invalidAnnotationsJSON.get?.length > 0) {
-        annotationsJSONStatus = formatError(
-            `Annotation file(s) ${state.invalidAnnotationsJSON.get.join(', ')}
-            are not valid JSON file(s).`,
-        );
-      } else {
-        let match = true;
-        // Check that the events files are appropriately named
-        appContext.getFromTask('annotationsJSON')
-            .map((annotationsJSONFile) => {
-              if (!appContext.getFromTask('recordingData')['files'].find(
-                  (recordingFile) => {
-                    const recordingFileName = recordingFile['name']
-                        .toLowerCase()
-                        .replace(/_i?eeg\.(edf|set)/i, '')
-                        .replace(/\.(edf|set)/i, '');
-
-                    const recordingFileNameAlt = recordingFile['name']
-                        .toLowerCase()
-                        .replace(/\.(edf|set)/i, '');
-
-                    const annotationsJSONFileName =
-                        annotationsJSONFile['name'].toLowerCase()
-                            .replace('_annotations.json', '')
-                            .replace('.json', '');
-
-                    return (
-                      recordingFileName === annotationsJSONFileName ||
-                      recordingFileNameAlt === annotationsJSONFileName
-                    );
-                  },
-              )) {
-                match = false;
-                annotationsJSONStatus = formatError(
-                    `Annotation file ${annotationsJSONFile['name']}
-                  is not matching any recording file names.`,
-                );
-              }
-            });
-
-        if (match) {
-          annotationsJSONStatus = formatPass(
-              'Annotations JSON file(s): ' +
-              appContext.getFromTask('annotationsJSON').map(
-                  (annotationsJSONFile) => annotationsJSONFile['name'],
-              ).join(', '),
-          );
-        }
-      }
-    }
-    result.push(
-        <div key='annotationsJSONStatus'>
-          {annotationsJSONStatus}
-        </div>,
-    );
-    //}
 
 
     // bidsDirectory
@@ -925,9 +777,6 @@ const Configuration = (props) => {
 
     if (state.recordingData.get?.files?.length > 0) {
       const eventFiles = [...state.eventFiles.get];
-      const annotationsTSVs = [...state.annotationsTSV.get];
-      const annotationsJSONs = [...state.annotationsJSON.get];
-
       const eegRuns = [];
 
       state.recordingData.get?.files.map(
@@ -956,47 +805,6 @@ const Configuration = (props) => {
               eventFiles.splice(eventFileIndex, 1);
             }
 
-            // Check if we do have a matching annotations TSV file
-            const annotationsTSVIndex = annotationsTSVs.findIndex(
-                (annotationsTSV) => {
-                  const annotationsTSVName = annotationsTSV['name']
-                      .toLowerCase()
-                      .replace('_annotations.tsv', '').replace('.tsv', '');
-
-                  return (
-                    recordingFileName === annotationsTSVName ||
-                    recordingFileNameAlt === annotationsTSVName
-                  );
-                },
-            );
-
-            if (annotationsTSVIndex > -1) {
-              eegRun.annotationsTSV =
-                annotationsTSVs[annotationsTSVIndex]['path'];
-              annotationsTSVs.splice(annotationsTSVIndex, 1);
-            }
-
-            // Check if we do have a matching annotations JSON file
-            const annotationsJSONIndex = annotationsJSONs.findIndex(
-                (annotationsJSON) => {
-                  const annotationsJSONName = annotationsJSON['name']
-                      .toLowerCase()
-                      .replace('_annotations.json', '')
-                      .replace('.json', '');
-
-                  return (
-                    recordingFileName === annotationsJSONName ||
-                    recordingFileNameAlt === annotationsJSONName
-                  );
-                },
-            );
-
-            if (annotationsJSONIndex > -1) {
-              eegRun.annotationsJSON =
-                annotationsJSONs[annotationsJSONIndex]['path'];
-              annotationsJSONs.splice(annotationsJSONIndex, 1);
-            }
-
             eegRuns.push(eegRun);
           },
       );
@@ -1005,22 +813,6 @@ const Configuration = (props) => {
       eventFiles.map((eventFile) => {
         eegRuns.eventErrors.push(`Event file ${eventFile['name']}
           is not matching any recording file names.`);
-      });
-
-      eegRuns.annotationsTSVErrors = [];
-      annotationsTSVs.map((annotationsTSV) => {
-        eegRuns.annotationsTSVErrors.push(
-            `Annotation file ${annotationsTSV['name']}
-            is not matching any recording file names.`,
-        );
-      });
-
-      eegRuns.annotationsJSONErrors = [];
-      annotationsJSONs.map((annotationsJSON) => {
-        eegRuns.annotationsJSONErrors.push(
-            `Annotation file  ${annotationsJSON['name']}
-            is not matching any recording file names.`,
-        );
       });
 
       state.eegRuns.set(eegRuns);
@@ -1456,8 +1248,8 @@ const Configuration = (props) => {
           </div>
         </span>
         <div className='info'>
-          <small>Annotation and events file names
-          must match one of the recording file names.</small>
+          <small>Events file names must match one of the recording file names.
+          </small>
         </div>
         <div className='container'>
           <div className='info half'>
@@ -1477,22 +1269,6 @@ const Configuration = (props) => {
                 this release. Blank fields ignored.'
               />
             </div>
-            <div className='small-pad'>
-              <FileInput id='annotationsJSON'
-                name='annotationsJSON'
-                multiple={true}
-                accept='.json'
-                placeholder={
-                  state.annotationsJSON.get.map(
-                      (annotationJSON) => annotationJSON['name'],
-                  ).join(', ')
-                }
-                label='annotations.json'
-                onUserInput={onUserInput}
-                help='Labels for Annotations, compliant with BIDS spec.
-                One file per task/run. Filename must be formatted correctly.'
-              />
-            </div>
           </div>
           <div className='info half'>
             <div className='small-pad'>
@@ -1507,25 +1283,9 @@ const Configuration = (props) => {
                 }
                 label='events.tsv (additional)'
                 onUserInput={onUserInput}
-                help='Additional events only. Events embedded in the
-                recording annotations are automatically extracted.'
-              />
-            </div>
-            <div className='small-pad'>
-              <FileInput id='annotationsTSV'
-                name='annotationsTSV'
-                multiple={true}
-                accept='.tsv'
-                placeholder={
-                  state.annotationsTSV.get.map(
-                      (annotationTSV) => annotationTSV['name'],
-                  ).join(', ')
-                }
-                label='annotations.tsv'
-                onUserInput={onUserInput}
-                help='Annotation data: time, label, etc compliant
-                with BIDS spec. One file per task/run.
-                Filename must be formatted correctly.'
+                help='Optional additional BIDS events. Time-based markers
+                embedded in the recording are extracted automatically and
+                merged with this file.'
               />
             </div>
           </div>
