@@ -658,7 +658,7 @@ const Configuration = (props) => {
 
     if (!metadata || !ignoredKeys || metadata.length < 1) {
       return formatWarning(
-          'An error occured while processing ' +
+          'An error occurred while processing ' +
           'the recording parameters file selected.',
       );
     }

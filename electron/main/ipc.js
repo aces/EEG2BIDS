@@ -5,7 +5,7 @@ const {openExternal} = require('./external-links');
 const backendService = require('./backend-service');
 
 /**
- * Register an invokable IPC channel. Failures are logged in the launching
+ * Register an invocable IPC channel. Failures are logged in the launching
  * terminal before propagating to the renderer, so handler errors are
  * visible during development without opening DevTools.
  * @param {string} channel - the IPC channel name
