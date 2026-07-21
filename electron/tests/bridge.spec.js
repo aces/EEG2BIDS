@@ -9,6 +9,7 @@ const EXPECTED_API = [
   'getBackendPort',
   'getPathForFile',
   'selectDirectory',
+  'scanDirectory',
   'openExternal',
   'getLorisAuthenticationCredentials',
   'setLorisAuthenticationCredentials',

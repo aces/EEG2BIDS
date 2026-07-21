@@ -74,9 +74,13 @@ function basename(filePath) {
 /**
  * addRecordings - append one recording row per entry-point file.
  * Files already present (matched by source path) are ignored, so re-selecting
- * a file never creates a duplicate row.
+ * a file never creates a duplicate row. Recursive discovery may also supply a
+ * detected `format` and linked `companions` (data/marker sibling files); both
+ * are carried onto the row for traceability and downstream conversion, and
+ * default to empty for manually selected files.
  * @param {object} manifest - the current manifest
- * @param {Array<object>} files - selected files, each {path, name?}
+ * @param {Array<object>} files - selected files, each
+ *   {path, name?, format?, companions?}
  * @return {object} a new manifest with the new rows appended
  */
 export function addRecordings(manifest, files) {
@@ -91,6 +95,8 @@ export function addRecordings(manifest, files) {
       id: `rec-${seq++}`,
       sourceFile: file.path,
       filename: file.name || basename(file.path),
+      format: file.format || '',
+      companions: file.companions || [],
       participant: '',
       session: '',
       task: '',

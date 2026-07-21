@@ -3,6 +3,7 @@ const {createSettingsWindow} = require('./windows');
 const credentials = require('./credentials');
 const {openExternal} = require('./external-links');
 const backendService = require('./backend-service');
+const {scanDirectory} = require('./discovery');
 
 /**
  * Register an invocable IPC channel. Failures are logged in the launching
@@ -41,6 +42,8 @@ const registerIpcHandlers = () => {
     }
     return result.filePaths[0];
   });
+
+  handle('discovery:scan-directory', (event, root) => scanDirectory(root));
 
   handle('links:open-external', (event, url) => openExternal(url));
 

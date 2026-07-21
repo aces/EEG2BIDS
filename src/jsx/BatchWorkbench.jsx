@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {AppContext} from '../context';
 import '../css/BatchWorkbench.css';
 
-import {FileInput} from './elements/inputs';
+import {FileInput, DirectoryInput} from './elements/inputs';
 import {
   createManifest,
   addRecordings,
@@ -14,6 +14,24 @@ import {
   getParticipants,
   toManifest,
 } from './types/batchManifest';
+import {discoverRecordings, ATTENTION_REASONS} from './types/batchDiscovery';
+
+// Human-readable explanation for each reason a discovered file is held out of
+// the ready conversion set. Keyed by the discovery module's reason codes.
+const ATTENTION_LABELS = {
+  [ATTENTION_REASONS.UNKNOWN]: 'Unrecognized file',
+  [ATTENTION_REASONS.ORPHAN_COMPANION]: 'Companion with no recording',
+  [ATTENTION_REASONS.DUPLICATE_CANDIDATE]: 'Ambiguous duplicate',
+};
+
+/**
+ * pluralize - a count with its noun, adding a plural "s" unless the count is 1.
+ * @param {number} count - the quantity
+ * @param {string} noun - the singular noun
+ * @return {string} e.g. "1 file" or "3 files"
+ */
+const pluralize = (count, noun) =>
+  `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /**
  * ReadinessBadge - per-row readiness indicator.
@@ -90,6 +108,14 @@ const RecordingsTable = ({rows, onChange, onRemove}) => {
           <span className='bw-file' title={row.sourceFile}>
             <strong>{row.filename}</strong>
             <small>{row.sourceFile}</small>
+            {row.companions && row.companions.length > 0 && (
+              <small
+                className='bw-companions'
+                title={row.companions.join('\n')}
+              >
+                + {pluralize(row.companions.length, 'companion file')}
+              </small>
+            )}
           </span>
           {field(row, 'participant', 'Required')}
           {field(row, 'session', 'Optional')}
@@ -170,6 +196,45 @@ ParticipantsPanel.propTypes = {
 };
 
 /**
+ * NeedsAttentionPanel - files discovery could not confidently import.
+ * Each entry names why it was held out of the ready set and shows its full
+ * source path so the user can trace and resolve it. These files are excluded
+ * from conversion by default.
+ * @param {object} props
+ * @param {object[]} props.items - needs-attention entries from discovery
+ * @return {JSX.Element}
+ */
+const NeedsAttentionPanel = ({items}) => {
+  if (items.length === 0) {
+    return (
+      <p className='bw-empty'>
+        Nothing needs attention. Scan a folder to check for unrecognized,
+        duplicate, or orphaned files; they will be listed here and kept out of
+        the batch.
+      </p>
+    );
+  }
+  return (
+    <div className='bw-attention'>
+      {items.map((item) => (
+        <div className='bw-attention-row' key={item.path}>
+          <span className='bw-badge bw-unready'>
+            {ATTENTION_LABELS[item.reason] || 'Needs attention'}
+          </span>
+          <span className='bw-file' title={item.path}>
+            <strong>{item.filename}</strong>
+            <small>{item.path}</small>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+NeedsAttentionPanel.propTypes = {
+  items: PropTypes.array,
+};
+
+/**
  * BatchWorkbench - manually populated batch import workbench.
  *
  * Users select multiple recording entry-point files; each becomes one
@@ -187,6 +252,9 @@ const BatchWorkbench = (props) => {
   const appContext = useContext(AppContext);
   const [manifest, setManifest] = useState(createManifest());
   const [section, setSection] = useState('recordings');
+  const [needsAttention, setNeedsAttention] = useState([]);
+  const [scanInfo, setScanInfo] = useState(null);
+  const [scanning, setScanning] = useState(false);
 
   const validated = useMemo(() => validateManifest(manifest), [manifest]);
   const participants = useMemo(() => getParticipants(manifest), [manifest]);
@@ -208,6 +276,39 @@ const BatchWorkbench = (props) => {
       name: file.name,
       path: file.path,
     }))));
+  };
+
+  /**
+   * onScanFolder - recursively discover recordings under a chosen folder.
+   * The main process walks the tree; the pure discovery module classifies the
+   * paths into recording rows (with companions linked) and needs-attention
+   * items. Discovered recordings are appended to the manifest (duplicates by
+   * source path are ignored) and the attention list replaces the last scan's.
+   * @param {string} _ - input id (unused)
+   * @param {string} root - the selected root folder
+   */
+  const onScanFolder = async (_, root) => {
+    if (!root || !window.eeg2bids?.scanDirectory) return;
+    setScanning(true);
+    try {
+      const paths = await window.eeg2bids.scanDirectory(root);
+      const result = discoverRecordings(paths);
+      setManifest((current) => addRecordings(current,
+          result.recordings.map((rec) => ({
+            name: rec.filename,
+            path: rec.sourceFile,
+            format: rec.format,
+            companions: rec.companions,
+          }))));
+      setNeedsAttention(result.needsAttention);
+      setScanInfo({
+        root,
+        scannedCount: result.scannedCount,
+        recordingCount: result.recordings.length,
+      });
+    } finally {
+      setScanning(false);
+    }
   };
 
   const onChangeRow = (id, changes) =>
@@ -246,6 +347,29 @@ const BatchWorkbench = (props) => {
             </small>
           </div>
         </div>
+        <div className='small-pad'>
+          <DirectoryInput id='batchScanFolder'
+            name='batchScanFolder'
+            label='Or discover recordings in a folder'
+            placeholder={scanInfo ? scanInfo.root : 'No folder scanned'}
+            onUserInput={onScanFolder}
+            help='Recursively scans the selected folder for supported
+            recordings. Companion files are grouped with their recording;
+            unrecognized, orphaned, or ambiguous files are listed under Needs
+            attention and left out of the batch.'
+          />
+          <div>
+            <small>
+              {scanning ?
+                'Scanning folder…' :
+                scanInfo ?
+                  `Scanned ${pluralize(scanInfo.scannedCount, 'file')}: ` +
+                    `${pluralize(scanInfo.recordingCount, 'recording')} ` +
+                    `found, ${needsAttention.length} flagged for attention.` :
+                  'Discovery finds recordings at any nesting depth.'}
+            </small>
+          </div>
+        </div>
       </div>
 
       <div
@@ -277,6 +401,13 @@ const BatchWorkbench = (props) => {
         >
           Participants ({participants.length})
         </button>
+        <button
+          type='button'
+          className={section === 'attention' ? 'active' : ''}
+          onClick={() => setSection('attention')}
+        >
+          Needs attention ({needsAttention.length})
+        </button>
       </div>
 
       {section === 'participants' ? (
@@ -284,6 +415,8 @@ const BatchWorkbench = (props) => {
           participants={participants}
           onRename={onRenameParticipant}
         />
+      ) : section === 'attention' ? (
+        <NeedsAttentionPanel items={needsAttention}/>
       ) : (
         <RecordingsTable
           rows={validated.recordings}

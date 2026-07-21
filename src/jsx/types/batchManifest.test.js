@@ -57,6 +57,23 @@ describe('addRecordings', () => {
     addRecordings(before, [{name: 'x.edf', path: '/data/x.edf'}]);
     expect(before.recordings).toHaveLength(2);
   });
+
+  it('defaults format and companions when not supplied', () => {
+    const [row] = seed([twoFiles[0]]).recordings;
+    expect(row.format).toBe('');
+    expect(row.companions).toEqual([]);
+  });
+
+  it('carries a discovered format and companion files onto the row', () => {
+    const [row] = seed([{
+      name: 'rest.set',
+      path: '/data/p1/rest.set',
+      format: 'EEGLAB',
+      companions: ['/data/p1/rest.fdt'],
+    }]).recordings;
+    expect(row.format).toBe('EEGLAB');
+    expect(row.companions).toEqual(['/data/p1/rest.fdt']);
+  });
 });
 
 describe('validateRecording', () => {
