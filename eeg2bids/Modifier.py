@@ -213,74 +213,82 @@ class Modifier:
 
     def copy_event_files(self):
         for eegRun in self.data.get('eegRuns'):
+            if not eegRun['eventFile']:
+                continue
+
             recording_file = eegRun['recordingBIDSBasename']
-            filename = os.path.join(self.get_eeg_path(), recording_file + '_annotations')
+            events_path = os.path.join(
+                self.get_eeg_path(), recording_file + '_events.tsv')
+            events_json_path = os.path.join(
+                self.get_eeg_path(), recording_file + '_events.json')
 
-            if eegRun['eventFile']:
-                # events.tsv data collected:
-                output = []
+            sources = [eegRun['eventFile']]
+            if os.path.isfile(events_path):
+                sources.append(events_path)
 
-                # Open user supplied events.tsv and grab data.
-                with open(eegRun['eventFile'], mode='r', newline='') as tsv_file:
-                    tsv_file.readline()
-                    reader = csv.reader(tsv_file, delimiter='\t')
-                    rows = list(reader)
-                    tsv_file.close()
+            columns = []
+            rows = []
+            for source in sources:
+                with open(source, mode='r', newline='') as tsv_file:
+                    reader = csv.DictReader(tsv_file, delimiter='\t')
+                    source_columns = reader.fieldnames or []
+                    for column in source_columns:
+                        if column not in columns:
+                            columns.append(column)
 
-                for line in rows:
-                    try:
-                        onset, duration, trial_type, value, sample = line
-                        output.append([onset, duration, trial_type, value, sample])
-                    except ValueError:
+                    for row in reader:
+                        # DictReader stores surplus values under the None key.
+                        # Missing optional values are supported and padded
+                        # after all source schemas have been combined.
+                        if row.get(None):
+                            print('Ignoring malformed events.tsv row.')
+                            continue
+                        if not row.get('onset') or not row.get('duration'):
+                            print('Ignoring events.tsv row without onset/duration.')
+                            continue
                         try:
-                            onset, duration, trial_type = line
-                            output.append([onset, duration, trial_type, 'n/a', 'n/a'])
+                            float(row['onset'])
+                            float(row['duration'])
                         except ValueError:
-                            print('error: ValueError')
+                            print('Ignoring events.tsv row with invalid timing.')
+                            continue
+                        rows.append(row)
 
-                path_event_files = ''
-                # We search for the events.tsv file.
-                for path, dirs, files in os.walk(self.get_eeg_path()):
-                    for filename in files:
-                        temp = os.path.join(path, filename)
-                        if temp.endswith(eegRun['recordingBIDSBasename'] + '_events.tsv'):
-                            path_event_files = temp
+            standard = [
+                'onset', 'duration', 'trial_type', 'value', 'sample'
+            ]
+            columns = standard + [
+                column for column in columns if column not in standard
+            ]
+            rows.sort(key=lambda row: float(row['onset']))
 
-                # We now open BIDS events.tsv file if it exists
-                if path_event_files:
-                    try:
-                        with open(path_event_files, mode='r', newline='') as tsv_file:
-                            tsv_file.readline()
-                            reader = csv.reader(tsv_file, delimiter='\t')
-                            rows = list(reader)
-                            tsv_file.close()
+            with open(events_path, mode='w', newline='') as tsv_file:
+                writer = csv.DictWriter(
+                    tsv_file, fieldnames=columns, delimiter='\t',
+                    extrasaction='ignore')
+                writer.writeheader()
+                for row in rows:
+                    writer.writerow({
+                        column: row.get(column) or 'n/a'
+                        for column in columns
+                    })
 
-                        for line in rows:
-                            try:
-                                onset, duration, trial_type, value, sample = line
-                                output.append([onset, duration, trial_type, value, sample])
-                            except ValueError:
-                                try:
-                                    onset, duration, trial_type = line
-                                    output.append([onset, duration, trial_type, 'n/a', 'n/a'])
-                                except ValueError:
-                                    print('error: ValueError')
-                    except:
-                        print('No events.tsv found in the BIDS folder.')
-                else:
-                    path_event_files = self.get_eeg_path() + '/' + eegRun['recordingBIDSBasename'] + '_events.tsv'
+            try:
+                with open(events_json_path, mode='r') as json_file:
+                    metadata = json.load(json_file)
+            except FileNotFoundError:
+                metadata = {}
 
-                # output is an array of arrays
-                # sort by first element in array
-                output.sort(key=lambda x: float(x[0]))
+            for column in columns:
+                if column not in metadata:
+                    metadata[column] = {
+                        'Description':
+                            "Event information from the '{}' column."
+                            .format(column)
+                    }
 
-                # overwrite BIDS events.tsv with collected data.
-                with open(path_event_files, mode='a+', newline='') as tsv_file:
-                    headers = ['onset', 'duration', 'trial_type', 'value', 'sample']
-                    writer = csv.writer(tsv_file, delimiter='\t')
-                    writer.writerow(headers)
-                    writer.writerows(output)
-                    tsv_file.close()
+            with open(events_json_path, mode='w') as json_file:
+                json.dump(metadata, json_file, indent=4)
 
 
     def modify_eeg_json(self):
