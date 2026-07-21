@@ -29,3 +29,14 @@ def test_generated_ieeg_dataset_passes_validator(make_convert_data,
     assert root is not None
     errors = bids_validator(root)
     assert errors == [], [e.get("code") for e in errors]
+
+
+def test_merged_embedded_and_external_events_pass_validator(
+        make_convert_data, run_conversion, bids_validator, fixtures_dir):
+    _, root = run_conversion(make_convert_data(
+        "eeg_events.set",
+        event_file=str(fixtures_dir / "events_custom.tsv"),
+        age="25", sex="M", hand="R"))
+    assert root is not None
+    errors = bids_validator(root)
+    assert errors == [], [e.get("code") for e in errors]

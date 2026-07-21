@@ -29,18 +29,21 @@ changes when someone deliberately regenerates it: an incidental `mne`/`edfio`/
 | `eeg_continuous.edf` | continuous EDF | 8 scalp-EEG channels, 256 Hz |
 | `ieeg_continuous.edf` | continuous EDF | 6 sEEG channels, 512 Hz |
 | `eeg_embedded.set` | EEGLAB SET | data embedded in the `.set`, no companion |
+| `eeg_events.set` | EEGLAB SET | two embedded recording markers (`embedded/A`, `embedded/B`) |
 | `eeg_split.set` + `eeg_split.fdt` | EEGLAB SET/FDT | metadata `.set` referencing a separate `.fdt` data file |
 | `eeg_epoched.set` | EEGLAB SET | epoched (`trials > 1`); drives the continuous-only rejection path |
 | `eeg_metadata.json` | JSON | representative EEG sidecar parameters |
 | `ieeg_metadata.json` | JSON | representative iEEG sidecar parameters |
 | `events_narrow.tsv` | TSV | supplied events, 3-column (onset/duration/trial_type) |
 | `events_wide.tsv` | TSV | supplied events, 5-column (adds value/sample) |
+| `events_custom.tsv` | TSV | supplied events with additional channel/provenance columns |
 | `events_malformed.tsv` | TSV | valid rows mixed with unsupported (2- and 6-column) rows |
 
 `eeg_split.fdt` is the data companion for `eeg_split.set` and is only valid
 alongside it; removing it drives the missing-companion error path.
 
-The `events_*.tsv` files are supplied-events inputs for the #79 regression:
+The `events_*.tsv` files are supplied-events inputs for event-merging
+regressions. The narrow and wide layouts retain coverage for #79;
+`events_custom.tsv` exercises valid additional BIDS event columns, while
 `events_malformed.tsv` deliberately mixes valid 3-/5-column rows with
-unsupported 2-/6-column rows to pin the defined behavior (valid rows survive,
-unsupported rows are dropped).
+unsupported 2-/6-column rows to pin the existing behavior.

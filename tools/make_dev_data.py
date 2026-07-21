@@ -26,6 +26,7 @@ there for provenance). These are deliberately short so the committed bytes stay
 small, while remaining structurally representative:
 
     eeg_continuous.edf    continuous EDF, scalp EEG
+    eeg_events.set        EEGLAB SET with embedded recording markers
     eeg_embedded.set      EEGLAB SET with data embedded in the .set
     eeg_split.set/.fdt    EEGLAB SET metadata + separate .fdt data file
     eeg_epoched.set       epoched EEGLAB SET (rejected: continuous-only)
@@ -219,12 +220,22 @@ def write_test_fixtures(fixtures_dir):
     mne.export.export_raw(str(fixtures_dir / 'ieeg_continuous.edf'), ieeg_raw,
                           fmt='edf', overwrite=True)
     _write_embedded_set(eeg_raw, fixtures_dir / 'eeg_embedded.set')
+
+    eeg_events_raw = eeg_raw.copy()
+    eeg_events_raw.set_annotations(mne.Annotations(
+        onset=[0.25, 1.25],
+        duration=[0.1, 0.2],
+        description=['embedded/A', 'embedded/B'],
+    ))
+    _write_embedded_set(eeg_events_raw, fixtures_dir / 'eeg_events.set')
+
     _write_set_fdt(eeg_raw, fixtures_dir / 'eeg_split.set')
     _write_epoched_set(eeg_raw, fixtures_dir / 'eeg_epoched.set',
                        FIXTURE_EPOCH_TRIALS)
 
     # Strip the timestamped .mat header so the committed .set bytes are stable.
-    for set_name in ('eeg_embedded.set', 'eeg_split.set', 'eeg_epoched.set'):
+    for set_name in ('eeg_embedded.set', 'eeg_events.set', 'eeg_split.set',
+                     'eeg_epoched.set'):
         _normalize_mat_header(fixtures_dir / set_name)
 
     _write_metadata('eeg_parameters_TEMPLATE.json',
@@ -245,12 +256,11 @@ def write_test_fixtures(fixtures_dir):
                                            'data).',
                     })
 
-    # Supplied events.tsv fixtures for the #79 regression. The app accepts a
-    # narrow 3-column layout (onset/duration/trial_type, padded to n/a) and a
-    # wide 5-column layout (adds value/sample). 'malformed' mixes valid rows
-    # with unsupported column counts (2 and 6) to pin the defined behavior:
-    # valid rows survive, unsupported rows are dropped -- not silent loss of
-    # the good rows.
+    # Supplied events.tsv fixtures for event-merging regressions. Narrow and
+    # wide retain the historical #79 layouts. Custom adds channel/provenance
+    # columns to verify that BIDS-compatible extension columns survive a merge.
+    # 'malformed' mixes valid rows with unsupported column counts (2 and 6) to
+    # pin the existing behavior: valid rows survive without silent loss.
     (fixtures_dir / 'events_narrow.tsv').write_text(
         'onset\tduration\ttrial_type\n'
         '0.5\t0.1\tstimulus/A\n'
@@ -259,6 +269,10 @@ def write_test_fixtures(fixtures_dir):
         'onset\tduration\ttrial_type\tvalue\tsample\n'
         '0.5\t0.1\tstimulus/A\t1\t128\n'
         '1.5\t0.2\tstimulus/B\t2\t384\n')
+    (fixtures_dir / 'events_custom.tsv').write_text(
+        'onset\tduration\ttrial_type\tchannel\tprovenance\n'
+        '0.5\t0.1\texternal/A\tC3\tmanual-review\n'
+        '1.5\t0.2\texternal/B\tC4\tstimulus-log\n')
     (fixtures_dir / 'events_malformed.tsv').write_text(
         'onset\tduration\ttrial_type\tvalue\tsample\n'
         '0.5\t0.1\tGOOD_WIDE\t1\t128\n'        # 5 cols: valid
