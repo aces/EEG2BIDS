@@ -23,6 +23,7 @@ import BackendStatus from './jsx/elements/backendStatus';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
+import BatchWorkbench from './jsx/BatchWorkbench';
 import Validator from './jsx/Validator';
 
 /**
@@ -100,10 +101,18 @@ const App = () => {
                 },
               },
               {
-                title: '4) Validate and package',
+                title: '4) Batch workbench',
                 onClick: (e) => {
                   e.preventDefault();
                   setActiveMenuTab(3);
+                  setAppMode('BatchWorkbench');
+                },
+              },
+              {
+                title: '5) Validate and package',
+                onClick: (e) => {
+                  e.preventDefault();
+                  setActiveMenuTab(4);
                   setAppMode('Validator');
                 },
               },
@@ -113,6 +122,7 @@ const App = () => {
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>
           <Configuration appMode={appMode}/>
+          <BatchWorkbench visible={appMode === 'BatchWorkbench'}/>
           <Validator visible={appMode === 'Validator'}/>
         </>
       </AppContext.Provider>

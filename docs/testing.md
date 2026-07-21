@@ -1,9 +1,11 @@
 # Testing guide
 
-EEG2BIDS has two automated test suites. The Python suite protects backend,
-conversion, and BIDS output behavior. The Playwright suite exercises the
-Electron application boundary and its integration with the Python backend.
-Both suites are required when a change can affect the application as a whole.
+EEG2BIDS has three automated test suites. The Python suite protects backend,
+conversion, and BIDS output behavior. The Vitest unit suite protects the
+renderer's pure logic (such as the batch workbench manifest model). The
+Playwright suite exercises the Electron application boundary and its
+integration with the Python backend. The suites are required when a change can
+affect the corresponding behavior.
 
 Automated coverage initially targets the supported Linux development
 environment. See [Development](development.md) for the general development
@@ -58,6 +60,21 @@ uv run pytest tests/test_regressions.py -k events
 Focused runs are useful while developing but do not replace the complete suite
 before review.
 
+## Renderer unit suite
+
+Run the renderer's pure-logic unit tests (Vitest) from the repository root:
+
+```sh
+npm run test:unit
+```
+
+The suite lives alongside the code it covers as `*.test.js` files under `src/`
+and runs in a Node environment without the app's Vite/React/CSP plumbing, so it
+is fast and needs no display. It currently covers the batch workbench manifest
+model (`src/jsx/types/batchManifest.js`): manifest validation and readiness,
+and participant-link propagation. Add unit tests here for new pure renderer
+logic; reserve the Electron suite for behavior that needs the running app.
+
 ## Electron integration suite
 
 Run the complete Playwright Electron suite from the repository root:
@@ -92,6 +109,7 @@ results.
 | Change | Required checks |
 | --- | --- |
 | Python backend, conversion, or dependencies | `uv run pytest` |
+| Pure renderer logic (e.g. the manifest model) | `npm run test:unit` |
 | Electron main/preload, renderer, or Node dependencies | `npm run test:electron` |
 | Shared backend port, startup, IPC, Socket.IO, or application lifecycle | Both suites |
 | Fixtures or fixture generator | Regenerate deliberately, then run both affected suites |
@@ -118,7 +136,7 @@ including direct merges and merge-queue merges — must pass it.
 | CI job | What it enforces | Run it locally |
 | --- | --- | --- |
 | `backend` (Python 3.11, 3.12, 3.13) | Lockfile is current, deps install frozen, full backend suite passes, and locked **production** deps have no known vulnerabilities. Package imports and Socket.IO startup are covered by the suite. | `uv lock --check`<br>`uv sync --frozen`<br>`uv run pytest`<br>`uv export --frozen --no-dev --no-emit-project -o requirements-audit.txt && uvx pip-audit -r requirements-audit.txt` |
-| `node` | `package-lock.json` is enforced, no high/critical npm advisories, lint passes, production renderer build succeeds. | `npm ci`<br>`npm audit --audit-level=high`<br>`npm run lint`<br>`npm run build` |
+| `node` | `package-lock.json` is enforced, no high/critical npm advisories, lint passes, renderer unit suite passes, production renderer build succeeds. | `npm ci`<br>`npm audit --audit-level=high`<br>`npm run lint`<br>`npm run test:unit`<br>`npm run build` |
 | `electron` | The locked Electron runtime is installed explicitly, then the full Playwright Electron suite passes headlessly with Chromium sandboxing intact. | `npm run install:electron`<br>`xvfb-run -a npm run test:electron` |
 
 The backend suite requires Deno for BIDS validation (see above); CI installs it.
