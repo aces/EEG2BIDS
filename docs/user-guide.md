@@ -57,26 +57,28 @@ templates list the fields understood by the application:
 Invalid, extra, and empty parameters are ignored by the current application.
 Required values are also collected through the Configuration form.
 
-## Events and annotations
+## Events
 
-An events TSV, annotations TSV, or annotations JSON can be associated with each
-recording file. A companion file is matched to a recording when its basename
-matches the recording basename, with standard suffixes such as `_events.tsv`
-and `_annotations.tsv` removed. Unmatched companion files are reported during
-configuration.
+Time-based markers embedded in a source recording are written to the BIDS
+`*_events.tsv` file. This includes markers exposed through source-library APIs
+such as `mne.Annotations`; they remain events in the generated BIDS dataset.
 
-Annotation files are copied into the output and listed in `.bidsignore`; the
-built-in validator skips them. When an annotations JSON is supplied, EEG2BIDS
-sets its `IntendedFor` field to the converted recording. The current
-implementation modifies the selected annotations JSON before copying it, so use
-a backed-up copy of source metadata.
+An optional external `*_events.tsv` can be associated with each recording. Its
+basename must match the recording basename after the `_events.tsv` suffix is
+removed. Unmatched event files are reported during configuration.
+
+External rows are combined with embedded events and ordered by onset. EEG2BIDS
+preserves additional event columns, padding fields absent from either source
+with `n/a`. Metadata entries for additional columns are added to the
+corresponding `*_events.json` sidecar. Review generated descriptions to ensure
+they adequately explain the meaning of project-specific columns.
 
 ## Validation and packaging
 
 The Validator tab can validate either the most recent conversion or any folder
 selected by the user. It checks whether individual paths conform to BIDS naming
 rules. This is a lightweight path check, not a complete dataset-level BIDS
-validation report. Annotation files and `.bidsignore` are skipped.
+validation report. The special `.bidsignore` file is skipped.
 
 The same tab can create a compressed archive of the selected folder.
 

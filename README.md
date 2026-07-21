@@ -10,7 +10,7 @@ also de-identify EDF headers and use LORIS credentials to retrieve metadata.
 Remove saved credentials after using EEG2BIDS on a shared computer.
 
 See the [user guide](docs/user-guide.md) for supported formats, recording,
-metadata, annotation, validation, and optional LORIS workflows.
+metadata, events, validation, and optional LORIS workflows.
 
 ## Project status
 
