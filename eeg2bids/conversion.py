@@ -84,7 +84,7 @@ def convert_recording(data):
     """Convert the selected recording(s) to BIDS and apply post-write edits.
 
     Validates the request, runs the MNE-BIDS conversion, then applies the
-    dataset/participant/event/annotation modifications. Returns
+    dataset, participant, and event modifications. Returns
     ``{'output_time': ...}`` on success or ``{'error': [...]}`` with one or
     more actionable messages.
     """

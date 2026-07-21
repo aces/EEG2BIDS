@@ -2,7 +2,6 @@ import os
 import csv
 import json
 import re
-import shutil
 from eeg2bids.converter import metadata as metadata_fields
 
 class Modifier:
@@ -17,7 +16,6 @@ class Modifier:
         self.modify_participants_json()
         self.clean_dataset_files()
         self.copy_event_files()
-        self.copy_annotation_files()
         self.modify_eeg_json()
 
 
@@ -164,51 +162,6 @@ class Modifier:
             json_file.seek(0)
             json.dump(json_data, json_file, indent=4)
             json_file.close()
-
-
-    def copy_annotation_files(self):
-        file = os.path.join(
-            self.get_bids_root_path(),
-            '.bidsignore'
-        )
-
-        with open(file, mode='w', newline='') as bidsignore:
-            bidsignore.write('*_annotations.json\n')
-            bidsignore.write('*_annotations.tsv\n')
-            bidsignore.close()
-
-        for eegRun in self.data.get('eegRuns'):
-            recording_file = eegRun['recordingBIDSBasename']
-            filename = os.path.join(self.get_eeg_path(), recording_file + '_annotations')
-
-            if eegRun['annotationsTSV']:
-                shutil.copyfile(
-                    eegRun['annotationsTSV'],
-                    os.path.join(self.get_eeg_path(), filename + '.tsv')
-                )
-
-            if eegRun['annotationsJSON']:
-                # Overrides the IntendedFor field
-                print(eegRun['annotationsJSON'])
-
-                try:
-                    with open(eegRun['annotationsJSON'], "r") as fp:
-                        file_data = json.load(fp)
-                        recording_ext = eegRun.get('recordingBIDSExtension', '.edf')
-                        file_data["IntendedFor"] = os.path.join(self.get_eeg_path(relative=True), recording_file + recording_ext)
-                        # In windows env path will contain \\
-                        file_data["IntendedFor"] = file_data["IntendedFor"].replace('\\', '/')
-
-                        with open(eegRun['annotationsJSON'], "w") as fp:
-                            json.dump(file_data, fp, indent=4)
-                except IOError as e:
-                    print(e)
-                    print("Could not read or write " + eegRun['annotationsJSON'])
-
-                shutil.copyfile(
-                    eegRun['annotationsJSON'],
-                    os.path.join(self.get_eeg_path(), filename + '.json')
-                )
 
 
     def copy_event_files(self):
