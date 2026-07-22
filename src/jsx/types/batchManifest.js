@@ -21,12 +21,23 @@
 // underscores, spaces or slashes, all of which are BIDS entity delimiters.
 const LABEL_RE = /^[A-Za-z0-9]+$/;
 
+// The editable per-recording assignment fields, in table-column order. This
+// is the single source of truth for the assignable fields; bulk assignment and
+// token mapping both target this same set.
+export const ASSIGNMENT_FIELDS = ['participant', 'session', 'task', 'run'];
+
 // Required assignments for a recording to be convertible. Session and run are
 // optional BIDS entities and are only validated when supplied.
 export const REQUIRED_FIELDS = ['participant', 'task'];
 
 // Optional BIDS label entities, validated only when a value is supplied.
 const OPTIONAL_LABEL_FIELDS = ['session'];
+
+// Participant demographic fields reviewed separately from recording metadata.
+// These mirror the core BIDS participants.tsv columns and are owned by the
+// participant, not the recording, so they live on a manifest-level map keyed
+// by participant label rather than on any recording row.
+export const DEMOGRAPHIC_FIELDS = ['age', 'sex', 'handedness'];
 
 // Human-readable field names for validation messages.
 const FIELD_LABELS = {
@@ -41,10 +52,25 @@ const LABEL_HINT =
 
 /**
  * createManifest - an empty batch manifest.
- * @return {{recordings: object[]}} a new manifest state
+ * `demographics` maps a participant label to its reviewed demographic values;
+ * it is keyed by label (not recording) because demographics belong to the
+ * participant and must survive recording edits.
+ * @return {{recordings: object[], demographics: Object<string, object>}} a new
+ *   manifest state
  */
 export function createManifest() {
-  return {recordings: []};
+  return {recordings: [], demographics: {}};
+}
+
+/**
+ * emptyDemographics - a blank demographic record.
+ * @return {Object<string, string>} all demographic fields empty
+ */
+function emptyDemographics() {
+  return DEMOGRAPHIC_FIELDS.reduce((row, field) => {
+    row[field] = '';
+    return row;
+  }, {});
 }
 
 /**
@@ -123,6 +149,26 @@ export function updateRecording(manifest, id, changes) {
 }
 
 /**
+ * bulkAssign - apply the same explicit assignments to many rows at once.
+ * Only the rows named in `ids` change, and only the fields present in
+ * `changes`; every other row and every other field is left exactly as it was,
+ * so a bulk change never disturbs assignments outside the selection and an
+ * individual row can still be corrected afterwards with updateRecording.
+ * @param {object} manifest - the current manifest
+ * @param {Iterable<string>} ids - recording ids to assign
+ * @param {object} changes - partial {participant, session, task, run}
+ * @return {object} a new manifest with the selected rows updated
+ */
+export function bulkAssign(manifest, ids, changes) {
+  const target = new Set(ids);
+  return {
+    ...manifest,
+    recordings: manifest.recordings.map((row) =>
+      target.has(row.id) ? {...row, ...changes} : row),
+  };
+}
+
+/**
  * removeRecording - drop a single recording row.
  * @param {object} manifest - the current manifest
  * @param {string} id - the recording id to remove
@@ -141,6 +187,10 @@ export function removeRecording(manifest, id) {
  * rewrite of that label on every matching row. Renaming onto an existing
  * label merges the two participants. A blank target is a no-op, so a rename
  * can never silently unlink recordings from their participant.
+ * Demographics travel with the label: the renamed participant's reviewed
+ * values move to the new label. Renaming onto a participant that already has
+ * demographics keeps the target's values (the merge target wins) rather than
+ * silently overwriting them.
  * @param {object} manifest - the current manifest
  * @param {string} fromLabel - the participant label being renamed
  * @param {string} toLabel - the new participant label
@@ -150,11 +200,71 @@ export function renameParticipant(manifest, fromLabel, toLabel) {
   const target = String(toLabel).trim();
   if (!target || target === fromLabel) return manifest;
 
+  const demographics = {...manifest.demographics};
+  if (demographics[fromLabel]) {
+    if (!demographics[target]) demographics[target] = demographics[fromLabel];
+    delete demographics[fromLabel];
+  }
+
   return {
     ...manifest,
     recordings: manifest.recordings.map((row) =>
       row.participant === fromLabel ? {...row, participant: target} : row),
+    demographics,
   };
+}
+
+/**
+ * updateDemographics - set reviewed demographic values for one participant.
+ * Demographics are reviewed separately from recording metadata and are stored
+ * against the participant label, so they persist across recording edits and
+ * are propagated by renameParticipant.
+ * @param {object} manifest - the current manifest
+ * @param {string} participant - the participant label
+ * @param {object} changes - partial {age, sex, handedness}
+ * @return {object} a new manifest with the participant's demographics updated
+ */
+export function updateDemographics(manifest, participant, changes) {
+  const current = manifest.demographics?.[participant] || emptyDemographics();
+  return {
+    ...manifest,
+    demographics: {
+      ...manifest.demographics,
+      [participant]: {...current, ...changes},
+    },
+  };
+}
+
+/**
+ * normalizeParticipantId - the comparison key for near-duplicate detection.
+ * Two labels are near-duplicates when they differ only by a `sub-` prefix or
+ * by letter case (e.g. `sub-01`, `Sub-01` and `01` all collapse to `01`), the
+ * exact confusion that would otherwise create two BIDS folders for one person.
+ * Prefix stripping happens ONLY here for comparison; assignments themselves are
+ * never silently rewritten.
+ * @param {string} label - a participant label
+ * @return {string} the normalized comparison key
+ */
+export function normalizeParticipantId(label) {
+  return String(label).trim().replace(/^sub-/i, '').toLowerCase();
+}
+
+/**
+ * findParticipantConflicts - groups of assigned labels that are near-duplicates.
+ * Each returned group holds two or more distinct labels that share a normalized
+ * key; an empty result means every participant id is unambiguous.
+ * @param {object} manifest - the current manifest
+ * @return {Array} groups of colliding labels (each an array of length >= 2)
+ */
+export function findParticipantConflicts(manifest) {
+  const byKey = new Map();
+  for (const {participant} of getParticipants(manifest)) {
+    const key = normalizeParticipantId(participant);
+    if (!key) continue;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push(participant);
+  }
+  return [...byKey.values()].filter((labels) => labels.length > 1);
 }
 
 /**
@@ -224,21 +334,31 @@ export function validateManifest(manifest) {
  * getParticipants - the distinct assigned participants, first-seen order.
  * Recordings with no participant assigned yet are excluded. The link count
  * is what a rename would propagate to.
+ * Each participant carries its reviewed demographics and its linked recordings
+ * (id and filename), so the count is traceable back to the exact recordings it
+ * covers.
  * @param {object} manifest - the current manifest
- * @return {Array<{participant: string, recordingIds: string[], count: number}>}
- *   the participants
+ * @return {Array<object>} participants, each carrying participant, recordings,
+ *   recordingIds, count and demographics
  */
 export function getParticipants(manifest) {
+  const demographics = manifest.demographics || {};
   const byId = new Map();
   for (const row of manifest.recordings) {
     if (!row.participant) continue;
     if (!byId.has(row.participant)) {
       byId.set(row.participant,
-          {participant: row.participant, recordingIds: []});
+          {participant: row.participant, recordings: []});
     }
-    byId.get(row.participant).recordingIds.push(row.id);
+    byId.get(row.participant).recordings
+        .push({id: row.id, filename: row.filename});
   }
-  return [...byId.values()].map((p) => ({...p, count: p.recordingIds.length}));
+  return [...byId.values()].map((p) => ({
+    ...p,
+    recordingIds: p.recordings.map((r) => r.id),
+    count: p.recordings.length,
+    demographics: demographics[p.participant] || emptyDemographics(),
+  }));
 }
 
 /**
@@ -250,7 +370,8 @@ export function toManifest(manifest) {
   const validated = validateManifest(manifest);
   return {
     participants: getParticipants(manifest)
-        .map(({participant}) => ({participant})),
+        .map(({participant, count, demographics}) =>
+          ({participant, recordingCount: count, demographics})),
     recordings: validated.recordings,
     totalCount: validated.totalCount,
     readyCount: validated.readyCount,

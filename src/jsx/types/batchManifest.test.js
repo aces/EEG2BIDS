@@ -3,8 +3,12 @@ import {
   createManifest,
   addRecordings,
   updateRecording,
+  bulkAssign,
   removeRecording,
   renameParticipant,
+  updateDemographics,
+  normalizeParticipantId,
+  findParticipantConflicts,
   validateRecording,
   validateManifest,
   getParticipants,
@@ -247,7 +251,11 @@ describe('toManifest export contract', () => {
         {participant: '001', task: ''});
 
     const out = toManifest(manifest);
-    expect(out.participants).toEqual([{participant: '001'}]);
+    expect(out.participants).toEqual([{
+      participant: '001',
+      recordingCount: 2,
+      demographics: {age: '', sex: '', handedness: ''},
+    }]);
     expect(out.totalCount).toBe(2);
     expect(out.readyCount).toBe(1);
     expect(out.ready).toBe(false); // not every row is ready
@@ -262,5 +270,154 @@ describe('toManifest export contract', () => {
           {participant: '001', task: 'rest'});
     }
     expect(toManifest(manifest).ready).toBe(true);
+  });
+
+  it('carries reviewed demographics onto the exported participants', () => {
+    let manifest = seed(twoFiles);
+    for (const row of manifest.recordings) {
+      manifest = updateRecording(manifest, row.id,
+          {participant: '001', task: 'rest'});
+    }
+    manifest = updateDemographics(manifest, '001', {age: '27', sex: 'F'});
+    const [person] = toManifest(manifest).participants;
+    expect(person.demographics).toMatchObject({age: '27', sex: 'F'});
+  });
+});
+
+describe('bulkAssign', () => {
+  /** @return {object} a manifest with three empty recordings */
+  const three = () => addRecordings(createManifest(), [
+    {name: 'a.edf', path: '/a.edf'},
+    {name: 'b.edf', path: '/b.edf'},
+    {name: 'c.edf', path: '/c.edf'},
+  ]);
+
+  it('applies the same fixed assignments to only the selected rows', () => {
+    const manifest = three();
+    const [a, b] = manifest.recordings;
+    const next = bulkAssign(manifest, [a.id, b.id],
+        {participant: '001', task: 'rest'});
+    const assigned = {participant: '001', task: 'rest'};
+    expect(next.recordings[0]).toMatchObject(assigned);
+    expect(next.recordings[1]).toMatchObject(assigned);
+    expect(next.recordings[2]).toMatchObject({participant: '', task: ''});
+  });
+
+  it('changes only the supplied fields, leaving others intact', () => {
+    let manifest = three();
+    const [a] = manifest.recordings;
+    manifest = updateRecording(manifest, a.id, {participant: '001', run: '2'});
+    const next = bulkAssign(manifest, [a.id], {task: 'rest'});
+    expect(next.recordings[0]).toMatchObject({
+      participant: '001', task: 'rest', run: '2',
+    });
+  });
+
+  it('lets an individual row be corrected after a bulk assignment', () => {
+    const manifest = three();
+    const ids = manifest.recordings.map((r) => r.id);
+    const bulk = bulkAssign(manifest, ids, {task: 'rest'});
+    const fixed = updateRecording(bulk, ids[1], {task: 'oddball'});
+    expect(fixed.recordings.map((r) => r.task))
+        .toEqual(['rest', 'oddball', 'rest']);
+  });
+
+  it('does not mutate the input manifest', () => {
+    const manifest = three();
+    bulkAssign(manifest, manifest.recordings.map((r) => r.id), {task: 'rest'});
+    expect(manifest.recordings.every((r) => r.task === '')).toBe(true);
+  });
+});
+
+describe('demographics review', () => {
+  /** @return {object} a manifest with one assigned participant */
+  const assigned = () => {
+    let manifest = addRecordings(createManifest(),
+        [{name: 'a.edf', path: '/a.edf'}]);
+    manifest = updateRecording(manifest, manifest.recordings[0].id,
+        {participant: '001'});
+    return manifest;
+  };
+
+  it('stores demographics separately from recording rows', () => {
+    const manifest = updateDemographics(assigned(), '001', {age: '30'});
+    expect(manifest.demographics['001']).toMatchObject({age: '30'});
+    expect(manifest.recordings[0]).not.toHaveProperty('age');
+  });
+
+  it('merges successive demographic edits for a participant', () => {
+    let manifest = updateDemographics(assigned(), '001', {age: '30'});
+    manifest = updateDemographics(manifest, '001', {sex: 'M'});
+    expect(manifest.demographics['001']).toMatchObject({age: '30', sex: 'M'});
+  });
+
+  it('exposes demographics and a traceable recording list', () => {
+    let manifest = addRecordings(createManifest(), [
+      {name: 'rest.edf', path: '/p1/rest.edf'},
+      {name: 'task.edf', path: '/p1/task.edf'},
+    ]);
+    for (const row of manifest.recordings) {
+      manifest = updateRecording(manifest, row.id, {participant: '001'});
+    }
+    manifest = updateDemographics(manifest, '001', {age: '42'});
+    const [person] = getParticipants(manifest);
+    expect(person.count).toBe(2);
+    expect(person.recordings.map((r) => r.filename))
+        .toEqual(['rest.edf', 'task.edf']);
+    expect(person.demographics.age).toBe('42');
+  });
+
+  it('carries demographics to the new label on rename', () => {
+    const manifest = renameParticipant(
+        updateDemographics(assigned(), '001', {age: '30'}), '001', '999');
+    expect(manifest.demographics['999']).toMatchObject({age: '30'});
+    expect(manifest.demographics['001']).toBeUndefined();
+  });
+
+  it('keeps the target demographics when a rename merges participants', () => {
+    let manifest = addRecordings(createManifest(), [
+      {name: 'a.edf', path: '/a.edf'},
+      {name: 'b.edf', path: '/b.edf'},
+    ]);
+    const [a, b] = manifest.recordings;
+    manifest = updateRecording(manifest, a.id, {participant: '001'});
+    manifest = updateRecording(manifest, b.id, {participant: '002'});
+    manifest = updateDemographics(manifest, '001', {age: '30'});
+    manifest = updateDemographics(manifest, '002', {age: '40'});
+    manifest = renameParticipant(manifest, '001', '002');
+    expect(manifest.demographics['002'].age).toBe('40');
+    expect(manifest.demographics['001']).toBeUndefined();
+  });
+});
+
+describe('near-duplicate participant ids', () => {
+  it('normalizes away a sub- prefix and letter case', () => {
+    expect(normalizeParticipantId('sub-01')).toBe('01');
+    expect(normalizeParticipantId('Sub-01')).toBe('01');
+    expect(normalizeParticipantId('01')).toBe('01');
+  });
+
+  it('flags prefixed and unprefixed forms of the same id as a conflict', () => {
+    let manifest = addRecordings(createManifest(), [
+      {name: 'a.edf', path: '/a.edf'},
+      {name: 'b.edf', path: '/b.edf'},
+    ]);
+    const [a, b] = manifest.recordings;
+    manifest = updateRecording(manifest, a.id, {participant: 'sub-01'});
+    manifest = updateRecording(manifest, b.id, {participant: '01'});
+    const conflicts = findParticipantConflicts(manifest);
+    expect(conflicts).toHaveLength(1);
+    expect(new Set(conflicts[0])).toEqual(new Set(['sub-01', '01']));
+  });
+
+  it('reports no conflict when every participant id is distinct', () => {
+    let manifest = addRecordings(createManifest(), [
+      {name: 'a.edf', path: '/a.edf'},
+      {name: 'b.edf', path: '/b.edf'},
+    ]);
+    const [a, b] = manifest.recordings;
+    manifest = updateRecording(manifest, a.id, {participant: '01'});
+    manifest = updateRecording(manifest, b.id, {participant: '02'});
+    expect(findParticipantConflicts(manifest)).toHaveLength(0);
   });
 });
