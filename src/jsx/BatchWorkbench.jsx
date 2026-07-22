@@ -1,6 +1,5 @@
-import React, {useContext, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import PropTypes from 'prop-types';
-import {AppContext} from '../context';
 import '../css/BatchWorkbench.css';
 
 import {FileInput, DirectoryInput} from './elements/inputs';
@@ -9,14 +8,12 @@ import {
   addRecordings,
   updateRecording,
   bulkAssign,
-  setRecordingExcluded,
   removeRecording,
   renameParticipant,
   updateDemographics,
   findParticipantConflicts,
   validateManifest,
   getParticipants,
-  toManifest,
   ASSIGNMENT_FIELDS,
   DEMOGRAPHIC_FIELDS,
 } from './types/batchManifest';
@@ -28,12 +25,6 @@ import {
   MAPPING_FIELDS,
   MAPPING_SOURCES,
 } from './types/batchMapping';
-import {
-  preflightBatch,
-  PREFLIGHT_STATUS,
-  PREVIEW_MODALITIES,
-  DEFAULT_MODALITY,
-} from './types/batchPreview';
 
 // Human-readable explanation for each reason a discovered file is held out of
 // the ready conversion set. Keyed by the discovery module's reason codes.
@@ -48,49 +39,6 @@ const ATTENTION_LABELS = {
 const DEMOGRAPHIC_OPTIONS = {
   sex: ['n/a', 'F', 'M', 'O'],
   handedness: ['n/a', 'R', 'L', 'A'],
-};
-
-// Display name for each preview modality (matches the Configuration wizard).
-const MODALITY_LABELS = {
-  ieeg: 'Stereo iEEG',
-  eeg: 'EEG',
-};
-
-// Label and status-badge CSS class for each preflight verdict, defined once so
-// a new status is added in a single place (its skip explanation lives in
-// skipReason, which is row-dependent, and its display order in skipOrder).
-const STATUS_META = {
-  [PREFLIGHT_STATUS.NEW]: {label: 'Will convert', className: 'bw-st-new'},
-  [PREFLIGHT_STATUS.ALREADY_PROCESSED]:
-    {label: 'Already processed', className: 'bw-st-done'},
-  [PREFLIGHT_STATUS.CONFLICT]: {label: 'Conflict', className: 'bw-st-conflict'},
-  [PREFLIGHT_STATUS.EXCLUDED]: {label: 'Excluded', className: 'bw-st-excluded'},
-  [PREFLIGHT_STATUS.UNRESOLVED]:
-    {label: 'Unresolved', className: 'bw-st-unresolved'},
-};
-
-/**
- * skipReason - why a non-ready recording will not be converted.
- * @param {object} row - a preflight recording row
- * @return {string} an explanation for the row's held-out status
- */
-const skipReason = (row) => {
-  switch (row.status) {
-    case PREFLIGHT_STATUS.ALREADY_PROCESSED:
-      return 'The exact output already exists at this destination; ' +
-        'it is skipped so the existing data is never overwritten.';
-    case PREFLIGHT_STATUS.CONFLICT:
-      return 'This BIDS destination is claimed by another included ' +
-        'recording, or already holds a different output file. Change an ' +
-        'assignment or exclude one of them.';
-    case PREFLIGHT_STATUS.EXCLUDED:
-      return 'Excluded from this batch by choice.';
-    case PREFLIGHT_STATUS.UNRESOLVED:
-      return Object.values(row.errors || {}).join(' ') ||
-        'Assign the required participant and task before converting.';
-    default:
-      return '';
-  }
 };
 
 /**
@@ -655,165 +603,6 @@ NeedsAttentionPanel.propTypes = {
 };
 
 /**
- * PreviewPanel - preview each proposed BIDS output and preflight the batch.
- *
- * Every included recording shows the exact BIDS destination it would be written
- * to and a verdict from output preflight: new (ready), already processed,
- * conflicting, excluded, or unresolved. Only "new" recordings are counted into
- * the run; the summary states exactly how many will convert and how many, and
- * why, will be skipped. Choosing the BIDS output folder lets preflight detect
- * outputs that already exist so they are never overwritten. Nothing here writes
- * to disk — the folder is only read to list what already exists.
- * @param {object} props
- * @param {object} props.preflight - the preflight result for the batch
- * @param {string} props.modality - the modality the preview assumes
- * @param {function} props.onModality - (modality) modality-change handler
- * @param {?string} props.outputRoot - the chosen BIDS output folder, if any
- * @param {boolean} props.checking - whether the output folder is being scanned
- * @param {function} props.onChooseOutput - (id, root) output-folder handler
- * @param {function} props.onToggleExclude - (id, excluded) exclusion handler
- * @return {JSX.Element}
- */
-const PreviewPanel = ({preflight, modality, onModality, outputRoot,
-  checking, onChooseOutput, onToggleExclude}) => {
-  const {recordings, counts, readyCount, total} = preflight;
-  const skipped = total - readyCount;
-
-  // The skipped categories, in the order they are worth the user's attention.
-  const skipOrder = [
-    PREFLIGHT_STATUS.CONFLICT,
-    PREFLIGHT_STATUS.UNRESOLVED,
-    PREFLIGHT_STATUS.ALREADY_PROCESSED,
-    PREFLIGHT_STATUS.EXCLUDED,
-  ];
-
-  return (
-    <div className='bw-preview-panel'>
-      <div className='bw-preview-controls'>
-        <div className='bw-modality' role='radiogroup' aria-label='Modality'>
-          <span>Modality</span>
-          {PREVIEW_MODALITIES.map((name) => (
-            <button
-              type='button'
-              key={name}
-              role='radio'
-              aria-checked={modality === name}
-              className={modality === name ? 'active' : ''}
-              onClick={() => onModality(name)}
-            >
-              {MODALITY_LABELS[name] || name}
-            </button>
-          ))}
-        </div>
-        <div className='bw-output-dir'>
-          <DirectoryInput id='batchOutputDir'
-            name='batchOutputDir'
-            label='BIDS output folder'
-            placeholder={outputRoot || 'No output folder checked'}
-            onUserInput={onChooseOutput}
-            help='Read (never written) to detect recordings already present in
-            the dataset so existing outputs are never overwritten.'
-          />
-          <small>
-            {checking ?
-              'Checking existing outputs…' :
-              outputRoot ?
-                'Existing outputs at this destination are detected and ' +
-                  'skipped.' :
-                'Choose the destination to check for already-processed ' +
-                  'recordings; without it every recording looks new.'}
-          </small>
-        </div>
-      </div>
-
-      <div className='bw-run-summary' role='status'>
-        <span className='bw-run-go'>
-          <b>{readyCount}</b> will convert
-        </span>
-        <span className='bw-run-skip'>
-          <b>{skipped}</b> skipped
-        </span>
-        {skipOrder.filter((status) => counts[status] > 0).map((status) => (
-          <span
-            key={status}
-            className={`bw-run-tag ${STATUS_META[status].className}`}
-          >
-            {counts[status]} {STATUS_META[status].label.toLowerCase()}
-          </span>
-        ))}
-      </div>
-
-      {total === 0 ? (
-        <p className='bw-empty'>
-          No recordings to preview yet. Add recordings and assign a participant
-          and task to see their proposed BIDS destinations here.
-        </p>
-      ) : (
-        <div className='bw-table bw-preview-table' role='table'>
-          <div className='bw-row bw-head' role='row'>
-            <span>Recording</span>
-            <span>Proposed BIDS destination</span>
-            <span>Status</span>
-            <span/>
-          </div>
-          {recordings.map((row) => (
-            <div
-              className={row.status === PREFLIGHT_STATUS.NEW ?
-                'bw-row' : 'bw-row bw-row-skip'}
-              role='row'
-              key={row.id}
-            >
-              <span className='bw-file' title={row.sourceFile}>
-                <strong>{row.filename}</strong>
-                <small>{row.sourceFile}</small>
-              </span>
-              <span className='bw-dest'>
-                {row.destination ? (
-                  <code title={row.destination.path}>
-                    {row.destination.path}
-                  </code>
-                ) : (
-                  <em className='bw-dest-none'>
-                    {skipReason(row)}
-                  </em>
-                )}
-              </span>
-              <span
-                className={`bw-badge ${STATUS_META[row.status].className}`}
-                title={row.status === PREFLIGHT_STATUS.NEW ?
-                  'Ready to convert' : skipReason(row)}
-              >
-                {STATUS_META[row.status].label}
-              </span>
-              <button
-                type='button'
-                className='bw-btn bw-exclude'
-                aria-pressed={row.excluded}
-                title={row.excluded ?
-                  'Include this recording in the batch' :
-                  'Exclude this recording from conversion'}
-                onClick={() => onToggleExclude(row.id, !row.excluded)}
-              >
-                {row.excluded ? 'Include' : 'Exclude'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-PreviewPanel.propTypes = {
-  preflight: PropTypes.object,
-  modality: PropTypes.string,
-  onModality: PropTypes.func,
-  outputRoot: PropTypes.string,
-  checking: PropTypes.bool,
-  onChooseOutput: PropTypes.func,
-  onToggleExclude: PropTypes.func,
-};
-
-/**
  * addAndPrefill - append recordings, then pre-fill only the new rows.
  * Pre-filling is scoped to the rows just added so a field the user has already
  * edited or cleared on an existing row is never re-filled.
@@ -840,56 +629,24 @@ const addAndPrefill = (manifest, files) => {
  * token mapping (previewed before it is applied); either way individual rows
  * stay correctable. Participants are reviewed on their own surface — renamed
  * (propagating to every linked recording), given demographics, traced to their
- * recordings, and checked for near-duplicate ids. The validated manifest is
- * published to the app context as `batchManifest` for later slices to consume.
+ * recordings, and checked for near-duplicate ids. Saving the versioned manifest
+ * or explicitly loading it into Configuration is handled by the handoff slice.
  * @param {object} props
  * @param {boolean} props.visible - whether this view is active
  * @return {JSX.Element}
  */
 const BatchWorkbench = (props) => {
-  const appContext = useContext(AppContext);
   const [manifest, setManifest] = useState(createManifest());
   const [section, setSection] = useState('recordings');
   const [selected, setSelected] = useState(() => new Set());
   const [needsAttention, setNeedsAttention] = useState([]);
   const [scanInfo, setScanInfo] = useState(null);
   const [scanning, setScanning] = useState(false);
-  // Modality is a shared, explicit conversion setting (the same one the
-  // Configuration step records), not a preview-only toggle: it is seeded from
-  // the app context and written back on change, so the destination it drives is
-  // an explicit choice consistent with the rest of the app rather than
-  // ephemeral local state.
-  const [modality, setModality] = useState(
-      () => appContext.getFromTask('modality') || DEFAULT_MODALITY);
-  const [outputRoot, setOutputRoot] = useState(null);
-  const [existingOutputs, setExistingOutputs] = useState([]);
-  const [checkingOutputs, setCheckingOutputs] = useState(false);
 
   const validated = useMemo(() => validateManifest(manifest), [manifest]);
   const participants = useMemo(() => getParticipants(manifest), [manifest]);
   const conflicts = useMemo(
       () => findParticipantConflicts(manifest), [manifest]);
-
-  // Preflight the batch against what already exists at the chosen destination.
-  // This reads only the final manifest assignments (never rerunning inference
-  // or mappings) and the existing-output list; it performs no I/O itself.
-  const preflight = useMemo(
-      () => preflightBatch(manifest, existingOutputs,
-          {modality, root: outputRoot || ''}),
-      [manifest, existingOutputs, modality, outputRoot]);
-
-  // Publish the explicit, validated manifest as the contract later slices
-  // consume. Kept in the shared app task context alongside the rest of the
-  // wizard's state.
-  useEffect(() => {
-    appContext.setTask('batchManifest', toManifest(manifest));
-  }, [manifest]);
-
-  // Publish the preflight verdict so the conversion slice consumes an
-  // already-classified ready set rather than re-deriving destinations.
-  useEffect(() => {
-    appContext.setTask('batchPreflight', preflight);
-  }, [preflight]);
 
   // Selection only ever references live recording ids; drop ids for rows that
   // have since been removed so counts and bulk targets stay accurate.
@@ -974,38 +731,8 @@ const BatchWorkbench = (props) => {
   const onChangeRow = (id, changes) =>
     setManifest((current) => updateRecording(current, id, changes));
 
-  const onToggleExclude = (id, excluded) =>
-    setManifest((current) => setRecordingExcluded(current, id, excluded));
-
-  // Record the modality as the shared app-level choice so the previewed
-  // destination and the eventual conversion agree on datatype and acquisition.
-  const onModality = (name) => {
-    setModality(name);
-    appContext.setTask('modality', name);
-  };
-
   const onRemoveRow = (id) =>
     setManifest((current) => removeRecording(current, id));
-
-  /**
-   * onChooseOutput - scan the chosen BIDS output folder for existing outputs.
-   * The folder is only read: its file list feeds preflight so recordings whose
-   * destination already exists are detected and never overwritten. An empty or
-   * unreadable folder simply yields no existing outputs.
-   * @param {string} _ - input id (unused)
-   * @param {string} root - the selected BIDS output folder
-   */
-  const onChooseOutput = async (_, root) => {
-    if (!root || !window.eeg2bids?.scanDirectory) return;
-    setOutputRoot(root);
-    setCheckingOutputs(true);
-    try {
-      const paths = await window.eeg2bids.scanDirectory(root);
-      setExistingOutputs(paths);
-    } finally {
-      setCheckingOutputs(false);
-    }
-  };
 
   const onRenameParticipant = (fromId, toId) =>
     setManifest((current) => renameParticipant(current, fromId, toId));
@@ -1101,13 +828,6 @@ const BatchWorkbench = (props) => {
         >
           Needs attention ({needsAttention.length})
         </button>
-        <button
-          type='button'
-          className={section === 'preview' ? 'active' : ''}
-          onClick={() => setSection('preview')}
-        >
-          Preview &amp; convert ({preflight.readyCount})
-        </button>
       </div>
 
       {section === 'participants' ? (
@@ -1119,16 +839,6 @@ const BatchWorkbench = (props) => {
         />
       ) : section === 'attention' ? (
         <NeedsAttentionPanel items={needsAttention}/>
-      ) : section === 'preview' ? (
-        <PreviewPanel
-          preflight={preflight}
-          modality={modality}
-          onModality={onModality}
-          outputRoot={outputRoot}
-          checking={checkingOutputs}
-          onChooseOutput={onChooseOutput}
-          onToggleExclude={onToggleExclude}
-        />
       ) : (
         <>
           {totalCount > 0 && (
