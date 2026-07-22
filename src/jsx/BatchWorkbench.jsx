@@ -15,6 +15,7 @@ import {
   toManifest,
 } from './types/batchManifest';
 import {discoverRecordings, ATTENTION_REASONS} from './types/batchDiscovery';
+import {inferRecordingFields, prefillFromPaths} from './types/batchInference';
 
 // Human-readable explanation for each reason a discovered file is held out of
 // the ready conversion set. Keyed by the discovery module's reason codes.
@@ -76,21 +77,30 @@ const RecordingsTable = ({rows, onChange, onRemove}) => {
 
   /**
    * field - an inline assignment input flagged when invalid.
+   * A field still holding the value read from its filename entity is marked
+   * "from filename"; the mark disappears once the user edits it away.
    * @param {object} row - the recording row
    * @param {string} name - the assignment field name
    * @param {string} placeholder - the input placeholder
+   * @param {Object<string, string>} inferred - proven values for this row
    * @return {JSX.Element}
    */
-  const field = (row, name, placeholder) => (
-    <input
-      className={row.errors[name] ? 'bw-input bw-invalid' : 'bw-input'}
-      value={row[name]}
-      placeholder={placeholder}
-      title={row.errors[name] || ''}
-      aria-label={`${name} for ${row.filename}`}
-      onChange={(e) => onChange(row.id, {[name]: e.target.value})}
-    />
-  );
+  const field = (row, name, placeholder, inferred) => {
+    const fromFilename = !!inferred[name] && inferred[name] === row[name];
+    return (
+      <div className='bw-cell'>
+        <input
+          className={row.errors[name] ? 'bw-input bw-invalid' : 'bw-input'}
+          value={row[name]}
+          placeholder={placeholder}
+          title={row.errors[name] || ''}
+          aria-label={`${name} for ${row.filename}`}
+          onChange={(e) => onChange(row.id, {[name]: e.target.value})}
+        />
+        {fromFilename && <small className='bw-from'>from filename</small>}
+      </div>
+    );
+  };
 
   return (
     <div className='bw-table' role='table'>
@@ -103,36 +113,39 @@ const RecordingsTable = ({rows, onChange, onRemove}) => {
         <span>Status</span>
         <span/>
       </div>
-      {rows.map((row) => (
-        <div className='bw-row' role='row' key={row.id}>
-          <span className='bw-file' title={row.sourceFile}>
-            <strong>{row.filename}</strong>
-            <small>{row.sourceFile}</small>
-            {row.companions && row.companions.length > 0 && (
-              <small
-                className='bw-companions'
-                title={row.companions.join('\n')}
-              >
-                + {pluralize(row.companions.length, 'companion file')}
-              </small>
-            )}
-          </span>
-          {field(row, 'participant', 'Required')}
-          {field(row, 'session', 'Optional')}
-          {field(row, 'task', 'Required')}
-          {field(row, 'run', 'Optional')}
-          <ReadinessBadge ready={row.ready} errors={row.errors}/>
-          <button
-            type='button'
-            className='bw-remove'
-            aria-label={`Remove ${row.filename}`}
-            title='Remove from batch'
-            onClick={() => onRemove(row.id)}
-          >
-            &times;
-          </button>
-        </div>
-      ))}
+      {rows.map((row) => {
+        const inferred = inferRecordingFields(row);
+        return (
+          <div className='bw-row' role='row' key={row.id}>
+            <span className='bw-file' title={row.sourceFile}>
+              <strong>{row.filename}</strong>
+              <small>{row.sourceFile}</small>
+              {row.companions && row.companions.length > 0 && (
+                <small
+                  className='bw-companions'
+                  title={row.companions.join('\n')}
+                >
+                  + {pluralize(row.companions.length, 'companion file')}
+                </small>
+              )}
+            </span>
+            {field(row, 'participant', 'Required', inferred)}
+            {field(row, 'session', 'Optional', inferred)}
+            {field(row, 'task', 'Required', inferred)}
+            {field(row, 'run', 'Optional', inferred)}
+            <ReadinessBadge ready={row.ready} errors={row.errors}/>
+            <button
+              type='button'
+              className='bw-remove'
+              aria-label={`Remove ${row.filename}`}
+              title='Remove from batch'
+              onClick={() => onRemove(row.id)}
+            >
+              &times;
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -235,15 +248,34 @@ NeedsAttentionPanel.propTypes = {
 };
 
 /**
+ * addAndPrefill - append recordings, then pre-fill only the new rows.
+ * Pre-filling is scoped to the rows just added so a field the user has already
+ * edited or cleared on an existing row is never re-filled.
+ * @param {object} manifest - the current manifest
+ * @param {Array<object>} files - files to add (see addRecordings)
+ * @return {object} a new manifest with the new rows added and pre-filled
+ */
+const addAndPrefill = (manifest, files) => {
+  const withAdded = addRecordings(manifest, files);
+  const existing = new Set(manifest.recordings.map((row) => row.id));
+  const newIds = withAdded.recordings
+      .filter((row) => !existing.has(row.id))
+      .map((row) => row.id);
+  return prefillFromPaths(withAdded, newIds);
+};
+
+/**
  * BatchWorkbench - manually populated batch import workbench.
  *
- * Users select multiple recording entry-point files; each becomes one
- * independently editable recording row with explicit participant, session,
- * task and run assignments. Participant IDs can be renamed with the change
+ * Users add recording entry-point files (by selection or by scanning a
+ * folder); each becomes one independently editable recording row with explicit
+ * participant, session, task and run assignments. Any metadata stated by a
+ * canonical BIDS entity in the source path (e.g. `sub-01`, `task-rest`) is
+ * pre-filled into the row on import and marked "from filename"; everything else
+ * is left blank for the user. Participant IDs can be renamed with the change
  * propagating to every linked recording, and each row exposes its own
  * readiness. The validated manifest is published to the app context as
- * `batchManifest` for later slices (discovery, preview, conversion) to
- * consume. Recursive discovery and conversion are out of scope here.
+ * `batchManifest` for later slices (preview, conversion) to consume.
  * @param {object} props
  * @param {boolean} props.visible - whether this view is active
  * @return {JSX.Element}
@@ -272,7 +304,7 @@ const BatchWorkbench = (props) => {
    * @param {File[]} files - selected files with a resolved native path
    */
   const onSelectFiles = (_, files) => {
-    setManifest((current) => addRecordings(current, files.map((file) => ({
+    setManifest((current) => addAndPrefill(current, files.map((file) => ({
       name: file.name,
       path: file.path,
     }))));
@@ -293,7 +325,7 @@ const BatchWorkbench = (props) => {
     try {
       const paths = await window.eeg2bids.scanDirectory(root);
       const result = discoverRecordings(paths);
-      setManifest((current) => addRecordings(current,
+      setManifest((current) => addAndPrefill(current,
           result.recordings.map((rec) => ({
             name: rec.filename,
             path: rec.sourceFile,
