@@ -18,6 +18,12 @@ contextBridge.exposeInMainWorld('eeg2bids', {
   selectDirectory: () => ipcRenderer.invoke('dialog:select-directory'),
   // Recursively list every file under a chosen root, for batch discovery.
   scanDirectory: (root) => ipcRenderer.invoke('discovery:scan-directory', root),
+  // Save a serialized batch manifest to a user-chosen file; returns its path.
+  saveBatchFile: (payload) => ipcRenderer.invoke('batch:save', payload),
+  // Open a batch manifest file; returns {filePath, data} or null if cancelled.
+  openBatchFile: () => ipcRenderer.invoke('batch:open'),
+  // Stat source paths so a reopened manifest can be reconciled against disk.
+  statPaths: (paths) => ipcRenderer.invoke('files:stat', paths),
   openExternal: (url) => ipcRenderer.invoke('links:open-external', url),
   getLorisAuthenticationCredentials: () =>
     ipcRenderer.invoke('credentials:get'),

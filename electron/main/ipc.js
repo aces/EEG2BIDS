@@ -4,6 +4,7 @@ const credentials = require('./credentials');
 const {openExternal} = require('./external-links');
 const backendService = require('./backend-service');
 const {scanDirectory} = require('./discovery');
+const {saveBatchFile, openBatchFile, statPaths} = require('./batch-io');
 
 /**
  * Register an invocable IPC channel. Failures are logged in the launching
@@ -44,6 +45,16 @@ const registerIpcHandlers = () => {
   });
 
   handle('discovery:scan-directory', (event, root) => scanDirectory(root));
+
+  handle('batch:save', (event, payload) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    return saveBatchFile(window, payload);
+  });
+  handle('batch:open', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    return openBatchFile(window);
+  });
+  handle('files:stat', (event, paths) => statPaths(paths));
 
   handle('links:open-external', (event, url) => openExternal(url));
 

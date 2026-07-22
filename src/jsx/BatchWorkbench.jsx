@@ -1,5 +1,6 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import PropTypes from 'prop-types';
+import {AppContext} from '../context';
 import '../css/BatchWorkbench.css';
 
 import {FileInput, DirectoryInput} from './elements/inputs';
@@ -25,6 +26,7 @@ import {
   MAPPING_FIELDS,
   MAPPING_SOURCES,
 } from './types/batchMapping';
+import {serializeManifest} from './types/batchFile';
 
 // Human-readable explanation for each reason a discovered file is held out of
 // the ready conversion set. Keyed by the discovery module's reason codes.
@@ -603,6 +605,130 @@ NeedsAttentionPanel.propTypes = {
 };
 
 /**
+ * ReviewPanel - the final review-and-handoff surface.
+ *
+ * It summarises the manifest's completeness — participant and recording counts,
+ * how many recordings are included versus excluded, how many are ready versus
+ * unresolved, and any validation problems — and offers the two workbench
+ * handoff actions: save the versioned manifest to a file, or load it straight
+ * into Configuration. This is a manifest review, deliberately NOT a conversion
+ * preview: it selects no output directory or modality, proposes no BIDS
+ * destinations, runs no output preflight, and starts no conversion. Those
+ * dataset-wide, output-facing responsibilities belong to Configuration and
+ * Recording to BIDS.
+ * @param {object} props
+ * @param {object[]} props.participants - distinct assigned participants
+ * @param {object[]} props.recordings - validated recordings (ready + errors)
+ * @param {Array} props.conflicts - groups of near-duplicate participant labels
+ * @param {?object} props.handoff - last save/handoff status {kind, message}
+ * @param {boolean} props.busy - whether a save/handoff is in progress
+ * @param {function} props.onSave - save-batch-file handler
+ * @param {function} props.onLoad - load-into-Configuration handler
+ * @return {JSX.Element}
+ */
+const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
+  onSave, onLoad}) => {
+  const included = recordings.filter((row) => !row.excluded);
+  const excludedCount = recordings.length - included.length;
+  const readyCount = included.filter((row) => row.ready).length;
+  const unresolved = included.filter((row) => !row.ready);
+
+  // Every reason this manifest is not yet internally consistent, phrased for
+  // the person handing it off. These are manifest problems only (unresolved
+  // assignments and duplicate participant ids) — never output or conversion
+  // concerns, which this surface does not touch.
+  const problems = [
+    ...unresolved.map((row) => ({
+      key: `unresolved-${row.id}`,
+      text: `${row.filename}: ${Object.values(row.errors)[0]}`,
+    })),
+    ...conflicts.map((group) => ({
+      key: `conflict-${group.join('|')}`,
+      text: `Possible duplicate participant: ${group.join(' · ')}`,
+    })),
+  ];
+
+  const empty = recordings.length === 0;
+
+  return (
+    <div className='bw-review'>
+      <div className='bw-review-stats' data-testid='batch-review-stats'>
+        <span><b>{participants.length}</b> participants</span>
+        <span><b>{recordings.length}</b> recordings</span>
+        <span><b>{included.length}</b> included</span>
+        <span><b>{excludedCount}</b> excluded</span>
+        <span><b>{readyCount}</b> ready</span>
+        <span><b>{unresolved.length}</b> unresolved</span>
+      </div>
+
+      {empty ? (
+        <p className='bw-empty'>
+          Nothing to review yet. Add recordings and assign them, then return
+          here to save the batch or load it into Configuration.
+        </p>
+      ) : problems.length === 0 ? (
+        <p className='bw-review-ok'>
+          <span className='bw-badge bw-ready'>Complete</span>
+          Every included recording is ready and participant ids are
+          unambiguous.
+        </p>
+      ) : (
+        <div className='bw-review-problems'>
+          <b>{pluralize(problems.length, 'item')} to resolve</b>
+          <ul>
+            {problems.map((problem) => (
+              <li key={problem.key}>{problem.text}</li>
+            ))}
+          </ul>
+          <small>
+            You can still save or hand off the batch; unresolved recordings are
+            simply held out of the ready set.
+          </small>
+        </div>
+      )}
+
+      <div className='bw-handoff-actions'>
+        <button
+          type='button'
+          className='bw-btn'
+          disabled={empty || busy}
+          onClick={onSave}
+        >
+          Save batch file
+        </button>
+        <button
+          type='button'
+          className='bw-btn bw-btn-primary'
+          disabled={empty || busy}
+          onClick={onLoad}
+        >
+          Load into Configuration
+        </button>
+      </div>
+
+      {handoff && (
+        <p
+          className={handoff.kind === 'error' ?
+            'bw-handoff-msg bw-handoff-error' : 'bw-handoff-msg'}
+          role='status'
+        >
+          {handoff.message}
+        </p>
+      )}
+    </div>
+  );
+};
+ReviewPanel.propTypes = {
+  participants: PropTypes.array,
+  recordings: PropTypes.array,
+  conflicts: PropTypes.array,
+  handoff: PropTypes.object,
+  busy: PropTypes.bool,
+  onSave: PropTypes.func,
+  onLoad: PropTypes.func,
+};
+
+/**
  * addAndPrefill - append recordings, then pre-fill only the new rows.
  * Pre-filling is scoped to the rows just added so a field the user has already
  * edited or cleared on an existing row is never re-filled.
@@ -636,12 +762,15 @@ const addAndPrefill = (manifest, files) => {
  * @return {JSX.Element}
  */
 const BatchWorkbench = (props) => {
+  const appContext = useContext(AppContext);
   const [manifest, setManifest] = useState(createManifest());
   const [section, setSection] = useState('recordings');
   const [selected, setSelected] = useState(() => new Set());
   const [needsAttention, setNeedsAttention] = useState([]);
   const [scanInfo, setScanInfo] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [handoff, setHandoff] = useState(null);
+  const [handoffBusy, setHandoffBusy] = useState(false);
 
   const validated = useMemo(() => validateManifest(manifest), [manifest]);
   const participants = useMemo(() => getParticipants(manifest), [manifest]);
@@ -740,6 +869,60 @@ const BatchWorkbench = (props) => {
   const onUpdateDemographics = (participant, changes) =>
     setManifest((current) => updateDemographics(current, participant, changes));
 
+  /**
+   * onSaveBatchFile - write the versioned manifest to a user-chosen file.
+   * The current sources are statted first so the saved document records a
+   * signature per recording; reopening can then report whether each source is
+   * still present, missing, or changed. Saving is the only writer of a batch
+   * file and happens only on this explicit action.
+   */
+  const onSaveBatchFile = async () => {
+    if (!window.eeg2bids?.saveBatchFile) return;
+    setHandoffBusy(true);
+    try {
+      const paths = manifest.recordings.map((row) => row.sourceFile);
+      const signatures = window.eeg2bids.statPaths ?
+        await window.eeg2bids.statPaths(paths) : {};
+      const data = serializeManifest(manifest, {signatures});
+      const savedPath = await window.eeg2bids.saveBatchFile({
+        suggestedName: 'batch-manifest.json',
+        data,
+      });
+      setHandoff(savedPath ?
+        {kind: 'ok', message: `Saved batch file to ${savedPath}`} :
+        null);
+    } catch (error) {
+      setHandoff({kind: 'error',
+        message: `Could not save the batch file: ${error.message}`});
+    } finally {
+      setHandoffBusy(false);
+    }
+  };
+
+  /**
+   * onLoadIntoConfiguration - hand the manifest to Configuration in memory.
+   * The same serialized representation used for a file is published as the
+   * active batch and Configuration is opened. No file is written or chosen:
+   * this is the direct, in-memory equivalent of saving then reopening, and it
+   * captures the same per-recording source signatures so the in-memory and
+   * file paths produce an equivalent active batch.
+   */
+  const onLoadIntoConfiguration = async () => {
+    setHandoffBusy(true);
+    try {
+      const paths = manifest.recordings.map((row) => row.sourceFile);
+      const signatures = window.eeg2bids?.statPaths ?
+        await window.eeg2bids.statPaths(paths) : {};
+      appContext.setTask('activeBatch',
+          serializeManifest(manifest, {signatures}));
+      setHandoff({kind: 'ok',
+        message: 'Loaded the batch into Configuration.'});
+      appContext.setAppMode('Configuration');
+    } finally {
+      setHandoffBusy(false);
+    }
+  };
+
   const {totalCount, readyCount} = validated;
   const percent = totalCount ? Math.round((readyCount / totalCount) * 100) : 0;
 
@@ -828,9 +1011,26 @@ const BatchWorkbench = (props) => {
         >
           Needs attention ({needsAttention.length})
         </button>
+        <button
+          type='button'
+          className={section === 'review' ? 'active' : ''}
+          onClick={() => setSection('review')}
+        >
+          Review &amp; handoff
+        </button>
       </div>
 
-      {section === 'participants' ? (
+      {section === 'review' ? (
+        <ReviewPanel
+          participants={participants}
+          recordings={validated.recordings}
+          conflicts={conflicts}
+          handoff={handoff}
+          busy={handoffBusy}
+          onSave={onSaveBatchFile}
+          onLoad={onLoadIntoConfiguration}
+        />
+      ) : section === 'participants' ? (
         <ParticipantsPanel
           participants={participants}
           conflicts={conflicts}

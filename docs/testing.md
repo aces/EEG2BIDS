@@ -76,10 +76,13 @@ readiness, participant-link propagation, bulk assignment, demographics,
 exclusion); recursive discovery (`src/jsx/types/batchDiscovery.js`: nested entry
 points, companion grouping, needs-attention classification, deterministic
 ordering); canonical-entity inference (`batchInference.js`) and token mapping
-(`batchMapping.js`); and output preview/preflight (`batchPreview.js`: proposed
+(`batchMapping.js`); output preview/preflight (`batchPreview.js`: proposed
 BIDS destinations, and the new/matching/conflicting/collision classification
-with its no-mutation guarantee). Add unit tests here for new pure renderer
-logic; reserve the Electron suite for behavior that needs the running app.
+with its no-mutation guarantee); and the versioned batch file
+(`batchFile.js`: schema versioning, save/load round trips, equivalent
+in-memory and file handoff, and per-recording present/missing/changed source
+reconciliation). Add unit tests here for new pure renderer logic; reserve the
+Electron suite for behavior that needs the running app.
 
 ## Electron integration suite
 
@@ -91,7 +94,10 @@ npm run test:electron
 
 This command first creates a production renderer build and then runs the tests
 in `electron/tests/`. The suite runs serially because each test controls an
-Electron application and its owned Python backend.
+Electron application and its owned Python backend. It covers the preload bridge
+contract, backend lifecycle, credential isolation, and the native-boundary
+operations that stub the OS dialogs at runtime (directory selection, external
+links, and the batch file save/open/stat round trip in `batch-io.spec.js`).
 
 The launch fixture reserves an available backend port and creates an isolated
 temporary Electron `userData` directory for every application instance. Tests

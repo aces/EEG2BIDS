@@ -460,6 +460,74 @@
   padding-left: 18px;
 }
 
+/* Review & handoff surface */
+.bw-review {
+  padding: 4px 2px 12px;
+}
+
+.bw-review-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  color: #475467;
+}
+
+.bw-review-stats b {
+  font-size: 18px;
+  color: #101828;
+  margin-right: 4px;
+}
+
+.bw-review-ok {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  color: #475467;
+}
+
+.bw-review-problems {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: #fffbfa;
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+  color: #b42318;
+}
+
+.bw-review-problems ul {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+.bw-review-problems small {
+  color: #667085;
+}
+
+.bw-handoff-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.bw-handoff-actions .bw-btn-primary {
+  margin-top: 0;
+}
+
+.bw-handoff-msg {
+  margin-top: 12px;
+  color: #027a48;
+}
+
+.bw-handoff-error {
+  color: #b42318;
+}
+
 @media (max-width: 850px) {
   .bw-row,
   .bw-head {
