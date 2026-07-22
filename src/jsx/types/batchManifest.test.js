@@ -4,6 +4,7 @@ import {
   addRecordings,
   updateRecording,
   bulkAssign,
+  setRecordingExcluded,
   removeRecording,
   renameParticipant,
   updateDemographics,
@@ -66,6 +67,11 @@ describe('addRecordings', () => {
     const [row] = seed([twoFiles[0]]).recordings;
     expect(row.format).toBe('');
     expect(row.companions).toEqual([]);
+  });
+
+  it('starts every recording included (not excluded)', () => {
+    const [row] = seed([twoFiles[0]]).recordings;
+    expect(row.excluded).toBe(false);
   });
 
   it('carries a discovered format and companion files onto the row', () => {
@@ -238,6 +244,30 @@ describe('removeRecording', () => {
     const kept = removeRecording(manifest, manifest.recordings[0].id);
     expect(kept.recordings).toHaveLength(1);
     expect(kept.recordings[0].id).toBe(manifest.recordings[1].id);
+  });
+});
+
+describe('setRecordingExcluded', () => {
+  it('excludes only the named row and keeps the rest included', () => {
+    const manifest = seed(twoFiles);
+    const id = manifest.recordings[0].id;
+    const next = setRecordingExcluded(manifest, id, true);
+    expect(next.recordings[0].excluded).toBe(true);
+    expect(next.recordings[1].excluded).toBe(false);
+  });
+
+  it('re-includes a previously excluded row', () => {
+    const manifest = seed(twoFiles);
+    const id = manifest.recordings[0].id;
+    const excluded = setRecordingExcluded(manifest, id, true);
+    const included = setRecordingExcluded(excluded, id, false);
+    expect(included.recordings[0].excluded).toBe(false);
+  });
+
+  it('does not mutate the input manifest', () => {
+    const manifest = seed(twoFiles);
+    setRecordingExcluded(manifest, manifest.recordings[0].id, true);
+    expect(manifest.recordings[0].excluded).toBe(false);
   });
 });
 

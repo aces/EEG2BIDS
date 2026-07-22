@@ -70,13 +70,16 @@ npm run test:unit
 
 The suite lives alongside the code it covers as `*.test.js` files under `src/`
 and runs in a Node environment without the app's Vite/React/CSP plumbing, so it
-is fast and needs no display. It currently covers the batch workbench manifest
-model (`src/jsx/types/batchManifest.js`): manifest validation and readiness,
-and participant-link propagation; and recursive discovery
-(`src/jsx/types/batchDiscovery.js`): nested entry points, companion grouping,
-needs-attention classification, and deterministic ordering. Add unit tests here
-for new pure renderer logic; reserve the Electron suite for behavior that needs
-the running app.
+is fast and needs no display. It currently covers the batch workbench pure
+modules: the manifest model (`src/jsx/types/batchManifest.js`: validation and
+readiness, participant-link propagation, bulk assignment, demographics,
+exclusion); recursive discovery (`src/jsx/types/batchDiscovery.js`: nested entry
+points, companion grouping, needs-attention classification, deterministic
+ordering); canonical-entity inference (`batchInference.js`) and token mapping
+(`batchMapping.js`); and output preview/preflight (`batchPreview.js`: proposed
+BIDS destinations, and the new/matching/conflicting/collision classification
+with its no-mutation guarantee). Add unit tests here for new pure renderer
+logic; reserve the Electron suite for behavior that needs the running app.
 
 ## Electron integration suite
 

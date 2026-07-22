@@ -123,6 +123,7 @@ export function addRecordings(manifest, files) {
       filename: file.name || basename(file.path),
       format: file.format || '',
       companions: file.companions || [],
+      excluded: false,
       participant: '',
       session: '',
       task: '',
@@ -165,6 +166,25 @@ export function bulkAssign(manifest, ids, changes) {
     ...manifest,
     recordings: manifest.recordings.map((row) =>
       target.has(row.id) ? {...row, ...changes} : row),
+  };
+}
+
+/**
+ * setRecordingExcluded - include or exclude a recording from conversion.
+ * An excluded recording stays in the batch (visible and still editable) but is
+ * deliberately held out of the ready-to-convert set by preflight, so a file the
+ * user wants to keep on record but not convert never enters conversion. This is
+ * distinct from removeRecording, which drops the row entirely.
+ * @param {object} manifest - the current manifest
+ * @param {string} id - the recording id to include/exclude
+ * @param {boolean} excluded - true to exclude, false to include
+ * @return {object} a new manifest with the row's excluded flag set
+ */
+export function setRecordingExcluded(manifest, id, excluded) {
+  return {
+    ...manifest,
+    recordings: manifest.recordings.map((row) =>
+      row.id === id ? {...row, excluded: !!excluded} : row),
   };
 }
 
