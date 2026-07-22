@@ -104,6 +104,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Renderer unit suite (Vitest): pure logic such as the batch workbench
+      # manifest model. Fast and display-free, so it runs alongside lint/build
+      # rather than in the Electron job.
+      - name: Unit tests
+        run: npm run test:unit
+
       - name: Production renderer build
         run: npm run build
 

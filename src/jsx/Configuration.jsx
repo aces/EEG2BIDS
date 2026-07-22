@@ -1,4 +1,10 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import { Tooltip } from 'react-tooltip';
@@ -7,6 +13,12 @@ import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import Papa from 'papaparse';
+import {
+  deserializeManifest,
+  reconcileSources,
+  SOURCE_STATUS,
+} from './types/batchFile';
+import {validateManifest, getParticipants} from './types/batchManifest';
 
 // Components
 import {
@@ -32,6 +44,104 @@ import '../css/Converter.css';
 
 // Display Loading, Success, Error
 import Modal from './elements/modal';
+
+/**
+ * formatPass - a passing status line.
+ * @param {*} msg - the message
+ * @return {JSX.Element}
+ */
+const formatPass = (msg) => (
+  <>
+    <span className='checkmark'>&#x2714;</span>
+    {msg}
+  </>
+);
+
+/**
+ * formatWarning - a warning status line.
+ * @param {*} msg - the message
+ * @return {JSX.Element}
+ */
+const formatWarning = (msg) => (
+  <>
+    <span className='warning'>&#x26A0;</span> {msg}
+  </>
+);
+
+// Per-recording source reconciliation labels for a reopened batch. A batch
+// always opens: a missing or changed source is reported here rather than
+// blocking, so the user can decide what to do about it.
+const BATCH_SOURCE_META = {
+  [SOURCE_STATUS.MISSING]:
+    {label: 'source missing', className: 'error', glyph: '❌'},
+  [SOURCE_STATUS.CHANGED]:
+    {label: 'source changed', className: 'warning', glyph: '⚠'},
+};
+
+/**
+ * ActiveBatchPanel - summarise the batch established in Configuration.
+ *
+ * This reports the reconstructed manifest (participant and recording counts,
+ * readiness) and reconciles each recording's source against disk, so a batch
+ * handed off in memory or reopened from a file is shown identically. It is a
+ * read-only summary: it establishes the batch as active without rewriting the
+ * source manifest, and leaves output directory, modality and conversion to the
+ * ordinary Configuration controls below.
+ * @param {object} props
+ * @param {object} props.batch - the deserialized batch {manifest, version,
+ *   problems, origin, filePath?}
+ * @param {Array} props.sources - per-recording reconciliation verdicts
+ * @return {JSX.Element}
+ */
+const ActiveBatchPanel = ({batch, sources}) => {
+  const {manifest, problems, origin, filePath} = batch;
+  const validated = validateManifest(manifest);
+  const participants = getParticipants(manifest);
+  const unresolved = sources.filter(
+      (source) => source.status !== SOURCE_STATUS.PRESENT);
+
+  return (
+    <div className='small-pad' data-testid='active-batch'>
+      <div>
+        <span className='checkmark'>&#x2714;</span>
+        <b>Active batch</b>
+        {filePath ?
+          <span> from {filePath}</span> :
+          origin === 'handoff' ?
+            <span> loaded from the Batch workbench</span> :
+            null}
+      </div>
+      <div style={{paddingLeft: '24px'}}>
+        <div>
+          {participants.length} participants, {validated.totalCount} recordings
+          ({validated.readyCount} ready)
+        </div>
+        {problems.map((problem, i) => (
+          <div key={`batch-problem-${i}`}>
+            {formatWarning(problem)}
+          </div>
+        ))}
+        {unresolved.length === 0 ? (
+          <div>{formatPass('All recording sources are present.')}</div>
+        ) : (
+          unresolved.map((source) => {
+            const meta = BATCH_SOURCE_META[source.status];
+            return (
+              <div key={source.id}>
+                <span className={meta.className}>{meta.glyph}</span>{' '}
+                {source.sourceFile} — {meta.label}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
+ActiveBatchPanel.propTypes = {
+  batch: PropTypes.object,
+  sources: PropTypes.array,
+};
 
 /**
  * Configuration - the Data Configuration component.
@@ -121,6 +231,79 @@ const Configuration = (props) => {
       error: '',
     },
   });
+
+  // The batch handed off from the workbench or reopened from a file. Held in
+  // memory only and never written back here: establishing it as the active
+  // batch, reconciling its sources, or changing any Configuration field leaves
+  // the source manifest untouched (only the workbench's explicit save writes a
+  // batch file).
+  const [activeBatch, setActiveBatch] = useState(null);
+  const [batchSources, setBatchSources] = useState([]);
+  const [batchError, setBatchError] = useState(null);
+  // The exact serialized object already established, so the in-memory handoff
+  // is not re-established on every render.
+  const establishedRef = useRef(null);
+
+  /**
+   * establishBatch - reconstruct a batch and set it as the active batch.
+   * The same serialized representation is used whether it arrived in memory
+   * from the workbench or was read from a file, so both paths produce the same
+   * active-batch state. Sources are reconciled against disk (present, missing,
+   * or changed) for reporting only; nothing is rewritten.
+   * @param {object} serialized - a serialized batch manifest document
+   * @param {object} meta - {origin, filePath?} describing where it came from
+   */
+  const establishBatch = useCallback(async (serialized, meta) => {
+    establishedRef.current = serialized;
+    setBatchError(null);
+    const result = deserializeManifest(serialized);
+    setActiveBatch({...result, ...meta});
+    // Keep this as the app-wide active batch for downstream conversion.
+    appContext.setTask('activeBatch', serialized);
+    let signatures = {};
+    try {
+      const paths = result.manifest.recordings.map((row) => row.sourceFile);
+      if (window.eeg2bids?.statPaths) {
+        signatures = await window.eeg2bids.statPaths(paths);
+      }
+    } catch {
+      // A stat failure is not fatal: reconcile with what we have, which simply
+      // reports the affected sources as missing.
+      signatures = {};
+    }
+    setBatchSources(reconcileSources(result.manifest, signatures));
+  }, [appContext]);
+
+  // Pick up a batch handed off in memory from the workbench. Keyed on the
+  // active-batch object itself (not the app mode), so a newly handed-off batch
+  // is established exactly once, whenever it arrives, and re-establishing on an
+  // unrelated re-render is guarded by establishedRef. A file open (below) calls
+  // establishBatch directly.
+  const incomingBatch = props.appMode === 'Configuration' ?
+    appContext.getFromTask('activeBatch') : null;
+  useEffect(() => {
+    if (incomingBatch && incomingBatch !== establishedRef.current) {
+      establishBatch(incomingBatch, {origin: 'handoff'});
+    }
+  }, [incomingBatch]);
+
+  /**
+   * onOpenBatchFile - open a saved batch manifest from disk.
+   * Reconstructs the batch from the file's stored explicit assignments without
+   * rerunning discovery, canonical prefilling, or mappings, and establishes it
+   * as the active batch exactly as the in-memory handoff does.
+   */
+  const onOpenBatchFile = async () => {
+    if (!window.eeg2bids?.openBatchFile) return;
+    setBatchError(null);
+    try {
+      const opened = await window.eeg2bids.openBatchFile();
+      if (!opened) return;
+      await establishBatch(opened.data, {filePath: opened.filePath});
+    } catch (error) {
+      setBatchError(`Could not open the batch file: ${error.message}`);
+    }
+  };
 
   /**
    * reset - reset the form fields (state).
@@ -339,23 +522,6 @@ const Configuration = (props) => {
     return (
       <>
         <span className='error'>&#x274C;</span> {msg}
-      </>
-    );
-  };
-
-  const formatWarning = (msg) => {
-    return (
-      <>
-        <span className='warning'>&#x26A0;</span> {msg}
-      </>
-    );
-  };
-
-  const formatPass = (msg) => {
-    return (
-      <>
-        <span className='checkmark'>&#x2714;</span>
-        {msg}
       </>
     );
   };
@@ -1159,6 +1325,34 @@ const Configuration = (props) => {
               value='Clear all fields below'
             />
           </div>
+        </div>
+        <span className='header'>
+          Batch import
+          <div className='header-hint'>
+            ⓘ Prepared in the Batch workbench
+          </div>
+        </span>
+        <div className='info'>
+          <div className='small-pad'>
+            <input type='button'
+              id='openBatchFile'
+              className='primary-btn'
+              onClick={onOpenBatchFile}
+              value='Open batch file'
+            />
+            <span style={{fontSize: '14px', marginLeft: '10px'}}>
+              Load a saved batch manifest, or hand one off from the Batch
+              workbench. Dataset-wide settings below apply to the batch.
+            </span>
+            {batchError &&
+              <div>
+                <span className='error'>&#x274C;</span> {batchError}
+              </div>
+            }
+          </div>
+          {activeBatch &&
+            <ActiveBatchPanel batch={activeBatch} sources={batchSources}/>
+          }
         </div>
         <span className='header'>
           Recording data

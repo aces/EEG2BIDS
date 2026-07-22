@@ -24,6 +24,7 @@
     "eslint-plugin-react": "^7.37.5",
     "lint-staged": "17.0.8",
     "vite": "^8.1.5",
+    "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
   },
   "scripts": {
@@ -34,6 +35,7 @@
     "electron-start": "DEV=1 electron .",
     "start": "npm run dev",
     "lint": "eslint src electron",
+    "test:unit": "vitest run",
     "test:electron": "npm run build && playwright test"
   },
   "lint-staged": {

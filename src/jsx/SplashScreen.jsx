@@ -7,16 +7,19 @@ import '../css/SplashScreen.css';
  * @param {object} props
  * @return {JSX.Element} - Loader React component
  */
-const SplashScreen = (props) => {
+const SplashScreen = ({size = '60', visible}) => {
+  // React 19 ignores defaultProps on function components, so the fallback
+  // lives in the parameter default; without it parseInt(undefined) is NaN,
+  // which React rejects as a width/height style value.
   const loaderDimensions = {
-    width: parseInt(props.size),
-    height: parseInt(props.size),
+    width: parseInt(size),
+    height: parseInt(size),
   };
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
-  return props.visible ? (
+  return visible ? (
     <>
       <p className='loader-font'>
         EEG2BIDS Wizard is loading ...
@@ -31,9 +34,6 @@ const SplashScreen = (props) => {
 SplashScreen.propTypes = {
   size: PropTypes.string,
   visible: PropTypes.bool,
-};
-SplashScreen.defaultProps = {
-  size: '60',
 };
 
 export default SplashScreen;
