@@ -65,8 +65,8 @@ function sourceString(recording, source) {
  * extractValue - the value a mapping reads out of one source string.
  * Splits the string on the delimiter, takes the chosen segment, and (when a
  * pattern is supplied) applies it as the transform. An out-of-range segment or
- * a non-matching pattern yields an empty value; an unparseable pattern yields
- * an empty value and a non-null `error` so the UI can flag the spec rather than
+ * a non-matching pattern yields an empty value; an unparsable pattern yields
+ * an empty value and a non-null `error` so the UI can flag the specification rather than
  * silently drop every recording.
  * @param {string} str - the source string
  * @param {object} spec - the mapping spec (see module docs)

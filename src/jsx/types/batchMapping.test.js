@@ -53,7 +53,7 @@ describe('extractValue', () => {
     expect(error).toBeNull();
   });
 
-  it('reports an error for an unparseable pattern instead of throwing', () => {
+  it('reports an error for an unparsable pattern instead of throwing', () => {
     const {value, error} = extractValue('rest',
         {delimiter: '_', index: 0, pattern: '('});
     expect(value).toBe('');
