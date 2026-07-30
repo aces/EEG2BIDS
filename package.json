@@ -2,6 +2,7 @@
   "name": "eeg2bids",
   "description": "EEG/iEEG to BIDS format Wizard",
   "version": "3.0.0-beta.1",
+  "desktopName": "eeg2bids.desktop",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
     "papaparse": "^5.5.4",
@@ -73,7 +74,8 @@
         "deb"
       ],
       "category": "Science",
-      "icon": "public/logo512.png"
+      "icon": "public/logo512.png",
+      "syncDesktopName": true
     }
   },
   "engines": {

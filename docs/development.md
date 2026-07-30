@@ -1,11 +1,15 @@
 # Development guide
 
 This guide covers the Linux development workflow for EEG2BIDS: launching the
-app, debugging it, generating development data, and the current manual sanity
-checks. For installation prerequisites (Node, uv, secret service) see the
-[README](../README.md). For the canonical automated test commands and fixture
-policy, see [Testing](testing.md). Linux is the only supported development
-target; production packaging, Windows, and macOS are explicitly out of scope.
+app from a source checkout, debugging it, generating development data, and the
+current manual sanity checks. For installation prerequisites (Node, uv, secret
+service) see the [README](../README.md). For the canonical automated test
+commands and fixture policy, see [Testing](testing.md).
+
+Linux is the supported development target. To build and install the Linux
+production `.deb` see [Packaging](../README.md#packaging) and the
+[installation guide](installation.md); Windows and macOS production builds are
+not yet available (#188, #189).
 
 ## Launching
 

@@ -411,9 +411,26 @@ Each phase is independently reviewable and de-risks the next.
   launches, sandbox on (not `--no-sandbox`), backend converts, credentials
   persist via keyring, quit leaves no python process, upgrade reapplies policy,
   uninstall removes policy. This *is* the acceptance-criteria checklist.
-- **Phase 5 — Docs.** Supported distros/arch (Ubuntu 24.04 x86_64 to start),
-  desktop/secret-service requirements, and explicit statements of what's *not*
-  supported (Wayland-only quirks? non-AppArmor distros? arm64?).
+- **Phase 5 — Docs. ✅ DONE.** New user-facing [installation guide](installation.md)
+  (supported distros/arch, desktop/secret-service requirements, install/upgrade/
+  uninstall, and the "user data is kept on uninstall" policy) and a repeatable
+  [clean-machine verification procedure](linux-packaging-verification.md) mapping
+  each step to a #170 acceptance criterion. Updated the stale "packaging is out
+  of scope" claims in `README.md` (Project status + Packaging sections, now with
+  real build instructions) and `docs/development.md`.
+
+- **Polish (C). ✅ DONE.** Set `desktopName`/`linux.syncDesktopName` so the
+  `.desktop` filename and `StartupWMClass` (`eeg2bids`) match Electron's runtime
+  WM_CLASS (clears electron-builder's window-association warning). Added
+  `render-process-gone` / `child-process-gone` diagnostics in
+  `electron/main/index.js` that log actionable sandbox guidance (to stderr,
+  consistent with the app's other diagnostics) when a child process dies
+  abnormally at startup — a hard sandbox abort still surfaces via Chromium's own
+  stderr message.
+
+- **Remaining for #170: Phase 4 only** — run the verification procedure on a
+  clean Ubuntu 24.04 VM (plus a 22.04 fallback check). Everything else is done
+  and validated on real restricted hardware.
 
 ---
 
