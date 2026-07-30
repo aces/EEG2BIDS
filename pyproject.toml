@@ -1,6 +1,6 @@
 [project]
 name = "eeg2bids"
-version = "1.0.5"
+version = "3.0.0b1"
 description = "EEG2BIDS Wizard backend: de-identifies EDF data and converts EEG/iEEG recordings to BIDS."
 readme = "README.md"
 license = { file = "LICENSE" }
