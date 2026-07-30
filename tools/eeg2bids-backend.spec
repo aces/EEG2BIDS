@@ -60,7 +60,11 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=[
+        # Restore raw._init_kwargs under freeze so MNE-BIDS can copy a
+        # lazily-read source (e.g. EDF) as-is. See the hook's docstring and #170.
+        os.path.join(SPECPATH, 'pyinstaller-rthooks', 'rthook_mne_init_kwargs.py'),
+    ],
     excludes=[
         # Test toolchain is not part of the shipped backend; excluding it keeps
         # the bundle smaller and avoids pytest's optional imports polluting the

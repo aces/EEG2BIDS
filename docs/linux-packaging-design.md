@@ -116,6 +116,38 @@ build config and how Electron launches it change (§5).
 
 ---
 
+### Freeze defect found & fixed: MNE `raw._init_kwargs` (cross-platform)
+
+Surfaced during Phase 2 hand-testing: the frozen backend read EDF fine but
+**failed at conversion** with
+`TypeError: read_raw_edf() argument after ** must be a mapping, not NoneType`.
+
+Cause (freeze-only — dev and the pytest suite are unaffected): MNE records how a
+`read_raw_*` call was made in `mne.io.base._get_argvalues`, which captures the
+reader frame's locals only if that frame's `co_filename` matches the glob
+`*/mne/io/*`. PyInstaller gives frozen modules bundle-relative code filenames
+(`mne/io/edf/edf.py`, no leading separator) that fail the glob, so it returns
+`None` and every file-backed Raw gets `raw._init_kwargs = None`. MNE-BIDS's
+default non-preload copy path — `reader[ext](**raw._init_kwargs)`, used for a
+lazily-read source like EDF — then dereferences `None`. This is EEG2BIDS's
+*primary* "preserve the source EDF byte-for-byte" conversion, so it is a
+blocker, not an edge case.
+
+Fix: a PyInstaller **runtime hook**
+(`tools/pyinstaller-rthooks/rthook_mne_init_kwargs.py`, wired via the spec's
+`runtime_hooks`) that replaces `_get_argvalues` with MNE's own logic but a
+filename test loosened to match `mne/io/` anywhere in a normalized path. The
+values captured are still the *real* reader arguments from the live frame, so
+frozen behavior equals dev. Chosen to live in the **packaging layer, not app
+code**, because it is purely a freeze artifact — putting a monkeypatch in
+`converter.py` would run (pointlessly) in development too. Verified: a frozen
+`read_raw_edf` → `write_raw_bids` round-trip on `tests/fixtures/eeg_continuous.edf`
+now populates `_init_kwargs` fully and writes the BIDS EDF.
+
+**Relevance to #188/#189:** this is inherent to PyInstaller's `co_filename`
+rewriting, so Windows and macOS builds need the same runtime hook — it is part
+of the shared freeze architecture, already covered by the committed spec.
+
 ## 4. Decision 2 — Linux package format + the sandbox
 
 **Recommendation: build a `.deb` with `electron-builder`, and use the Debian
