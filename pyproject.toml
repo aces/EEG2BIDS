@@ -34,10 +34,11 @@ dev = [
     "pytest>=8",
 ]
 
-# Optional group for a future standalone-binary build. The packaged
-# PyInstaller/Electron workflow is not maintained in this branch (see #135 /
-# #136 / #137); this declaration keeps PyInstaller a declared, resolvable build
-# dependency so the freeze step is not blocked when packaging is revisited.
+# Build-time dependencies for freezing the backend into a standalone binary
+# that the Electron app spawns without uv or a Python interpreter present.
+# PyInstaller freezes eeg2bids/__main__.py; see docs/linux-packaging-design.md
+# and #170 for the production-packaging approach. Installed on demand for the
+# freeze step (`uv sync --group packaging`), not part of the runtime deps.
 packaging = [
     "pyinstaller>=6",
 ]

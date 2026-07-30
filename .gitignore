@@ -20,6 +20,8 @@ lib64/
 bin/
 include/
 *.spec
+# ...except the authoritative, hand-maintained backend freeze spec (issue #170).
+!tools/eeg2bids-backend.spec
 pyvenv.cfg
 Scripts/
 Lib/
