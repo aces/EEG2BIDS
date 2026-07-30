@@ -47,9 +47,11 @@
     ]
   },
   "main": "electron/main/index.js",
+  "homepage": "https://github.com/aces/eeg2bids",
   "build": {
     "appId": "ca.mcgill.mcin.eeg2bids",
     "productName": "EEG2BIDS",
+    "executableName": "eeg2bids",
     "directories": {
       "output": "dist/electron"
     },
@@ -68,7 +70,7 @@
     ],
     "linux": {
       "target": [
-        "dir"
+        "deb"
       ],
       "category": "Science",
       "icon": "public/logo512.png"

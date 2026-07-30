@@ -376,8 +376,36 @@ Each phase is independently reviewable and de-risks the next.
   easily changed); `productName` `EEG2BIDS`; output dir `dist/electron/` (kept
   separate from the PyInstaller `dist/eeg2bids-backend/` so neither wipes the
   other).
-- **Phase 3 — `.deb` + sandbox.** electron-builder `.deb` target, install path,
-  icons, and the `postinst`/`prerm` scripts doing the AppArmor + setuid work.
+- **Phase 3 — `.deb` + sandbox. ✅ DONE (install verify is Phase 4).** Switched
+  `linux.target` to `deb`, pinned `executableName: "eeg2bids"` (the AppArmor
+  profile targets that exact `/opt/EEG2BIDS/eeg2bids` path — a rename would
+  silently break it), added `homepage` (fpm requires a package URL). Produces
+  `dist/electron/eeg2bids_<version>_amd64.deb`.
+
+  **The sandbox decision resolved itself via tooling.** electron-builder 26's
+  *default* `deb` maintainer-script templates already implement the "Both"
+  strategy, more carefully than a hand-rolled script:
+  `after-install` runtime-detects working userns (`unshare --user true`) and
+  sets `chrome-sandbox` setuid `4755` *only* when needed (else `0755`); it
+  installs an AppArmor `userns` profile to `/etc/apparmor.d/eeg2bids` but only
+  after an `apparmor_parser --skip-kernel-load` dry-run, so it **degrades
+  gracefully on Ubuntu 22.04** (no `abi/4.0`) and guards against chroots;
+  `after-remove` unloads and deletes the profile. We use these defaults rather
+  than override them — they satisfy every #170 security constraint (no
+  `--no-sandbox`, no host-wide userns disable, narrowly-scoped root-owned setuid
+  helper, profile installed/removed through the package lifecycle). This is the
+  upstream fix for electron-builder issue #8635.
+
+  Verified here by inspection (`dpkg-deb -c/-e`): payload at `/opt/EEG2BIDS/`
+  (electron binary, `chrome-sandbox`, frozen backend under `resources/backend/`,
+  `resources/apparmor-profile`, `.desktop`); the shipped profile targets
+  `/opt/EEG2BIDS/eeg2bids`; `postinst`/`postrm` carry the correctly-substituted
+  paths. Not verified here (needs root + system mutation → Phase 4): actually
+  installing, and confirming a sandboxed launch with no `--no-sandbox`.
+
+  Minor open polish: electron-builder warns `desktopName`/`syncDesktopName` is
+  unset (window/.desktop association); harmless, easy follow-up. Package version
+  is still `1.0.5` (inherits package.json — see the version-source decision, §10).
 - **Phase 4 — Clean-machine verification.** Install the `.deb` on a fresh
   Ubuntu 24.04 VM/container with none of Node/npm/uv/Python present. Confirm:
   launches, sandbox on (not `--no-sandbox`), backend converts, credentials
