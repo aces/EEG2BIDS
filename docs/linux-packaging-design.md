@@ -314,10 +314,36 @@ Each phase is independently reviewable and de-risks the next.
   spec resolves its entry point from `SPECPATH` so it builds from any checkout
   path, excludes the test toolchain, and disables UPX. Verified: builds in ~41s
   from the committed spec and the resulting binary binds its port.
-- **Phase 2 — Electron packaged paths.** Add `app.isPackaged` branches in
-  `backend-service.js` and `windows.js`; spawn the frozen binary; load the
-  bundled renderer. Verify from a locally-run `electron-builder --dir` (unpacked
-  dir, no installer yet).
+- **Phase 2 — Electron packaged paths. ✅ DONE (launch verify deferred to
+  Phase 4).** Added an `app.isPackaged` branch to `backend-service.js`
+  (`resolveBackendLaunch()`): packaged → spawn the frozen binary at
+  `process.resourcesPath/backend/eeg2bids-backend` (`.exe` on win32); dev/tests
+  → unchanged `uv run` path. Launch-error hint now adapts to packaged vs dev
+  (keeps "uv" in the dev message the fail-fast test relies on). `windows.js`
+  needed **no** change — its `__dirname`-relative `build/index.html` resolves
+  correctly inside `app.asar`, confirmed below. Added `electron-builder`
+  (26.15.3) devDep + a `build` config in `package.json` + `freeze:backend` /
+  `dist:dir` / `dist:linux` scripts. The `build.files` list ships only our own
+  code (`electron/**`, `build/**`, `public/logo512.png`, `package.json`) and
+  `!node_modules/**/*` — the main process needs no npm deps (renderer deps are
+  Vite-bundled), shrinking the asar from 61 MB → **1.4 MB**. The frozen backend
+  is an `extraResource` (`dist/eeg2bids-backend` → `resources/backend`), i.e.
+  unpacked, since a binary can't run from inside an asar.
+
+  Verified here: `electron-builder --linux dir` produces the correct layout
+  (backend launcher at `resources/backend/eeg2bids-backend`; renderer + main in
+  `app.asar`; node_modules absent); ESLint clean; **all 11 Playwright electron
+  tests pass**, proving the unpackaged path is unbroken. Not verifiable on this
+  dev box: launching the *packaged* app — this machine has
+  `kernel.apparmor_restrict_unprivileged_userns = 1` and the packaged
+  `chrome-sandbox` is `0755` (not `root:4755`), which is exactly the Phase 3
+  problem; a real launch of the packaged app is deferred to the Phase 4 clean
+  machine (after the sandbox is integrated).
+
+  App config note: `appId` is currently `ca.mcgill.mcin.eeg2bids` (placeholder,
+  easily changed); `productName` `EEG2BIDS`; output dir `dist/electron/` (kept
+  separate from the PyInstaller `dist/eeg2bids-backend/` so neither wipes the
+  other).
 - **Phase 3 — `.deb` + sandbox.** electron-builder `.deb` target, install path,
   icons, and the `postinst`/`prerm` scripts doing the AppArmor + setuid work.
 - **Phase 4 — Clean-machine verification.** Install the `.deb` on a fresh

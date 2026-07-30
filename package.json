@@ -19,6 +19,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^9.2.4",
     "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
     "eslint": "^8.57.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.37.5",
@@ -34,7 +35,10 @@
     "electron-start": "DEV=1 electron .",
     "start": "npm run dev",
     "lint": "eslint src electron",
-    "test:electron": "npm run build && playwright test"
+    "test:electron": "npm run build && playwright test",
+    "freeze:backend": "bash tools/freeze-backend.sh",
+    "dist:dir": "npm run build && npm run freeze:backend && electron-builder --linux dir",
+    "dist:linux": "npm run build && npm run freeze:backend && electron-builder --linux"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css,md}": [
@@ -43,6 +47,33 @@
     ]
   },
   "main": "electron/main/index.js",
+  "build": {
+    "appId": "ca.mcgill.mcin.eeg2bids",
+    "productName": "EEG2BIDS",
+    "directories": {
+      "output": "dist/electron"
+    },
+    "files": [
+      "electron/**/*",
+      "build/**/*",
+      "public/logo512.png",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/eeg2bids-backend",
+        "to": "backend"
+      }
+    ],
+    "linux": {
+      "target": [
+        "dir"
+      ],
+      "category": "Science",
+      "icon": "public/logo512.png"
+    }
+  },
   "engines": {
     "node": ">=22.12"
   },
