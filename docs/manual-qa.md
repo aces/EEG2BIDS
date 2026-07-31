@@ -1,7 +1,7 @@
-# Linux manual QA
+# Production manual QA
 
 This guide covers human checks that add value beyond the automated Python and
-Electron suites. It initially targets Ubuntu 24.04 x86_64. Run the applicable
+Electron suites. It initially targets Ubuntu 24.04 x86_64 and Windows 11 x64. Run the applicable
 scenarios for application changes; run every release-gate scenario against a
 release candidate before promoting it to a final release.
 
@@ -239,6 +239,51 @@ policy.
 
 **Cleanup:** Delete the disposable VM or securely remove transferred test data
 and candidate artifacts.
+
+## Windows scenarios
+
+Use the exact Windows installer and `SHA256SUMS` downloaded together from the
+packaging workflow. Record the full commit SHA and workflow run URL. The initial
+installer is unsigned, so SmartScreen behavior is an expected observation, not
+something automation should suppress.
+
+### QA-WINDOWS-001: Clean install and full workflow
+
+**Release gate:** yes.
+
+On a clean Windows 11 x64 VM without Node, npm, uv, or Python, verify the SHA-256
+checksum, run the assisted per-user NSIS installer, and record any SmartScreen
+warning and the exact user-visible path through it. Launch EEG2BIDS from the
+Start menu. Confirm the backend connects, then perform the anonymized conversion
+and validation described in QA-LINUX-001 using synthetic data.
+
+**Expected:** Installation requires no development tooling or administrator
+access; the installed renderer and frozen backend complete the representative
+workflow. The unsigned-app warning is documented clearly and no security control
+is disabled by the application.
+
+### QA-WINDOWS-002: Shutdown process cleanup
+
+**Release gate:** yes.
+
+With the installed application connected, record the relevant process baseline,
+quit normally, wait ten seconds, and inspect Task Manager or `Get-Process`.
+
+**Expected:** No application-owned EEG2BIDS, Electron, or frozen-backend process
+remains. Unrelated processes are unchanged.
+
+### QA-WINDOWS-003: Upgrade and uninstall
+
+**Release gate:** yes.
+
+Install a newer checksummed candidate over an existing per-user installation.
+Confirm it upgrades in place, launches, connects, and retains expected settings.
+Then uninstall it through Windows Settings.
+
+**Expected:** There is one upgraded installation; installer-owned files and Start
+menu integration are removed on uninstall; no owned process remains; user
+settings and credentials are retained according to policy without exposing their
+contents.
 
 ## Reporting results
 

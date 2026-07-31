@@ -1,0 +1,111 @@
+# Native packaging validation for the supported Linux and Windows targets.
+# This workflow never publishes a GitHub Release. Issue #190 can consume these
+# jobs later for immutable release-candidate publication and promotion.
+name: Package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/package.yml'
+      - 'electron/**'
+      - 'eeg2bids/**'
+      - 'tools/eeg2bids-backend.spec'
+      - 'tools/pyinstaller-rthooks/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux deb (x64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Electron runtime
+        run: npm run install:electron
+
+      - name: Build Linux package
+        run: npm run dist:linux
+
+      - name: Generate checksum
+        run: |
+          cd dist/electron
+          sha256sum *.deb > SHA256SUMS
+
+      - name: Upload Linux candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: eeg2bids-linux-x64-${{ github.sha }}
+          path: |
+            dist/electron/*.deb
+            dist/electron/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows NSIS (x64)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Electron runtime
+        run: npm run install:electron
+
+      - name: Build Windows package
+        run: npm run dist:windows
+
+      - name: Generate checksum
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/electron/*-setup.exe
+          if ($installer.Count -ne 1) {
+            throw "Expected exactly one NSIS installer, found $($installer.Count)"
+          }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content dist/electron/SHA256SUMS
+
+      - name: Upload Windows candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: eeg2bids-windows-x64-${{ github.sha }}
+          path: |
+            dist/electron/*-setup.exe
+            dist/electron/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
