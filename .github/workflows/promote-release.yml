@@ -1,0 +1,115 @@
+# Promote a manually qualified RC without rebuilding its artifacts. The
+# production-release environment must require maintainer approval. This creates
+# a draft final release so maintainers retain control of notes and publication.
+name: Promote release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      rc_tag:
+        description: Qualified immutable RC tag (for example v3.0.0-rc.1)
+        required: true
+        type: string
+      final_tag:
+        description: Final version tag to create (for example v3.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Create draft final release
+    runs-on: ubuntu-24.04
+    environment: production-release
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RC_TAG: ${{ inputs.rc_tag }}
+      FINAL_TAG: ${{ inputs.final_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate release selection
+        run: |
+          set -euo pipefail
+          if [[ ! "$RC_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc\.([1-9][0-9]*)$ ]]; then
+            echo "Invalid RC tag: $RC_TAG" >&2
+            exit 1
+          fi
+          rc_version="${BASH_REMATCH[1]}"
+          if [[ "$FINAL_TAG" != "v$rc_version" ]]; then
+            echo "Final tag $FINAL_TAG does not match RC version $rc_version" >&2
+            exit 1
+          fi
+          git rev-parse --verify --quiet "refs/tags/$RC_TAG" >/dev/null || {
+            echo "RC tag does not exist: $RC_TAG" >&2
+            exit 1
+          }
+          if git rev-parse --verify --quiet "refs/tags/$FINAL_TAG" >/dev/null; then
+            echo "Final tag already exists: $FINAL_TAG" >&2
+            exit 1
+          fi
+          if ! gh release view "$RC_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease \
+            --jq 'select(.isDraft == false and .isPrerelease == true)' \
+            | grep -q .; then
+            echo "$RC_TAG is not a published GitHub prerelease" >&2
+            exit 1
+          fi
+          if gh release view "$FINAL_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Final release already exists: $FINAL_TAG" >&2
+            exit 1
+          fi
+
+      - name: Download qualified candidate assets
+        run: |
+          set -euo pipefail
+          mkdir release-assets
+          gh release download "$RC_TAG" --repo "$GITHUB_REPOSITORY" \
+            --dir release-assets
+
+      - name: Verify candidate assets and provenance
+        run: |
+          set -euo pipefail
+          cd release-assets
+          shopt -s nullglob
+          debs=(*.deb)
+          installers=(*-setup.exe)
+          if (( ${#debs[@]} != 1 || ${#installers[@]} != 1 )); then
+            echo "Expected exactly one Linux package and one Windows installer" >&2
+            printf 'Downloaded: %s\n' * >&2
+            exit 1
+          fi
+          required=(SHA256SUMS-linux-x64 SHA256SUMS-windows-x64 SOURCE.txt)
+          for file in "${required[@]}"; do
+            [[ -f "$file" ]] || { echo "Missing candidate asset: $file" >&2; exit 1; }
+          done
+          sha256sum --check SHA256SUMS-linux-x64
+          sha256sum --check SHA256SUMS-windows-x64
+
+          rc_commit="$(git -C .. rev-parse "refs/tags/$RC_TAG^{}")"
+          grep -Fx "tag=$RC_TAG" SOURCE.txt
+          grep -Fx "commit=$rc_commit" SOURCE.txt
+          grep -Fx 'windows_signing=unsigned' SOURCE.txt
+          printf '%s\n' "$rc_commit" > ../rc-commit.txt
+
+      - name: Create draft final release from exact RC assets
+        run: |
+          set -euo pipefail
+          rc_commit="$(cat rc-commit.txt)"
+          mapfile -t assets < <(find release-assets -maxdepth 1 -type f -print | sort)
+          gh release create "$FINAL_TAG" "${assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$rc_commit" \
+            --draft \
+            --title "EEG2BIDS ${FINAL_TAG#v}" \
+            --notes "Promoted byte-for-byte from $RC_TAG after manual QA. The Windows installer is unsigned. Edit these notes before publishing this draft release."
