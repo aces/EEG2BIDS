@@ -158,6 +158,39 @@ def get_recording_data(sid, data):
     sio.emit('recording_data', response)
 
 
+def _read_parameter_file(file_path, modality):
+    """Read nested BIDS metadata and configuration prepopulation values."""
+    with open(file_path) as fd:
+        parameters = json.load(fd)
+
+    if not isinstance(parameters, dict) or set(parameters) != {
+            'bids', 'prepopulation'}:
+        raise ValueError(
+            'Parameter file must contain exactly "bids" and '
+            '"prepopulation" objects.'
+        )
+
+    metadata = parameters['bids']
+    prepopulation = parameters['prepopulation']
+    if not isinstance(metadata, dict) or not isinstance(prepopulation, dict):
+        raise ValueError(
+            'Parameter file "bids" and "prepopulation" values must be objects.'
+        )
+
+    empty_values = [
+        key for key, value in metadata.items()
+        if isinstance(value, str) and not value.strip()
+    ]
+    unsupported = set(metadata) - set(metadata_fields[modality])
+
+    return {
+        'metadata': metadata,
+        'prepopulation': prepopulation,
+        'ignored_keys': empty_values + sorted(unsupported - set(empty_values)),
+        'source_file': str(file_path),
+    }
+
+
 @sio.event
 def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
@@ -173,23 +206,14 @@ def get_bids_metadata(sid, data):
         response = {'error': msg}
     else:
         try:
-            with open(data['file_path']) as fd:
-                try:
-                    metadata = json.load(fd)
-                    empty_values = [k for k in metadata if isinstance(metadata[k], str) and metadata[k].strip() == '']
-                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]) - set(empty_values))
-                    ignored_keys = empty_values + diff
-
-                    response = {
-                        'metadata': metadata,
-                        'ignored_keys': ignored_keys,
-                    }
-                except ValueError as e:
-                    print(e)
-                    metadata = {}
-                    response = {
-                        'error': 'Metadata file format is not valid.',
-                    }
+            try:
+                response = _read_parameter_file(
+                    data['file_path'], data['modality'])
+            except (ValueError, TypeError) as e:
+                print(e)
+                response = {
+                    'error': 'Metadata file format is not valid: ' + str(e),
+                }
         except IOError:
             msg = "Could not read the metadata file."
             print(msg)

@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useEffect, useRef} from 'react';
 import {AppContext} from '../context';
 import PropTypes from 'prop-types';
 import { Tooltip } from 'react-tooltip';
@@ -44,6 +44,7 @@ const Configuration = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
   const socketStatus = useSocketStatus();
+  const importedPrepopulationFile = useRef(null);
 
   // React State
   const initialState = {
@@ -848,6 +849,8 @@ const Configuration = (props) => {
           file_path: state.bidsMetadataFile.get[0]['path'],
           modality: state.modality.get,
         });
+      } else {
+        importedPrepopulationFile.current = null;
       }
     }
   }, [state.bidsMetadataFile.get, state.modality.get]);
@@ -918,6 +921,27 @@ const Configuration = (props) => {
 
         state.bidsMetadata.set(message);
         appContext.setTask('bidsMetadata', message);
+
+        if (message.prepopulation && message.source_file !==
+            importedPrepopulationFile.current) {
+          const fieldMap = {
+            Project: 'projectID',
+            Subproject: 'subprojectID',
+            Visit: 'session',
+            Site: 'siteID',
+            LineFrequency: 'lineFreq',
+            Reference: 'reference',
+            RecordingType: 'recordingType',
+          };
+          Object.entries(fieldMap).forEach(([parameter, task]) => {
+            const value = message.prepopulation[parameter];
+            if (value !== undefined && value !== null && value !== '') {
+              state[task].set(value);
+              appContext.setTask(task, value);
+            }
+          });
+          importedPrepopulationFile.current = message.source_file;
+        }
       });
 
       socketContext.on('new_candidate_created', (data) => {
