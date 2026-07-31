@@ -6,10 +6,11 @@ current manual sanity checks. For installation prerequisites (Node, uv, secret
 service) see the [README](../README.md). For the canonical automated test
 commands and fixture policy, see [Testing](testing.md).
 
-Linux is the supported development target. To build and install the Linux
-production `.deb` see [Packaging](../README.md#packaging) and the
-[installation guide](installation.md); Windows and macOS production builds are
-not yet available (#188, #189).
+Linux is the supported development target. Production packages are available
+for Ubuntu and Windows 11 x64. See [Packaging](../README.md#packaging), the
+[installation guide](installation.md), and the
+[Windows packaging guide](windows-packaging.md). macOS packaging remains
+tracked in #189.
 
 ## Launching
 
@@ -123,7 +124,7 @@ validation. A failed or unreachable LORIS produces a visible login error
 ## Manual QA
 
 The former provisional Socket.IO and happy-path checks have been reviewed and
-consolidated into [Linux manual QA](manual-qa.md). That guide assigns stable
+consolidated into [production manual QA](manual-qa.md). That guide assigns stable
 scenario IDs and covers only human-observable value beyond the automated test
 baseline, including development and packaged workflows, anonymization,
 connection recovery, process cleanup, and release-candidate reporting.

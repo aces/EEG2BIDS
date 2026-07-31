@@ -1,10 +1,10 @@
 # User guide
 
 > [!NOTE]
-> EEG2BIDS is currently supported for Linux development use only. Production
-> installers and packaged releases are not supported. See the
-> [project status](../README.md#project-status) before relying on the workflow
-> below.
+> Production packages are supported for Ubuntu amd64 and Windows 11 x64. See
+> [installation](installation.md) and the
+> [project status](../README.md#project-status) for the current support and
+> distribution details.
 
 EEG2BIDS converts one continuous EEG or stereo-iEEG recording into BIDS. Back
 up the source data before conversion.

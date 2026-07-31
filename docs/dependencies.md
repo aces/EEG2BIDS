@@ -76,7 +76,8 @@ The export is temporary and must not be committed.
 
 ### Optional dependency groups
 
-- `packaging`: `pyinstaller`, reserved for future standalone packaging work
+- `packaging`: `pyinstaller`, used to freeze the production backend natively on
+  Linux and Windows
 - build system: `hatchling`, used to build the Python package
 
 These groups are not part of the normal application runtime. Audit them when
@@ -88,7 +89,7 @@ changing packaging.
 Dependabot beta ecosystem so updates modify the authoritative `uv.lock`
 rather than recreating a legacy requirements file.
 
-The CI work tracked by issue #147 should run, at minimum:
+The required CI workflow runs, at minimum:
 
 ```sh
 npm ci

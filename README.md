@@ -14,8 +14,8 @@ metadata, events, validation, and optional LORIS workflows.
 
 ## Project status
 
-**Linux is the supported target for both development and production.** The
-Python backend was modernized in
+**Linux is the supported development target. Production packages are supported
+for Ubuntu and Windows 11 x64.** The Python backend was modernized in
 [#135](https://github.com/aces/EEG2BIDS/issues/135) (uv-managed package) and the
 Electron/renderer toolchain in
 [#137](https://github.com/aces/EEG2BIDS/issues/137) (Electron 43, Vite,
@@ -25,11 +25,12 @@ A supported Linux production build landed in
 [#170](https://github.com/aces/EEG2BIDS/issues/170): a `.deb` that bundles the
 Electron app and the PyInstaller-frozen Python backend, with Chromium sandbox
 integration for Ubuntu 24.04+. See [Packaging](#packaging) to build it and the
-[installation guide](docs/installation.md) to install it. Windows and macOS
-production builds are tracked in
-[#188](https://github.com/aces/EEG2BIDS/issues/188) and
-[#189](https://github.com/aces/EEG2BIDS/issues/189); cross-platform release
-automation in [#190](https://github.com/aces/EEG2BIDS/issues/190).
+[installation guide](docs/installation.md) to install it. A Windows 11 x64 NSIS
+build landed in [#188](https://github.com/aces/EEG2BIDS/issues/188), including a
+frozen backend, Windows process lifecycle support, and native CI smoke testing.
+See the [Windows packaging guide](docs/windows-packaging.md). macOS packaging is
+tracked in [#189](https://github.com/aces/EEG2BIDS/issues/189), and coordinated
+release automation in [#190](https://github.com/aces/EEG2BIDS/issues/190).
 
 Automated backend and Electron integration suites are available for the
 supported Linux environment; see the [testing guide](docs/testing.md).
@@ -137,8 +138,9 @@ On headless Linux, run the Electron suite with
 ### Credential storage
 
 LORIS credentials are encrypted with Electron `safeStorage` and persisted
-under the application `userData` directory (`~/.config/eeg2bids/`), separate
-from ordinary settings such as the LORIS URL. On Linux, secure encryption
+under the application `userData` directory (`~/.config/eeg2bids/` on Linux,
+`%APPDATA%\eeg2bids\` on Windows), separate from ordinary settings such as the
+LORIS URL. On Linux, secure encryption
 requires a secret service (GNOME Keyring or KWallet). When only the
 `basic_text` fallback is available, the app logs an explicit warning that
 credentials are obfuscated rather than encrypted; when no backend exists at
@@ -176,24 +178,31 @@ Do not work around it with `--no-sandbox`.
 
 ## Packaging
 
-A supported Linux production build is available: a `.deb` bundling the Electron
-app, the renderer, and the Python backend frozen with PyInstaller, so end users
-need neither Node, npm, uv, nor a Python interpreter. See the
-[installation guide](docs/installation.md) for supported environments and
-install/uninstall behavior, and
-[docs/linux-packaging-design.md](docs/linux-packaging-design.md) for the design
-and rationale.
+Supported production packages bundle the Electron app, renderer, and
+PyInstaller-frozen Python backend, so end users need neither Node, npm, uv, nor
+a Python interpreter:
 
-Build it from the authoritative lockfiles:
+- Ubuntu amd64: `.deb`
+- Windows 11 x64: unsigned, per-user NSIS installer
+
+Build natively from the authoritative lockfiles:
 
 ```sh
-npm run dist:linux   # vite build -> freeze backend -> electron-builder .deb
+npm run dist:linux     # on Linux: .deb
+npm run dist:windows   # on Windows: x64 NSIS installer
 ```
 
-The artifact is written to `dist/electron/eeg2bids_<version>_amd64.deb`. The
-freeze step alone is `npm run freeze:backend`, which runs PyInstaller against
-`tools/eeg2bids-backend.spec` after installing the build-only `packaging`
-dependency group (`uv sync --group packaging`); the backend has a single entry
-point (`python -m eeg2bids`, also the `eeg2bids` console script).
+Artifacts are written to `dist/electron/`. PyInstaller must run on the target
+operating system; the Windows backend cannot be cross-compiled from Linux. The
+freeze step alone is `npm run freeze:backend`, using
+`tools/eeg2bids-backend.spec` and the locked `packaging` dependency group.
 
-Windows and macOS production builds are not yet available (#188, #189).
+The `Package` GitHub Actions workflow builds both platforms natively, smoke
+tests the installed Windows application and managed backend, generates
+`SHA256SUMS`, and uploads workflow artifacts. It does not publish a GitHub
+Release; coordinated candidate publication and promotion remain in #190.
+
+See the [installation guide](docs/installation.md), the
+[Windows packaging guide](docs/windows-packaging.md), and the historical
+[Linux packaging design](docs/linux-packaging-design.md). macOS is not yet
+supported (#189).

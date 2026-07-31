@@ -5,9 +5,10 @@ conversion, and BIDS output behavior. The Playwright suite exercises the
 Electron application boundary and its integration with the Python backend.
 Both suites are required when a change can affect the application as a whole.
 
-Automated coverage initially targets the supported Linux development
-environment. See [Development](development.md) for the general development
-setup and launch architecture.
+The complete development suites run on Linux. Native packaging validation also
+builds Ubuntu and Windows artifacts and smoke tests the installed Windows
+application. See [Development](development.md) for the development setup and
+launch architecture.
 
 ## Install test dependencies
 
@@ -134,13 +135,20 @@ The production-dependency audit exports a temporary `requirements-audit.txt` for
 `pip-audit` only. It is git-ignored, never committed, and never authoritative:
 `pyproject.toml` and `uv.lock` remain the sole Python dependency manifest.
 
-### Reuse by future release automation
+### Native packaging validation
 
-`ci.yml` is `workflow_call`-able. When release automation is added, its
-publishing jobs must invoke this workflow for the exact commit/tag being
-released (`uses: ./.github/workflows/ci.yml`) and depend on its success before
-publishing. Verifying a release only *after* it is published does not satisfy
-this gate.
+[`.github/workflows/package.yml`](../.github/workflows/package.yml) runs for
+packaging-related pull requests and manual dispatches. It builds the Linux
+`.deb` on Ubuntu 24.04 and the unsigned Windows x64 NSIS installer on a native
+Windows runner, generates checksums, and uploads short-lived workflow artifacts.
+The Windows job also installs the package silently, confirms the managed backend
+remains available, closes the app, verifies process cleanup, and uninstalls it.
+Diagnostic logs are uploaded even when the smoke test fails.
+
+This workflow does not publish GitHub Releases. Release automation in #190 can
+reuse the native build interface, but must run `ci.yml` for the exact candidate
+commit and depend on it before publishing. Post-publication verification does
+not replace that gate.
 
 ## Test fixtures
 
@@ -198,7 +206,7 @@ clinical recordings, or decrypted credential contents.
 ## Manual QA
 
 Human checks that add value beyond the automated suites are defined in
-[Linux manual QA](manual-qa.md). It provides stable scenario IDs, synthetic and
+[production manual QA](manual-qa.md). It provides stable scenario IDs, synthetic and
 approved legacy-data requirements, release-candidate gates, packaged-install
 checks, and a sanitized failure-reporting template. Automated CI must pass for
 the exact candidate commit before release manual QA begins.
