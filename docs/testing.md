@@ -197,8 +197,8 @@ clinical recordings, or decrypted credential contents.
 
 ## Manual QA
 
-Stable manual QA scenarios and the manual failure-reporting workflow are
-intentionally deferred to [issue #179](https://github.com/aces/EEG2BIDS/issues/179).
-That work does not block the automated testing baseline. Existing development
-sanity checks remain in [Development](development.md) until #179 reviews and
-consolidates them.
+Human checks that add value beyond the automated suites are defined in
+[Linux manual QA](manual-qa.md). It provides stable scenario IDs, synthetic and
+approved legacy-data requirements, release-candidate gates, packaged-install
+checks, and a sanitized failure-reporting template. Automated CI must pass for
+the exact candidate commit before release manual QA begins.
