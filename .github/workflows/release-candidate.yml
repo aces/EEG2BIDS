@@ -1,0 +1,103 @@
+# Build and publish immutable Linux and unsigned Windows release candidates.
+# Final releases are promoted separately after maintainer QA; this workflow
+# never publishes a production release.
+name: Release candidate
+
+on:
+  push:
+    tags:
+      - 'v*-rc.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate candidate tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate tag and package version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc\.([1-9][0-9]*)$ ]]; then
+            echo "Expected an immutable release-candidate tag such as v3.0.0-rc.1" >&2
+            exit 1
+          fi
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ "$package_version" != "${BASH_REMATCH[1]}" ]]; then
+            echo "Tag version ${BASH_REMATCH[1]} does not match package.json version $package_version" >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists and will not be replaced" >&2
+            exit 1
+          fi
+
+  ci:
+    name: Exact-tag test suite
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  package:
+    name: Native packages
+    needs: validate
+    uses: ./.github/workflows/package.yml
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish GitHub prerelease
+    needs: [ci, package]
+    runs-on: ubuntu-24.04
+    environment: release-candidate
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux candidate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: eeg2bids-linux-x64-${{ github.sha }}
+          path: release-assets/linux
+
+      - name: Download Windows candidate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: eeg2bids-windows-x64-${{ github.sha }}
+          path: release-assets/windows
+
+      - name: Record source provenance
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          cat > release-assets/SOURCE.txt <<EOF
+          tag=$TAG
+          commit=$GITHUB_SHA
+          repository=$GITHUB_REPOSITORY
+          workflow_run=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          windows_signing=unsigned
+          EOF
+
+      - name: Publish immutable prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(find release-assets -type f -print | sort)
+          gh release create "$TAG" "${assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --prerelease \
+            --title "EEG2BIDS ${TAG#v}" \
+            --notes "Automated release candidate for manual QA. The Windows installer is unsigned. Do not promote this candidate unless its recorded checksums pass QA."

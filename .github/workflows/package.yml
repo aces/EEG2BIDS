@@ -4,6 +4,7 @@
 name: Package
 
 on:
+  workflow_call:
   workflow_dispatch:
   pull_request:
     paths:
@@ -30,14 +31,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
           enable-cache: true
 
@@ -53,15 +54,15 @@ jobs:
       - name: Generate checksum
         run: |
           cd dist/electron
-          sha256sum *.deb > SHA256SUMS
+          sha256sum -- *.deb > SHA256SUMS-linux-x64
 
       - name: Upload Linux candidate
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: eeg2bids-linux-x64-${{ github.sha }}
           path: |
             dist/electron/*.deb
-            dist/electron/SHA256SUMS
+            dist/electron/SHA256SUMS-linux-x64
           if-no-files-found: error
           retention-days: 14
 
@@ -70,14 +71,14 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
           enable-cache: true
 
@@ -156,7 +157,7 @@ jobs:
 
       - name: Upload packaged application logs
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: eeg2bids-windows-smoke-logs-${{ github.sha }}
           path: test-results/packaged-windows/
@@ -171,14 +172,14 @@ jobs:
             throw "Expected exactly one NSIS installer, found $($installer.Count)"
           }
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
-          "$hash  $($installer.Name)" | Set-Content dist/electron/SHA256SUMS
+          "$hash  $($installer.Name)" | Set-Content dist/electron/SHA256SUMS-windows-x64
 
       - name: Upload Windows candidate
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: eeg2bids-windows-x64-${{ github.sha }}
           path: |
             dist/electron/*-setup.exe
-            dist/electron/SHA256SUMS
+            dist/electron/SHA256SUMS-windows-x64
           if-no-files-found: error
           retention-days: 14

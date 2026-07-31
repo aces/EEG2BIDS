@@ -199,8 +199,10 @@ freeze step alone is `npm run freeze:backend`, using
 
 The `Package` GitHub Actions workflow builds both platforms natively, smoke
 tests the installed Windows application and managed backend, generates
-`SHA256SUMS`, and uploads workflow artifacts. It does not publish a GitHub
-Release; coordinated candidate publication and promotion remain in #190.
+platform-specific SHA-256 files, and uploads workflow artifacts. Immutable RC
+tags invoke that workflow and publish a GitHub prerelease for manual QA; see the
+[release-candidate guide](docs/releasing.md). Final promotion remains a separate,
+protected manual operation.
 
 See the [installation guide](docs/installation.md), the
 [Windows packaging guide](docs/windows-packaging.md), and the historical
