@@ -238,6 +238,49 @@ def disconnect(sid):
     print('disconnect: ', sid)
 
 
+def _windows_process_is_alive(pid):
+    """Return whether *pid* is alive using the native Windows process API.
+
+    ``os.kill(pid, 0)`` is a POSIX process-existence probe, but Python's Windows
+    implementation maps signals onto different Win32 semantics. Use a
+    non-terminating wait on a synchronization handle instead.
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    synchronize = 0x00100000
+    wait_timeout = 0x00000102
+    error_access_denied = 5
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL,
+                                     wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel32.WaitForSingleObject.restype = wintypes.DWORD
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+    handle = kernel32.OpenProcess(synchronize, False, pid)
+    if not handle:
+        # Access denied proves that a process occupies the pid; do not kill the
+        # backend merely because Windows refuses a synchronization handle.
+        return ctypes.get_last_error() == error_access_denied
+    try:
+        return kernel32.WaitForSingleObject(handle, 0) == wait_timeout
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _owner_process_is_alive(pid):
+    """Return whether the Electron owner process still exists."""
+    if sys.platform == 'win32':
+        return _windows_process_is_alive(pid)
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
 def _watch_owner_process():
     """Exit when the process that owns this backend disappears.
 
@@ -254,11 +297,9 @@ def _watch_owner_process():
     def watch():
         while True:
             time.sleep(2)
-            try:
-                os.kill(int(owner_pid), 0)
-            except OSError:
-                # stderr is a pipe into the (now dead) owner, so this
-                # print may itself fail; exit regardless.
+            if not _owner_process_is_alive(int(owner_pid)):
+                # stderr is a pipe into the (now dead) owner, so this print may
+                # itself fail; exit regardless.
                 try:
                     print(
                         f'eeg2bids: owner process {owner_pid} exited, '

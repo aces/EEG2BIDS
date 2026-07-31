@@ -35,10 +35,24 @@ release automation one native build interface to consume.
   disable or bypass Windows security controls programmatically; manual QA records
   the warning and the user-visible path explicitly.
 
+## Diagnostics
+
+The installed application writes main-process and captured backend output to:
+
+```text
+%APPDATA%\eeg2bids\logs\main.log
+```
+
+The log records backend launch, readiness, output, exit, and IPC failures. Review
+and sanitize it before sharing; application code must never log credentials or
+clinical data.
+
 ## Verification boundary
 
 CI is responsible for reproducibly building the native artifact from
-`package-lock.json` and `uv.lock`, generating its checksum, and retaining both
-together. Windows manual QA verifies the interactive installer, SmartScreen,
-Start menu integration, installed application workflow, upgrade, shutdown, and
-uninstall against that exact checksummed artifact.
+`package-lock.json` and `uv.lock`, silently installing it, confirming the managed
+backend remains available, closing it normally, checking process cleanup,
+uninstalling it, generating its checksum, and retaining the artifact and logs.
+Windows manual QA verifies the interactive installer, SmartScreen, Start menu
+integration, visible application workflow, upgrade, and uninstall against that
+exact checksummed artifact.
