@@ -231,7 +231,7 @@ wheels = [
 
 [[package]]
 name = "eeg2bids"
-version = "3.0.0b1"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "bids-validator" },
