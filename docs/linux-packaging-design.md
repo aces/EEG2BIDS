@@ -1,9 +1,9 @@
-# Linux production packaging — design draft (issue #170)
+# Linux production packaging — implementation record (issue #170)
 
-**Status:** draft / proposal. Nothing here is committed to yet. This document
-exists to pressure-test an approach before we write build config, and to record
-*why* each choice was made so the Windows (#188) and macOS (#189) follow-ups can
-reuse the reasoning instead of rediscovering it.
+**Status:** implemented. This document began as the design proposal for #170 and
+retains its phased reasoning and historical verification notes. The current user
+instructions live in [Installation](installation.md); Windows implementation
+status lives in [Windows production packaging](windows-packaging.md).
 
 Read this alongside the issue text of #170. Where the issue says *what* must be
 true, this doc proposes *how*, and argues the trade-offs.
@@ -12,7 +12,7 @@ true, this doc proposes *how*, and argues the trade-offs.
 
 ## 1. What we're actually building
 
-Today EEG2BIDS only runs from a source checkout. A developer runs `uv sync`,
+Before production packaging, EEG2BIDS ran only from a source checkout. A developer runs `uv sync`,
 `npm ci`, `npm run dev`, and Electron launches the Python backend with
 `uv run --frozen python -m eeg2bids`. That is three separate toolchains (Node,
 uv, a Python interpreter) all assumed to be present, plus the repo itself on
@@ -241,16 +241,11 @@ checkout) rather than the current `DEV` env var alone.
    dev-server override. (Dev = load `localhost:3000`; packaged = load the
    bundled build; there's no "packaged but dev-server" case.)
 
-**One cross-platform bug to flag now, even though it's not a Linux blocker:**
-`backend-service.js` terminates the backend with `process.kill(-pid, ...)` on a
-`detached` process group. That negative-pid / process-group trick is
-**POSIX-only** — it works on Linux and macOS but **not on Windows**, so #188 will
-have to add a Windows teardown path (job objects or `taskkill /T /F`). The
-Python-side `EEG2BIDS_OWNER_PID` watchdog is already cross-platform, so the
-backend won't orphan even if the Electron-side kill is weaker on Windows — but
-the clean-shutdown guarantee needs Windows-specific work. Noting it here so
-#170's "shared architecture" doesn't accidentally bake in a POSIX assumption the
-follow-ups inherit silently.
+**Cross-platform lifecycle resolution:** the original process-group teardown was
+POSIX-only. #188 added a Windows path using `taskkill /T` with `/F` escalation,
+and changed the Python owner watchdog to use the native Windows process API
+rather than the POSIX `os.kill(pid, 0)` probe. Native CI now verifies that the
+installed Windows backend remains connected and exits with its owner.
 
 ---
 
@@ -403,9 +398,9 @@ Each phase is independently reviewable and de-risks the next.
   paths. Not verified here (needs root + system mutation → Phase 4): actually
   installing, and confirming a sandboxed launch with no `--no-sandbox`.
 
-  Minor open polish: electron-builder warns `desktopName`/`syncDesktopName` is
-  unset (window/.desktop association); harmless, easy follow-up. Package version
-  is still `1.0.5` (inherits package.json — see the version-source decision, §10).
+  The later polish set `desktopName`/`syncDesktopName` for correct desktop and
+  window association. Package versions now inherit the project version from
+  `package.json`.
 - **Phase 4 — Clean-machine verification.** Install the `.deb` on a fresh
   Ubuntu 24.04 VM/container with none of Node/npm/uv/Python present. Confirm:
   launches, sandbox on (not `--no-sandbox`), backend converts, credentials
@@ -434,7 +429,7 @@ Each phase is independently reviewable and de-risks the next.
 
 ---
 
-## 9. What #188 (Windows) and #189 (macOS) inherit from this
+## 9. What Windows and macOS inherit from this
 
 So the follow-ups stay "sparse" as intended, #170 nails down the shared spine:
 - The **PyInstaller freeze** of `__main__.py` (same on all three OSes; only the
@@ -445,12 +440,11 @@ So the follow-ups stay "sparse" as intended, #170 nails down the shared spine:
 - The launch contract (`EEG2BIDS_BACKEND_PORT`, `EEG2BIDS_OWNER_PID`, port-in-use
   → external).
 
-What they must add themselves (and why it can't be shared):
-- **Windows (#188):** a real child-process teardown (the POSIX process-group
-  kill doesn't exist); installer format (NSIS recommended); **Authenticode code
-  signing** (needs a cert — a procurement decision, not code) or users get
-  SmartScreen warnings.
-- **macOS (#189):** `.dmg`/`.pkg`; **code signing + notarization** (needs an
+Platform-specific status:
+- **Windows (#188, complete):** per-user NSIS on Windows 11 x64; native process
+  teardown and watchdog; unsigned initially, with SmartScreen warnings
+  documented; native CI build and installed-app smoke test.
+- **macOS (#189, pending):** `.dmg`/`.pkg`; **code signing + notarization** (needs an
   Apple Developer ID account — annual cost, org decision) or Gatekeeper blocks
   it on clean machines; hardened runtime; arm64 vs x86_64 (universal binary?).
   Neither Windows nor macOS has the AppArmor/userns problem — the whole §4
@@ -458,24 +452,19 @@ What they must add themselves (and why it can't be shared):
 
 ---
 
-## 10. Decisions needed from a human before/while building
+## 10. Resolved implementation decisions
 
-These are genuine forks I shouldn't silently pick:
-
-1. **Supported scope for v1:** Ubuntu 24.04 x86_64 only, or also 22.04 / arm64 /
-   non-AppArmor distros? (Narrower = faster to a real, *verified* artifact.)
-2. **AppArmor profile vs setuid helper as the *primary*** — I've proposed
-   "profile primary, setuid fallback." If we'd rather commit to one, that's a
-   call to make.
-3. **`.deb` first vs invest in Snap/Flatpak** for confinement-managed
-   sandboxing. I recommend `.deb` first; Snap is a legitimate alternative if the
-   team wants store distribution and can accept the file-access/credential
-   confinement work.
-4. **Version source of truth:** `package.json` and `pyproject.toml` both say
-   `1.0.5` but #191 targets a `3.0.0` release. The build needs one authoritative
-   version; where does it live and who bumps it?
-5. **Uninstall data policy:** keep user credentials/settings on uninstall
-   (proposed) vs purge them. Affects the `postrm` script.
+1. **Supported Linux scope:** Ubuntu 24.04+ amd64, with Ubuntu 22.04 supported
+   through the installer's AppArmor fallback.
+2. **Sandbox integration:** electron-builder's `.deb` lifecycle scripts select
+   the supported AppArmor/userns path and configure the narrowly scoped setuid
+   helper only when needed.
+3. **Package format:** `.deb`; Snap and Flatpak remain outside the supported
+   formats.
+4. **Version source:** electron-builder reads `package.json`; the Python project
+   version is kept aligned for the frozen backend package.
+5. **Uninstall data policy:** retain user settings and credentials while removing
+   installer-owned files and policy.
 
 ---
 

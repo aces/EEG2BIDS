@@ -1,93 +1,91 @@
-# Installing EEG2BIDS (Linux)
+# Installing EEG2BIDS
 
-This guide is for **installing and running** the EEG2BIDS desktop application
-from a production `.deb` package. It requires no development tooling — Node,
-npm, uv, and Python do **not** need to be installed. To build the `.deb`
-yourself see [Packaging](../README.md#packaging); to run from a source checkout
-see the [development guide](development.md).
+Production packages include Electron, the renderer, and the frozen Python
+backend. End users do not need Node, npm, uv, or Python. To build a package see
+[Packaging](../README.md#packaging); to run from source see the
+[development guide](development.md).
 
-## Supported environment
+## Supported environments
 
-- **Ubuntu 24.04 LTS or newer, amd64** — the primary supported target.
-- **Ubuntu 22.04 LTS, amd64** — supported. (The AppArmor sandbox profile the
-  installer ships targets a newer AppArmor and is automatically skipped here;
-  the app still runs correctly.)
-- A **graphical desktop session** (X11 or Wayland).
-- A **secret service** — GNOME Keyring or KWallet — if you use the LORIS
-  integration. Credentials are encrypted through it; without one the app still
-  runs but can only obfuscate saved credentials and will warn you.
+- **Ubuntu 24.04 LTS or newer, amd64** — primary Linux target.
+- **Ubuntu 22.04 LTS, amd64** — supported with the installer's AppArmor
+  fallback.
+- **Windows 11, x64** — installed per-user with NSIS.
+- A graphical desktop session.
+- On Linux, GNOME Keyring or KWallet is required to encrypt saved LORIS
+  credentials. Without a secret service, the app warns that it can only
+  obfuscate them.
 
-Other Debian-family distributions may work but are not verified. Non-amd64
-architectures, Windows, and macOS are not yet supported (Windows and macOS are
-tracked in #188 and #189).
+Other Debian-family distributions may work but are not verified. Other
+architectures, older Windows versions, and macOS are not supported.
 
-## Install
+## Ubuntu
+
+### Install and launch
 
 ```sh
 sudo apt install ./eeg2bids_<version>_amd64.deb
-```
-
-Using `apt install ./file.deb` (rather than `dpkg -i`) also pulls in any system
-dependencies. The application installs to `/opt/EEG2BIDS/`, adds a launcher to
-your applications menu, and creates the command `eeg2bids` on your `PATH`.
-
-### The Chromium sandbox is handled for you
-
-Ubuntu 24.04+ restricts the unprivileged user namespaces that Chromium's
-sandbox relies on. The installer resolves this during installation — it enables
-a setuid sandbox helper only on systems that need it, and installs an AppArmor
-profile where supported. **You do not need to run `chown`, `chmod`, edit
-AppArmor, or launch with `--no-sandbox`.** The application runs fully sandboxed.
-
-## Launch
-
-From your applications menu (search "EEG2BIDS"), or from a terminal:
-
-```sh
 eeg2bids
 ```
 
-## Upgrade
+Using `apt install ./file.deb` also installs system dependencies. EEG2BIDS is
+installed under `/opt/EEG2BIDS/`, with an applications-menu launcher and an
+`eeg2bids` command.
 
-Install a newer `.deb` the same way; it replaces the previous version and
-re-applies the sandbox integration automatically:
+Ubuntu 24.04+ restricts the user namespaces Chromium's sandbox uses. The
+installer configures the sandbox helper and an AppArmor profile where supported.
+Do not manually run `chown`, change AppArmor, or use `--no-sandbox`.
+
+### Upgrade and uninstall
+
+Install a newer `.deb` in the same way. It replaces the previous version and
+re-applies sandbox integration.
 
 ```sh
 sudo apt install ./eeg2bids_<newer-version>_amd64.deb
-```
-
-## Uninstall
-
-```sh
 sudo apt remove eeg2bids
 ```
 
-This removes the installed application under `/opt/EEG2BIDS/`, the `PATH`
-command, and the AppArmor profile the installer added (unloading it from the
-running kernel).
+Uninstall removes package-owned files, commands, and AppArmor policy.
 
-### Your data is kept
+## Windows 11
 
-Uninstalling does **not** delete your personal data — your settings and any
-saved LORIS credentials live in your user profile
-(`~/.config/eeg2bids/`, credentials encrypted via the secret service), not in
-the installed package. Remove them yourself if you want a clean slate:
+Download the x64 NSIS installer and its `SHA256SUMS` from the same successful
+`Package` workflow artifact. Verify the checksum before installation, then run
+the assisted installer. It installs per-user without administrator access and
+adds EEG2BIDS to the Start menu.
 
-```sh
-rm -rf ~/.config/eeg2bids
-```
+The initial Windows installer is unsigned. Windows SmartScreen may identify it
+as an unrecognized application. Confirm the file came from the project workflow
+and that its checksum matches; the application does not disable or bypass
+Windows security controls.
 
-On a **shared computer**, remove saved LORIS credentials from within the app
-(or delete `~/.config/eeg2bids/`) after use.
+Run a newer installer to upgrade in place. Uninstall EEG2BIDS through Windows
+**Settings > Apps > Installed apps**.
+
+See [Windows production packaging](windows-packaging.md) for native build,
+workflow, lifecycle, diagnostics, and verification details.
+
+## User data and credentials
+
+Uninstalling on either platform retains personal settings and saved LORIS
+credentials:
+
+- Linux: `~/.config/eeg2bids/`
+- Windows: `%APPDATA%\eeg2bids\`
+
+Remove saved credentials inside the application before uninstalling, especially
+on a shared computer. Delete the corresponding profile directory only when you
+intend to remove all retained application data.
 
 ## Troubleshooting
 
-- **The window does not appear / the app exits immediately.** Launch from a
-  terminal (`eeg2bids`) to see diagnostics. Sandbox-related failures are logged
-  with actionable guidance. Do not work around them with `--no-sandbox`.
-- **"Backend unavailable" in the app.** The bundled backend failed to start;
-  the status area and terminal output describe why. The backend listens on
-  `127.0.0.1:7301`; if another program already uses that port the app assumes an
-  externally managed backend.
-- **Credentials only obfuscated, not encrypted.** No secret service is
-  available in your session; install/enable GNOME Keyring or KWallet.
+- **Backend unavailable:** another program may own `127.0.0.1:7301`, or the
+  bundled backend failed to start. Use the status indicator and **Restart
+  backend** after addressing the cause.
+- **Linux launch failure:** run `eeg2bids` in a terminal to see diagnostics. Do
+  not use `--no-sandbox`.
+- **Windows launch/backend failure:** inspect
+  `%APPDATA%\eeg2bids\logs\main.log`; it records main-process and captured
+  backend diagnostics. Sanitize logs before sharing them.
+- **Linux credentials only obfuscated:** enable GNOME Keyring or KWallet.
