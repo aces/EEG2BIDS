@@ -44,14 +44,18 @@ test('shutdown terminates the owned backend process group', async ({
     expect(typeof pid).toBe('number');
     expect(pid).toBeGreaterThan(0);
     expect(alive(pid)).toBe(true);
-    // The child is detached, so its pid is also its process-group id.
-    expect(alive(-pid)).toBe(true);
+    // POSIX exposes the detached process group through a negative pid.
+    // Windows process trees are terminated with taskkill /T instead.
+    if (process.platform !== 'win32') {
+      expect(alive(-pid)).toBe(true);
+    }
 
     await app.close();
 
-    // The whole owned process group is gone shortly after quit.
-    await expect.poll(() => alive(-pid), {timeout: 8000}).toBe(false);
-    expect(alive(pid)).toBe(false);
+    if (process.platform !== 'win32') {
+      await expect.poll(() => alive(-pid), {timeout: 8000}).toBe(false);
+    }
+    await expect.poll(() => alive(pid), {timeout: 8000}).toBe(false);
   } finally {
     // close() is idempotent enough here; guard against a still-open app if an
     // assertion threw before the explicit close above.

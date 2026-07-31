@@ -1,0 +1,184 @@
+# Native packaging validation for the supported Linux and Windows targets.
+# This workflow never publishes a GitHub Release. Issue #190 can consume these
+# jobs later for immutable release-candidate publication and promotion.
+name: Package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/package.yml'
+      - 'electron/**'
+      - 'eeg2bids/**'
+      - 'tools/eeg2bids-backend.spec'
+      - 'tools/pyinstaller-rthooks/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux deb (x64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Electron runtime
+        run: npm run install:electron
+
+      - name: Build Linux package
+        run: npm run dist:linux
+
+      - name: Generate checksum
+        run: |
+          cd dist/electron
+          sha256sum *.deb > SHA256SUMS
+
+      - name: Upload Linux candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: eeg2bids-linux-x64-${{ github.sha }}
+          path: |
+            dist/electron/*.deb
+            dist/electron/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows NSIS (x64)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Electron runtime
+        run: npm run install:electron
+
+      - name: Build Windows package
+        run: npm run dist:windows
+
+      - name: Smoke test installed application
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/electron/*-setup.exe
+          if ($installer.Count -ne 1) {
+            throw "Expected exactly one NSIS installer, found $($installer.Count)"
+          }
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          $app = Get-ChildItem "$env:LOCALAPPDATA/Programs/eeg2bids" `
+            -Filter 'eeg2bids.exe' -Recurse | Select-Object -First 1
+          if (-not $app) { throw 'Installed eeg2bids.exe was not found' }
+
+          $process = Start-Process -FilePath $app.FullName -PassThru
+          $connected = $false
+          for ($attempt = 0; $attempt -lt 120; $attempt++) {
+            try {
+              $client = [System.Net.Sockets.TcpClient]::new()
+              $client.Connect('127.0.0.1', 7301)
+              $client.Dispose()
+              $connected = $true
+              break
+            } catch {
+              Start-Sleep -Seconds 1
+            }
+          }
+          if (-not $connected) { throw 'Backend did not open port 7301' }
+
+          # The Windows watchdog defect appeared only after its first poll.
+          # Require the managed backend to remain available well beyond that.
+          Start-Sleep -Seconds 10
+          $client = [System.Net.Sockets.TcpClient]::new()
+          try {
+            $client.Connect('127.0.0.1', 7301)
+          } finally {
+            $client.Dispose()
+          }
+
+          $window = Get-Process eeg2bids | Where-Object MainWindowHandle -ne 0 |
+            Select-Object -First 1
+          if (-not $window -or -not $window.CloseMainWindow()) {
+            throw 'Could not close the installed application normally'
+          }
+          $window.WaitForExit(15000) | Out-Null
+          Start-Sleep -Seconds 5
+          if (Get-Process eeg2bids-backend -ErrorAction SilentlyContinue) {
+            throw 'Frozen backend remained after application shutdown'
+          }
+
+          $uninstaller = Get-ChildItem "$env:LOCALAPPDATA/Programs/eeg2bids" `
+            -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if (-not $uninstaller) { throw 'NSIS uninstaller was not found' }
+          Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait
+
+      - name: Collect packaged application logs
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force test-results/packaged-windows |
+            Out-Null
+          $log = Join-Path $env:APPDATA 'eeg2bids/logs/main.log'
+          if (Test-Path $log) {
+            Copy-Item $log test-results/packaged-windows/main.log
+          }
+
+      - name: Upload packaged application logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eeg2bids-windows-smoke-logs-${{ github.sha }}
+          path: test-results/packaged-windows/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Generate checksum
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/electron/*-setup.exe
+          if ($installer.Count -ne 1) {
+            throw "Expected exactly one NSIS installer, found $($installer.Count)"
+          }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content dist/electron/SHA256SUMS
+
+      - name: Upload Windows candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: eeg2bids-windows-x64-${{ github.sha }}
+          path: |
+            dist/electron/*-setup.exe
+            dist/electron/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14

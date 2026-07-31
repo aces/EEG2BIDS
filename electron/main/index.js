@@ -6,6 +6,7 @@ const {
 } = require('./windows');
 const {registerIpcHandlers} = require('./ipc');
 const backendService = require('./backend-service');
+const {initializeLogging} = require('./logging');
 
 // Redirect all user data (settings + encrypted credentials) to an isolated
 // directory when asked. Integration tests point this at a temporary dir so
@@ -15,6 +16,7 @@ if (process.env.EEG2BIDS_USER_DATA_DIR) {
   app.setPath('userData', process.env.EEG2BIDS_USER_DATA_DIR);
 }
 
+initializeLogging(app);
 registerIpcHandlers();
 
 // Renderer content is untrusted: windows may only show our own renderer,
