@@ -10,7 +10,6 @@
     "react": "^19.2.7",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1",
     "react-switch": "^7.1.0",
     "react-tooltip": "6.0.8",
     "socket.io-client": "^4.8.3"
@@ -108,5 +107,8 @@
     "name": "Loris Team",
     "email": "loris-dev@bic.mni.mcgill.ca",
     "url": "https://github.com/aces/eeg2bids"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.9"
   }
 }

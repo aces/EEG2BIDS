@@ -73,8 +73,16 @@ templates list the fields understood by the application:
 - [EEG metadata template](../templates/eeg_parameters_TEMPLATE.json)
 - [iEEG metadata template](../templates/ieeg_parameters_TEMPLATE.json)
 
-Invalid, extra, and empty parameters are ignored by the current application.
-Required values are also collected through the Configuration form.
+Parameter files contain two top-level objects: `bids` holds BIDS sidecar
+metadata, while `prepopulation` holds Project, Subproject, Visit, Site,
+LineFrequency, Reference, and RecordingType values used to initialize the
+Configuration form. Users can review and change imported values; re-reading
+metadata for a modality change does not overwrite those edits. Flat parameter
+files are not supported.
+
+Invalid, extra, and empty BIDS parameters are ignored by the current
+application. Required values are also collected through the Configuration
+form.
 
 ## Events
 
