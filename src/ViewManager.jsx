@@ -1,9 +1,4 @@
 import React from 'react';
-import {
-  HashRouter,
-  Routes,
-  Route,
-} from 'react-router-dom';
 
 // Components
 import App from './App';
@@ -17,15 +12,7 @@ const ViewManager = () => {
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
-  return (
-    <HashRouter>
-      <div>
-        <Routes>
-          <Route path='/' exact element={<App/>}/>
-        </Routes>
-      </div>
-    </HashRouter>
-  );
+  return <App/>;
 };
 
 export default ViewManager;

@@ -120,8 +120,8 @@ def bids_validator():
 
     def _validate(dataset_root):
         proc = subprocess.run(
-            [deno, "run", "-A", BIDS_VALIDATOR_SPEC, str(dataset_root),
-             "--json"],
+            [deno, "run", "-A", "--node-modules-dir=auto",
+             BIDS_VALIDATOR_SPEC, str(dataset_root), "--json"],
             capture_output=True, text=True)
         try:
             report = json.loads(proc.stdout)
