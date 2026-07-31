@@ -34,6 +34,25 @@ preserves the source format when it is BIDS-compatible and converts to EDF
 otherwise. You can also select EDF, BrainVision, or EEGLAB explicitly;
 MNE-BIDS performs any conversion.
 
+## Anonymization
+
+Enable **Anonymize** to have MNE-BIDS anonymize metadata it recognizes before
+writing any supported output format. EEG2BIDS uses one consistent date shift
+for all runs in the conversion, removes MNE subject-identifying metadata, and
+writes the shifted acquisition time to BIDS metadata. Because EDF can only
+represent a two-digit year in one header date field, an anonymized EDF may show
+1985 there; the complete shifted date is stored in `*_scans.tsv`.
+
+EDF output receives an additional format-specific safeguard: both its
+80-character patient-identification and recording-identification fields are
+replaced with `X X X X`. When anonymization is disabled, those fields are
+preserved.
+
+MNE-BIDS can only anonymize metadata its source reader recognizes. Review
+free-text events, annotations, custom vendor fields, external metadata files,
+and participant/project values before sharing a dataset; the toggle does not
+claim to detect identifiers in arbitrary user-authored text.
+
 ## Recordings and runs
 
 The Configuration tab accepts one or more recording files for a single

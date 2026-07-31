@@ -104,6 +104,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Fast, display-free tests for pure renderer logic.
+      - name: Unit tests
+        run: npm run test:unit
+
       - name: Production renderer build
         run: npm run build
 

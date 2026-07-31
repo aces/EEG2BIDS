@@ -7,8 +7,11 @@ metadata) rather than whole-dataset snapshots. These tests own EEG2BIDS
 orchestration and output policy; they do not re-test MNE's parsers.
 """
 import csv
+from datetime import datetime
 import json
+import shutil
 
+import mne
 import pytest
 
 
@@ -47,6 +50,52 @@ def test_eeg_edf_conversion_writes_dataset(make_convert_data, run_conversion):
     assert _recording_file(root, "eeg").suffix == ".edf"
     assert (root / "dataset_description.json").exists()
     assert (root / "participants.tsv").exists()
+
+
+def _edf_identification_fields(path):
+    with open(path, "rb") as stream:
+        stream.seek(8)
+        return tuple(stream.read(80).decode("ascii").strip() for _ in range(2))
+
+
+def test_anonymization_toggle_controls_edf_identity_and_date(
+        fixtures_dir, tmp_path, make_convert_data, run_conversion):
+    source = tmp_path / "identified.edf"
+    shutil.copyfile(fixtures_dir / "eeg_continuous.edf", source)
+    with open(source, "r+b") as stream:
+        stream.seek(8)
+        stream.write(b"PATIENT-SECRET".ljust(80))
+        stream.write(b"RECORDING-SECRET".ljust(80))
+
+    common = {
+        "recordingData": {"files": [{"path": str(source), "name": source.name}]},
+        "eegRuns": [{"recordingFile": str(source), "eventFile": ""}],
+    }
+
+    plain_data = make_convert_data(
+        "eeg_continuous.edf", bids_directory=str(tmp_path / "plain"), **common)
+    _, plain_root = run_conversion(plain_data)
+    plain = _recording_file(plain_root, "eeg")
+    assert _edf_identification_fields(plain) == (
+        "PATIENT-SECRET", "RECORDING-SECRET")
+
+    anonymous_data = make_convert_data(
+        "eeg_continuous.edf", anonymize=True,
+        bids_directory=str(tmp_path / "anonymous"), **common)
+    _, anonymous_root = run_conversion(anonymous_data)
+    anonymous = _recording_file(anonymous_root, "eeg")
+    patient, recording = _edf_identification_fields(anonymous)
+    assert patient == "X X X X"
+    assert recording == "X X X X"
+    # EDF's two-digit start-date field bottoms out at 1985; MNE-BIDS stores
+    # the true shifted date in scans.tsv.
+    raw = mne.io.read_raw_edf(anonymous, verbose="ERROR")
+    assert raw.info["meas_date"].year == 1985
+    (scans_path,) = anonymous_root.glob("sub-*/ses-*/*_scans.tsv")
+    with open(scans_path) as stream:
+        (scan,) = csv.DictReader(stream, delimiter="\t")
+    shifted = datetime.fromisoformat(scan["acq_time"].replace("Z", "+00:00"))
+    assert shifted.year < 1925
 
 
 def test_ieeg_edf_conversion_uses_ieeg_datatype(make_convert_data,

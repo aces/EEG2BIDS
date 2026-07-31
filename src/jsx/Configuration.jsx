@@ -6,6 +6,7 @@ import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
+import {buildConversionRequest} from './types/conversionRequest';
 import Papa from 'papaparse';
 
 // Components
@@ -162,31 +163,13 @@ const Configuration = (props) => {
     setModalVisible(true);
 
     if (appContext.getFromTask('recordingData')?.['files'].length > 0) {
-      socketContext.emit('recording_to_bids', {
-        recordingData: appContext.getFromTask('recordingData') ?? [],
-        eegRuns: state.eegRuns.get ?? [],
-        modality: appContext.getFromTask('modality') ?? 'ieeg',
-        outputFormat: appContext.getFromTask('outputFormat') ?? 'auto',
-        bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-        read_only: false,
-        event_files: appContext.getFromTask('eventFiles').length > 0 ?
-          appContext.getFromTask('eventFiles')[0]['path'] : '',
-        bidsMetadata: appContext.getFromTask('bidsMetadata') ?? '',
-        site_id: appContext.getFromTask('siteID') ?? '',
-        project_id: appContext.getFromTask('projectID') ?? '',
-        sub_project_id: appContext.getFromTask('subprojectID') ?? '',
-        session: appContext.getFromTask('session') ?? '',
-        participantID: appContext.getFromTask('participantID') ?? '',
-        age: appContext.getFromTask('participantAge') ?? '',
-        hand: appContext.getFromTask('participantHand') ?? '',
-        sex: appContext.getFromTask('participantSex') ?? '',
-        preparedBy: preparedBy ?? '',
-        line_freq: appContext.getFromTask('lineFreq') || 'n/a',
-        recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
-        taskName: appContext.getFromTask('taskName') ?? '',
-        reference: appContext.getFromTask('reference') ?? '',
-        subject_id: appContext.getFromTask('subject_id') ?? '',
-      });
+      socketContext.emit('recording_to_bids', buildConversionRequest(
+          (key) => appContext.getFromTask(key),
+          {
+            eegRuns: state.eegRuns.get ?? [],
+            preparedBy: preparedBy ?? '',
+          },
+      ));
     }
   };
 
