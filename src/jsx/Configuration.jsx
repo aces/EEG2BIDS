@@ -12,6 +12,7 @@ import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
+import {buildConversionRequest} from './types/conversionRequest';
 import Papa from 'papaparse';
 import {
   deserializeManifest,
@@ -153,6 +154,7 @@ const Configuration = (props) => {
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
   const socketStatus = useSocketStatus();
+  const importedPrepopulationFile = useRef(null);
 
   // React State
   const initialState = {
@@ -345,31 +347,13 @@ const Configuration = (props) => {
     setModalVisible(true);
 
     if (appContext.getFromTask('recordingData')?.['files'].length > 0) {
-      socketContext.emit('recording_to_bids', {
-        recordingData: appContext.getFromTask('recordingData') ?? [],
-        eegRuns: state.eegRuns.get ?? [],
-        modality: appContext.getFromTask('modality') ?? 'ieeg',
-        outputFormat: appContext.getFromTask('outputFormat') ?? 'auto',
-        bids_directory: appContext.getFromTask('bidsDirectory') ?? '',
-        read_only: false,
-        event_files: appContext.getFromTask('eventFiles').length > 0 ?
-          appContext.getFromTask('eventFiles')[0]['path'] : '',
-        bidsMetadata: appContext.getFromTask('bidsMetadata') ?? '',
-        site_id: appContext.getFromTask('siteID') ?? '',
-        project_id: appContext.getFromTask('projectID') ?? '',
-        sub_project_id: appContext.getFromTask('subprojectID') ?? '',
-        session: appContext.getFromTask('session') ?? '',
-        participantID: appContext.getFromTask('participantID') ?? '',
-        age: appContext.getFromTask('participantAge') ?? '',
-        hand: appContext.getFromTask('participantHand') ?? '',
-        sex: appContext.getFromTask('participantSex') ?? '',
-        preparedBy: preparedBy ?? '',
-        line_freq: appContext.getFromTask('lineFreq') || 'n/a',
-        recording_type: appContext.getFromTask('recordingType') ?? 'n/a',
-        taskName: appContext.getFromTask('taskName') ?? '',
-        reference: appContext.getFromTask('reference') ?? '',
-        subject_id: appContext.getFromTask('subject_id') ?? '',
-      });
+      socketContext.emit('recording_to_bids', buildConversionRequest(
+          (key) => appContext.getFromTask(key),
+          {
+            eegRuns: state.eegRuns.get ?? [],
+            preparedBy: preparedBy ?? '',
+          },
+      ));
     }
   };
 
@@ -1031,6 +1015,8 @@ const Configuration = (props) => {
           file_path: state.bidsMetadataFile.get[0]['path'],
           modality: state.modality.get,
         });
+      } else {
+        importedPrepopulationFile.current = null;
       }
     }
   }, [state.bidsMetadataFile.get, state.modality.get]);
@@ -1101,6 +1087,27 @@ const Configuration = (props) => {
 
         state.bidsMetadata.set(message);
         appContext.setTask('bidsMetadata', message);
+
+        if (message.prepopulation && message.source_file !==
+            importedPrepopulationFile.current) {
+          const fieldMap = {
+            Project: 'projectID',
+            Subproject: 'subprojectID',
+            Visit: 'session',
+            Site: 'siteID',
+            LineFrequency: 'lineFreq',
+            Reference: 'reference',
+            RecordingType: 'recordingType',
+          };
+          Object.entries(fieldMap).forEach(([parameter, task]) => {
+            const value = message.prepopulation[parameter];
+            if (value !== undefined && value !== null && value !== '') {
+              state[task].set(value);
+              appContext.setTask(task, value);
+            }
+          });
+          importedPrepopulationFile.current = message.source_file;
+        }
       });
 
       socketContext.on('new_candidate_created', (data) => {

@@ -1,10 +1,10 @@
 # User guide
 
 > [!NOTE]
-> EEG2BIDS is currently supported for Linux development use only. Production
-> installers and packaged releases are not supported. See the
-> [project status](../README.md#project-status) before relying on the workflow
-> below.
+> Production packages are supported for Ubuntu amd64 and Windows 11 x64. See
+> [installation](installation.md) and the
+> [project status](../README.md#project-status) for the current support and
+> distribution details.
 
 EEG2BIDS converts one continuous EEG or stereo-iEEG recording into BIDS. Back
 up the source data before conversion.
@@ -34,6 +34,25 @@ preserves the source format when it is BIDS-compatible and converts to EDF
 otherwise. You can also select EDF, BrainVision, or EEGLAB explicitly;
 MNE-BIDS performs any conversion.
 
+## Anonymization
+
+Enable **Anonymize** to have MNE-BIDS anonymize metadata it recognizes before
+writing any supported output format. EEG2BIDS uses one consistent date shift
+for all runs in the conversion, removes MNE subject-identifying metadata, and
+writes the shifted acquisition time to BIDS metadata. Because EDF can only
+represent a two-digit year in one header date field, an anonymized EDF may show
+1985 there; the complete shifted date is stored in `*_scans.tsv`.
+
+EDF output receives an additional format-specific safeguard: both its
+80-character patient-identification and recording-identification fields are
+replaced with `X X X X`. When anonymization is disabled, those fields are
+preserved.
+
+MNE-BIDS can only anonymize metadata its source reader recognizes. Review
+free-text events, annotations, custom vendor fields, external metadata files,
+and participant/project values before sharing a dataset; the toggle does not
+claim to detect identifiers in arbitrary user-authored text.
+
 ## Recordings and runs
 
 The Configuration tab accepts one or more recording files for a single
@@ -54,8 +73,16 @@ templates list the fields understood by the application:
 - [EEG metadata template](../templates/eeg_parameters_TEMPLATE.json)
 - [iEEG metadata template](../templates/ieeg_parameters_TEMPLATE.json)
 
-Invalid, extra, and empty parameters are ignored by the current application.
-Required values are also collected through the Configuration form.
+Parameter files contain two top-level objects: `bids` holds BIDS sidecar
+metadata, while `prepopulation` holds Project, Subproject, Visit, Site,
+LineFrequency, Reference, and RecordingType values used to initialize the
+Configuration form. Users can review and change imported values; re-reading
+metadata for a modality change does not overwrite those edits. Flat parameter
+files are not supported.
+
+Invalid, extra, and empty BIDS parameters are ignored by the current
+application. Required values are also collected through the Configuration
+form.
 
 ## Events
 

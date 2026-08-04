@@ -1,4 +1,4 @@
-const {BrowserWindow} = require('electron');
+const {BrowserWindow, app} = require('electron');
 const {spawn} = require('child_process');
 const net = require('net');
 const path = require('path');
@@ -35,6 +35,30 @@ let status = {state: 'stopped', error: null};
  * @return {Promise<void>} resolves when the timer fires
  */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * How to launch the backend, which differs between a source checkout and an
+ * installed production build. In development (and in the Playwright tests,
+ * which run unpackaged) we run it through uv against the repo. In a packaged
+ * app there is no uv or Python interpreter present, so we spawn the
+ * self-contained binary produced by the freeze step (tools/freeze-backend.sh)
+ * and shipped by electron-builder as an unpacked resource under
+ * resources/backend/. See docs/linux-packaging-design.md (issue #170).
+ * @return {{command: string, args: string[], cwd: string}} spawn parameters
+ */
+const resolveBackendLaunch = () => {
+  if (app.isPackaged) {
+    const exe = process.platform === 'win32' ?
+      'eeg2bids-backend.exe' : 'eeg2bids-backend';
+    const command = path.join(process.resourcesPath, 'backend', exe);
+    return {command, args: [], cwd: path.dirname(command)};
+  }
+  return {
+    command: 'uv',
+    args: ['run', '--frozen', 'python', '-m', 'eeg2bids'],
+    cwd: REPO_ROOT,
+  };
+};
 
 /**
  * Record the new backend state and push it to every window.
@@ -129,11 +153,7 @@ const waitForReady = async (owned) => {
         `${BACKEND_PORT} within ${READINESS_TIMEOUT_MS / 1000}s of starting.`;
       console.error(`[backend] ${message}`);
       setStatus('failed', message);
-      try {
-        process.kill(-owned.pid, 'SIGTERM');
-      } catch (error) {
-        // already gone
-      }
+      terminateProcessTree(owned.pid, true);
       return;
     }
     await delay(READINESS_POLL_INTERVAL_MS);
@@ -159,8 +179,9 @@ const start = async () => {
   stopping = false;
   timedOut = false;
   setStatus('starting');
-  child = spawn('uv', ['run', '--frozen', 'python', '-m', 'eeg2bids'], {
-    cwd: REPO_ROOT,
+  const {command, args, cwd} = resolveBackendLaunch();
+  child = spawn(command, args, {
+    cwd,
     detached: true, // own process group, so stop() reaches python too
     stdio: ['ignore', 'pipe', 'pipe'],
     // The backend watches this pid and exits when it disappears, so it is
@@ -183,8 +204,10 @@ const start = async () => {
   });
   child.on('error', (error) => {
     child = null;
-    const message = `could not launch the backend through uv: ` +
-      `${error.message}. Is uv installed and on PATH?`;
+    const hint = app.isPackaged ?
+      `The bundled backend at ${command} could not be launched.` :
+      `Is uv installed and on PATH?`;
+    const message = `could not launch the backend: ${error.message}. ${hint}`;
     console.error(`[backend] ${message}`);
     setStatus('failed', message);
   });
@@ -208,8 +231,37 @@ const start = async () => {
 };
 
 /**
- * Terminate the owned backend process group, escalating to SIGKILL when
- * it ignores SIGTERM.
+ * Terminate an owned backend and its descendants. POSIX supports signaling the
+ * detached process group through a negative pid. Windows has no equivalent, so
+ * taskkill is used with /T to reach the complete process tree.
+ * @param {number} pid - root process id
+ * @param {boolean} force - whether to force termination
+ * @return {boolean} whether a termination request was started
+ */
+const terminateProcessTree = (pid, force = false) => {
+  if (process.platform === 'win32') {
+    const args = ['/PID', String(pid), '/T'];
+    if (force) {
+      args.push('/F');
+    }
+    const killer = spawn('taskkill.exe', args, {
+      windowsHide: true,
+      stdio: 'ignore',
+    });
+    killer.on('error', () => {});
+    return true;
+  }
+  try {
+    process.kill(-pid, force ? 'SIGKILL' : 'SIGTERM');
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+/**
+ * Terminate the owned backend process tree, escalating when it ignores the
+ * initial request.
  * @return {Promise<void>} resolves once the child has exited
  */
 const stop = () => new Promise((resolve) => {
@@ -225,15 +277,9 @@ const stop = () => new Promise((resolve) => {
     resolve();
   });
   killTimer = setTimeout(() => {
-    try {
-      process.kill(-pid, 'SIGKILL');
-    } catch (error) {
-      // already gone
-    }
+    terminateProcessTree(pid, true);
   }, SIGKILL_TIMEOUT_MS);
-  try {
-    process.kill(-pid, 'SIGTERM');
-  } catch (error) {
+  if (!terminateProcessTree(pid)) {
     clearTimeout(killTimer);
     resolve();
   }

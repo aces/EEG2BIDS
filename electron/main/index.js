@@ -6,6 +6,7 @@ const {
 } = require('./windows');
 const {registerIpcHandlers} = require('./ipc');
 const backendService = require('./backend-service');
+const {initializeLogging} = require('./logging');
 
 // Redirect all user data (settings + encrypted credentials) to an isolated
 // directory when asked. Integration tests point this at a temporary dir so
@@ -15,6 +16,7 @@ if (process.env.EEG2BIDS_USER_DATA_DIR) {
   app.setPath('userData', process.env.EEG2BIDS_USER_DATA_DIR);
 }
 
+initializeLogging(app);
 registerIpcHandlers();
 
 // Renderer content is untrusted: windows may only show our own renderer,
@@ -30,6 +32,39 @@ app.on('web-contents-created', (event, contents) => {
   contents.on('will-attach-webview', (navigation) => {
     navigation.preventDefault();
   });
+});
+
+// Surface actionable diagnostics when a child process dies abnormally. A
+// Chromium sandbox that cannot initialize — for example an installed sandbox
+// helper or AppArmor profile that is missing or misconfigured — shows up here
+// as a renderer or GPU process that fails to launch or crashes at startup,
+// rather than as a blank window with no explanation. A hard sandbox abort can
+// still take the whole process down before these fire; in that case Chromium
+// prints its own SUID-sandbox message to stderr. Launch from a terminal to see
+// either. Never work around it with --no-sandbox.
+const SANDBOX_HINT =
+  'If this occurred at startup it may be a Chromium sandbox failure. Do not ' +
+  'launch with --no-sandbox; see docs/installation.md for supported ' +
+  'environments and sandbox setup.';
+
+app.on('render-process-gone', (event, webContents, details) => {
+  if (details.reason === 'clean-exit') {
+    return;
+  }
+  console.error(
+      `[electron:main] renderer process gone (reason: ${details.reason}, ` +
+      `exitCode: ${details.exitCode}). ${SANDBOX_HINT}`,
+  );
+});
+
+app.on('child-process-gone', (event, details) => {
+  if (details.reason === 'clean-exit') {
+    return;
+  }
+  console.error(
+      `[electron:main] ${details.type} process gone (reason: ` +
+      `${details.reason}). ${SANDBOX_HINT}`,
+  );
 });
 
 app.whenReady().then(() => {

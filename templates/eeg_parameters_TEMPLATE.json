@@ -1,19 +1,30 @@
 {
-  "InstitutionName": "",
-  "InstitutionAddress": "",
-  "Manufacturer": "",
-  "ManufacturersModelName": "",
-  "SoftwareVersions": "",
-  "TaskDescription": "",
-  "Instructions": "",
-  "CogAtlasID": "",
-  "CogPOID": "",
-  "DeviceSerialNumber": "",
-  "HardwareFilters": "",
-  "CapManufacturer": "",
-  "CapManufacturersModelName": "",
-  "EEGGround": "",
-  "HeadCircumference": "",
-  "EEGPlacementScheme": "",
-  "SubjectArtefactDescription": ""
+  "bids": {
+    "InstitutionName": "",
+    "InstitutionAddress": "",
+    "Manufacturer": "",
+    "ManufacturersModelName": "",
+    "SoftwareVersions": "",
+    "TaskDescription": "",
+    "Instructions": "",
+    "CogAtlasID": "",
+    "CogPOID": "",
+    "DeviceSerialNumber": "",
+    "HardwareFilters": "",
+    "CapManufacturer": "",
+    "CapManufacturersModelName": "",
+    "EEGGround": "",
+    "HeadCircumference": "",
+    "EEGPlacementScheme": "",
+    "SubjectArtefactDescription": ""
+  },
+  "prepopulation": {
+    "Project": "",
+    "Subproject": "",
+    "Visit": "",
+    "Site": "",
+    "LineFrequency": "",
+    "Reference": "",
+    "RecordingType": ""
+  }
 }

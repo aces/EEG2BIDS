@@ -1,11 +1,16 @@
 # Development guide
 
 This guide covers the Linux development workflow for EEG2BIDS: launching the
-app, debugging it, generating development data, and the current manual sanity
-checks. For installation prerequisites (Node, uv, secret service) see the
-[README](../README.md). For the canonical automated test commands and fixture
-policy, see [Testing](testing.md). Linux is the only supported development
-target; production packaging, Windows, and macOS are explicitly out of scope.
+app from a source checkout, debugging it, generating development data, and the
+current manual sanity checks. For installation prerequisites (Node, uv, secret
+service) see the [README](../README.md). For the canonical automated test
+commands and fixture policy, see [Testing](testing.md).
+
+Linux is the supported development target. Production packages are available
+for Ubuntu and Windows 11 x64. See [Packaging](../README.md#packaging), the
+[installation guide](installation.md), and the
+[Windows packaging guide](windows-packaging.md). macOS packaging remains
+tracked in #189.
 
 ## Launching
 
@@ -116,54 +121,10 @@ is optional; leaving it blank keeps the app fully usable for conversion and
 validation. A failed or unreachable LORIS produces a visible login error
 (after a 10-second timeout) and does not crash the backend.
 
-## Provisional manual checks
+## Manual QA
 
-The checks below predate the automated testing baseline and are retained for
-reference. [Issue #179](https://github.com/aces/EEG2BIDS/issues/179) will review
-them, remove checks that duplicate reliable automation, and establish stable
-manual QA scenarios. They are not part of the automated test requirements in
-the [testing guide](testing.md).
-
-### Verifying the Socket.IO integration
-
-The renderer talks to the Python backend over Socket.IO on
-`127.0.0.1:7301`. To sanity-check the integration:
-
-1. **Initial connection** — launch the app; the indicator reaches *connected*.
-2. **Rejected/failed connection** — start the app with no backend reachable
-   (e.g. occupy 7301 with an unrelated program); the indicator shows
-   *unavailable*/*disconnected* and `[socket] connect_error` appears in the
-   DevTools console.
-3. **Disconnect** — stop the backend; the indicator shows *disconnected*.
-4. **Reconnect after backend restart** — use *Restart backend*; the indicator
-   returns to *connected*.
-5. **Request/response round trip** — run a validation (below); a result comes
-   back over the `response` event.
-6. **Backend error response** — validate an empty/invalid directory; a visible
-   error is returned rather than a hang.
-
-### Manual happy-path procedure
-
-Run this end-to-end pass on Linux after generating the fixtures. Record any
-defects found as focused follow-up issues unless they block the workflow.
-
-1. Launch the app with `npm run dev`.
-2. Confirm the backend connects (indicator: *connected*; `[backend stderr]
-   Running on http://127.0.0.1:7301` in the terminal).
-3. Open the settings window.
-4. Select an input directory (the `dev-data/` folder).
-5. Select representative EEG or iEEG data (`eeg_sample.edf` or
-   `ieeg_sample.edf`).
-6. Read its header (channel list and recording details appear).
-7. Enter or load metadata (`eeg_metadata.json` / `ieeg_metadata.json`).
-8. Convert the recording to BIDS (choose an output directory).
-9. Validate the resulting dataset (all files report valid).
-10. Exercise one expected failure — validate `dev-data/bids_invalid/`; the
-    non-BIDS-named file reports a validation failure.
-11. Close Electron.
-12. Confirm no owned Python or Electron child processes remain
-    (`pgrep -af "eeg2bids|electron|vite"` returns nothing).
-
-The conversion and validation pipeline (steps 8–10) is exercised
-automatically against the fixtures by the checks in `tools/make_dev_data.py`'s
-verification; the steps above confirm it through the UI.
+The former provisional Socket.IO and happy-path checks have been reviewed and
+consolidated into [production manual QA](manual-qa.md). That guide assigns stable
+scenario IDs and covers only human-observable value beyond the automated test
+baseline, including development and packaged workflows, anonymization,
+connection recovery, process cleanup, and release-candidate reporting.

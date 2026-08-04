@@ -1,19 +1,30 @@
 {
-  "InstitutionName": "EEG2BIDS Test Fixture",
-  "InstitutionAddress": "",
-  "Manufacturer": "Synthetic",
-  "ManufacturersModelName": "make_dev_data",
-  "SoftwareVersions": "",
-  "TaskDescription": "Synthetic fixture (not real data).",
-  "Instructions": "",
-  "CogAtlasID": "",
-  "CogPOID": "",
-  "DeviceSerialNumber": "",
-  "HardwareFilters": "",
-  "CapManufacturer": "",
-  "CapManufacturersModelName": "",
-  "EEGGround": "Fpz",
-  "HeadCircumference": "",
-  "EEGPlacementScheme": "10-20",
-  "SubjectArtefactDescription": ""
+  "bids": {
+    "InstitutionName": "EEG2BIDS Test Fixture",
+    "InstitutionAddress": "",
+    "Manufacturer": "Synthetic",
+    "ManufacturersModelName": "make_dev_data",
+    "SoftwareVersions": "",
+    "TaskDescription": "Synthetic fixture (not real data).",
+    "Instructions": "",
+    "CogAtlasID": "",
+    "CogPOID": "",
+    "DeviceSerialNumber": "",
+    "HardwareFilters": "",
+    "CapManufacturer": "",
+    "CapManufacturersModelName": "",
+    "EEGGround": "Fpz",
+    "HeadCircumference": "",
+    "EEGPlacementScheme": "10-20",
+    "SubjectArtefactDescription": ""
+  },
+  "prepopulation": {
+    "Project": "",
+    "Subproject": "",
+    "Visit": "",
+    "Site": "",
+    "LineFrequency": "",
+    "Reference": "",
+    "RecordingType": ""
+  }
 }

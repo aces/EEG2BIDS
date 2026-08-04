@@ -1,0 +1,483 @@
+# Linux production packaging — implementation record (issue #170)
+
+**Status:** implemented. This document began as the design proposal for #170 and
+retains its phased reasoning and historical verification notes. The current user
+instructions live in [Installation](installation.md); Windows implementation
+status lives in [Windows production packaging](windows-packaging.md).
+
+Read this alongside the issue text of #170. Where the issue says *what* must be
+true, this doc proposes *how*, and argues the trade-offs.
+
+---
+
+## 1. What we're actually building
+
+Before production packaging, EEG2BIDS ran only from a source checkout. A developer runs `uv sync`,
+`npm ci`, `npm run dev`, and Electron launches the Python backend with
+`uv run --frozen python -m eeg2bids`. That is three separate toolchains (Node,
+uv, a Python interpreter) all assumed to be present, plus the repo itself on
+disk.
+
+A *production install* has to collapse all of that into one artifact a
+non-technical user can install and launch, with **none** of Node, npm, uv, or a
+managed Python environment present on their machine. So there are really three
+sub-problems stacked on top of each other:
+
+1. **Freeze the Python backend** into something that runs without uv or a
+   Python interpreter.
+2. **Bundle** that frozen backend + the Electron app + the renderer build into
+   one installable package.
+3. **Solve the Chromium sandbox** on modern Ubuntu, which a plain bundle does
+   *not* solve on its own — this is the part that makes #170 hard rather than
+   routine.
+
+Everything below is organized around those three.
+
+---
+
+## 2. Key concepts (so the rest of the doc makes sense)
+
+If you already know these, skip to §3.
+
+- **Electron** = Chromium (the "renderer", i.e. our React UI) + a Node.js "main"
+  process. Our main process also owns a *third* process: the Python backend.
+- **The Chromium sandbox** is a security feature: Chromium runs the renderer in
+  a locked-down child process that can't touch the filesystem or network
+  directly. On Linux this relies on the kernel's **unprivileged user
+  namespaces** feature.
+- **AppArmor** is a Linux mandatory-access-control system. **Ubuntu 23.10+ /
+  24.04+ ships a profile that restricts unprivileged user namespaces by
+  default.** That restriction is what breaks Electron's sandbox on a fresh
+  machine — Chromium tries to create a user namespace, the kernel refuses, and
+  Electron aborts. This is the exact failure #155 documented for development.
+- **The two legitimate fixes** (both endorsed by Electron's docs):
+  1. A **setuid `chrome-sandbox` helper** — a small root-owned binary shipped
+     inside Electron, mode `4755`, that Chromium calls to set up the sandbox
+     with elevated privileges. This is the classic fix.
+  2. An **AppArmor profile** installed for the app's binary that explicitly
+     grants it the `userns` capability. This is Ubuntu's newer, preferred fix.
+  We must do one of these *from the installer*, because a normal user can't be
+  asked to `chmod 4755` a file or write an AppArmor profile by hand (that's the
+  dev-only workaround #155 rejected for end users).
+- **asar** = Electron's archive format; the app's JS/HTML get packed into one
+  `app.asar` file inside the install. Native binaries and our frozen Python must
+  be marked as "unpacked" so they stay as real files on disk (you can't exec a
+  file that lives inside an archive).
+- **PyInstaller** = a tool that freezes a Python program + its interpreter + all
+  its libraries into a self-contained folder or single executable.
+- **safeStorage** = Electron's OS-backed encrypted storage; on Linux it uses the
+  desktop **secret service** (GNOME Keyring / KWallet) via libsecret. We already
+  use it for LORIS credentials and must keep using it.
+
+---
+
+## 3. Decision 1 — how to ship the Python backend
+
+**Recommendation: PyInstaller freeze, in one-directory (`--onedir`) mode,
+spawned as a bundled executable.**
+
+### The options considered
+
+| Option | What it means | Verdict |
+|---|---|---|
+| **PyInstaller `--onedir`** | Freeze `python -m eeg2bids` into a folder containing a launcher binary + all libs. Ship the folder. | **Chosen.** |
+| PyInstaller `--onefile` | Same, but one self-extracting exe. | Rejected — it unpacks to a temp dir on every launch (slow, ~200 MB extract each start, AV-unfriendly on Windows later). `--onedir` starts fast and is what we'd want cross-platform anyway. |
+| Bundle uv + a locked venv + a private Python | Ship uv and run `uv run` against a pre-materialized venv inside the package. | Rejected — heavier, still effectively ships a Python install, and reimplements what freezing does. The issue also says users must not need uv *or* `uv sync`; bundling uv invites exactly that machinery. |
+| Rewrite the backend as a bundled service some other way | e.g. Nuitka. | Out of scope — PyInstaller is already a declared, resolvable build dep in `pyproject.toml` (`packaging` group, currently pinned `pyinstaller>=6`, resolves to 6.21). Don't add a new toolchain. |
+
+### Why this is the riskiest decision, and how we de-risk it first
+
+The backend pulls **MNE, NumPy, and SciPy** — heavy scientific packages with
+compiled extensions and data files that PyInstaller is historically fiddly
+with (it misses "hidden imports" and non-code data files it can't statically
+see). Frozen size will be large: SciPy alone is ~94 MB, NumPy ~34 MB, MNE
+~22 MB in the current venv, so expect a **200–400 MB** frozen backend before
+compression.
+
+**Therefore the very first task in the plan (§8, Phase 0) is a throwaway spike:**
+freeze the backend, run it standalone, and run the existing pytest suite
+against the frozen binary's behavior. If MNE won't freeze cleanly, we want to
+know that in an afternoon, not after we've built the whole installer around it.
+
+Known things we'll almost certainly need in the PyInstaller spec:
+- `--collect-all mne`, `--collect-all mne_bids` (they ship data files / lazy
+  imports).
+- hidden imports for `socketio`, `engineio`'s async drivers, `simple_websocket`.
+- confirm `edfio`, `eeglabio`, `pybv`, `bids-validator` (ships a JS schema? —
+  check) come across with their data.
+
+### The single entry point already exists
+
+`eeg2bids/__main__.py` is already written to be the freeze target — its
+docstring literally says so. It calls `server.main()`. The backend already reads
+its port from `EEG2BIDS_BACKEND_PORT` and watches `EEG2BIDS_OWNER_PID` to avoid
+being orphaned. **So the backend needs no code changes to be frozen** — only the
+build config and how Electron launches it change (§5).
+
+---
+
+### Freeze defect found & fixed: MNE `raw._init_kwargs` (cross-platform)
+
+Surfaced during Phase 2 hand-testing: the frozen backend read EDF fine but
+**failed at conversion** with
+`TypeError: read_raw_edf() argument after ** must be a mapping, not NoneType`.
+
+Cause (freeze-only — dev and the pytest suite are unaffected): MNE records how a
+`read_raw_*` call was made in `mne.io.base._get_argvalues`, which captures the
+reader frame's locals only if that frame's `co_filename` matches the glob
+`*/mne/io/*`. PyInstaller gives frozen modules bundle-relative code filenames
+(`mne/io/edf/edf.py`, no leading separator) that fail the glob, so it returns
+`None` and every file-backed Raw gets `raw._init_kwargs = None`. MNE-BIDS's
+default non-preload copy path — `reader[ext](**raw._init_kwargs)`, used for a
+lazily-read source like EDF — then dereferences `None`. This is EEG2BIDS's
+*primary* "preserve the source EDF byte-for-byte" conversion, so it is a
+blocker, not an edge case.
+
+Fix: a PyInstaller **runtime hook**
+(`tools/pyinstaller-rthooks/rthook_mne_init_kwargs.py`, wired via the spec's
+`runtime_hooks`) that replaces `_get_argvalues` with MNE's own logic but a
+filename test loosened to match `mne/io/` anywhere in a normalized path. The
+values captured are still the *real* reader arguments from the live frame, so
+frozen behavior equals dev. Chosen to live in the **packaging layer, not app
+code**, because it is purely a freeze artifact — putting a monkeypatch in
+`converter.py` would run (pointlessly) in development too. Verified: a frozen
+`read_raw_edf` → `write_raw_bids` round-trip on `tests/fixtures/eeg_continuous.edf`
+now populates `_init_kwargs` fully and writes the BIDS EDF.
+
+**Relevance to #188/#189:** this is inherent to PyInstaller's `co_filename`
+rewriting, so Windows and macOS builds need the same runtime hook — it is part
+of the shared freeze architecture, already covered by the committed spec.
+
+## 4. Decision 2 — Linux package format + the sandbox
+
+**Recommendation: build a `.deb` with `electron-builder`, and use the Debian
+maintainer scripts (`postinst`/`prerm`) to install an AppArmor profile
+(primary) with the setuid `chrome-sandbox` helper as the fallback mechanism.**
+
+### Why a `.deb` and not the alternatives
+
+The format choice is dictated almost entirely by the sandbox requirement,
+because **only a format with install-time hooks can fix the sandbox.**
+
+| Format | Has an install step that can run as root? | Verdict |
+|---|---|---|
+| **`.deb`** | Yes — `postinst`/`prerm` scripts run as root at install/remove. | **Chosen.** We can install the AppArmor profile and chmod the helper, and cleanly remove them on uninstall. |
+| **AppImage** | **No.** It's a single file the user just runs; nothing runs as root, ever. | **Rejected — and the issue explicitly warns about this.** AppImage on Ubuntu 24.04 hits the exact sandbox failure with no way to fix it short of `--no-sandbox`, which is forbidden. |
+| **Snap** | Yes, and the snap runtime *manages sandboxing for you.* | Strong contender, but its confinement is the problem: a snap can't freely read EEG files from arbitrary paths the user picks, and secret-service (safeStorage) access needs specific interfaces/plugs. It changes our filesystem and credentials story significantly. Worth revisiting, but more moving parts than a `.deb` for a first supported target. |
+| **Flatpak** | Yes, runtime-sandboxed. | Same confinement trade-offs as Snap, plus portal-based file access. Same "revisit later" bucket. |
+| **`.rpm`** | Yes (scriptlets). | Fine mechanism, wrong first audience — our documented target is Ubuntu. electron-builder can emit `.rpm` later from the same config. |
+
+Rationale in one sentence: **AppImage is out because it can't fix the sandbox;
+Snap/Flatpak *over*-fix it in a way that fights our file-access and credential
+needs; `.deb` gives us exactly the root install hook we need and nothing we
+don't.**
+
+### How the sandbox actually gets fixed (the core of #170)
+
+electron-builder, when it packages, ships Chromium's `chrome-sandbox` helper. On
+a plain unpacked install it's the wrong owner/mode and Ubuntu's userns
+restriction blocks the fallback. Our `postinst` does the two-part fix:
+
+1. **Install an AppArmor profile** targeting the app's *stable installed binary
+   path* (e.g. `/opt/EEG2BIDS/eeg2bids`). The profile grants that exact binary
+   the `userns` capability so Chromium's normal (unprivileged) sandbox works
+   under Ubuntu 24.04's policy. Reload AppArmor. This is the modern, preferred
+   fix and avoids setuid entirely on machines where it's honored.
+2. **As the robust fallback**, `chown root:root` the bundled `chrome-sandbox`
+   and `chmod 4755` it, so the setuid path works where the AppArmor route
+   doesn't apply.
+
+`prerm`/`postrm` on uninstall: remove the AppArmor profile we installed, reload
+AppArmor, and let the package manager remove the files it owns. **We only touch
+policy we installed — we never disable AppArmor globally and never touch the
+host-wide `kernel.apparmor_restrict_unprivileged_userns` sysctl.** Both of those
+are explicitly forbidden by the issue and would weaken the whole machine.
+
+Non-negotiables this respects (straight from the issue's security section):
+- No `--no-sandbox`.
+- No globally disabling the userns restriction.
+- The setuid helper is narrowly scoped, root-owned, mode `4755`, and validated
+  during package testing.
+- The AppArmor profile targets the stable installed path and is installed *and
+  removed* through the package lifecycle.
+- Renderer keeps `sandbox: true` + context-isolated preload (already true in
+  `windows.js`), and credentials stay on `safeStorage`.
+
+### Install location
+
+`/opt/EEG2BIDS/` for the app payload (Electron + frozen Python + renderer
+`build/`), a `.desktop` launcher in `/usr/share/applications/`, and a symlink or
+wrapper in `/usr/bin`. A stable, predictable path matters specifically because
+the AppArmor profile is written against it — if the binary path moves between
+versions, the profile silently stops matching and the sandbox breaks. So the
+path is part of the security contract, not just a preference.
+
+---
+
+## 5. Runtime code changes (dev-vs-packaged)
+
+Three places currently assume a source checkout. Each needs a packaged branch,
+keyed off Electron's `app.isPackaged` (true in a built app, false from a
+checkout) rather than the current `DEV` env var alone.
+
+1. **`electron/main/backend-service.js`** — today:
+   ```js
+   const REPO_ROOT = path.join(__dirname, '../..');
+   child = spawn('uv', ['run', '--frozen', 'python', '-m', 'eeg2bids'], { cwd: REPO_ROOT, ... });
+   ```
+   Packaged: spawn the **frozen backend executable** from the unpacked resources
+   dir (e.g. `process.resourcesPath/backend/eeg2bids`), no uv, no `cwd` on the
+   repo. Keep passing `EEG2BIDS_OWNER_PID` and `EEG2BIDS_BACKEND_PORT` exactly as
+   now — that contract doesn't change. The "port already in use → assume
+   external backend" logic stays and is still useful.
+
+2. **`electron/main/windows.js`** — the renderer URL and the allowed-URL check
+   both compute `../../build/index.html`. In a packaged app the renderer lives
+   inside resources; resolve it relative to `process.resourcesPath` (or via the
+   asar path) instead of `__dirname/../..`.
+
+3. **Dev/prod signal** — right now the only switch is `process.env.DEV`.
+   Introduce `app.isPackaged` as the real signal; `DEV` stays as the
+   dev-server override. (Dev = load `localhost:3000`; packaged = load the
+   bundled build; there's no "packaged but dev-server" case.)
+
+**Cross-platform lifecycle resolution:** the original process-group teardown was
+POSIX-only. #188 added a Windows path using `taskkill /T` with `/F` escalation,
+and changed the Python owner watchdog to use the native Windows process API
+rather than the POSIX `os.kill(pid, 0)` probe. Native CI now verifies that the
+installed Windows backend remains connected and exits with its owner.
+
+---
+
+## 6. The build pipeline (reproducible, from lockfiles)
+
+The issue requires a reproducible build from the **authoritative npm and uv
+lockfiles** (`package-lock.json`, `uv.lock`). Proposed sequence, wrapped in one
+script (e.g. `tools/build-linux.sh`) and later a package.json `dist:linux`
+script:
+
+```
+1.  uv sync --frozen --group packaging      # exact backend deps + pyinstaller
+2.  uv run pyinstaller <spec>               # freeze backend  -> dist/backend/
+3.  npm ci                                   # exact frontend deps
+4.  npm run build                            # vite renderer   -> build/
+5.  electron-builder --linux deb             # bundle 1+3+4    -> dist/*.deb
+        (electron-builder config: mark dist/backend as an unpacked
+         extraResource; wire postinst/prerm; set icon from build/logo512.png;
+         set install path /opt/EEG2BIDS; version from a single source)
+```
+
+Reproducibility notes / rationale:
+- Both `--frozen`/`ci` refuse to touch the lockfiles, so the artifact is pinned.
+- **PyInstaller output is not bit-for-bit reproducible by default** (timestamps,
+  paths). "Reproducible" here means *"same inputs → functionally identical,
+  from committed lockfiles,"* not byte-identical. If byte-identical is later
+  required we'd add `SOURCE_DATE_EPOCH` and `--strip`; I'd argue that's a
+  #190 (CI) concern, not #170.
+- electron-builder is chosen over electron-forge because it emits `.deb` with
+  maintainer-script hooks, `.dmg`+notarization, and NSIS/MSI from *one* config —
+  which is exactly the shared architecture #188/#189 need. Picking it here is a
+  #170 decision with cross-platform consequences, so it's called out
+  deliberately.
+
+---
+
+## 7. Lifecycle: install / upgrade / uninstall
+
+- **Install:** dpkg unpacks to `/opt/EEG2BIDS/`; `postinst` installs the
+  AppArmor profile + fixes the sandbox helper + reloads AppArmor; `.desktop`
+  entry appears.
+- **Upgrade / reinstall:** dpkg replaces files; `postinst` re-runs, so the
+  sandbox integration is reapplied against the (unchanged, stable) path. Must
+  verify the profile still matches after upgrade — this is an explicit
+  acceptance criterion.
+- **Uninstall:** `prerm`/`postrm` removes the AppArmor profile we installed and
+  reloads AppArmor; dpkg removes installer-owned files. **User data** (settings
+  + `safeStorage` credentials in the user's config/keyring) is left in place by
+  default, with the removal policy documented — deleting someone's saved
+  credentials on an uninstall is a surprising, destructive default.
+- **No orphaned backend:** already guaranteed by the OWNER_PID watchdog + the
+  process-group kill on `will-quit`; the packaged build must preserve both.
+
+---
+
+## 8. Phased implementation plan
+
+Each phase is independently reviewable and de-risks the next.
+
+- **Phase 0 — Freeze spike (throwaway, highest risk first). ✅ DONE — PASSED.**
+  `--onedir` froze the backend in ~48s; the frozen binary launches and binds
+  `127.0.0.1` in ~3.5s (proving MNE/NumPy/SciPy/MNE-BIDS import, since the
+  server imports them transitively at startup). A separate frozen probe
+  confirmed the *dynamic* write-time deps import inside a frozen binary with no
+  source tree present: `edfio 0.4.14`, `eeglabio 0.1.3`, `pybv 0.8.1`,
+  `mne 1.12.1`, plus `socketio`/`engineio`/`simple_websocket` and
+  `bids_validator` (schema data bundled). Bundle size **221 MB**. The only
+  PyInstaller "missing module" warnings were Windows-only (`winreg`, `win32pdh`,
+  `msvc`) or benign optional imports (`typing_extensions`), none of them our
+  runtime deps. **Gate cleared — proceed to Phase 1.** The working invocation
+  (seed for the Phase 1 `.spec`):
+
+  ```sh
+  uv run --frozen --group packaging pyinstaller --noconfirm --onedir \
+    --name eeg2bids-backend \
+    --collect-all mne --collect-all mne_bids --collect-all bids_validator \
+    --collect-submodules socketio --collect-submodules engineio \
+    --hidden-import simple_websocket \
+    --hidden-import edfio --hidden-import eeglabio --hidden-import eeglabio.utils \
+    --hidden-import pybv \
+    eeg2bids/__main__.py
+  ```
+
+  Not yet exercised (deferred to Phase 4 clean-machine test, not a freeze risk):
+  a full end-to-end conversion through the socket.io API, and `simple_websocket`
+  actually serving a live upgrade (it's bundled; only the runtime handshake is
+  unproven).
+- **Phase 1 — Backend build config. ✅ DONE.** Committed
+  `tools/eeg2bids-backend.spec` (authoritative, hand-maintained; `.gitignore`
+  un-ignores this one path via `!tools/eeg2bids-backend.spec`) and
+  `tools/freeze-backend.sh` (syncs the `packaging` group, runs PyInstaller,
+  outputs the runnable bundle to the gitignored `dist/eeg2bids-backend/`). The
+  spec resolves its entry point from `SPECPATH` so it builds from any checkout
+  path, excludes the test toolchain, and disables UPX. Verified: builds in ~41s
+  from the committed spec and the resulting binary binds its port.
+- **Phase 2 — Electron packaged paths. ✅ DONE (launch verify deferred to
+  Phase 4).** Added an `app.isPackaged` branch to `backend-service.js`
+  (`resolveBackendLaunch()`): packaged → spawn the frozen binary at
+  `process.resourcesPath/backend/eeg2bids-backend` (`.exe` on win32); dev/tests
+  → unchanged `uv run` path. Launch-error hint now adapts to packaged vs dev
+  (keeps "uv" in the dev message the fail-fast test relies on). `windows.js`
+  needed **no** change — its `__dirname`-relative `build/index.html` resolves
+  correctly inside `app.asar`, confirmed below. Added `electron-builder`
+  (26.15.3) devDep + a `build` config in `package.json` + `freeze:backend` /
+  `dist:dir` / `dist:linux` scripts. The `build.files` list ships only our own
+  code (`electron/**`, `build/**`, `public/logo512.png`, `package.json`) and
+  `!node_modules/**/*` — the main process needs no npm deps (renderer deps are
+  Vite-bundled), shrinking the asar from 61 MB → **1.4 MB**. The frozen backend
+  is an `extraResource` (`dist/eeg2bids-backend` → `resources/backend`), i.e.
+  unpacked, since a binary can't run from inside an asar.
+
+  Verified here: `electron-builder --linux dir` produces the correct layout
+  (backend launcher at `resources/backend/eeg2bids-backend`; renderer + main in
+  `app.asar`; node_modules absent); ESLint clean; **all 11 Playwright electron
+  tests pass**, proving the unpackaged path is unbroken. Not verifiable on this
+  dev box: launching the *packaged* app — this machine has
+  `kernel.apparmor_restrict_unprivileged_userns = 1` and the packaged
+  `chrome-sandbox` is `0755` (not `root:4755`), which is exactly the Phase 3
+  problem; a real launch of the packaged app is deferred to the Phase 4 clean
+  machine (after the sandbox is integrated).
+
+  App config note: `appId` is currently `ca.mcgill.mcin.eeg2bids` (placeholder,
+  easily changed); `productName` `EEG2BIDS`; output dir `dist/electron/` (kept
+  separate from the PyInstaller `dist/eeg2bids-backend/` so neither wipes the
+  other).
+- **Phase 3 — `.deb` + sandbox. ✅ DONE (install verify is Phase 4).** Switched
+  `linux.target` to `deb`, pinned `executableName: "eeg2bids"` (the AppArmor
+  profile targets that exact `/opt/EEG2BIDS/eeg2bids` path — a rename would
+  silently break it), added `homepage` (fpm requires a package URL). Produces
+  `dist/electron/eeg2bids_<version>_amd64.deb`.
+
+  **The sandbox decision resolved itself via tooling.** electron-builder 26's
+  *default* `deb` maintainer-script templates already implement the "Both"
+  strategy, more carefully than a hand-rolled script:
+  `after-install` runtime-detects working userns (`unshare --user true`) and
+  sets `chrome-sandbox` setuid `4755` *only* when needed (else `0755`); it
+  installs an AppArmor `userns` profile to `/etc/apparmor.d/eeg2bids` but only
+  after an `apparmor_parser --skip-kernel-load` dry-run, so it **degrades
+  gracefully on Ubuntu 22.04** (no `abi/4.0`) and guards against chroots;
+  `after-remove` unloads and deletes the profile. We use these defaults rather
+  than override them — they satisfy every #170 security constraint (no
+  `--no-sandbox`, no host-wide userns disable, narrowly-scoped root-owned setuid
+  helper, profile installed/removed through the package lifecycle). This is the
+  upstream fix for electron-builder issue #8635.
+
+  Verified here by inspection (`dpkg-deb -c/-e`): payload at `/opt/EEG2BIDS/`
+  (electron binary, `chrome-sandbox`, frozen backend under `resources/backend/`,
+  `resources/apparmor-profile`, `.desktop`); the shipped profile targets
+  `/opt/EEG2BIDS/eeg2bids`; `postinst`/`postrm` carry the correctly-substituted
+  paths. Not verified here (needs root + system mutation → Phase 4): actually
+  installing, and confirming a sandboxed launch with no `--no-sandbox`.
+
+  The later polish set `desktopName`/`syncDesktopName` for correct desktop and
+  window association. Package versions now inherit the project version from
+  `package.json`.
+- **Phase 4 — Clean-machine verification.** Install the `.deb` on a fresh
+  Ubuntu 24.04 VM/container with none of Node/npm/uv/Python present. Confirm:
+  launches, sandbox on (not `--no-sandbox`), backend converts, credentials
+  persist via keyring, quit leaves no python process, upgrade reapplies policy,
+  uninstall removes policy. This *is* the acceptance-criteria checklist.
+- **Phase 5 — Docs. ✅ DONE.** New user-facing [installation guide](installation.md)
+  (supported distros/arch, desktop/secret-service requirements, install/upgrade/
+  uninstall, and the "user data is kept on uninstall" policy) and a repeatable
+  [clean-machine verification procedure](linux-packaging-verification.md) mapping
+  each step to a #170 acceptance criterion. Updated the stale "packaging is out
+  of scope" claims in `README.md` (Project status + Packaging sections, now with
+  real build instructions) and `docs/development.md`.
+
+- **Polish (C). ✅ DONE.** Set `desktopName`/`linux.syncDesktopName` so the
+  `.desktop` filename and `StartupWMClass` (`eeg2bids`) match Electron's runtime
+  WM_CLASS (clears electron-builder's window-association warning). Added
+  `render-process-gone` / `child-process-gone` diagnostics in
+  `electron/main/index.js` that log actionable sandbox guidance (to stderr,
+  consistent with the app's other diagnostics) when a child process dies
+  abnormally at startup — a hard sandbox abort still surfaces via Chromium's own
+  stderr message.
+
+- **Remaining for #170: Phase 4 only** — run the verification procedure on a
+  clean Ubuntu 24.04 VM (plus a 22.04 fallback check). Everything else is done
+  and validated on real restricted hardware.
+
+---
+
+## 9. What Windows and macOS inherit from this
+
+So the follow-ups stay "sparse" as intended, #170 nails down the shared spine:
+- The **PyInstaller freeze** of `__main__.py` (same on all three OSes; only the
+  spec's platform bits differ).
+- **electron-builder** as the packaging tool, one config, per-target sections.
+- The **`app.isPackaged` runtime-path pattern** in `backend-service.js` /
+  `windows.js`.
+- The launch contract (`EEG2BIDS_BACKEND_PORT`, `EEG2BIDS_OWNER_PID`, port-in-use
+  → external).
+
+Platform-specific status:
+- **Windows (#188, complete):** per-user NSIS on Windows 11 x64; native process
+  teardown and watchdog; unsigned initially, with SmartScreen warnings
+  documented; native CI build and installed-app smoke test.
+- **macOS (#189, pending):** `.dmg`/`.pkg`; **code signing + notarization** (needs an
+  Apple Developer ID account — annual cost, org decision) or Gatekeeper blocks
+  it on clean machines; hardened runtime; arm64 vs x86_64 (universal binary?).
+  Neither Windows nor macOS has the AppArmor/userns problem — the whole §4
+  sandbox saga is Linux-specific.
+
+---
+
+## 10. Resolved implementation decisions
+
+1. **Supported Linux scope:** Ubuntu 24.04+ amd64, with Ubuntu 22.04 supported
+   through the installer's AppArmor fallback.
+2. **Sandbox integration:** electron-builder's `.deb` lifecycle scripts select
+   the supported AppArmor/userns path and configure the narrowly scoped setuid
+   helper only when needed.
+3. **Package format:** `.deb`; Snap and Flatpak remain outside the supported
+   formats.
+4. **Version source:** electron-builder reads `package.json`; the Python project
+   version is kept aligned for the frozen backend package.
+5. **Uninstall data policy:** retain user settings and credentials while removing
+   installer-owned files and policy.
+
+---
+
+## 11. Biggest risks, honestly
+
+- **MNE/SciPy won't freeze cleanly** — the top risk; Phase 0 exists to hit it
+  first. Mitigation is `--collect-all` + hidden-imports, but if a compiled dep
+  actively resists freezing we may need a different backend-shipping strategy.
+- **AppArmor profile doesn't take on some target distro** — userns policy
+  differs across distros and even Ubuntu point releases; this is why "supported
+  distros" must be *stated and verified*, not assumed.
+- **Artifact size** — a 200–400 MB backend makes for a chunky `.deb`. Acceptable
+  for a desktop scientific tool, but worth a conscious "yes, that's fine."
+- **secret-service on minimal/headless desktops** — safeStorage needs a running
+  keyring; on a bare session it may be absent. Needs a documented requirement
+  and an actionable error, not a silent credential failure.

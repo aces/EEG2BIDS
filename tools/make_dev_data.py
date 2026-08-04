@@ -88,7 +88,7 @@ def _write_metadata(template_name, out_path, overrides):
     """Fill a parameters template with representative values."""
     with open(TEMPLATES / template_name) as fd:
         metadata = json.load(fd)
-    metadata.update(overrides)
+    metadata['bids'].update(overrides)
     with open(out_path, 'w') as fd:
         json.dump(metadata, fd, indent=2)
 

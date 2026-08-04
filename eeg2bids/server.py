@@ -158,6 +158,39 @@ def get_recording_data(sid, data):
     sio.emit('recording_data', response)
 
 
+def _read_parameter_file(file_path, modality):
+    """Read nested BIDS metadata and configuration prepopulation values."""
+    with open(file_path) as fd:
+        parameters = json.load(fd)
+
+    if not isinstance(parameters, dict) or set(parameters) != {
+            'bids', 'prepopulation'}:
+        raise ValueError(
+            'Parameter file must contain exactly "bids" and '
+            '"prepopulation" objects.'
+        )
+
+    metadata = parameters['bids']
+    prepopulation = parameters['prepopulation']
+    if not isinstance(metadata, dict) or not isinstance(prepopulation, dict):
+        raise ValueError(
+            'Parameter file "bids" and "prepopulation" values must be objects.'
+        )
+
+    empty_values = [
+        key for key, value in metadata.items()
+        if isinstance(value, str) and not value.strip()
+    ]
+    unsupported = set(metadata) - set(metadata_fields[modality])
+
+    return {
+        'metadata': metadata,
+        'prepopulation': prepopulation,
+        'ignored_keys': empty_values + sorted(unsupported - set(empty_values)),
+        'source_file': str(file_path),
+    }
+
+
 @sio.event
 def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
@@ -173,23 +206,14 @@ def get_bids_metadata(sid, data):
         response = {'error': msg}
     else:
         try:
-            with open(data['file_path']) as fd:
-                try:
-                    metadata = json.load(fd)
-                    empty_values = [k for k in metadata if isinstance(metadata[k], str) and metadata[k].strip() == '']
-                    diff = list(set(metadata.keys()) - set(metadata_fields[data['modality']]) - set(empty_values))
-                    ignored_keys = empty_values + diff
-
-                    response = {
-                        'metadata': metadata,
-                        'ignored_keys': ignored_keys,
-                    }
-                except ValueError as e:
-                    print(e)
-                    metadata = {}
-                    response = {
-                        'error': 'Metadata file format is not valid.',
-                    }
+            try:
+                response = _read_parameter_file(
+                    data['file_path'], data['modality'])
+            except (ValueError, TypeError) as e:
+                print(e)
+                response = {
+                    'error': 'Metadata file format is not valid: ' + str(e),
+                }
         except IOError:
             msg = "Could not read the metadata file."
             print(msg)
@@ -238,6 +262,49 @@ def disconnect(sid):
     print('disconnect: ', sid)
 
 
+def _windows_process_is_alive(pid):
+    """Return whether *pid* is alive using the native Windows process API.
+
+    ``os.kill(pid, 0)`` is a POSIX process-existence probe, but Python's Windows
+    implementation maps signals onto different Win32 semantics. Use a
+    non-terminating wait on a synchronization handle instead.
+    """
+    import ctypes
+    from ctypes import wintypes
+
+    synchronize = 0x00100000
+    wait_timeout = 0x00000102
+    error_access_denied = 5
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL,
+                                     wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel32.WaitForSingleObject.restype = wintypes.DWORD
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+    handle = kernel32.OpenProcess(synchronize, False, pid)
+    if not handle:
+        # Access denied proves that a process occupies the pid; do not kill the
+        # backend merely because Windows refuses a synchronization handle.
+        return ctypes.get_last_error() == error_access_denied
+    try:
+        return kernel32.WaitForSingleObject(handle, 0) == wait_timeout
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _owner_process_is_alive(pid):
+    """Return whether the Electron owner process still exists."""
+    if sys.platform == 'win32':
+        return _windows_process_is_alive(pid)
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
 def _watch_owner_process():
     """Exit when the process that owns this backend disappears.
 
@@ -254,11 +321,9 @@ def _watch_owner_process():
     def watch():
         while True:
             time.sleep(2)
-            try:
-                os.kill(int(owner_pid), 0)
-            except OSError:
-                # stderr is a pipe into the (now dead) owner, so this
-                # print may itself fail; exit regardless.
+            if not _owner_process_is_alive(int(owner_pid)):
+                # stderr is a pipe into the (now dead) owner, so this print may
+                # itself fail; exit regardless.
                 try:
                     print(
                         f'eeg2bids: owner process {owner_pid} exited, '

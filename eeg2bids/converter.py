@@ -1,7 +1,9 @@
+import hashlib
 import os
 import mne
 import numpy as np
-from mne_bids import write_raw_bids, BIDSPath
+from mne_bids import (BIDSPath, get_anonymization_daysback,
+                      write_raw_bids)
 
 
 class ReadError(PermissionError):
@@ -219,6 +221,14 @@ class TarFile:
 class Converter:
     m_info = ''
 
+    @staticmethod
+    def _anonymization_daysback(eeg_runs, participant_id):
+        """Choose one valid, deterministic date shift for all requested runs."""
+        raws = [read_raw_recording(run['recordingFile']) for run in eeg_runs]
+        minimum, maximum = get_anonymization_daysback(raws, verbose=False)
+        digest = hashlib.sha256(participant_id.encode('utf-8')).digest()
+        return minimum + int.from_bytes(digest[:8], 'big') % (maximum - minimum + 1)
+
     # data = { file_path: '', bids_directory: '', read_only: false,
     # event_files: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', session: '', subject_id: ''}
@@ -227,6 +237,12 @@ class Converter:
         modality = 'seeg'
         if data['modality'] == 'eeg':
             modality = 'eeg'
+
+        anonymize = data.get('anonymize', False)
+        daysback = None
+        if anonymize:
+            daysback = self._anonymization_daysback(
+                data['eegRuns'], data['participantID'])
 
         for i, eegRun in enumerate(data['eegRuns']):
             eegRun['recordingBIDSBasename'] = self.to_bids(
@@ -240,7 +256,9 @@ class Converter:
                 output_time=data['output_time'],
                 read_only=data['read_only'],
                 line_freq=data['line_freq'],
-                output_format=data.get('outputFormat', 'auto')
+                output_format=data.get('outputFormat', 'auto'),
+                anonymize=anonymize,
+                daysback=daysback
             )
 
     @staticmethod
@@ -266,7 +284,9 @@ class Converter:
                 ch_type='seeg',
                 read_only=False,
                 line_freq='n/a',
-                output_format='auto'):
+                output_format='auto',
+                anonymize=False,
+                daysback=None):
         file = eeg_run['recordingFile']
 
         if self.validate(file):
@@ -342,14 +362,21 @@ class Converter:
                 write_kwargs = {'overwrite': False, 'verbose': False}
                 write_kwargs.update(
                     resolve_write_kwargs(raw, file, output_format))
+                if anonymize:
+                    write_kwargs['anonymize'] = {
+                        'daysback': daysback,
+                        'keep_his': False,
+                    }
                 written_path = write_raw_bids(
                     raw, bids_basename, **write_kwargs)
 
-                # write_raw_bids does not anonymize by default, so scrub the
-                # subject identification field from the copied EDF header.
-                if written_path.extension == '.edf':
+                # MNE anonymizes the common metadata model. EDF additionally
+                # has a standardized recording-identification field that MNE
+                # does not expose, so clear it after serialization.
+                if anonymize and written_path.extension == '.edf':
                     with open(written_path.fpath, 'r+b') as f:
-                        f.seek(8)  # id_info field starts 8 bytes in
+                        f.seek(8)
+                        f.write(bytes("X X X X".ljust(80), 'ascii'))
                         f.write(bytes("X X X X".ljust(80), 'ascii'))
 
                 print('finished')
