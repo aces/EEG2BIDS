@@ -14,7 +14,7 @@
     "react-color": "^2.19.3",
     "react-datepicker": "^4.8.0",
     "react-dom": "^18.1.0",
-    "react-router-dom": "^6.3.0",
+    "react-router-dom": "^6.30.4",
     "react-scripts": "^5.0.1",
     "react-switch": "^7.0.0",
     "react-tooltip": "^4.2.21",
