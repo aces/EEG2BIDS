@@ -1332,12 +1332,6 @@ const Configuration = (props) => {
                 {formatWarning('Subject ID is not modified.')}
               </div>
             }
-            {appContext.getFromTask('recording_id') &&
-              <div>
-                Recording ID:&nbsp;
-                {appContext.getFromTask('recording_id')}
-              </div>
-            }
             {appContext.getFromTask('recordingData')?.['date'] &&
               <div>
                 Recording Date:&nbsp;
