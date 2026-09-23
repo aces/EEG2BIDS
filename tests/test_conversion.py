@@ -12,7 +12,6 @@ import json
 import shutil
 
 import mne
-import pytest
 
 
 def _datatype_dir(root, datatype):
