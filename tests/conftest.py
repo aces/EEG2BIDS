@@ -54,7 +54,6 @@ def make_convert_data(fixtures_dir, tmp_path):
             "bids_directory": str(tmp_path / "bids"),
             "participantID": "01",
             "session": "01",
-            "read_only": False,
             "line_freq": "60",
             "outputFormat": output_format,
             "preparedBy": "Tester",

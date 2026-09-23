@@ -16,8 +16,6 @@ export const buildConversionRequest = (
   outputFormat: getFromTask('outputFormat'),
   anonymize: getFromTask('anonymize'),
   bids_directory: getFromTask('bidsDirectory'),
-  read_only: false,
-  event_files: getFromTask('eventFiles')?.[0]?.path ?? '',
   bidsMetadata: getFromTask('bidsMetadata'),
   site_id: getFromTask('siteID'),
   project_id: getFromTask('projectID'),
@@ -32,5 +30,4 @@ export const buildConversionRequest = (
   recording_type: getFromTask('recordingType'),
   taskName: getFromTask('taskName'),
   reference: getFromTask('reference'),
-  subject_id: getFromTask('subject_id'),
 });
