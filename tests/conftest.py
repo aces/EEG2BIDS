@@ -116,7 +116,9 @@ def bids_validator():
         proc = subprocess.run(
             [deno, "run", "-A", "--node-modules-dir=auto",
              BIDS_VALIDATOR_SPEC, str(dataset_root), "--json"],
-            capture_output=True, text=True)
+            capture_output=True, text=True,
+            # Keep deno's node_modules out of the repo's.
+            cwd=os.path.dirname(dataset_root))
         try:
             report = json.loads(proc.stdout)
         except json.JSONDecodeError:
