@@ -81,19 +81,6 @@ class LorisAPI:
             })
         )
 
-    def create_candidate(self, project, dob, sex, site):
-        return self._request(
-            'POST', '/candidates/',
-            data=json.dumps({
-                "Candidate": {
-                    "Project": project,
-                    "DoB": dob,
-                    "Sex": sex,
-                    "Site": site,
-                }
-            })
-        ).json()
-
     def create_visit(self, candid, visit, site, project, subproject):
         self._request(
             'PUT', '/candidates/' + candid + '/' + visit,
