@@ -209,7 +209,7 @@ const Configuration = (props) => {
 
     if (appContext.getFromTask('recordingData')?.['files'].length > 0) {
       socketContext.emit('recording_to_bids', buildConversionRequest(
-          (key) => appContext.getFromTask(key),
+          appContext.getFromTask,
           {
             eegRuns: state.eegRuns.get ?? [],
             preparedBy: preparedBy ?? '',
@@ -337,7 +337,7 @@ const Configuration = (props) => {
     result.push(<div key='modalityStatus'>{modalityStatus}</div>);
 
     // Output format
-    const outputFormat = appContext.getFromTask('outputFormat') ?? 'auto';
+    const outputFormat = appContext.getFromTask('outputFormat');
     result.push(
         <div key='outputFormatStatus'>
           {formatPass(`Output format: ${outputFormat === 'auto' ?
