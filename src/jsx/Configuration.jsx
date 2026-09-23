@@ -3,7 +3,6 @@ import {AppContext} from '../context';
 import {Tooltip} from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
-import EEGRun from './types/EEGRun';
 import {buildConversionRequest} from './types/conversionRequest';
 import Papa from 'papaparse';
 
@@ -598,8 +597,7 @@ const Configuration = (props) => {
       const eventFiles = [...state.eventFiles.get];
 
       const eegRuns = state.recordingData.get.files.map((recordingFile) => {
-        const eegRun = new EEGRun();
-        eegRun.recordingFile = recordingFile['path'];
+        const eegRun = {recordingFile: recordingFile['path'], eventFile: null};
 
         const eventFileIndex = eventFiles.findIndex(
             (eventFile) => eventMatchesRecording(eventFile, recordingFile),
@@ -748,7 +746,6 @@ const Configuration = (props) => {
           appContext.setTask('participantID', data.PSCID);
 
           state.participantDOB.set(new Date(data.DoB));
-          appContext.setTask('participantDoB', data.DoB);
 
           state.participantSex.set(data.Sex);
           appContext.setTask('participantSex', data.Sex);
