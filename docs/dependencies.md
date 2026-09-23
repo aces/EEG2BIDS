@@ -14,9 +14,8 @@ Do not restore `requirements.txt`. It was retired when the backend moved to uv.
 The packages under `dependencies` in `package.json` ship with or support the
 Electron renderer:
 
-- React and renderer support: `react`, `react-dom`, `prop-types`
-- UI and routing: `react-datepicker`, `react-router-dom`, `react-switch`,
-  `react-tooltip`, `@fortawesome/fontawesome-free`
+- React: `react`, `react-dom`
+- UI: `react-switch`, `react-tooltip`, `@fortawesome/fontawesome-free`
 - Data and backend communication: `papaparse`, `socket.io-client`
 
 ### Development dependencies
@@ -26,8 +25,7 @@ application runtime dependencies:
 
 - Electron and Vite: `electron`, `vite`, `@vitejs/plugin-react`
 - Workflow orchestration: `concurrently`, `wait-on`
-- Linting: `eslint`, `eslint-config-google`, `eslint-plugin-react`,
-  `lint-staged`
+- Linting: `eslint`, `eslint-config-google`, `eslint-plugin-react`
 
 Audit the locked graph with:
 
