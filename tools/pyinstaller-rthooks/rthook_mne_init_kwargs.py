@@ -23,7 +23,6 @@ still returns ``None`` for non-io callers like ``<decorator-gen-N>`` exactly as
 upstream does). The captured values are still the real reader arguments taken
 from the live frame, so frozen behavior matches development.
 """
-import fnmatch
 import inspect
 
 
@@ -31,7 +30,7 @@ def _get_argvalues():
     """Return the read_raw_* arguments (except self), tolerant of frozen paths.
 
     Mirrors mne.io.base._get_argvalues; only the co_filename gate is relaxed.
-    @return {dict|None} the reader's arguments, or None for non-io callers.
+    Returns the reader's arguments, or None for non-io callers.
     """
     frame = inspect.currentframe()
     try:
@@ -40,7 +39,7 @@ def _get_argvalues():
         fname = frame.f_code.co_filename.replace("\\", "/")
         # Upstream requires "*/mne/io/*"; the leading separator is absent from
         # PyInstaller's bundle-relative filenames, so match "mne/io/" anywhere.
-        if not fnmatch.fnmatch(fname, "*mne/io/*"):
+        if "mne/io/" not in fname:
             return None
         args, _, _, values = inspect.getargvalues(frame)
     finally:

@@ -1,4 +1,4 @@
-const {test: base, _electron: electron} = require('@playwright/test');
+const {test: base, expect, _electron: electron} = require('@playwright/test');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
@@ -93,8 +93,4 @@ const test = base.extend({
   },
 });
 
-const {expect} = require('@playwright/test');
-
-module.exports = {
-  test, expect, REPO_ROOT, reserveFreePort, canConnect, launchElectron,
-};
+module.exports = {test, expect, REPO_ROOT, canConnect, launchElectron};

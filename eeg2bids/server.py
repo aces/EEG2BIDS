@@ -1,11 +1,11 @@
 import os
+import shutil
 import sys
 import threading
 import time
 
 import socketio
 from werkzeug.serving import run_simple
-from eeg2bids import converter
 from eeg2bids.converter import metadata as metadata_fields
 from eeg2bids import conversion
 from eeg2bids import BIDS
@@ -19,13 +19,6 @@ import json
 # defaults to 7301 for normal use.
 HOST = '127.0.0.1'
 PORT = int(os.environ.get('EEG2BIDS_BACKEND_PORT') or 7301)
-
-# LORIS credentials of user
-lorisCredentials = {
-    'lorisURL': '',
-    'lorisUsername': '',
-    'lorisPassword': '',
-}
 
 # Create socket listener. The threading async mode keeps the event handlers
 # synchronous (they perform blocking file IO and BIDS conversion) and avoids
@@ -44,27 +37,17 @@ def connect(sid, environ):
         return False  # extra precaution.
 
 
-def tarfile_bids_thread(bids_directory):
-    converter.TarFile(bids_directory)
-    response = {
-        'compression_time': 'example_5mins'
-    }
-    return response
-
-
 @sio.event
 def tarfile_bids(sid, bids_directory):
-    response = tarfile_bids_thread(bids_directory)
-    send = {
-        'compression_time': response['compression_time']
-    }
-    sio.emit('response', send)
+    shutil.make_archive(bids_directory, 'gztar',
+                        root_dir=os.path.dirname(bids_directory),
+                        base_dir=os.path.basename(bids_directory))
+    sio.emit('response', {'compression_time': 'example_5mins'})
 
 
 @sio.event
 def get_participant_data(sid, data):
-    # todo helper to to data validation
-    if 'candID' not in data or not data['candID']:
+    if not data.get('candID'):
         return
 
     candidate = loris_api.get_candidate(data['candID'])
@@ -73,19 +56,15 @@ def get_participant_data(sid, data):
 
 @sio.event
 def set_loris_credentials(sid, data):
-    global lorisCredentials
-    lorisCredentials = data
     # Never print the credentials payload: it contains the LORIS password
     # and this output is forwarded into the development logs.
-    if 'lorisURL' not in lorisCredentials:
+    if 'lorisURL' not in data:
         print('set_loris_credentials: lorisURL missing from credentials payload')
         return
 
-    if lorisCredentials['lorisURL'].endswith('/'):
-        lorisCredentials['lorisURL'] = lorisCredentials['lorisURL'][:-1]
-    loris_api.url = lorisCredentials['lorisURL'] + '/api/v0.0.4-dev/'
-    loris_api.username = lorisCredentials['lorisUsername']
-    loris_api.password = lorisCredentials['lorisPassword']
+    loris_api.url = data['lorisURL'].removesuffix('/') + '/api/v0.0.4-dev/'
+    loris_api.username = data['lorisUsername']
+    loris_api.password = data['lorisPassword']
     resp = loris_api.login()
 
     if resp.get('error'):
@@ -106,16 +85,6 @@ def set_loris_credentials(sid, data):
 
 
 @sio.event
-def get_loris_sites(sid):
-    sio.emit('loris_sites', loris_api.get_sites())
-
-
-@sio.event
-def get_loris_projects(sid):
-    sio.emit('loris_projects', loris_api.get_projects())
-
-
-@sio.event
 def get_loris_subprojects(sid, project):
     sio.emit('loris_subprojects', loris_api.get_subprojects(project))
 
@@ -125,10 +94,15 @@ def get_loris_visits(sid, subproject):
     sio.emit('loris_visits', loris_api.get_visits(subproject))
 
 
+def _open_visit(candid, data):
+    loris_api.create_visit(candid, data['visit'], data['site'], data['project'], data['subproject'])
+    loris_api.start_next_stage(candid, data['visit'], data['site'], data['subproject'], data['project'], data['date'])
+
+
 @sio.event
 def create_visit(sid, data):
-    loris_api.create_visit(data['candID'], data['visit'], data['site'], data['project'], data['subproject'])
-    loris_api.start_next_stage(data['candID'], data['visit'], data['site'], data['subproject'], data['project'], data['date'])
+    _open_visit(data['candID'], data)
+
 
 @sio.event
 def create_candidate_and_visit(sid, data):
@@ -140,12 +114,7 @@ def create_candidate_and_visit(sid, data):
     )
 
     if new_candidate['CandID']:
-        print('create_visit')
-        loris_api.create_visit(new_candidate['CandID'], data['visit'], data['site'], data['project'],
-                               data['subproject'])
-        loris_api.start_next_stage(new_candidate['CandID'], data['visit'], data['site'], data['subproject'],
-                                   data['project'], data['date'])
-        print('new_candidate_created')
+        _open_visit(new_candidate['CandID'], data)
         sio.emit('new_candidate_created', new_candidate)
 
 
@@ -196,30 +165,24 @@ def get_bids_metadata(sid, data):
     # data = { file_path: 'path to metadata file' }
     print('data:', data)
 
-    if 'file_path' not in data or not data['file_path']:
+    if not data.get('file_path'):
         msg = 'No metadata file selected.'
         print(msg)
         response = {'error': msg}
-    elif 'modality' not in data or data['modality'] not in ['ieeg', 'eeg']:
+    elif data.get('modality') not in ('ieeg', 'eeg'):
         msg = 'No valid modality found.'
         print(msg)
         response = {'error': msg}
     else:
         try:
-            try:
-                response = _read_parameter_file(
-                    data['file_path'], data['modality'])
-            except (ValueError, TypeError) as e:
-                print(e)
-                response = {
-                    'error': 'Metadata file format is not valid: ' + str(e),
-                }
-        except IOError:
-            msg = "Could not read the metadata file."
+            response = _read_parameter_file(data['file_path'], data['modality'])
+        except (ValueError, TypeError) as e:
+            print(e)
+            response = {'error': f'Metadata file format is not valid: {e}'}
+        except OSError:
+            msg = 'Could not read the metadata file.'
             print(msg)
-            response = {
-                'error': msg,
-            }
+            response = {'error': msg}
 
     sio.emit('bids_metadata', response)
 
@@ -227,7 +190,7 @@ def get_bids_metadata(sid, data):
 @sio.event
 def recording_to_bids(sid, data):
     # data = { recordingData: {files: [{path, name}]}, eegRuns: [], modality: '',
-    # bids_directory: '', read_only: false, session: '', participantID: '',
+    # bids_directory: '', session: '', participantID: '',
     # taskName: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
     print('recording_to_bids: ', data)
@@ -240,20 +203,10 @@ def recording_to_bids(sid, data):
 @sio.event
 def validate_bids(sid, bids_directory):
     print('validate_bids: ', bids_directory)
-    error_messages = []
     if not bids_directory:
-        error_messages.append('The BIDS output directory is missing.')
-
-    if not error_messages:
-        BIDS.Validate(bids_directory)
-        response = {
-            'file_paths': BIDS.Validate.file_paths,
-            'result': BIDS.Validate.result
-        }
+        response = {'error': ['The BIDS output directory is missing.']}
     else:
-        response = {
-            'error': error_messages
-        }
+        response = BIDS.validate(bids_directory)
     sio.emit('response', response)
 
 
@@ -350,7 +303,3 @@ def main():
     # A port collision needs no handling here: Werkzeug prints an actionable
     # "Port <PORT> is in use by another program" message and exits non-zero.
     run_simple(HOST, PORT, app, threaded=True)
-
-
-if __name__ == '__main__':
-    main()

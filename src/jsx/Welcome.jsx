@@ -1,6 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import '../css/Welcome.css';
+
+const open = (url) => () => window.eeg2bids.openExternal(url);
 
 /**
  * Welcome - the Getting started component.
@@ -8,36 +9,6 @@ import '../css/Welcome.css';
  * @return {JSX.Element}
  */
 const Welcome = (props) => {
-  /**
-   * openBIDS - Navigate browser to the BIDS specification.
-   */
-  const openBIDS = () => {
-    window.eeg2bids.openExternal('https://bids.neuroimaging.io');
-  };
-  /**
-   * openGitHub - Navigate browser to EEG2BIDS Wizard.
-   */
-  const openGitHub = () => {
-    window.eeg2bids.openExternal('https://github.com/aces/eeg2bids');
-  };
-  /**
-   * openIssues - Navigate browser to the EEG2BIDS issue tracker.
-   */
-  const openIssues = () => {
-    window.eeg2bids.openExternal('https://github.com/aces/eeg2bids/issues');
-  };
-  /**
-   * openMNE - Navigate browser to MNE.
-   */
-  const openMNE = () => {
-    window.eeg2bids.openExternal('https://mne.tools/mne-bids/');
-  };
-  /**
-   * openMCIN - Navigate browser to MCIN.
-   */
-  const openMCIN = () => {
-    window.eeg2bids.openExternal('https://mcin.ca');
-  };
   /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
@@ -61,7 +32,8 @@ const Welcome = (props) => {
         <ul>
           <li>
             For more information about BIDS, visit <a
-              className='open-source' onClick={openBIDS}>
+              className='open-source'
+              onClick={open('https://bids.neuroimaging.io')}>
                 bids.neuroimaging.io
             </a>
           </li>
@@ -104,22 +76,22 @@ const Welcome = (props) => {
         </p>
       </div>
       <div className='footer'>
-        Powered by <a className='open-source' onClick={openGitHub}>
+        Powered by <a className='open-source'
+          onClick={open('https://github.com/aces/eeg2bids')}>
           open source software
-        </a> and <a className='open-source' onClick={openMNE}>
+        </a> and <a className='open-source'
+          onClick={open('https://mne.tools/mne-bids/')}>
           MNE-BIDS
         </a>.<br/>
-        <a className='open-source' onClick={openIssues}>
+        <a className='open-source'
+          onClick={open('https://github.com/aces/eeg2bids/issues')}>
           Contact us
         </a> with your feedback.<br/>
-        Copyright © 2021 <a className='mcin' onClick={openMCIN}>
+        Copyright © 2021 <a className='open-source'
+          onClick={open('https://mcin.ca')}>
         MCIN</a>.
       </div>
     </>
   ) : null;
 };
-Welcome.propTypes = {
-  visible: PropTypes.bool,
-};
-
 export default Welcome;

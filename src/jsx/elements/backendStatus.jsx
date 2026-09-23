@@ -58,9 +58,6 @@ const BackendStatus = () => {
 
   useEffect(() => {
     const api = window.eeg2bids;
-    if (!api) {
-      return;
-    }
     let active = true;
     api.getBackendStatus()
         .then((status) => {
@@ -82,9 +79,6 @@ const BackendStatus = () => {
   const status = resolveStatus(socketStatus, backend.state);
 
   const handleRestart = async () => {
-    if (!window.eeg2bids || !window.eeg2bids.restartBackend) {
-      return;
-    }
     setRestarting(true);
     try {
       await window.eeg2bids.restartBackend();

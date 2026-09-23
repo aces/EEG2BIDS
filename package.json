@@ -6,7 +6,6 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
     "papaparse": "^5.5.4",
-    "prop-types": "^15.8.1",
     "react": "^19.2.8",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.8",
@@ -23,7 +22,6 @@
     "eslint": "^8.57.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.37.5",
-    "lint-staged": "17.0.8",
     "vite": "^8.1.5",
     "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
@@ -42,12 +40,6 @@
     "dist:dir": "npm run build && npm run freeze:backend && electron-builder --linux dir --publish never",
     "dist:linux": "npm run build && npm run freeze:backend && electron-builder --linux deb --publish never",
     "dist:windows": "npm run build && npm run freeze:backend && electron-builder --win nsis --x64 --publish never"
-  },
-  "lint-staged": {
-    "src/**/*.{js,jsx,json,css,md}": [
-      "eslint --fix src",
-      "git add"
-    ]
   },
   "main": "electron/main/index.js",
   "homepage": "https://github.com/aces/eeg2bids",
@@ -72,17 +64,11 @@
       }
     ],
     "linux": {
-      "target": [
-        "deb"
-      ],
       "category": "Science",
       "icon": "public/logo512.png",
       "syncDesktopName": true
     },
     "win": {
-      "target": [
-        "nsis"
-      ],
       "artifactName": "EEG2BIDS-${version}-windows-${arch}-setup.${ext}"
     },
     "nsis": {

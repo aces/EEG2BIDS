@@ -1,6 +1,48 @@
-import React, {useState} from 'react';
-import PropTypes from 'prop-types';
-import styles from '../../css/Inputs.module.css';
+import React from 'react';
+
+const styleRow = {
+  display: 'flex',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  width: '100%',
+};
+const styleColumn = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignSelf: 'flex-start',
+  marginRight: '10px',
+};
+const styleRadioLabel = {
+  margin: 0,
+  color: '#064785',
+  cursor: 'pointer',
+};
+const styleRadioInput = {
+  display: 'inline-block',
+  margin: '0 5px 0 5px',
+  cursor: 'pointer',
+};
+const styleSelect = {
+  display: 'inline-block',
+  margin: '0 10px 10px 0',
+  cursor: 'pointer',
+};
+
+/**
+ * FieldLabel - the label, required marker and help icon of an input.
+ * @param {object} props
+ * @return {JSX.Element}
+ */
+const FieldLabel = ({id, label, required, help}) => (
+  <label className='label' htmlFor={id}>
+    <b>
+      {label} {required && <span className='red'>*</span>}
+      {help &&
+        <i className='fas fa-question-circle' data-tooltip-content={help}/>
+      }
+    </b>
+  </label>
+);
 
 /**
  * FileInput - the input type='file' component.
@@ -37,17 +79,8 @@ export const FileInput = (props) => {
    */
   return (
     <>
-      <label className="label">
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-          }
-        </b>
-      </label>
+      <FieldLabel label={props.label} required={props.required}
+        help={props.help}/>
       <button>
         <label htmlFor={props.id}>
           {
@@ -71,20 +104,6 @@ export const FileInput = (props) => {
     </>
   );
 };
-FileInput.defaultProps = {
-  multiple: false,
-};
-FileInput.propTypes = {
-  id: PropTypes.string,
-  multiple: PropTypes.bool,
-  name: PropTypes.string,
-  label: PropTypes.string,
-  accept: PropTypes.string,
-  onUserInput: PropTypes.func,
-  placeholder: PropTypes.string,
-  help: PropTypes.string,
-};
-
 /**
  * DirectoryInput - the directory select component.
  * @param {object} props
@@ -107,17 +126,7 @@ export const DirectoryInput = (props) => {
    */
   return (
     <>
-      <label className="label" htmlFor={props.id}>
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-          }
-        </b>
-      </label>
+      <FieldLabel {...props}/>
       <input
         type='button'
         id={props.id}
@@ -130,14 +139,6 @@ export const DirectoryInput = (props) => {
       </a>
     </>
   );
-};
-DirectoryInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  label: PropTypes.string,
-  onUserInput: PropTypes.func,
-  placeholder: PropTypes.string,
-  help: PropTypes.string,
 };
 
 /**
@@ -152,13 +153,7 @@ export const TextInput = (props) => {
    */
   const handleChange = (event) => {
     const value = event.target.value;
-    if (props.bannedCharacters) {
-      for (const character of props.bannedCharacters) {
-        if (value.includes(character)) {
-          return;
-        }
-      }
-    }
+    if (props.bannedCharacters?.some((c) => value.includes(c))) return;
     props.onUserInput(props.id, value);
   };
   /**
@@ -168,17 +163,7 @@ export const TextInput = (props) => {
   return (
     <>
       {props.label &&
-        <label className="label" htmlFor={props.id}>
-          <b>
-            {props.label} {props.required ?
-              <span className="red">*</span> :
-              null
-            }
-            {props.help &&
-              <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-            }
-          </b>
-        </label>
+        <FieldLabel {...props}/>
       }
       <input
         type='text'
@@ -193,29 +178,6 @@ export const TextInput = (props) => {
     </>
   );
 };
-TextInput.defaultProps = {
-  readonly: false,
-  required: false,
-};
-TextInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  required: PropTypes.bool,
-  label: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
-  onUserInput: PropTypes.func,
-  placeholder: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]),
-  bannedCharacters: PropTypes.array,
-  readonly: PropTypes.bool,
-  help: PropTypes.string,
-};
-
 /**
  * RadioInput - the input type='radio' component.
  * @param {object} props
@@ -233,93 +195,34 @@ export const RadioInput = (props) => {
     );
   };
   /**
-   * generateRadioLayout - creates the radio input layout.
-   * @return {JSX.Element}
-   */
-  const generateRadioLayout = () => {
-    const styleRow = {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: '100%',
-    };
-    const styleColumn = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignSelf: 'flex-start',
-      marginRight: '10px',
-    };
-    const styleLabel = {
-      margin: 0,
-      color: '#064785',
-      cursor: 'pointer',
-    };
-    const styleInput = {
-      display: 'inline-block',
-      margin: '0 5px 0 5px',
-      cursor: 'pointer',
-    };
-    const content = [];
-    for (const [key] of Object.entries(props.options)) {
-      content.push(
-          <div key={key}
-            style={styleColumn}>
-            <span style={{cursor: 'pointer'}}>
-              <input
-                type='radio'
-                id={`${props.id}_${key}`}
-                name={`${props.name}_${key}`}
-                value={key}
-                checked={props.checked === key}
-                onChange={handleChange}
-                style={styleInput}
-              />
-              <label htmlFor={`${props.id}_${key}`}
-                style={styleLabel}
-              >
-                {props.options[key]}
-              </label>
-            </span>
-          </div>,
-      );
-    }
-    return <div key={props.name + '_key'} style={styleRow}>
-      <label className="label" htmlFor={props.id}>
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-          }
-        </b>
-      </label>
-      {content}
-    </div>;
-  };
-  /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
-    <>
-      {generateRadioLayout()}
-    </>
+    <div style={styleRow}>
+      <FieldLabel {...props}/>
+      {Object.entries(props.options).map(([key, label]) => (
+        <div key={key} style={styleColumn}>
+          <span style={{cursor: 'pointer'}}>
+            <input
+              type='radio'
+              id={`${props.id}_${key}`}
+              name={`${props.name}_${key}`}
+              value={key}
+              checked={props.checked === key}
+              onChange={handleChange}
+              style={styleRadioInput}
+            />
+            <label htmlFor={`${props.id}_${key}`}
+              style={styleRadioLabel}
+            >
+              {label}
+            </label>
+          </span>
+        </div>
+      ))}
+    </div>
   );
-};
-RadioInput.defaultProps = {
-  required: false,
-};
-RadioInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  required: PropTypes.bool,
-  label: PropTypes.string,
-  options: PropTypes.object,
-  checked: PropTypes.string,
-  onUserInput: PropTypes.func,
-  help: PropTypes.string,
 };
 
 /**
@@ -339,138 +242,30 @@ export const SelectInput = (props) => {
     );
   };
   /**
-   * generateRadioLayout - creates the radio input layout.
-   * @return {JSX.Element}
-   */
-  const generateSelectLayout = () => {
-    const styleRow = {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      width: '100%',
-    };
-    const styleColumn = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignSelf: 'flex-start',
-      marginRight: '10px',
-    };
-    const styleInput = {
-      display: 'inline-block',
-      margin: '0 10px 10px 0',
-      cursor: 'pointer',
-    };
-
-    let emptyOptionHTML = null;
-    // Add empty option
-    if (props.emptyOption) {
-      emptyOptionHTML = <option>{props.emptyOption}</option>;
-    }
-
-    const optionList = Object.keys(props.options).map((key, index) => {
-      return (
-        <option value={key} key={index}>
-          {props.options[key]}
-        </option>
-      );
-    });
-
-    return (
-      <>
-        {props.label &&
-          <label className="label" htmlFor={props.id}>
-            <b>
-              {props.label} {props.required ?
-                <span className="red">*</span> :
-                null
-              }
-              {props.help &&
-                <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-              }
-            </b>
-          </label>
-        }
-        <select
-          id={props.id}
-          name={props.name}
-          value={props.value || ''}
-          onChange={handleChange}
-          style={styleInput}
-        >
-          {emptyOptionHTML}
-          {optionList}
-        </select>
-      </>
-    );
-  };
-  /**
    * Renders the React component.
    * @return {JSX.Element} - React markup for component.
    */
   return (
     <>
-      {generateSelectLayout()}
-    </>
-  );
-};
-SelectInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  label: PropTypes.string,
-  value: PropTypes.string,
-  emptyOption: PropTypes.string,
-  options: PropTypes.object,
-  onUserInput: PropTypes.func,
-  help: PropTypes.string,
-};
-
-/**
- * NumberInput - the input type='number' component.
- * @param {object} props
- * @return {JSX.Element}
- */
-export const NumberInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
-  const handleChange = (event) => {
-    props.onUserInput(
-        props.id,
-        event.target.value,
-    );
-  };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
-  return (
-    <>
-      <label className="label" htmlFor={props.id}>
-        <b>{props.label}</b>
-        {props.help &&
-          <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-        }
-      </label>
-      <input
-        type='number'
+      {props.label &&
+        <FieldLabel {...props}/>
+      }
+      <select
         id={props.id}
         name={props.name}
-        value={props.value}
+        value={props.value || ''}
         onChange={handleChange}
-        placeholder={props.placeholder}
-      />
+        style={styleSelect}
+      >
+        {props.emptyOption && <option>{props.emptyOption}</option>}
+        {Object.keys(props.options).map((key, index) => (
+          <option value={key} key={index}>
+            {props.options[key]}
+          </option>
+        ))}
+      </select>
     </>
   );
-};
-NumberInput.propTypes = {
-  id: PropTypes.string,
-  name: PropTypes.string,
-  label: PropTypes.string,
-  value: PropTypes.string,
-  onUserInput: PropTypes.func,
-  placeholder: PropTypes.string,
-  help: PropTypes.string,
 };
 
 /**
@@ -496,17 +291,7 @@ export const TextareaInput = (props) => {
    */
   return (
     <>
-      <label className="label" htmlFor={props.id}>
-        <b>
-          {props.label} {props.required ?
-            <span className="red">*</span> :
-            null
-          }
-          {props.help &&
-            <i className='fas fa-question-circle' data-tooltip-content={props.help}></i>
-          }
-        </b>
-      </label>
+      <FieldLabel {...props}/>
       <textarea
         cols={props.cols}
         rows={props.rows}
@@ -519,22 +304,4 @@ export const TextareaInput = (props) => {
       </textarea>
     </>
   );
-};
-
-TextareaInput.propTypes = {
-  name: PropTypes.string.isRequired,
-  label: PropTypes.string,
-  value: PropTypes.string,
-  id: PropTypes.string,
-  required: PropTypes.bool,
-  rows: PropTypes.number,
-  cols: PropTypes.number,
-  onUserInput: PropTypes.func,
-  help: PropTypes.string,
-};
-
-TextareaInput.defaultProps = {
-  required: false,
-  rows: 4,
-  cols: 23,
 };

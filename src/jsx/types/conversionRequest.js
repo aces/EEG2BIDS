@@ -17,8 +17,7 @@ export const buildConversionRequest = (
   anonymize: getFromTask('anonymize') ?? false,
   bids_directory: getFromTask('bidsDirectory') ?? '',
   read_only: false,
-  event_files: (getFromTask('eventFiles') ?? []).length > 0 ?
-    getFromTask('eventFiles')[0]['path'] : '',
+  event_files: getFromTask('eventFiles')?.[0]?.path ?? '',
   bidsMetadata: getFromTask('bidsMetadata') ?? '',
   site_id: getFromTask('siteID') ?? '',
   project_id: getFromTask('projectID') ?? '',

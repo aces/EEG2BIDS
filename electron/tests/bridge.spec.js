@@ -13,7 +13,6 @@ const EXPECTED_API = [
   'getLorisAuthenticationCredentials',
   'setLorisAuthenticationCredentials',
   'removeLorisAuthenticationCredentials',
-  'openSettings',
   'getBackendStatus',
   'restartBackend',
   'onBackendStatusChange',

@@ -4,7 +4,6 @@ import {defineConfig} from 'vitest/config';
 // behavior remains covered by the Playwright suite.
 export default defineConfig({
   test: {
-    environment: 'node',
     include: ['src/**/*.test.{js,jsx}'],
   },
 });

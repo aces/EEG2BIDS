@@ -93,6 +93,24 @@ def _write_metadata(template_name, out_path, overrides):
         json.dump(metadata, fd, indent=2)
 
 
+def _write_metadata_pair(out_dir, institution, eeg_task, ieeg_task):
+    """Write representative eeg_metadata.json and ieeg_metadata.json."""
+    base = {
+        'InstitutionName': institution,
+        'Manufacturer': 'Synthetic',
+        'ManufacturersModelName': 'make_dev_data',
+    }
+    _write_metadata('eeg_parameters_TEMPLATE.json', out_dir / 'eeg_metadata.json', {
+        **base,
+        'TaskDescription': eeg_task,
+        'EEGPlacementScheme': '10-20',
+        'EEGGround': 'Fpz',
+    })
+    _write_metadata('ieeg_parameters_TEMPLATE.json',
+                    out_dir / 'ieeg_metadata.json',
+                    {**base, 'TaskDescription': ieeg_task})
+
+
 def _write_valid_bids(edf_path, bids_root):
     """Convert an EDF to a valid BIDS dataset the way the app does."""
     if bids_root.exists():
@@ -137,7 +155,6 @@ _MAT_FIXED_DESCRIPTION = (
 def _normalize_mat_header(mat_path):
     """Replace the .mat header's timestamped description with a fixed string."""
     with open(mat_path, 'r+b') as fd:
-        fd.seek(0)
         fd.write(_MAT_FIXED_DESCRIPTION)
 
 
@@ -150,27 +167,26 @@ def _write_embedded_set(raw, set_path):
     mne.export.export_raw(str(set_path), raw, fmt='eeglab', overwrite=True)
 
 
+def _export_and_load_set(raw, set_path):
+    """Export an embedded .set and load it back without MATLAB dunder keys."""
+    _write_embedded_set(raw, set_path)
+    return {k: v for k, v in loadmat(set_path).items() if not k.startswith('__')}
+
+
 def _write_set_fdt(raw, set_path):
     """Write an EEGLAB SET/FDT pair (metadata .set + separate .fdt data file).
 
     Built by exporting the embedded form, then moving the sample array out into
     a sibling ``.fdt`` file and replacing the ``data`` field with that file's
-    name. MNE reads the .fdt as float32 reshaped ``(nbchan, pnts, trials)`` in
-    Fortran order, so the samples are written in that order.
+    name. MNE reads the .fdt as float32 in Fortran order, so the samples are
+    written in that order.
     """
     set_path = Path(set_path)
-    _write_embedded_set(raw, set_path)
-
-    mat = {k: v for k, v in loadmat(str(set_path)).items()
-           if not k.startswith('__')}
-    nbchan = int(np.asarray(mat['nbchan']).ravel()[0])
-    pnts = int(np.asarray(mat['pnts']).ravel()[0])
-    trials = int(np.asarray(mat['trials']).ravel()[0])
+    mat = _export_and_load_set(raw, set_path)
 
     fdt_name = set_path.stem + '.fdt'
-    samples = np.asarray(mat['data'], dtype=np.float32)
-    samples.reshape(nbchan, pnts, trials, order='F') \
-        .ravel(order='F').astype(np.float32).tofile(str(set_path.parent / fdt_name))
+    np.asarray(mat['data'], dtype=np.float32).ravel(order='F').tofile(
+        set_path.parent / fdt_name)
 
     mat['data'] = fdt_name
     savemat(str(set_path), mat, appendmat=False)
@@ -183,18 +199,14 @@ def _write_epoched_set(raw, set_path, n_trials):
     continuous-only rejection path. The epochs are non-overlapping slices of the
     continuous data, embedded in the .set as an ``(nbchan, pnts, trials)`` array.
     """
-    set_path = Path(set_path)
-    _write_embedded_set(raw, set_path)
-
-    mat = {k: v for k, v in loadmat(str(set_path)).items()
-           if not k.startswith('__')}
+    mat = _export_and_load_set(raw, Path(set_path))
     data = np.asarray(mat['data'], dtype=np.float32)  # (nbchan, total_pnts)
     nbchan, total_pnts = data.shape
     epoch_pnts = total_pnts // n_trials
     epoched = data[:, :epoch_pnts * n_trials].reshape(
         nbchan, epoch_pnts, n_trials, order='F')
 
-    mat['data'] = epoched.astype(np.float32)
+    mat['data'] = epoched
     mat['trials'] = n_trials
     mat['pnts'] = epoch_pnts
     mat['xmax'] = (epoch_pnts - 1) / float(np.asarray(mat['srate']).ravel()[0])
@@ -238,23 +250,9 @@ def write_test_fixtures(fixtures_dir):
                      'eeg_epoched.set'):
         _normalize_mat_header(fixtures_dir / set_name)
 
-    _write_metadata('eeg_parameters_TEMPLATE.json',
-                    fixtures_dir / 'eeg_metadata.json', {
-                        'InstitutionName': 'EEG2BIDS Test Fixture',
-                        'Manufacturer': 'Synthetic',
-                        'ManufacturersModelName': 'make_dev_data',
-                        'TaskDescription': 'Synthetic fixture (not real data).',
-                        'EEGPlacementScheme': '10-20',
-                        'EEGGround': 'Fpz',
-                    })
-    _write_metadata('ieeg_parameters_TEMPLATE.json',
-                    fixtures_dir / 'ieeg_metadata.json', {
-                        'InstitutionName': 'EEG2BIDS Test Fixture',
-                        'Manufacturer': 'Synthetic',
-                        'ManufacturersModelName': 'make_dev_data',
-                        'TaskDescription': 'Synthetic iEEG fixture (not real '
-                                           'data).',
-                    })
+    _write_metadata_pair(fixtures_dir, 'EEG2BIDS Test Fixture',
+                         'Synthetic fixture (not real data).',
+                         'Synthetic iEEG fixture (not real data).')
 
     # Supplied events.tsv fixtures for event-merging regressions. Narrow and
     # wide retain the historical #79 layouts. Custom adds channel/provenance
@@ -305,21 +303,9 @@ def main():
     mne.export.export_raw(ieeg_edf, ieeg_raw, fmt='edf', overwrite=True)
 
     # Representative metadata sidecars.
-    _write_metadata('eeg_parameters_TEMPLATE.json', out / 'eeg_metadata.json', {
-        'InstitutionName': 'EEG2BIDS Dev Fixture',
-        'Manufacturer': 'Synthetic',
-        'ManufacturersModelName': 'make_dev_data',
-        'TaskDescription': 'Synthetic resting-state fixture (not real data).',
-        'EEGPlacementScheme': '10-20',
-        'EEGGround': 'Fpz',
-    })
-    _write_metadata(
-        'ieeg_parameters_TEMPLATE.json', out / 'ieeg_metadata.json', {
-            'InstitutionName': 'EEG2BIDS Dev Fixture',
-            'Manufacturer': 'Synthetic',
-            'ManufacturersModelName': 'make_dev_data',
-            'TaskDescription': 'Synthetic iEEG fixture (not real data).',
-        })
+    _write_metadata_pair(out, 'EEG2BIDS Dev Fixture',
+                         'Synthetic resting-state fixture (not real data).',
+                         'Synthetic iEEG fixture (not real data).')
 
     # Outputs: a known-valid and a known-invalid BIDS dataset.
     bids_valid = out / 'bids_valid'
@@ -330,23 +316,8 @@ def main():
     # Committed test fixtures.
     write_test_fixtures(args.fixtures_out)
 
-    print('Development fixtures written to', out)
-    print()
-    print('Expected characteristics:')
-    print(f'  eeg_sample.edf   {len(EEG_CHANNELS)} EEG ch, '
-          f'{SFREQ_EEG:.0f} Hz, {DURATION_S:.0f}s, ~50 uV, line {LINE_FREQ} Hz')
-    print(f'  ieeg_sample.edf  {len(IEEG_CHANNELS)} sEEG ch, '
-          f'{SFREQ_IEEG:.0f} Hz, {DURATION_S:.0f}s, ~200 uV, '
-          f'line {LINE_FREQ} Hz')
-    print('  bids_valid/      sub-01 ses-01 task-rest eeg — all files '
-          'BIDS-compliant')
-    print('  bids_invalid/    same, plus one non-BIDS-named file that fails '
-          'validation')
-    print()
-    print('Committed test fixtures written to', args.fixtures_out)
-    print('  eeg_continuous.edf / ieeg_continuous.edf, eeg_embedded.set, '
-          'eeg_split.set(+.fdt), eeg_epoched.set, *_metadata.json')
-
+    print(f'Dev data written to {args.out}; test fixtures written to '
+          f'{args.fixtures_out}')
 
 if __name__ == '__main__':
     main()

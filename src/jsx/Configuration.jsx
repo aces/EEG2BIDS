@@ -1,10 +1,8 @@
 import React, {useContext, useState, useEffect, useRef} from 'react';
 import {AppContext} from '../context';
-import PropTypes from 'prop-types';
-import { Tooltip } from 'react-tooltip';
+import {Tooltip} from 'react-tooltip';
 import '../css/Configuration.css';
 import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
-import 'react-datepicker/dist/react-datepicker.css';
 import EEGRun from './types/EEGRun';
 import {buildConversionRequest} from './types/conversionRequest';
 import Papa from 'papaparse';
@@ -24,7 +22,6 @@ import {
 } from './elements/authentication';
 
 import Switch from 'react-switch';
-import DatePicker from 'react-datepicker';
 
 // Socket.io
 import {SocketContext, useSocketStatus} from './socket.io';
@@ -33,6 +30,79 @@ import '../css/Converter.css';
 
 // Display Loading, Success, Error
 import Modal from './elements/modal';
+
+const MODAL_TITLES = {
+  loading: '⏱ Task in Progress!',
+  success: '⭐ Task Finished!',
+  error: '❌ Task Error!',
+};
+
+const MODAL_MESSAGES = {
+  loading: <span style={{padding: '40px'}}>
+    <span className='bids-loading'>
+        BIDS creation in progress<span>.</span><span>.</span><span>.</span>
+        😴
+    </span>
+  </span>,
+  success: <span style={{padding: '40px'}}>
+    <span className='bids-success'>
+      <span className='checkmark'>&#x2714;</span> Success creating BIDS!
+    </span></span>,
+};
+
+const recordingDateFormat = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+});
+
+const eventMatchesRecording = (eventFile, recordingFile) => {
+  const rec = recordingFile.name.toLowerCase();
+  const evt = eventFile.name.toLowerCase()
+      .replace('_events.tsv', '').replace('.tsv', '');
+  return evt === rec.replace(/_i?eeg\.(edf|set)/i, '')
+      .replace(/\.(edf|set)/i, '') ||
+    evt === rec.replace(/\.(edf|set)/i, '');
+};
+
+const invalidFiles = async (files, isValid) => {
+  const results = await Promise.all(files.map(
+      async (file) => (isValid(await file.text()) ? null : file.name),
+  ));
+  return results.filter(Boolean);
+};
+
+const isJSON = (text) => {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const isTSV = (text) => Papa.parse(text, {quoteChar: ''}).errors.length === 0;
+
+/**
+ * Get age at visit
+ *
+ * @param {Date} birthDate
+ * @param {Date} visitDate
+ *
+ * @return {Number}
+ */
+const getAge = (birthDate, visitDate) => {
+  let age = visitDate.getFullYear() - birthDate.getFullYear();
+  const m = visitDate.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && visitDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const arrayToObject = (array) => Object.fromEntries(array.map((v) => [v, v]));
 
 /**
  * Configuration - the Data Configuration component.
@@ -100,29 +170,8 @@ const Configuration = (props) => {
   const [preparedBy, setPreparedBy] = useState('');
   const [displayErrors, setDisplayErrors] = useState(false);
   const [outputTime, setOutputTime] = useState('');
-  const [successMessage, setSuccessMessage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalText, setModalText] = useState({
-    mode: 'loading',
-    title: {
-      loading: '⏱ Task in Progress!',
-      success: '⭐ Task Finished!',
-      error: '❌ Task Error!',
-    },
-    message: {
-      loading: <span style={{padding: '40px'}}>
-        <span className='bids-loading'>
-            BIDS creation in progress<span>.</span><span>.</span><span>.</span>
-            😴
-        </span>
-      </span>,
-      success: <span style={{padding: '40px'}}>
-        <span className='bids-success'>
-          <span className='checkmark'>&#x2714;</span> Success creating BIDS!
-        </span></span>,
-      error: '',
-    },
-  });
+  const [modal, setModal] = useState({mode: 'loading', error: null});
 
   /**
    * reset - reset the form fields (state).
@@ -144,23 +193,18 @@ const Configuration = (props) => {
     }
 
     if (socketStatus !== 'connected') {
-      setModalText((prevState) => {
-        prevState.message['error'] = (
-          <span style={{padding: '40px'}}>
-            <span className='error'>&#x274C;</span> The backend is not
-            connected, so the conversion cannot run. Wait for it to reconnect
-            or use “Restart backend”, then try again.
-          </span>
-        );
-        return {...prevState, ['mode']: 'error'};
-      });
+      setModal({mode: 'error', error: (
+        <span style={{padding: '40px'}}>
+          <span className='error'>&#x274C;</span> The backend is not
+          connected, so the conversion cannot run. Wait for it to reconnect
+          or use “Restart backend”, then try again.
+        </span>
+      )});
       setModalVisible(true);
       return;
     }
 
-    setModalText((prevState) => {
-      return {...prevState, ['mode']: 'loading'};
-    });
+    setModal({mode: 'loading', error: null});
     setModalVisible(true);
 
     if (appContext.getFromTask('recordingData')?.['files'].length > 0) {
@@ -174,21 +218,6 @@ const Configuration = (props) => {
     }
   };
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(() => {
-    if (outputTime) {
-      // cleanup time display for user.
-      let time = outputTime.replace('output-', '');
-      time = time.slice(0, time.lastIndexOf('-')) + ' ' +
-        time.slice(time.lastIndexOf('-')+1);
-      setSuccessMessage(<>
-        <a className='task-finished'>Last created at: {time}</a>
-      </>);
-    }
-  }, [outputTime]);
-
   useEffect(() => {
     if (isAuthenticated && state.LORIScompliant.get) {
       state.participantEntryMode.set('existing_loris');
@@ -196,63 +225,6 @@ const Configuration = (props) => {
       state.participantEntryMode.set('manual');
     }
   }, [state.LORIScompliant.get, isAuthenticated]);
-
-  /**
-   * hideModal - display Modal.
-   * @param {boolean} hidden
-   */
-  const hideModal = (hidden) => {
-    setModalVisible(!hidden);
-  };
-
-  const validateJSON = (jsons) => {
-    const promisesArray = [];
-    for (let i = 0; i < jsons?.length; i++) {
-      const json = jsons[i];
-      promisesArray.push(new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsText(json, 'UTF-8');
-        fileReader.onload = (e) => {
-          try {
-            JSON.parse(e.target.result);
-            resolve(null);
-          } catch (e) {
-            console.info(e);
-            resolve(json.name);
-          }
-        };
-      }));
-    }
-    return Promise.all(promisesArray);
-  };
-
-  const validateTSV = (tsvs) => {
-    const promisesArray = [];
-    for (let i = 0; i < tsvs?.length; i++) {
-      const tsv = tsvs[i];
-      promisesArray.push(new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsText(tsv, 'UTF-8');
-        fileReader.onload = (e) => {
-          Papa.parse(
-              e.target.result,
-              {
-                quoteChar: '',
-                complete: (results, file) => {
-                  console.info(results.errors);
-                  if (results.errors.length > 0) {
-                    resolve(tsv.name);
-                  } else {
-                    resolve(null);
-                  }
-                },
-              },
-          );
-        };
-      }));
-    }
-    return Promise.all(promisesArray);
-  };
 
   useEffect(() => {
     if (socketContext) {
@@ -273,22 +245,17 @@ const Configuration = (props) => {
   }, [state.participantCandID.get, state.participantPSCID.get]);
 
   useEffect(() => {
-    validateJSON(state.bidsMetadataFile.get)
-        .then((result) => {
-          state.invalidBidsMetadataFile.set(result.filter((el) => el != null));
-        });
+    invalidFiles(state.bidsMetadataFile.get, isJSON)
+        .then(state.invalidBidsMetadataFile.set);
   }, [state.bidsMetadataFile.get]);
 
   useEffect(() => {
-    validateTSV(state.eventFiles.get)
-        .then((result) => {
-          state.invalidEventFiles.set(result.filter((el) => el != null));
-        });
+    invalidFiles(state.eventFiles.get, isTSV)
+        .then(state.invalidEventFiles.set);
   }, [state.eventFiles.get]);
 
   useEffect(() => {
     if (props.appMode === 'Converter') {
-      console.info('validate');
       validate();
     }
   }, [props.appMode]);
@@ -299,19 +266,14 @@ const Configuration = (props) => {
         if (message['output_time']) {
           setOutputTime(message['output_time']);
           appContext.setTask('output_time', message['output_time']);
-          setModalText((prevState) => {
-            return {...prevState, ['mode']: 'success'};
-          });
+          setModal({mode: 'success', error: null});
         } else if (message['error']) {
-          setModalText((prevState) => {
-            prevState.message['error'] = (
-              <div className='bids-errors'>
-                {message['error'].map((error, i) =>
-                  <span key={i}>{error}<br/></span>)}
-              </div>
-            );
-            return {...prevState, ['mode']: 'error'};
-          });
+          setModal({mode: 'error', error: (
+            <div className='bids-errors'>
+              {message['error'].map((error, i) =>
+                <span key={i}>{error}<br/></span>)}
+            </div>
+          )});
         }
       });
     }
@@ -351,9 +313,7 @@ const Configuration = (props) => {
     let recordingDataStatus;
     if (state.recordingData.get?.error) {
       recordingDataStatus = formatError(state.recordingData.get.error);
-    } else if (
-      state.recordingData.get && state.recordingData.get?.files?.length > 0
-    ) {
+    } else if (state.recordingData.get?.files?.length > 0) {
       recordingDataStatus = formatPass('Recording file(s): ' +
         state.recordingData.get.files.map(
             (recordingFile) => recordingFile['name'],
@@ -400,37 +360,19 @@ const Configuration = (props) => {
             are not valid TSV file(s).`,
         );
       } else {
-        let match = true;
+        const recordingFiles = appContext.getFromTask('recordingData')['files'];
+        const unmatched = appContext.getFromTask('eventFiles').findLast(
+            (eventFile) => !recordingFiles.some(
+                (recording) => eventMatchesRecording(eventFile, recording),
+            ),
+        );
 
-        // Check that the events files are appropriately named
-        appContext.getFromTask('eventFiles').map((eventFile) => {
-          if (!appContext.getFromTask('recordingData')['files'].find(
-              (recordingFile) => {
-                const recordingFileName = recordingFile['name'].toLowerCase()
-                    .replace(/_i?eeg\.(edf|set)/i, '')
-                    .replace(/\.(edf|set)/i, '');
-
-                const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                    .replace(/\.(edf|set)/i, '');
-
-                const eventFileName = eventFile['name'].toLowerCase()
-                    .replace('_events.tsv', '').replace('.tsv', '');
-
-                return (
-                  recordingFileName === eventFileName ||
-                  recordingFileNameAlt === eventFileName
-                );
-              },
-          )) {
-            match = false;
-            eventsStatus = formatError(
-                `Event file ${eventFile['name']}
-                is not matching any recording file names.`,
-            );
-          }
-        });
-
-        if (match) {
+        if (unmatched) {
+          eventsStatus = formatError(
+              `Event file ${unmatched['name']}
+              is not matching any recording file names.`,
+          );
+        } else {
           eventsStatus = formatPass('Event file(s): ' +
               appContext.getFromTask('eventFiles').map(
                   (eventFile) => eventFile['name'],
@@ -535,74 +477,32 @@ const Configuration = (props) => {
     return result;
   };
 
-  const validateRecordingDetails = () => {
-    const result = [];
+  const requireField = (key, label) => {
+    const value = appContext.getFromTask(key);
+    return (
+      <div key={key}>
+        {value ?
+          formatPass(`${label}: ${value}`) :
+          formatError(`${label} is not specified`)}
+      </div>
+    );
+  };
 
-    // taskName
-    let taskNameStatus;
-    const taskName = appContext.getFromTask('taskName');
-    if (taskName) {
-      /* if (taskName.indexOf('-') > -1 ||
-          taskName.indexOf('_') > -1 ||
-          taskName.indexOf('/') > -1) {
-        taskNameStatus = formatError(
-            'Task Name has invalid characters (-, /, _)',
-        );
-      } else {
-        taskNameStatus = formatPass(
-            `Task Name: ${appContext.getFromTask('taskName')}`,
-        );
-      } */
-      taskNameStatus = formatPass(
-          `Task Name: ${appContext.getFromTask('taskName')}`,
-      );
-    } else {
-      taskNameStatus = formatError('Task Name is not specified');
-    }
-    result.push(<div key='taskNameStatus'>{taskNameStatus}</div>);
+  const validateRecordingDetails = () => {
+    const result = [requireField('taskName', 'Task Name')];
 
     if (appContext.getFromTask('LORIScompliant')) {
-      // siteID
-      let siteIDStatus;
-      if (appContext.getFromTask('siteID')) {
-        siteIDStatus = formatPass(
-            `Site: ${appContext.getFromTask('siteID')}`,
-        );
-      } else {
-        siteIDStatus = formatError('Site is not specified');
-      }
-      result.push(<div key='siteIDStatus'>{siteIDStatus}</div>);
-
-      // projectID
-      let projectIDStatus;
-      if (appContext.getFromTask('projectID')) {
-        projectIDStatus = formatPass(
-            `Project: ${appContext.getFromTask('projectID')}`,
-        );
-      } else {
-        projectIDStatus = formatError('Project is not specified');
-      }
-      result.push(<div key='projectIDStatus'>{projectIDStatus}</div>);
-
-      // subprojectID
-      let subprojectIDStatus;
-      if (appContext.getFromTask('subprojectID')) {
-        subprojectIDStatus = formatPass(
-            `Subproject: ${appContext.getFromTask('subprojectID')}`,
-        );
-      } else {
-        subprojectIDStatus = formatError('Subproject is not specified');
-      }
-      result.push(<div key='subprojectIDStatus'>{subprojectIDStatus}</div>);
+      result.push(
+          requireField('siteID', 'Site'),
+          requireField('projectID', 'Project'),
+          requireField('subprojectID', 'Subproject'),
+      );
     }
 
     // session
     let sessionStatus;
     if (appContext.getFromTask('session')) {
-      if (
-        appContext.getFromTask('session').indexOf(' ') >= 0 ||
-        appContext.getFromTask('session').indexOf('-') >= 0
-      ) {
+      if (/[ -]/.test(appContext.getFromTask('session'))) {
         sessionStatus = formatError('Session is containing a dash/space.');
       } else {
         sessionStatus = formatPass(
@@ -625,16 +525,7 @@ const Configuration = (props) => {
     }
     result.push(<div key='lineFreqStatus'>{lineFreqStatus}</div>);
 
-    // reference
-    let referenceStatus;
-    if (appContext.getFromTask('reference')) {
-      referenceStatus = formatPass(
-          `Reference: ${appContext.getFromTask('reference')}`,
-      );
-    } else {
-      referenceStatus = formatError('Reference is not specified');
-    }
-    result.push(<div key='referenceStatus'>{referenceStatus}</div>);
+    result.push(requireField('reference', 'Reference'));
 
     return result;
   };
@@ -696,116 +587,35 @@ const Configuration = (props) => {
             'Participant ID is not specified',
         );
       }
-      // participantCandID
-      // let participantCandID;
-      // if (state.participantCandID.get) {
-      //   participantCandID = formatPass(
-      //       `DSCID: ${state.participantCandID.get}`,
-      //   );
-      // } else {
-      //   participantCandID = formatError(
-      //       'DSCID is unknown',
-      //   );
-      // }
-      result.push(
-          <div key='participantID'>{participantIDStatus}</div>,
-          // <div key='participantCandID'>{participantCandID}</div>,
-      );
+      result.push(<div key='participantID'>{participantIDStatus}</div>);
     }
 
     return result;
   };
 
   const validate = () => {
-    /*if (socketContext) {
-      if (state.session.get && state.siteID.get &&
-          state.projectID.get && state.subprojectID.get &&
-          state.recordingData.get?.date && state.participantDOB.get &&
-          state.participantSex.get
-      ) {
-        const visitDate = state.recordingData.get['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    //    const dob = state.participantDOB.get
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    console.info('start request for new candidate');
-        socketContext.emit('create_candidate_and_visit', {
-          project: state.projectID.get,
-          dob: dob,
-          sex: state.participantSex.get,
-          site: state.siteID.get,
-          subproject: state.subprojectID.get,
-          visit: state.session.get,
-          date: visitDate,
-        });
-      }
-
-      if (state.participantCandID.get && state.session.get &&
-          state.siteID.get && state.projectID.get &&
-          state.subprojectID.get && state.recordingData.get?.date
-      ) {
-        console.info('start request to create the visit');
-        const visitDate = state.recordingData.get['date'] */
-    //        .toISOString().replace(/T.*/, '');
-
-    /*    socketContext.emit('create_visit', {
-          candID: state.participantCandID.get,
-          project: state.projectID.get,
-          site: state.siteID.get,
-          subproject: state.subprojectID.get,
-          visit: state.session.get,
-          date: visitDate,
-        });
-    } */
-
     if (state.recordingData.get?.files?.length > 0) {
       const eventFiles = [...state.eventFiles.get];
-      const eegRuns = [];
 
-      state.recordingData.get?.files.map(
-          (recordingFile) => {
-            const eegRun = new EEGRun();
-            eegRun.recordingFile = recordingFile['path'];
+      const eegRuns = state.recordingData.get.files.map((recordingFile) => {
+        const eegRun = new EEGRun();
+        eegRun.recordingFile = recordingFile['path'];
 
-            const recordingFileName = recordingFile['name'].toLowerCase()
-                .replace(/_i?eeg\.(edf|set)/i, '').replace(/\.(edf|set)/i, '');
+        const eventFileIndex = eventFiles.findIndex(
+            (eventFile) => eventMatchesRecording(eventFile, recordingFile),
+        );
+        if (eventFileIndex > -1) {
+          eegRun.eventFile = eventFiles[eventFileIndex]['path'];
+          eventFiles.splice(eventFileIndex, 1);
+        }
 
-            const recordingFileNameAlt = recordingFile['name'].toLowerCase()
-                .replace(/\.(edf|set)/i, '');
-
-            // Check if we do have a matching event file
-            const eventFileIndex = eventFiles.findIndex((eventFile) => {
-              const eventFileName = eventFile['name'].toLowerCase()
-                  .replace('_events.tsv', '').replace('.tsv', '');
-              return (
-                recordingFileName === eventFileName ||
-                recordingFileNameAlt === eventFileName
-              );
-            });
-
-            if (eventFileIndex > -1) {
-              eegRun.eventFile = eventFiles[eventFileIndex]['path'];
-              eventFiles.splice(eventFileIndex, 1);
-            }
-
-            eegRuns.push(eegRun);
-          },
-      );
-
-      eegRuns.eventErrors = [];
-      eventFiles.map((eventFile) => {
-        eegRuns.eventErrors.push(`Event file ${eventFile['name']}
-          is not matching any recording file names.`);
+        return eegRun;
       });
 
       state.eegRuns.set(eegRuns);
     }
   };
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
   useEffect(() => {
     if (!state.participantCandID.get || !state.session.get ||
       !state.siteID.get || !state.projectID.get ||
@@ -865,40 +675,14 @@ const Configuration = (props) => {
 
   useEffect(() => {
     if (socketContext) {
-      socketContext.on('loris_sites', (sites) => {
-        if (!sites) return;
-        const siteOpts = [];
-        sites.map((site) => {
-          siteOpts.push(site.Name);
-        });
-        state.siteOptions.set(siteOpts);
-      });
-
-      socketContext.on('loris_projects', (projects) => {
-        const projectOpts = [];
-        Object.keys(projects).map((project) => {
-          projectOpts.push(project);
-        });
-        state.projectOptions.set(projectOpts);
-      });
-
-      socketContext.on('loris_subprojects', (subprojects) => {
-        const subprojectOpts = [];
-        subprojects?.map((subproject) => {
-          subprojectOpts.push(subproject);
-        });
-        state.subprojectOptions.set(subprojectOpts);
-      });
-
-      socketContext.on('loris_visits', (visits) => {
-        const visitOpts = [];
-        if (visits && visits?.length > 0) {
-          visits.map((visit) => {
-            visitOpts.push(visit);
-          });
-        }
-        state.sessionOptions.set(visitOpts);
-      });
+      socketContext.on('loris_sites', (sites) =>
+        sites && state.siteOptions.set(sites.map((site) => site.Name)));
+      socketContext.on('loris_projects', (projects) =>
+        state.projectOptions.set(Object.keys(projects)));
+      socketContext.on('loris_subprojects', (subprojects) =>
+        state.subprojectOptions.set(subprojects ?? []));
+      socketContext.on('loris_visits', (visits) =>
+        state.sessionOptions.set(visits ?? []));
 
       socketContext.on('recording_data', (message) => {
         if (message['error']) {
@@ -944,24 +728,8 @@ const Configuration = (props) => {
         }
       });
 
-      socketContext.on('new_candidate_created', (data) => {
-        console.info('candidate created !!!');
-
-        state.participantID.set(data['PSCID']);
-        state.participantCandID.set(data['CandID']);
-        appContext.setTask('participantID', data['PSCID']);
-        appContext.setTask('participantCandID', data['CandID']);
-      });
-
       socketContext.on('loris_login_response', (data) => {
-        // todo from alizee - this code should not,
-        //  isAuthenticated should be passed back from authentication component
-        if (data.error) {
-          // todo display error message - login failure
-        } else {
-          setIsAuthenticated(true);
-          //state.participantEntryMode.set('new_loris');
-        }
+        if (!data.error) setIsAuthenticated(true);
       });
     }
   }, [socketContext]);
@@ -1006,6 +774,24 @@ const Configuration = (props) => {
       value = value.trim();
     }
 
+    const combo = name.match(
+        /^(siteID|projectID|subprojectID|session)_(API|Manual)$/,
+    );
+    if (combo) {
+      const [, field, source] = combo;
+      if (source === 'API') {
+        const useAPI = value !== 'Enter manually';
+        if (!useAPI) value = '';
+        state[field.replace(/ID$/, '') + 'UseAPI'].set(useAPI);
+        const next = {
+          projectID: 'get_loris_subprojects',
+          subprojectID: 'get_loris_visits',
+        }[field];
+        if (useAPI && next) socketContext.emit(next, value);
+      }
+      name = field;
+    }
+
     // Update the state of Configuration.
     switch (name) {
       case 'LORIScompliant':
@@ -1024,64 +810,6 @@ const Configuration = (props) => {
         });
         state.subjectID.set(value);
         appContext.setTask(name, value);
-        break;
-      case 'siteID_API':
-        if (value === 'Enter manually') {
-          value = '';
-          state.siteUseAPI.set(false);
-        } else {
-          state.siteUseAPI.set(true);
-        }
-        state.siteID.set(value);
-        name = 'siteID';
-        break;
-      case 'siteID_Manual':
-        state.siteID.set(value);
-        name = 'siteID';
-        break;
-      case 'projectID_API':
-        if (value === 'Enter manually') {
-          state.projectUseAPI.set(false);
-          value = '';
-        } else {
-          state.projectUseAPI.set(true);
-          socketContext.emit('get_loris_subprojects', value);
-        }
-        state.projectID.set(value);
-        name = 'projectID';
-        break;
-      case 'projectID_Manual':
-        state.projectID.set(value);
-        name = 'projectID';
-        break;
-      case 'subprojectID_API':
-        if (value === 'Enter manually') {
-          state.subprojectUseAPI.set(false);
-          value = '';
-        } else {
-          state.subprojectUseAPI.set(true);
-          socketContext.emit('get_loris_visits', value);
-        }
-        state.subprojectID.set(value);
-        name = 'subprojectID';
-        break;
-      case 'subprojectID_Manual':
-        state.subprojectID.set(value);
-        name = 'subprojectID';
-        break;
-      case 'session_API':
-        if (value === 'Enter manually') {
-          state.sessionUseAPI.set(false);
-          value = '';
-        } else {
-          state.sessionUseAPI.set(true);
-        }
-        state.session.set(value);
-        name = 'session';
-        break;
-      case 'session_Manual':
-        state.session.set(value);
-        name = 'session';
         break;
       case 'anonymize':
         if (value) {
@@ -1106,50 +834,6 @@ const Configuration = (props) => {
       // Update the 'task' of app context.
       appContext.setTask(name, value);
     }
-  };
-
-  /**
-   * Get age at visit
-   *
-   * @param {Date} birthDate
-   * @param {Date} visitDate
-   *
-   * @return {Number|void}
-   */
-  const getAge = (birthDate, visitDate) => {
-    if (!birthDate || !visitDate) return;
-
-    let age = visitDate.getFullYear() - birthDate.getFullYear();
-    const m = visitDate.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && visitDate.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  /**
-   * arrayToObject - Convert an array to an object
-   * { value: value }
-   *
-   * @param {array} array
-   *
-   * @return {Object}
-   */
-  const arrayToObject = (array) => {
-    return array.reduce((obj, item) => {
-      return {
-        ...obj,
-        [item]: item,
-      };
-    }, {});
-  };
-
-  /**
-   * hideAuthCredentials - display AuthCredentials.
-   * @param {boolean} hidden
-   */
-  const hideAuthCredentials = (hidden) => {
-    setAuthCredentialsVisible(!hidden);
   };
 
   if (props.appMode === 'Configuration') {
@@ -1314,100 +998,45 @@ const Configuration = (props) => {
                 See BIDS specification for more information.'
               />
             </div>
-            {state.LORIScompliant.get &&
-              <>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#siteID_API'>
-                    <b>
-                      Site <span className="red">*</span>
-                      <i className='fas fa-question-circle'
-                        data-tooltip-content='Study Centre'
-                      />
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    <SelectInput id='siteID_API'
-                      name='siteID_API'
+            {state.LORIScompliant.get && [
+              ['siteID', 'Site', 'Study Centre',
+                state.siteOptions.get, state.siteUseAPI.get],
+              ['projectID', 'Project', 'Study',
+                state.projectOptions.get, state.projectUseAPI.get],
+              ['subprojectID', 'Subproject', 'Subproject or population cohort',
+                state.subprojectOptions.get, state.subprojectUseAPI.get],
+            ].map(([field, label, tooltip, options, useAPI]) =>
+              <div className='small-pad' key={field}>
+                <label className="label" htmlFor={`#${field}_API`}>
+                  <b>
+                    {label} <span className="red">*</span>
+                    <i className='fas fa-question-circle'
+                      data-tooltip-content={tooltip}
+                    />
+                  </b>
+                </label>
+                <div className='comboField'>
+                  <SelectInput id={`${field}_API`}
+                    name={`${field}_API`}
+                    label=''
+                    required={true}
+                    value={state[field].get}
+                    emptyOption='Enter manually'
+                    options={arrayToObject(options)}
+                    onUserInput={onUserInput}
+                  />
+                  {!useAPI &&
+                    <TextInput id={`${field}_Manual`}
+                      name={`${field}_Manual`}
                       label=''
-                      required={true}
-                      value={state.siteID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.siteOptions.get)}
+                      placeholder='n/a'
+                      value={state[field].get}
                       onUserInput={onUserInput}
                     />
-                    {!state.siteUseAPI.get &&
-                      <TextInput id='siteID_Manual'
-                        name='siteID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        value={state.siteID.get}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
+                  }
                 </div>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#projectID_API'>
-                    <b>
-                      Project <span className="red">*</span>
-                      <i className='fas fa-question-circle'
-                        data-tooltip-content='Study'
-                      />
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    <SelectInput id='projectID_API'
-                      name='projectID_API'
-                      label=''
-                      required={true}
-                      value={state.projectID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.projectOptions.get)}
-                      onUserInput={onUserInput}
-                    />
-                    {!state.projectUseAPI.get &&
-                      <TextInput id='projectID_Manual'
-                        name='projectID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        value={state.projectID.get}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
-                </div>
-                <div className='small-pad'>
-                  <label className="label" htmlFor='#subprojectID_API'>
-                    <b>
-                      Subproject <span className="red">*</span>
-                      <i className="fas fa-question-circle"
-                        data-tooltip-content="Subproject or population cohort"
-                      />
-                    </b>
-                  </label>
-                  <div className='comboField'>
-                    <SelectInput id='subprojectID_API'
-                      name='subprojectID_API'
-                      label=''
-                      required={true}
-                      value={state.subprojectID.get}
-                      emptyOption='Enter manually'
-                      options={arrayToObject(state.subprojectOptions.get)}
-                      onUserInput={onUserInput}
-                    />
-                    {!state.subprojectUseAPI.get &&
-                      <TextInput id='subprojectID_Manual'
-                        name='subprojectID_Manual'
-                        label=''
-                        placeholder='n/a'
-                        value={state.subprojectID.get}
-                        onUserInput={onUserInput}
-                      />
-                    }
-                  </div>
-                </div>
-              </>
-            }
+              </div>,
+            )}
             <div className='small-pad'>
               <label className="label" htmlFor='#session_API'>
                 <b>
@@ -1502,7 +1131,6 @@ const Configuration = (props) => {
                 options={isAuthenticated === true ?
                   {
                     manual: 'Manual',
-                    //new_loris: '(beta) Create a LORIS candidate',
                     existing_loris: 'Use an existing LORIS candidate',
                   } :
                   {
@@ -1514,53 +1142,6 @@ const Configuration = (props) => {
                 or by lookup in LORIS'
               />
             </div>
-          }
-          {state.participantEntryMode.get === 'new_loris' &&
-            <>
-              <div className='small-pad'>
-                <label className="label" htmlFor={props.id}>
-                  <b>Date of Birth <span className="red">*</span></b>
-                </label>
-                <DatePicker id='participantDOB'
-                  name='participantDOB'
-                  required={true}
-                  selected={state.participantDOB.get}
-                  dateFormat="yyyy-MM-dd"
-                  onChange={(date) => onUserInput('participantDOB', date)}
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantSex'
-                  name='participantSex'
-                  label='Biological Sex'
-                  required={true}
-                  value={state.participantSex.get}
-                  emptyOption='n/a'
-                  options={{
-                    'female': 'Female',
-                    'male': 'Male',
-                    'other': 'Other',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
-            </>
           }
           {state.participantEntryMode.get === 'existing_loris' &&
             <>
@@ -1580,21 +1161,6 @@ const Configuration = (props) => {
                   required={true}
                   value={state.participantCandID.get}
                   onUserInput={onUserInput}
-                />
-              </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
                 />
               </div>
             </>
@@ -1640,23 +1206,19 @@ const Configuration = (props) => {
                   help='Required; see BIDS specification for more information'
                 />
               </div>
-              <div className='small-pad'>
-                <SelectInput id='participantHand'
-                  name='participantHand'
-                  label='Handedness'
-                  value={state.participantHand.get}
-                  emptyOption='n/a'
-                  options={{
-                    'R': 'Right',
-                    'L': 'Left',
-                    'A': 'Ambidextrous',
-                  }}
-                  onUserInput={onUserInput}
-                  help='Required; see BIDS specification for more information'
-                />
-              </div>
             </>
           }
+          <div className='small-pad'>
+            <SelectInput id='participantHand'
+              name='participantHand'
+              label='Handedness'
+              value={state.participantHand.get}
+              emptyOption='n/a'
+              options={{R: 'Right', L: 'Left', A: 'Ambidextrous'}}
+              onUserInput={onUserInput}
+              help='Required; see BIDS specification for more information'
+            />
+          </div>
         </div>
         <span className='header'>
           Recording Details
@@ -1721,17 +1283,8 @@ const Configuration = (props) => {
                 label='Recording Date'
                 readonly={true}
                 value={state.recordingData.get?.['date'] ?
-                    new Intl.DateTimeFormat(
-                        'en-US',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: 'numeric',
-                        },
-                    ).format(state.recordingData.get['date']) :
-                    ''
+                  recordingDateFormat.format(state.recordingData.get['date']) :
+                  ''
                 }
               />
             </div>
@@ -1740,7 +1293,7 @@ const Configuration = (props) => {
         <AuthenticationCredentials
           title='Login to LORIS'
           show={authCredentialsVisible}
-          close={hideAuthCredentials}
+          close={() => setAuthCredentialsVisible(false)}
           width='500px'
         />
         <Tooltip anchorSelect='[data-tooltip-content]'/>
@@ -1788,16 +1341,9 @@ const Configuration = (props) => {
             {appContext.getFromTask('recordingData')?.['date'] &&
               <div>
                 Recording Date:&nbsp;
-                {new Intl.DateTimeFormat(
-                    'en-US',
-                    {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    },
-                ).format(appContext.getFromTask('recordingData')['date'])}
+                {recordingDateFormat.format(
+                    appContext.getFromTask('recordingData')['date'],
+                )}
               </div>
             }
           </div>
@@ -1838,16 +1384,21 @@ const Configuration = (props) => {
               value='Convert to BIDS'
               disabled={error}
             />
-            {successMessage}
+            {outputTime &&
+              <a className='task-finished'>
+                Last created at: {outputTime.replace('output-', '')
+                    .replace(/-(?=[^-]*$)/, ' ')}
+              </a>
+            }
           </div>
         </div>
         <Modal
-          title={modalText.title[modalText.mode]}
+          title={MODAL_TITLES[modal.mode]}
           show={modalVisible}
-          close={hideModal}
+          close={() => setModalVisible(false)}
           width='500px'
         >
-          {modalText.message[modalText.mode]}
+          {modal.mode === 'error' ? modal.error : MODAL_MESSAGES[modal.mode]}
         </Modal>
         <Tooltip anchorSelect='[data-tooltip-content]'/>
       </>
@@ -1855,10 +1406,6 @@ const Configuration = (props) => {
   } else {
     return null;
   }
-};
-
-Configuration.propTypes = {
-  visible: PropTypes.bool,
 };
 
 export default Configuration;

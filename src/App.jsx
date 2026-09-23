@@ -1,24 +1,23 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {AppContext} from './context';
 import './css/App.css';
 
 // Socket.io
 import {Socket} from './jsx/socket.io';
 // The backend port is configurable (see electron/main/backend-service.js); the
-// preload bridge exposes the value the main process chose. Fall back to 7301
-// when the bridge is unavailable (e.g. renderer opened outside Electron).
-const backendPort = window.eeg2bids?.getBackendPort?.() ?? 7301;
+// preload bridge exposes the value the main process chose.
+const backendPort = window.eeg2bids.getBackendPort();
 const uri = `http://127.0.0.1:${backendPort}`;
 const options = {
   // Prefer websocket, but allow long-polling as a fallback: the backend
   // serves both, and polling keeps the app usable if the websocket
   // transport is unavailable.
   transports: ['websocket', 'polling'],
+  reconnectionDelayMax: 10000,
 };
 
 // Main components
 import Menu from './jsx/elements/menu';
-import Help from './jsx/elements/help';
 import BackendStatus from './jsx/elements/backendStatus';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
@@ -29,11 +28,17 @@ import Validator from './jsx/Validator';
  * App - the main window.
  * @return {JSX.Element}
  */
+const TABS = [
+  ['1) Getting started', 'Welcome'],
+  ['2) Configuration', 'Configuration'],
+  ['3) Recording to BIDS', 'Converter'],
+  ['4) Validate and package', 'Validator'],
+];
+
 const App = () => {
   // React State
   const [appMode, setAppMode] = useState('SplashScreen');
-  const [activeMenuTab, setActiveMenuTab] = useState(0);
-  const [task, setTask] = useState({});
+  const task = useRef({});
 
   /**
    * Similar to componentDidMount and componentDidUpdate.
@@ -52,16 +57,10 @@ const App = () => {
   return (
     <Socket uri={uri} options={options}>
       <AppContext.Provider value={{
-        setAppMode: (appMode) => {
-          setAppMode(appMode);
-        },
         setTask: (key, value) => {
-          task[key] = value;
-          setTask(task);
+          task.current[key] = value;
         },
-        getFromTask: (key) => {
-          return task[key] ?? '';
-        },
+        getFromTask: (key) => task.current[key] ?? '',
       }}>
         <>
           {/* Stable readiness anchor for integration tests: always present,
@@ -72,43 +71,12 @@ const App = () => {
             style={{display: 'contents'}}
           />
           <BackendStatus/>
-          {/*<Help visible={appMode !== 'SplashScreen'} activeMode={appMode}/>*/}
           <Menu visible={appMode !== 'SplashScreen'}
-            tabs={[
-              {
-                title: '1) Getting started',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(0);
-                  setAppMode('Welcome');
-                },
-              },
-              {
-                title: '2) Configuration',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(1);
-                  setAppMode('Configuration');
-                },
-              },
-              {
-                title: '3) Recording to BIDS',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(2);
-                  setAppMode('Converter');
-                },
-              },
-              {
-                title: '4) Validate and package',
-                onClick: (e) => {
-                  e.preventDefault();
-                  setActiveMenuTab(3);
-                  setAppMode('Validator');
-                },
-              },
-            ]}
-            activeTab={activeMenuTab}
+            tabs={TABS.map(([title, mode]) => ({
+              title,
+              onClick: () => setAppMode(mode),
+            }))}
+            activeTab={TABS.findIndex(([, mode]) => mode === appMode)}
           />
           <SplashScreen visible={appMode === 'SplashScreen'}/>
           <Welcome visible={appMode === 'Welcome'}/>

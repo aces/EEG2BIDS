@@ -2,10 +2,9 @@ const {contextBridge, ipcRenderer, webUtils} = require('electron');
 
 // The main process passes the configured backend port through
 // additionalArguments as "--backend-port=NNNN"; fall back to 7301.
-const backendPortArg = process.argv.find((arg) =>
-  arg.startsWith('--backend-port='));
-const backendPort = backendPortArg ?
-  Number(backendPortArg.split('=')[1]) || 7301 : 7301;
+const backendPort = Number(process.argv
+    .find((arg) => arg.startsWith('--backend-port='))
+    ?.split('=')[1]) || 7301;
 
 // The only bridge between the renderer and the main process. Every
 // operation goes through a fixed IPC channel and passes plain serializable
@@ -23,7 +22,6 @@ contextBridge.exposeInMainWorld('eeg2bids', {
     ipcRenderer.invoke('credentials:set', credentials),
   removeLorisAuthenticationCredentials: () =>
     ipcRenderer.invoke('credentials:remove'),
-  openSettings: () => ipcRenderer.send('settings:open-window'),
   getBackendStatus: () => ipcRenderer.invoke('backend:get-status'),
   restartBackend: () => ipcRenderer.invoke('backend:restart'),
   onBackendStatusChange: (callback) => {

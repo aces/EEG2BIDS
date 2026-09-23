@@ -82,8 +82,6 @@ def test_malformed_events_drop_bad_rows_keep_good(make_convert_data,
     _, rows = _events(root)
     trial_types = {r["trial_type"] for r in rows}
     assert trial_types == {"GOOD_WIDE", "GOOD_NARROW"}
-    assert "BAD_TWO_COL" not in trial_types
-    assert "BAD_SIX_COL" not in trial_types
 
 
 # --- #184: all time-based markers are represented as BIDS events -----------
@@ -130,7 +128,7 @@ def test_additional_event_columns_are_documented(make_convert_data,
 
     for column in ("channel", "provenance"):
         assert column in metadata
-        assert isinstance(metadata[column].get("Description"), str)
+        assert isinstance(metadata[column]["Description"], str)
         assert metadata[column]["Description"]
 
 

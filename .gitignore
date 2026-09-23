@@ -1,12 +1,7 @@
 .DS_Store
-.eslintcache
 .idea/
-.spec
 .python-version
 node_modules/
-logs/*.log
-VERSION
-venv/
 .venv/
 __pycache__/
 .pytest_cache/
@@ -15,18 +10,9 @@ __pycache__/
 dev-data/
 build/
 dist/
-lib/
-lib64/
-bin/
-include/
 *.spec
 # ...except the authoritative, hand-maintained backend freeze spec (issue #170).
 !tools/eeg2bids-backend.spec
-pyvenv.cfg
-Scripts/
-Lib/
-Include/
-share/
 
 # generated dependency audit export (CI: pip-audit only; never authoritative)
 requirements-audit.txt

@@ -58,8 +58,6 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=[],
-    hooksconfig={},
     runtime_hooks=[
         # Restore raw._init_kwargs under freeze so MNE-BIDS can copy a
         # lazily-read source (e.g. EDF) as-is. See the hook's docstring and #170.
@@ -72,7 +70,6 @@ a = Analysis(
         'pytest',
         '_pytest',
     ],
-    noarchive=False,
     optimize=0,
 )
 pyz = PYZ(a.pure)
@@ -83,27 +80,17 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='eeg2bids-backend',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
     # UPX is disabled deliberately: it is non-deterministic, provides little
     # benefit for a local desktop tool, and UPX-compressed binaries are a
     # frequent source of antivirus false positives on the Windows target (#188).
     upx=False,
     # The backend is a console service; Electron captures its stdout/stderr.
     console=True,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
 )
 coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
-    strip=False,
     upx=False,
-    upx_exclude=[],
     name='eeg2bids-backend',
 )

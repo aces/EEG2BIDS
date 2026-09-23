@@ -1,39 +1,19 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import '../css/SplashScreen.css';
 
 /**
  * SplashScreen - the splash screen animation.
  * @param {object} props
+ * @param {boolean} props.visible
  * @return {JSX.Element} - Loader React component
  */
-const SplashScreen = (props) => {
-  const loaderDimensions = {
-    width: parseInt(props.size),
-    height: parseInt(props.size),
-  };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
-  return props.visible ? (
-    <>
-      <p className='loader-font'>
-        EEG2BIDS Wizard is loading ...
-      </p>
-      <span
-        className='loader centered'
-        style={loaderDimensions}
-      />
-    </>
-  ) : null;
-};
-SplashScreen.propTypes = {
-  size: PropTypes.string,
-  visible: PropTypes.bool,
-};
-SplashScreen.defaultProps = {
-  size: '60',
-};
+const SplashScreen = ({visible}) => visible ? (
+  <>
+    <p className='loader-font'>
+      EEG2BIDS Wizard is loading ...
+    </p>
+    <span className='loader centered'/>
+  </>
+) : null;
 
 export default SplashScreen;

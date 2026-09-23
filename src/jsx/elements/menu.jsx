@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import '../../css/Menu.css';
 
 /**
@@ -24,13 +23,6 @@ const MenuTab = (props) => {
     </div>
   );
 };
-MenuTab.propTypes = {
-  id: PropTypes.string,
-  title: PropTypes.string,
-  onClick: PropTypes.func,
-  active: PropTypes.bool,
-};
-
 /**
  * Menu - the menu component.
  * @param {object} props
@@ -47,25 +39,13 @@ const Menu = (props) => {
         { props.tabs.map((tab, index) => (
           <MenuTab
             key={index}
-            index={index}
-            length={props.tabs.length}
             title={tab.title}
             onClick={tab.onClick}
             active={index === props.activeTab}
-            activeIndex={props.activeTab}
           />
         ))}
       </div>
     </div>
   ) : null;
 };
-Menu.defaultProps = {
-  activeTab: 0,
-};
-Menu.propTypes = {
-  visible: PropTypes.bool,
-  tabs: PropTypes.array,
-  activeTab: PropTypes.number,
-};
-
 export default Menu;

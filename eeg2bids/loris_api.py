@@ -1,6 +1,7 @@
 import json
+from urllib.parse import quote
+
 import requests
-import urllib
 
 
 class LorisAPI:
@@ -8,6 +9,12 @@ class LorisAPI:
     username = ''
     password = ''
     token = ''
+
+    def _request(self, method, path, **kwargs):
+        return requests.request(
+            method, self.url + path,
+            headers={'Authorization': f'Bearer {self.token}', 'LORIS-Overwrite': 'overwrite'},
+            verify=False, **kwargs)
 
     def login(self):
         # A LORIS instance is optional; an unreachable or slow URL must not
@@ -29,118 +36,36 @@ class LorisAPI:
 
         # Never print the login response or token: this output is forwarded
         # into the development logs by the Electron main process.
-        login_succeeded = {}
         if resp.status_code == 405:
-            login_succeeded = {'error': 'User credentials error!'}
             print('User credentials error!')
-        else:
-            try:
-                resp_json = json.loads(resp.content.decode('ascii'))
-            except (ValueError, UnicodeDecodeError):
-                return {'error': 'Unexpected response from the LORIS server.'}
-            if resp_json.get('error'):
-                login_succeeded = {'error': resp_json.get('error')}
-            else:
-                self.token = resp_json.get('token')
-        return login_succeeded
+            return {'error': 'User credentials error!'}
+        try:
+            resp_json = resp.json()
+        except ValueError:
+            return {'error': 'Unexpected response from the LORIS server.'}
+        if resp_json.get('error'):
+            return {'error': resp_json['error']}
+        self.token = resp_json.get('token')
+        return {}
 
     def get_projects(self):
-        print('get_projects has ran')
-        resp = requests.get(
-            url=self.url + 'projects',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-
-        json_resp = json.loads(resp.content.decode('ascii'))
-        return json_resp.get('Projects')
-
-    def get_all_subprojects(self):
-        print('get_all_subprojects has ran')
-        resp = requests.get(
-            url=self.url + 'subprojects',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-        print('getting subprojects')
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        return json_resp.get('Subprojects')
+        return self._request('GET', 'projects').json().get('Projects')
 
     def get_subprojects(self, project):
-        print('get_subprojects has ran')
-        project = self.get_project(project)
-        print(project)
-        return project.get('Subprojects')
+        return self.get_project(project).get('Subprojects')
 
     def get_visits(self, subproject):
-        print('get_visits has ran')
-        print('get_visits look here:')
-        resp = requests.get(
-            url=self.url + 'subprojects/' + urllib.parse.quote(subproject),
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        print(json_resp)
-        return json_resp.get('Visits')
+        return self._request('GET', 'subprojects/' + quote(subproject)).json().get('Visits')
 
     def get_sites(self):
-        print('get_sites has ran')
-        resp = requests.get(
-            url=self.url + 'sites',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-
-        print(resp)
-
-        json_resp = json.loads(resp.content.decode('ascii'))
-        print (json_resp)
-        sites = json_resp.get('Sites')
-        return sites
+        return self._request('GET', 'sites').json().get('Sites')
 
     def get_project(self, project):
-        print('get_project has ran')
-        resp = requests.get(
-            url=self.url + 'projects/' + urllib.parse.quote(project),
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        return json_resp
-
-    def get_visit(self, candid, visit, site, subproject, project):
-        print('get_visit has ran')
-        resp = requests.get(
-            url=self.url + '/candidates/' + str(candid) + '/' + urllib.parse.quote(visit),
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            data=json.dumps({
-                "Meta": {
-                    "CandID": candid,
-                    "Visit": visit,
-                    "Site": site,
-                    "Battery": subproject,
-                    "Project": project
-                }
-            }),
-            verify=False
-        )
-
-        print(visit)
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        return json_resp
+        return self._request('GET', 'projects/' + quote(project)).json()
 
     def start_next_stage(self, candid, visit, site, subproject, project, date):
-        print('start_next_stage has ran')
-        resp = requests.patch(
-            url=self.url + '/candidates/' + str(candid) + '/' + urllib.parse.quote(visit),
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+        self._request(
+            'PATCH', '/candidates/' + str(candid) + '/' + quote(visit),
             data=json.dumps({
                 "CandID": candid,
                 "Visit": visit,
@@ -153,19 +78,12 @@ class LorisAPI:
                         "Status": "In Progress",
                     }
                 }
-            }),
-            verify=False
+            })
         )
-        print('resp.status_code:')
-        print(resp.status_code)
-        print('resp.text:')
-        print(resp.text)
 
     def create_candidate(self, project, dob, sex, site):
-        print('create_candidate has ran')
-        resp = requests.post(
-            url=self.url + '/candidates/',
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+        return self._request(
+            'POST', '/candidates/',
             data=json.dumps({
                 "Candidate": {
                     "Project": project,
@@ -173,45 +91,23 @@ class LorisAPI:
                     "Sex": sex,
                     "Site": site,
                 }
-            }),
-            verify=False
-        )
-
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        print(json_resp)
-        return json_resp
+            })
+        ).json()
 
     def create_visit(self, candid, visit, site, project, subproject):
-        print('create_visit has ran')
-        resp = requests.put(
-            url=self.url + '/candidates/' + candid + '/' + visit,
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
+        self._request(
+            'PUT', '/candidates/' + candid + '/' + visit,
             data=json.dumps({
                 "CandID": candid,
                 "Visit": visit,
                 "Site": site,
                 "Battery": subproject,
                 "Project": project
-            }),
-            verify=False
+            })
         )
-        print('resp:')
-        print(resp)
-        # json_resp = json.loads(resp.content.decode('ascii'))
-        # print(json_resp)
 
     def get_candidate(self, candid):
-        print('get_candidate has ran')
-        resp = requests.get(
-            url=self.url + '/candidates/' + candid,
-            headers={'Authorization': 'Bearer %s' % self.token, 'LORIS-Overwrite': 'overwrite'},
-            verify=False
-        )
-
-        print(resp)
-        json_resp = json.loads(resp.content.decode('ascii'))
-        print(json_resp)
+        json_resp = self._request('GET', '/candidates/' + candid).json()
 
         # validate candid
         if json_resp.get('error'):

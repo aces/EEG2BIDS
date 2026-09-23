@@ -2,6 +2,8 @@ const {BrowserWindow, app} = require('electron');
 const {spawn} = require('child_process');
 const net = require('net');
 const path = require('path');
+const readline = require('readline');
+const {setTimeout: delay} = require('timers/promises');
 
 // Ownership of the Python Socket.IO backend. Electron spawns it through
 // uv, captures its output, reports availability to the renderer, and kills
@@ -28,13 +30,6 @@ let stopping = false;
 let timedOut = false;
 let stderrTail = [];
 let status = {state: 'stopped', error: null};
-
-/**
- * Resolve after the given delay.
- * @param {number} ms - milliseconds to wait
- * @return {Promise<void>} resolves when the timer fires
- */
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * How to launch the backend, which differs between a source checkout and an
@@ -113,18 +108,15 @@ const isPortInUse = () => new Promise((resolve) => {
  * @param {string} name - 'stdout' or 'stderr'
  */
 const logOutput = (stream, name) => {
-  stream.setEncoding('utf8');
-  stream.on('data', (chunk) => {
-    for (const line of chunk.split('\n')) {
-      if (!line.trim()) {
-        continue;
-      }
-      console.info(`[backend ${name}] ${line}`);
-      if (name === 'stderr') {
-        stderrTail.push(line);
-        if (stderrTail.length > STDERR_TAIL_LINES) {
-          stderrTail.shift();
-        }
+  readline.createInterface({input: stream}).on('line', (line) => {
+    if (!line.trim()) {
+      return;
+    }
+    console.info(`[backend ${name}] ${line}`);
+    if (name === 'stderr') {
+      stderrTail.push(line);
+      if (stderrTail.length > STDERR_TAIL_LINES) {
+        stderrTail.shift();
       }
     }
   });

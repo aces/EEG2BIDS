@@ -84,7 +84,6 @@ const set = async (values) => {
     lorisUsername: values.lorisUsername,
     lorisPassword: values.lorisPassword,
   }));
-  fs.mkdirSync(path.dirname(credentialsFile()), {recursive: true});
   fs.writeFileSync(credentialsFile(), encrypted, {mode: 0o600});
   settings.set('lorisURL', values.lorisURL);
 };

@@ -15,28 +15,6 @@
     padding-right: 10px;
     color: red;
 }
-.tooltip {
-    cursor: default;
-    position: relative;
-}
-.tooltip .tooltiptext {
-    color: #fff;
-    width: 120px;
-    text-align: center;
-    visibility: hidden;
-    border-radius: 6px;
-    background-color: black;
-}
-.tooltip:hover .tooltiptext {
-    padding: 5px 0;
-    visibility: visible;
-    font-size: 10pt;
-    position: absolute;
-    z-index: 1;
-    top: -5px;
-    left: 105%;
-}
-
 .start_task {
     min-height: 30px;
 }
@@ -47,28 +25,4 @@
 .convert-bids-row {
     padding-top: 0;
     margin-top: 10px;
-}
-
-.bids-errors {
-    font-size: 12pt;
-}
-.bids-loading .bids-success {
-    font-size: 14pt;
-}
-@keyframes blink {
-    0% { opacity: .2; }
-    20% { opacity: 1; }
-    100% { opacity: .2; }
-}
-.bids-loading span {
-    animation-name: blink;
-    animation-duration: 1.4s;
-    animation-iteration-count: infinite;
-    animation-fill-mode: both;
-}
-.bids-loading span:nth-child(2) {
-    animation-delay: .2s;
-}
-.bids-loading span:nth-child(3) {
-    animation-delay: .4s;
 }

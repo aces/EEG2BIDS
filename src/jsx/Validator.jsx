@@ -1,6 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
-import PropTypes from 'prop-types';
 import '../css/Validator.css';
 
 // Display Loading, Success, Error
@@ -23,7 +22,6 @@ const Validator = (props) => {
 
   // React State
   const [validator, setValidator] = useState({});
-  const [validPath, setValidPaths] = useState(null);
   const [validationMode, setValidationMode] = useState('lastRun');
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,47 +49,26 @@ const Validator = (props) => {
   });
 
   /**
-   * hideModal - display Modal.
-   * @param {boolean} hidden
-   */
-  const hideModal = (hidden) => {
-    setModalVisible(!hidden);
-  };
-
-  /**
    * getBIDSDir - get BIDS directory.
    *
    * @return {string}
    */
   const getBIDSDir = () => {
-    if (validationMode == 'lastRun') {
-      if (!appContext.getFromTask('bidsDirectory') ||
-          !appContext.getFromTask('output_time')
-      ) {
-        console.error('No bidsDirectory or output_time.');
-        return null;
-      } else {
-        return [
-          appContext.getFromTask('bidsDirectory') ?? '',
-          appContext.getFromTask('output_time') ?? '',
-        ].filter(Boolean).join('/');
-      }
-    } else {
-      if (!bidsDirectory) {
-        console.error('No bidsDirectory.');
-        return null;
-      } else {
-        return bidsDirectory;
-      }
+    if (validationMode !== 'lastRun') {
+      if (!bidsDirectory) console.error('No bidsDirectory.');
+      return bidsDirectory || null;
     }
+    const dir = appContext.getFromTask('bidsDirectory');
+    const time = appContext.getFromTask('output_time');
+    if (!dir || !time) {
+      console.error('No bidsDirectory or output_time.');
+      return null;
+    }
+    return `${dir}/${time}`;
   };
 
   /**
-   * validateBIDS - get validated BIDS format.
-   *   Sent by socket to python: validate_bids.
-   */
-  /**
-   * showDisconnectedError - display the backend-disconnected error modal.
+   * requireBackend - display the backend-disconnected error modal.
    * @return {boolean} true when the backend is connected, false otherwise
    */
   const requireBackend = () => {
@@ -111,6 +88,10 @@ const Validator = (props) => {
     return false;
   };
 
+  /**
+   * validateBIDS - get validated BIDS format.
+   *   Sent by socket to python: validate_bids.
+   */
   const validateBIDS = () => {
     console.info('validateBIDS();');
 
@@ -143,37 +124,6 @@ const Validator = (props) => {
       socketContext.emit('tarfile_bids', bidsDirectory);
     }
   };
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect(() => {
-    const renderFields = [];
-    if (validator['file_paths']) {
-      validator['file_paths'].forEach((value, index) => {
-        if (validator['result'][index]) {
-          renderFields.push(
-              <div key={index} className='small-pad'>
-                <span className='green'>&#x2714;</span> {value}
-              </div>,
-          );
-        } else {
-          renderFields.push(
-              <div key={index} className='small-pad'>
-                <span className='red'>&#x274C;</span> {value}
-              </div>,
-          );
-        }
-      });
-    }
-    setValidPaths(
-        <>
-          <div className='terminal'>
-            {renderFields}
-          </div>
-        </>,
-    );
-  }, [validator]);
 
   useEffect(() => {
     setValidator({});
@@ -210,6 +160,10 @@ const Validator = (props) => {
       });
     }
   };
+
+  const noTarget = validationMode === 'lastRun' ?
+    !appContext.getFromTask('output_time') :
+    !bidsDirectory;
 
   return props.visible ? (
     <>
@@ -255,33 +209,29 @@ const Validator = (props) => {
             value='Validate BIDS'
             className='primary-btn'
             style={{marginRight: '10px'}}
-            disabled={
-              (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
-              ) ||
-              (validationMode == 'folder' && !bidsDirectory)
-            }
+            disabled={noTarget}
           />
           <input onClick={packageBIDS}
             type='button'
             value='Package BIDS'
             className='primary-btn'
-            disabled={
-              (
-                validationMode == 'lastRun' &&
-                !appContext.getFromTask('output_time')
-              ) ||
-              (validationMode == 'folder' && !bidsDirectory)
-            }
+            disabled={noTarget}
           />
         </div>
       </div>
-      {validPath}
+      <div className='terminal'>
+        {validator.file_paths?.map((path, i) => (
+          <div key={i} className='small-pad'>
+            {validator.result[i] ?
+              <span className='green'>&#x2714;</span> :
+              <span className='red'>&#x274C;</span>} {path}
+          </div>
+        ))}
+      </div>
       <Modal
         title={modalText.title[modalText.mode]}
         show={modalVisible}
-        close={hideModal}
+        close={() => setModalVisible(false)}
         width='500px'
       >
         {modalText.message[modalText.mode]}
@@ -290,8 +240,4 @@ const Validator = (props) => {
     </>
   ) : null;
 };
-Validator.propTypes = {
-  visible: PropTypes.bool,
-};
-
 export default Validator;

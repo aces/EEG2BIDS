@@ -2,12 +2,10 @@ import os
 import csv
 import json
 import re
-from eeg2bids.converter import metadata as metadata_fields
 
 class Modifier:
     def __init__(self, data):
         self.data = data
-        print(self.data)
 
         print('- Modifier: init started.')
 
@@ -25,39 +23,25 @@ class Modifier:
             self.data['output_time']
         )
 
-    def get_eeg_path(self, relative=False):
-        directory_path = 'sub-' + self.data['participantID']
-
-        if relative:
-            return os.path.join(
-                directory_path,
-                'ses-' + self.data['session'],
-                self.data['modality']
-            )
-
+    def get_eeg_path(self):
         return os.path.join(
             self.get_bids_root_path(),
-            directory_path,
+            'sub-' + self.data['participantID'],
             'ses-' + self.data['session'],
             self.data['modality']
         )
 
 
     def clean_dataset_files(self):
-        if len(self.data['recordingData']['files']) > 0:
-            # for multiple run recording, clean the duplicate _channels.tsv
-            channels_files = [f for f in os.listdir(self.get_eeg_path()) if f.endswith('_channels.tsv')]
-            for i in range(1, len(channels_files)):
-                filename = os.path.join(self.get_eeg_path(), channels_files[i])
-                os.remove(filename)
+        # for multiple run recording, clean the duplicate _channels.tsv
+        eeg_path = self.get_eeg_path()
+        channels_files = [f for f in os.listdir(eeg_path) if f.endswith('_channels.tsv')]
+        for name in channels_files[1:]:
+            os.remove(os.path.join(eeg_path, name))
 
-            # remove the run suffix in the file names
-            fileOrig = os.path.join(self.get_eeg_path(), channels_files[0])
-            fileDest = os.path.join(
-                self.get_eeg_path(),
-                re.sub(r"_run-[0-9]+", '', channels_files[0])
-            )
-            os.rename(fileOrig, fileDest)
+        # remove the run suffix in the file names
+        os.rename(os.path.join(eeg_path, channels_files[0]),
+                  os.path.join(eeg_path, re.sub(r"_run-[0-9]+", '', channels_files[0])))
 
         # remove the mne citations README
         filename = os.path.join(self.get_bids_root_path(), 'README')
@@ -87,12 +71,12 @@ class Modifier:
         try:
             with open(file_path, "r") as fp:
                 file_data = json.load(fp)
-                file_data['PreparedBy'] = self.data['preparedBy']
-                file_data['Eeg2bidsVersion'] = appVersion
-                file_data['Name'] = self.data['participantID'] + '_' + self.data['session']
+            file_data['PreparedBy'] = self.data['preparedBy']
+            file_data['Eeg2bidsVersion'] = appVersion
+            file_data['Name'] = self.data['participantID'] + '_' + self.data['session']
 
-                with open(file_path, "w") as fp:
-                    json.dump(file_data, fp, indent=4)
+            with open(file_path, "w") as fp:
+                json.dump(file_data, fp, indent=4)
 
         except IOError:
             print("Could not read or write dataset_description.json file")
@@ -117,26 +101,17 @@ class Modifier:
             participant_ids = [row['participant_id'] for row in reader]
 
         # participants.tsv data collected:
-        output = []
-        for participant_id in participant_ids:
-            output.append(
-                [
-                    participant_id,
-                    self.data['age'],
-                    self.data['sex'],
-                    self.data['hand'],
-                    self.data['site_id'],
-                    self.data['sub_project_id'],
-                    self.data['project_id']
-                ]
-            )
+        d = self.data
+        output = [
+            [pid, d['age'], d['sex'], d['hand'], d['site_id'], d['sub_project_id'], d['project_id']]
+            for pid in participant_ids
+        ]
 
         with open(file_path, mode='w', newline='') as tsv_file:
             headers = ['participant_id', 'age', 'sex', 'hand', 'site', 'subproject', 'project']
             writer = csv.writer(tsv_file, delimiter='\t')
             writer.writerow(headers)
             writer.writerows(output)
-            tsv_file.close()
 
 
     def modify_participants_json(self):
@@ -161,7 +136,6 @@ class Modifier:
             json_data.update(user_data)
             json_file.seek(0)
             json.dump(json_data, json_file, indent=4)
-            json_file.close()
 
 
     def copy_event_files(self):
@@ -184,10 +158,7 @@ class Modifier:
             for source in sources:
                 with open(source, mode='r', newline='') as tsv_file:
                     reader = csv.DictReader(tsv_file, delimiter='\t')
-                    source_columns = reader.fieldnames or []
-                    for column in source_columns:
-                        if column not in columns:
-                            columns.append(column)
+                    columns.extend(reader.fieldnames or [])
 
                     for row in reader:
                         # DictReader stores surplus values under the None key.
@@ -207,18 +178,13 @@ class Modifier:
                             continue
                         rows.append(row)
 
-            standard = [
-                'onset', 'duration', 'trial_type', 'value', 'sample'
-            ]
-            columns = standard + [
-                column for column in columns if column not in standard
-            ]
+            columns = list(dict.fromkeys(
+                ['onset', 'duration', 'trial_type', 'value', 'sample'] + columns))
             rows.sort(key=lambda row: float(row['onset']))
 
             with open(events_path, mode='w', newline='') as tsv_file:
                 writer = csv.DictWriter(
-                    tsv_file, fieldnames=columns, delimiter='\t',
-                    extrasaction='ignore')
+                    tsv_file, fieldnames=columns, delimiter='\t')
                 writer.writeheader()
                 for row in rows:
                     writer.writerow({
@@ -233,12 +199,9 @@ class Modifier:
                 metadata = {}
 
             for column in columns:
-                if column not in metadata:
-                    metadata[column] = {
-                        'Description':
-                            "Event information from the '{}' column."
-                            .format(column)
-                    }
+                metadata.setdefault(column, {
+                    'Description': f"Event information from the '{column}' column."
+                })
 
             with open(events_json_path, mode='w') as json_file:
                 json.dump(metadata, json_file, indent=4)
@@ -253,22 +216,22 @@ class Modifier:
             try:
                 with open(file_path, "r") as fp:
                     file_data = json.load(fp)
-                    file_data["RecordingType"] = self.data['recording_type']
+                file_data["RecordingType"] = self.data['recording_type']
 
-                    if (self.data["modality"] == 'ieeg'):
-                        referenceField = 'iEEGReference'
-                    else:
-                        referenceField = 'EEGReference'
+                if (self.data["modality"] == 'ieeg'):
+                    referenceField = 'iEEGReference'
+                else:
+                    referenceField = 'EEGReference'
 
-                    file_data[referenceField] = " ".join(self.data['reference'].split())
+                file_data[referenceField] = " ".join(self.data['reference'].split())
 
-                    if 'metadata' in self.data['bidsMetadata'] and 'ignored_keys' in self.data['bidsMetadata']:
-                        for key in self.data['bidsMetadata']['metadata']:
-                            if key not in self.data['bidsMetadata']['ignored_keys']:
-                                file_data[key] = self.data['bidsMetadata']['metadata'][key]
+                meta = self.data['bidsMetadata']
+                if 'metadata' in meta and 'ignored_keys' in meta:
+                    file_data.update({k: v for k, v in meta['metadata'].items()
+                                      if k not in meta['ignored_keys']})
 
-                    with open(file_path, "w") as fp:
-                        json.dump(file_data, fp, indent=4)
+                with open(file_path, "w") as fp:
+                    json.dump(file_data, fp, indent=4)
 
             except IOError as e:
                 print(e)

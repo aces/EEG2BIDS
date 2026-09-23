@@ -9,13 +9,6 @@
     background-color: #064785;
     font-family: Verdana, sans-serif;
 }
-.font-large {
-    font-size: 16pt;
-}
-.font-medium {
-    font-size: 14pt;
-}
-
 .footer {
     bottom: 0;
     width: 100%;
@@ -27,10 +20,6 @@
     background-color: #282828;
 }
 .open-source {
-    color: #7fb3e3;
-    cursor: pointer;
-}
-.mcin {
     color: #7fb3e3;
     cursor: pointer;
 }

@@ -2,19 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
-let initialized = false;
-
 /**
  * Tee main-process console output (including captured backend output) to a
  * persistent file for installed-app diagnostics. Values still go to the
  * original console and credentials are never logged by this module.
  * @param {Electron.App} app - Electron application
- * @return {string} path to the active log file
  */
 const initializeLogging = (app) => {
-  if (initialized) {
-    return path.join(app.getPath('userData'), 'logs', 'main.log');
-  }
   const logDir = path.join(app.getPath('userData'), 'logs');
   fs.mkdirSync(logDir, {recursive: true});
   const logPath = path.join(logDir, 'main.log');
@@ -37,9 +31,7 @@ const initializeLogging = (app) => {
       }
     };
   }
-  initialized = true;
   console.info(`[electron:main] logging to ${logPath}`);
-  return logPath;
 };
 
 module.exports = {initializeLogging};

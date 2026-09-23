@@ -16,7 +16,7 @@ const ALLOWED_EXTERNAL_URLS = new Set([
  * @return {Promise<boolean>} true if the URL was opened
  */
 const openExternal = async (url) => {
-  if (typeof url !== 'string' || !ALLOWED_EXTERNAL_URLS.has(url)) {
+  if (!ALLOWED_EXTERNAL_URLS.has(url)) {
     console.warn(`[links] blocked external URL: ${url}`);
     return false;
   }
@@ -24,4 +24,4 @@ const openExternal = async (url) => {
   return true;
 };
 
-module.exports = {openExternal, ALLOWED_EXTERNAL_URLS};
+module.exports = {openExternal};

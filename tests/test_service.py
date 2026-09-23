@@ -8,7 +8,6 @@ The client uses HTTP long-polling (websocket-client is not a dependency), which
 is the transport the service documents as sufficient for this local, single-
 client setup.
 """
-import socket
 import threading
 
 import pytest
@@ -18,25 +17,16 @@ from werkzeug.serving import make_server
 from eeg2bids import server as srv
 
 
-def _free_port():
-    sock = socket.socket()
-    sock.bind(("127.0.0.1", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
-
-
 @pytest.fixture
 def running_service():
     """Run the backend WSGI app on a loopback port; yield its base URL."""
-    port = _free_port()
     # make_server binds the listening socket immediately, so a client can
     # connect as soon as serve_forever() is running in the thread.
-    httpd = make_server("127.0.0.1", port, srv.app, threaded=True)
+    httpd = make_server("127.0.0.1", 0, srv.app, threaded=True)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     try:
-        yield f"http://127.0.0.1:{port}"
+        yield f"http://127.0.0.1:{httpd.port}"
     finally:
         httpd.shutdown()
         thread.join(timeout=5)

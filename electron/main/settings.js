@@ -42,7 +42,6 @@ const get = (key) => readAll()[key];
  */
 const set = (key, value) => {
   const settings = {...readAll(), [key]: value};
-  fs.mkdirSync(path.dirname(settingsFile()), {recursive: true});
   fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2) + '\n');
 };
 

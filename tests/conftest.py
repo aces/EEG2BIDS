@@ -91,15 +91,10 @@ def run_conversion():
 
 def _find_deno():
     """Locate the deno executable, on PATH or in the default install dir."""
-    found = which("deno")
-    if found:
-        return found
-    for base in (os.environ.get("DENO_INSTALL"), os.path.expanduser("~/.deno")):
-        if base:
-            candidate = os.path.join(base, "bin", "deno")
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                return candidate
-    return None
+    extra = [os.path.join(base, "bin") for base in
+             (os.environ.get("DENO_INSTALL"), os.path.expanduser("~/.deno"))
+             if base]
+    return which("deno") or which("deno", path=os.pathsep.join(extra))
 
 
 @pytest.fixture(scope="session")

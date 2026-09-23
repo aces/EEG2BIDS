@@ -10,6 +10,8 @@ an ``error`` key with an actionable message (a string, or a list of strings
 for the multi-validation conversion path); the caller owns transport.
 """
 
+from datetime import datetime
+
 from eeg2bids import converter
 from eeg2bids.converter import ReadError, WriteError
 from eeg2bids.Modifier import Modifier
@@ -31,8 +33,7 @@ def _meas_date_str(raw):
 def _subject_id(raw):
     """MNE-provided subject identifier, or 'n/a' when absent."""
     subject_info = raw.info.get('subject_info') or {}
-    his_id = subject_info.get('his_id')
-    return his_id if his_id else 'n/a'
+    return subject_info.get('his_id') or 'n/a'
 
 
 def inspect_recording(files):
@@ -59,11 +60,9 @@ def inspect_recording(files):
                 'date': _meas_date_str(raw),
             })
 
-        for i in range(1, len(recordings)):
-            if set(recordings[i - 1]['raw'].ch_names) \
-                    != set(recordings[i]['raw'].ch_names):
-                return {'error': 'The files selected contain more than one '
-                                 'recording.'}
+        if len({frozenset(r['raw'].ch_names) for r in recordings}) > 1:
+            return {'error': 'The files selected contain more than one '
+                             'recording.'}
 
         # sort the recording splits by date (blank dates sort first)
         recordings = sorted(recordings, key=lambda r: r['date'] or '')
@@ -89,10 +88,9 @@ def convert_recording(data):
     more actionable messages.
     """
     error_messages = []
-    if 'recordingData' not in data or 'files' not in data['recordingData'] \
-            or not data['recordingData']['files']:
+    if not data.get('recordingData', {}).get('files'):
         error_messages.append('No recording file(s) to convert.')
-    if 'bids_directory' not in data or not data['bids_directory']:
+    if not data.get('bids_directory'):
         error_messages.append('The BIDS output folder is missing.')
     if not data['session']:
         error_messages.append('The LORIS Visit Label is missing.')
@@ -104,14 +102,10 @@ def convert_recording(data):
     if error_messages:
         return {'error': error_messages}
 
-    time = converter.Time()
-    data['output_time'] = 'output-' + time.latest_output
+    data['output_time'] = datetime.now().strftime('output-%Y-%m-%d-%Hh%Mm%Ss')
 
     try:
         converter.Converter(data)  # source recording to BIDS format.
-
-        # store subject_id for Modifier
-        data['subject_id'] = converter.Converter.m_info['subject_id']
         Modifier(data)  # Modifies data of BIDS format
         return {'output_time': data['output_time']}
     except ReadError as e:

@@ -1,6 +1,5 @@
 # Native packaging validation for the supported Linux and Windows targets.
-# This workflow never publishes a GitHub Release. Issue #190 can consume these
-# jobs later for immutable release-candidate publication and promotion.
+# Never publishes; release-candidate.yml calls it and publishes the artifacts.
 name: Package
 
 on:

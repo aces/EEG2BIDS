@@ -1,5 +1,4 @@
 const {BrowserWindow, dialog, ipcMain} = require('electron');
-const {createSettingsWindow} = require('./windows');
 const credentials = require('./credentials');
 const {openExternal} = require('./external-links');
 const backendService = require('./backend-service');
@@ -27,10 +26,6 @@ const handle = (channel, handler) => {
  * bridge. Inputs and results are plain serializable values only.
  */
 const registerIpcHandlers = () => {
-  ipcMain.on('settings:open-window', () => {
-    createSettingsWindow();
-  });
-
   handle('dialog:select-directory', async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     const result = await dialog.showOpenDialog(window, {

@@ -1,10 +1,6 @@
 # Linux CI for the full EEG2BIDS test suite: uv-managed Python backend, the
 # Node/renderer build, and the Playwright Electron integration suite. Every
 # merge into `main` is gated on the `ci-required` check (see docs/testing.md).
-#
-# This workflow is `workflow_call`-able so future release automation can invoke
-# the identical suite for the exact commit/tag being released before publishing
-# — post-release verification is not a substitute for this gate.
 name: CI
 
 on:
@@ -14,11 +10,9 @@ on:
   # Support GitHub merge queues so the required check cannot strand queued
   # merges. Harmless if merge queue is not enabled.
   merge_group:
-  # Callable by a future release workflow: publishing jobs must `needs` a
-  # successful invocation of this suite for the release commit/tag.
+  # Also called by release-candidate.yml to gate publishing on the exact tag.
   workflow_call:
 
-# Cancel superseded runs for the same ref so only the latest change is tested.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -40,13 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install uv (with cache)
+      - name: Install uv and Python ${{ matrix.python-version }}
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       # The backend suite runs the official dataset-level BIDS Validator through
       # Deno; those tests fail rather than skip when Deno is unavailable
@@ -60,13 +52,13 @@ jobs:
         run: uv lock --check
 
       - name: Install dependencies (frozen)
-        run: uv sync --frozen --python ${{ matrix.python-version }}
+        run: uv sync --frozen
 
       # The complete backend suite. It exercises package imports and Socket.IO
       # startup, so backend import/startup is verified here (no separate smoke
       # step needed).
       - name: Backend suite
-        run: uv run --frozen --python ${{ matrix.python-version }} pytest
+        run: uv run --frozen pytest
 
       # Audit the locked *production* dependencies. Export to a throwaway
       # requirements file for the audit only; it is never committed and pyproject
@@ -89,22 +81,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      # Enforce package-lock.json.
       - name: Install dependencies
         run: npm ci
 
-      # Report lower-severity findings without failing the build...
-      - name: Audit (report all severities)
-        run: npm audit || true
-
-      # ...then fail CI for high and critical vulnerabilities.
-      - name: Audit (gate high/critical)
+      # Reports every finding; fails only on high/critical.
+      - name: Audit
         run: npm audit --audit-level=high
 
       - name: Lint
         run: npm run lint
 
-      # Fast, display-free tests for pure renderer logic.
       - name: Unit tests
         run: npm run test:unit
 

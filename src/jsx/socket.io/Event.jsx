@@ -1,6 +1,5 @@
 import React, {useEffect, useContext} from 'react';
 import {SocketContext} from './SocketContext';
-import PropTypes from 'prop-types';
 import {warning} from './utils';
 
 /**
@@ -23,13 +22,7 @@ const Event = (props) => {
     socket.on(props.event, props.handler);
 
     // returned function will be called on component unmount
-    return () => {
-      if (!socket) {
-        warning('Socket IO connection has not been established.');
-        return;
-      }
-      socket.off(props.event, props.handler);
-    };
+    return () => socket.off(props.event, props.handler);
   }, []);
 
   /**
@@ -37,13 +30,6 @@ const Event = (props) => {
    * @return {JSX.Element} - React markup for component.
    */
   return null;
-};
-
-Event.context = SocketContext;
-
-Event.propTypes = {
-  event: PropTypes.string.isRequired,
-  handler: PropTypes.func.isRequired,
 };
 
 export default Event;

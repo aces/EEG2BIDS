@@ -34,15 +34,12 @@ test.describe('backend', () => {
   });
 
   test('a failed backend surfaces immediately, not via timeout', async ({
-    backendPort,
+    backendPort, userDataDir,
   }) => {
     // Point PATH at an empty directory so `uv` cannot be found: the spawn
     // errors out at once, exercising the fail-fast path rather than a hang.
     const emptyPath = fs.mkdtempSync(
         path.join(os.tmpdir(), 'eeg2bids-nopath-'),
-    );
-    const userDataDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), 'eeg2bids-userdata-'),
     );
     const app = await launchElectron({
       backendPort,
@@ -70,7 +67,6 @@ test.describe('backend', () => {
     } finally {
       await app.close();
       fs.rmSync(emptyPath, {recursive: true, force: true});
-      fs.rmSync(userDataDir, {recursive: true, force: true});
     }
   });
 });

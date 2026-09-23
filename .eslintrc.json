@@ -16,8 +16,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module",
     "ecmaFeatures": {
-      "jsx": true,
-      "globalReturn": false
+      "jsx": true
     }
   },
   "extends": [
@@ -36,15 +35,10 @@
     "linebreak-style": "off",
     "spaced-comment": "off",
     "no-unused-vars": "off",
-    "require-jsdoc": "error",
     "no-console": ["warn", {
       "allow": ["info", "warn", "error"]
     }],
     "react/jsx-curly-brace-presence": "warn",
     "react/jsx-key": "warn"
-  },
-  "globals": {
-    "React": true,
-    "ReactDOM": true
   }
 }
