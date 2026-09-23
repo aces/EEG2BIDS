@@ -33,7 +33,7 @@
     "install:electron": "install-electron",
     "electron-start": "DEV=1 electron .",
     "start": "npm run dev",
-    "lint": "eslint src electron",
+    "lint": "eslint --ext .js,.jsx src electron",
     "test:unit": "vitest run",
     "test:electron": "npm run build && playwright test",
     "freeze:backend": "uv run --frozen --group packaging pyinstaller --noconfirm --distpath dist --workpath dist/.pyinstaller-work tools/eeg2bids-backend.spec",
