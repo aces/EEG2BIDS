@@ -1,33 +1,33 @@
+import {buildRuns} from '../configuration/recordingFiles';
+
 /**
- * Build the backend conversion request from renderer task state.
+ * Translate the reviewed form snapshot into a backend conversion request.
+ * The same snapshot determines readiness and submission; the task store is
+ * only used by screens outside the conversion form.
  *
- * Keeping this translation pure makes the UI/backend contract independently
- * testable without mounting the full Configuration component.
- *
- * @param {function(string): *} getFromTask read one task value
- * @param {{eegRuns: Array, preparedBy: string}} options local UI values
+ * @param {object} form current conversion form values
+ * @param {string} preparedBy name of the person performing conversion
  * @return {object} backend recording_to_bids payload
  */
-export const buildConversionRequest = (
-    getFromTask, {eegRuns = [], preparedBy = ''} = {}) => ({
-  recordingData: getFromTask('recordingData'),
-  eegRuns,
-  modality: getFromTask('modality'),
-  outputFormat: getFromTask('outputFormat'),
-  anonymize: getFromTask('anonymize'),
-  bids_directory: getFromTask('bidsDirectory'),
-  bidsMetadata: getFromTask('bidsMetadata'),
-  site_id: getFromTask('siteID'),
-  project_id: getFromTask('projectID'),
-  sub_project_id: getFromTask('subprojectID'),
-  session: getFromTask('session'),
-  participantID: getFromTask('participantID'),
-  age: getFromTask('participantAge'),
-  hand: getFromTask('participantHand'),
-  sex: getFromTask('participantSex'),
+export const buildConversionRequest = (form, preparedBy) => ({
+  recordingData: form.recordingData,
+  eegRuns: buildRuns(form.recordingData?.files ?? [], form.eventFiles ?? []),
+  modality: form.modality,
+  outputFormat: form.outputFormat,
+  anonymize: form.anonymize,
+  bids_directory: form.bidsDirectory,
+  bidsMetadata: form.bidsMetadata,
+  site_id: form.siteID,
+  project_id: form.projectID,
+  sub_project_id: form.subprojectID,
+  session: form.session,
+  participantID: form.participantID,
+  age: form.participantAge,
+  hand: form.participantHand,
+  sex: form.participantSex,
   preparedBy,
-  line_freq: getFromTask('lineFreq') || 'n/a',
-  recording_type: getFromTask('recordingType'),
-  taskName: getFromTask('taskName'),
-  reference: getFromTask('reference'),
+  line_freq: form.lineFreq || 'n/a',
+  recording_type: form.recordingType,
+  taskName: form.taskName,
+  reference: form.reference,
 });

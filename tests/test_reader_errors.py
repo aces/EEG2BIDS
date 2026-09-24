@@ -30,6 +30,25 @@ def test_missing_fdt_companion_reports_actionable_error(fixtures_dir, tmp_path):
     assert '.fdt' in str(excinfo.value)
 
 
+def test_convert_rejects_missing_runs_before_writing(make_convert_data):
+    request = make_convert_data('eeg_continuous.edf', eeg_runs=[])
+
+    assert convert_recording(request) == {
+        'error': ['No recording run(s) to convert.']}
+
+
+def test_convert_reports_missing_source_at_write_seam(make_convert_data):
+    request = make_convert_data('missing.edf')
+
+    result = convert_recording(request)
+
+    assert 'output_time' not in result
+    assert result['error'] == [
+        'Cannot read file - Recording file not found: '
+        + request['eegRuns'][0]['recordingFile']
+    ]
+
+
 def test_convert_rejects_unsupported_output_format(fixtures_dir):
     data = {
         'recordingData': {'files': [
@@ -48,4 +67,9 @@ def test_convert_reports_all_missing_required_fields():
     result = convert_recording(
         {'recordingData': {'files': []}, 'bids_directory': '', 'session': ''})
     assert 'error' in result
-    assert len(result['error']) == 3
+    assert result['error'] == [
+        'No recording file(s) to convert.',
+        'The BIDS output folder is missing.',
+        'The LORIS Visit Label is missing.',
+        'No recording run(s) to convert.',
+    ]

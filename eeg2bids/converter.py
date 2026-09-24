@@ -207,10 +207,12 @@ class Converter:
         digest = hashlib.sha256(participant_id.encode('utf-8')).digest()
         return minimum + int.from_bytes(digest[:8], 'big') % (maximum - minimum + 1)
 
-    # data = { file_path: '', bids_directory: '', line_freq: '', site_id: '',
-    # project_id: '', sub_project_id: '', session: ''}
     def __init__(self, data):
-        print('- Converter: init started.')
+        self.data = data
+
+    def write_runs(self):
+        """Write source runs and return BIDS basenames paired with event files."""
+        data = self.data
         modality = 'eeg' if data['modality'] == 'eeg' else 'seeg'
 
         anonymize = data.get('anonymize', False)
@@ -219,21 +221,27 @@ class Converter:
             daysback = self._anonymization_daysback(
                 data['eegRuns'], data['participantID'])
 
-        for i, eegRun in enumerate(data['eegRuns']):
-            eegRun['recordingBIDSBasename'] = self.to_bids(
-                eeg_run=eegRun,
+        written_runs = []
+        for index, eeg_run in enumerate(data['eegRuns']):
+            basename = self.to_bids(
+                eeg_run=eeg_run,
                 ch_type=modality,
                 task=data['taskName'],
                 bids_directory=data['bids_directory'],
                 subject_id=data['participantID'],
                 session=data['session'],
-                run=((i + 1) if len(data['recordingData']['files']) > 1 else None),
+                run=((index + 1) if len(data['recordingData']['files']) > 1 else None),
                 output_time=data['output_time'],
                 line_freq=data['line_freq'],
                 output_format=data.get('outputFormat', 'auto'),
                 anonymize=anonymize,
                 daysback=daysback
             )
+            written_runs.append({
+                'recordingBIDSBasename': basename,
+                'eventFile': eeg_run['eventFile'],
+            })
+        return written_runs
 
     def to_bids(self,
                 eeg_run,
@@ -248,16 +256,15 @@ class Converter:
                 output_format,
                 anonymize,
                 daysback):
-        file = eeg_run['recordingFile']
+        source_path = eeg_run['recordingFile']
 
-        if not os.path.isfile(file):
-            print(f'File not found or is not file: {file}')
-            return None
+        if not os.path.isfile(source_path):
+            raise ReadError(f'Recording file not found: {source_path}')
 
         # Reading is delegated to MNE's generic dispatcher, which selects
         # the format reader and resolves companion files from the file
         # itself.
-        raw = read_raw_recording(file)
+        raw = read_raw_recording(source_path)
 
         # Preserve the channel types MNE resolved from the source. Only
         # channels MNE left as the generic 'eeg' default fall back to
@@ -313,7 +320,7 @@ class Converter:
             # file-as-is.
             write_kwargs = {'overwrite': False, 'verbose': False}
             write_kwargs.update(
-                resolve_write_kwargs(raw, file, output_format))
+                resolve_write_kwargs(raw, source_path, output_format))
             if anonymize:
                 write_kwargs['anonymize'] = {
                     'daysback': daysback,

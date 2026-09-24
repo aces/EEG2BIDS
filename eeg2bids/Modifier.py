@@ -4,11 +4,12 @@ import json
 import re
 
 class Modifier:
-    def __init__(self, data):
+    def __init__(self, data, written_runs):
         self.data = data
+        self.written_runs = written_runs
 
-        print('- Modifier: init started.')
-
+    def apply(self):
+        """Apply dataset metadata and event edits after recording files exist."""
         self.modify_dataset_description_json()
         self.modify_participants_tsv()
         self.modify_participants_json()
@@ -139,17 +140,17 @@ class Modifier:
 
 
     def copy_event_files(self):
-        for eegRun in self.data.get('eegRuns'):
-            if not eegRun['eventFile']:
+        for written_run in self.written_runs:
+            if not written_run['eventFile']:
                 continue
 
-            recording_file = eegRun['recordingBIDSBasename']
+            bids_basename = written_run['recordingBIDSBasename']
             events_path = os.path.join(
-                self.get_eeg_path(), recording_file + '_events.tsv')
+                self.get_eeg_path(), bids_basename + '_events.tsv')
             events_json_path = os.path.join(
-                self.get_eeg_path(), recording_file + '_events.json')
+                self.get_eeg_path(), bids_basename + '_events.json')
 
-            sources = [eegRun['eventFile']]
+            sources = [written_run['eventFile']]
             if os.path.isfile(events_path):
                 sources.append(events_path)
 

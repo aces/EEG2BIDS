@@ -1,16 +1,13 @@
 import os
 import shutil
-import sys
-import threading
-import time
 
 import socketio
 from werkzeug.serving import run_simple
-from eeg2bids.converter import metadata as metadata_fields
 from eeg2bids import conversion
 from eeg2bids import BIDS
 from eeg2bids.loris_api import LorisAPI
-import json
+from eeg2bids.parameter_file import read_parameter_file
+from eeg2bids.runtime.owner_process import watch_owner_process
 
 # The host and port the local Socket.IO service binds to. The service only
 # ever listens on the loopback interface; the connect handler below rejects
@@ -50,8 +47,12 @@ def get_participant_data(sid, data):
     if not data.get('candID'):
         return
 
-    candidate = loris_api.get_candidate(data['candID'])
-    sio.emit('participant_data', candidate)
+    candidate_id = data['candID']
+    candidate = loris_api.get_candidate(candidate_id)
+    sio.emit('participant_data', {
+        'candID': candidate_id,
+        'candidate': candidate,
+    })
 
 
 @sio.event
@@ -103,51 +104,17 @@ def create_visit(sid, data):
 
 @sio.event
 def get_recording_data(sid, data):
-    # data = { files: 'recording entry points (array of {path, name})' }
-    print('get_recording_data:', data)
+    # Echo the selection so a late inspection cannot replace a newer one.
     files = data.get('files') if isinstance(data, dict) else None
     response = conversion.inspect_recording(files)
-    sio.emit('recording_data', response)
-
-
-def _read_parameter_file(file_path, modality):
-    """Read nested BIDS metadata and configuration prepopulation values."""
-    with open(file_path) as fd:
-        parameters = json.load(fd)
-
-    if not isinstance(parameters, dict) or set(parameters) != {
-            'bids', 'prepopulation'}:
-        raise ValueError(
-            'Parameter file must contain exactly "bids" and '
-            '"prepopulation" objects.'
-        )
-
-    metadata = parameters['bids']
-    prepopulation = parameters['prepopulation']
-    if not isinstance(metadata, dict) or not isinstance(prepopulation, dict):
-        raise ValueError(
-            'Parameter file "bids" and "prepopulation" values must be objects.'
-        )
-
-    empty_values = [
-        key for key, value in metadata.items()
-        if isinstance(value, str) and not value.strip()
-    ]
-    unsupported = set(metadata) - set(metadata_fields[modality])
-
-    return {
-        'metadata': metadata,
-        'prepopulation': prepopulation,
-        'ignored_keys': empty_values + sorted(unsupported - set(empty_values)),
-        'source_file': str(file_path),
-    }
+    sio.emit('recording_data', {
+        **response,
+        'requested_files': [file['path'] for file in files] if files else [],
+    })
 
 
 @sio.event
 def get_bids_metadata(sid, data):
-    # data = { file_path: 'path to metadata file' }
-    print('data:', data)
-
     if not data.get('file_path'):
         msg = 'No metadata file selected.'
         print(msg)
@@ -158,7 +125,7 @@ def get_bids_metadata(sid, data):
         response = {'error': msg}
     else:
         try:
-            response = _read_parameter_file(data['file_path'], data['modality'])
+            response = read_parameter_file(data['file_path'], data['modality'])
         except (ValueError, TypeError) as e:
             print(e)
             response = {'error': f'Metadata file format is not valid: {e}'}
@@ -167,6 +134,10 @@ def get_bids_metadata(sid, data):
             print(msg)
             response = {'error': msg}
 
+    # Echo the request identity even on errors. The renderer may select a
+    # different file or modality before this blocking read completes.
+    response['source_file'] = data.get('file_path')
+    response['modality'] = data.get('modality')
     sio.emit('bids_metadata', response)
 
 
@@ -176,16 +147,12 @@ def recording_to_bids(sid, data):
     # bids_directory: '', session: '', participantID: '',
     # taskName: '', line_freq: '', site_id: '', project_id: '',
     # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
-    print('recording_to_bids: ', data)
     response = conversion.convert_recording(data)
-    print(response)
-    print('Response received!')
-    sio.emit('bids', response.copy())
+    sio.emit('bids', response)
 
 
 @sio.event
 def validate_bids(sid, bids_directory):
-    print('validate_bids: ', bids_directory)
     if not bids_directory:
         response = {'error': ['The BIDS output directory is missing.']}
     else:
@@ -198,82 +165,6 @@ def disconnect(sid):
     print('disconnect: ', sid)
 
 
-def _windows_process_is_alive(pid):
-    """Return whether *pid* is alive using the native Windows process API.
-
-    ``os.kill(pid, 0)`` is a POSIX process-existence probe, but Python's Windows
-    implementation maps signals onto different Win32 semantics. Use a
-    non-terminating wait on a synchronization handle instead.
-    """
-    import ctypes
-    from ctypes import wintypes
-
-    synchronize = 0x00100000
-    wait_timeout = 0x00000102
-    error_access_denied = 5
-    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL,
-                                     wintypes.DWORD]
-    kernel32.OpenProcess.restype = wintypes.HANDLE
-    kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
-    kernel32.WaitForSingleObject.restype = wintypes.DWORD
-    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-
-    handle = kernel32.OpenProcess(synchronize, False, pid)
-    if not handle:
-        # Access denied proves that a process occupies the pid; do not kill the
-        # backend merely because Windows refuses a synchronization handle.
-        return ctypes.get_last_error() == error_access_denied
-    try:
-        return kernel32.WaitForSingleObject(handle, 0) == wait_timeout
-    finally:
-        kernel32.CloseHandle(handle)
-
-
-def _owner_process_is_alive(pid):
-    """Return whether the Electron owner process still exists."""
-    if sys.platform == 'win32':
-        return _windows_process_is_alive(pid)
-    try:
-        os.kill(pid, 0)
-        return True
-    except OSError:
-        return False
-
-
-def _watch_owner_process():
-    """Exit when the process that owns this backend disappears.
-
-    Electron sets EEG2BIDS_OWNER_PID when it spawns the backend. Electron
-    normally terminates the backend's process group itself on quit, but that
-    cannot happen when Electron dies without a graceful shutdown (a terminal
-    Ctrl+C killing the whole foreground process group, or a hard kill). This
-    watchdog is the backstop that keeps the backend from being orphaned.
-    """
-    owner_pid = os.environ.get('EEG2BIDS_OWNER_PID', '')
-    if not owner_pid.isdigit():
-        return
-
-    def watch():
-        while True:
-            time.sleep(2)
-            if not _owner_process_is_alive(int(owner_pid)):
-                # stderr is a pipe into the (now dead) owner, so this print may
-                # itself fail; exit regardless.
-                try:
-                    print(
-                        f'eeg2bids: owner process {owner_pid} exited, '
-                        'shutting down',
-                        file=sys.stderr,
-                    )
-                except OSError:
-                    pass
-                finally:
-                    os._exit(0)
-
-    threading.Thread(target=watch, daemon=True).start()
-
-
 def main():
     """Start the local EEG2BIDS Socket.IO service.
 
@@ -282,7 +173,7 @@ def main():
     to HTTP long-polling, which is sufficient for this local single-client
     service.
     """
-    _watch_owner_process()
+    watch_owner_process()
     # A port collision needs no handling here: Werkzeug prints an actionable
     # "Port <PORT> is in use by another program" message and exits non-zero.
     run_simple(HOST, PORT, app, threaded=True)

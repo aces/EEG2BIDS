@@ -44,7 +44,11 @@ def _sidecar(root, datatype):
 # --- representative EEG / iEEG conversion --------------------------------
 
 def test_eeg_edf_conversion_writes_dataset(make_convert_data, run_conversion):
-    result, root = run_conversion(make_convert_data("eeg_continuous.edf"))
+    request = make_convert_data("eeg_continuous.edf")
+    original_runs = [run.copy() for run in request['eegRuns']]
+    result, root = run_conversion(request)
+    assert 'output_time' not in request
+    assert request['eegRuns'] == original_runs
     assert "output_time" in result
     assert _recording_file(root, "eeg").suffix == ".edf"
     assert (root / "dataset_description.json").exists()

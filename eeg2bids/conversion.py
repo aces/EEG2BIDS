@@ -92,8 +92,10 @@ def convert_recording(data):
         error_messages.append('No recording file(s) to convert.')
     if not data.get('bids_directory'):
         error_messages.append('The BIDS output folder is missing.')
-    if not data['session']:
+    if not data.get('session'):
         error_messages.append('The LORIS Visit Label is missing.')
+    if not data.get('eegRuns'):
+        error_messages.append('No recording run(s) to convert.')
     if not converter.is_supported_output_format(data.get('outputFormat', 'auto')):
         error_messages.append(
             "Unsupported output format '{}'. Choose Auto, EDF, BrainVision, "
@@ -102,12 +104,15 @@ def convert_recording(data):
     if error_messages:
         return {'error': error_messages}
 
-    data['output_time'] = datetime.now().strftime('output-%Y-%m-%d-%Hh%Mm%Ss')
+    # The request is owned by the caller. Keep generated output paths and run
+    # basenames in the conversion pipeline rather than writing into that input.
+    request = {**data, 'output_time': datetime.now().strftime(
+        'output-%Y-%m-%d-%Hh%Mm%Ss')}
 
     try:
-        converter.Converter(data)  # source recording to BIDS format.
-        Modifier(data)  # Modifies data of BIDS format
-        return {'output_time': data['output_time']}
+        written_runs = converter.Converter(request).write_runs()
+        Modifier(request, written_runs).apply()
+        return {'output_time': request['output_time']}
     except ReadError as e:
         error_messages.append('Cannot read file - ' + str(e))
     except WriteError as e:

@@ -1,28 +1,30 @@
 import {describe, expect, it} from 'vitest';
+import {initialState} from '../configuration/initialState';
 import {buildConversionRequest} from './conversionRequest';
 
-// Mirrors Configuration's initial state, which is copied into the task on
-// mount, so the getter below behaves like AppContext.getFromTask.
-const requiredTask = {
+const requestFor = (overrides = {}) => buildConversionRequest({
+  ...initialState,
   recordingData: {files: [{path: '/data/rest.edf', name: 'rest.edf'}]},
-  eventFiles: [],
-  anonymize: false,
-};
+  ...overrides,
+}, 'Tester');
 
-const requestFor = (overrides = {}) => {
-  const task = {...requiredTask, ...overrides};
-  return buildConversionRequest(
-      (key) => task[key] ?? '',
-      {eegRuns: [], preparedBy: 'Tester'},
-  );
-};
-
-describe('buildConversionRequest anonymization', () => {
-  it('sends enabled anonymization to the backend', () => {
+describe('buildConversionRequest', () => {
+  it('sends the current anonymization choice', () => {
     expect(requestFor({anonymize: true}).anonymize).toBe(true);
+    expect(requestFor().anonymize).toBe(false);
   });
 
-  it('sends disabled anonymization when the toggle is untouched', () => {
-    expect(requestFor().anonymize).toBe(false);
+  it('pairs current events with recordings when submitting', () => {
+    const request = requestFor({
+      recordingData: {files: [{
+        path: '/data/rest.edf', name: 'sub-01_task-rest_eeg.edf',
+      }]},
+      eventFiles: [{
+        path: '/data/events.tsv', name: 'sub-01_task-rest_events.tsv',
+      }],
+    });
+    expect(request.eegRuns).toEqual([{
+      recordingFile: '/data/rest.edf', eventFile: '/data/events.tsv',
+    }]);
   });
 });

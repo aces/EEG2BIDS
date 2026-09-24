@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from eeg2bids.server import _read_parameter_file
+from eeg2bids.parameter_file import read_parameter_file
 
 
 def test_nested_parameter_file_separates_bids_and_prepopulation(tmp_path):
@@ -20,7 +20,7 @@ def test_nested_parameter_file_separates_bids_and_prepopulation(tmp_path):
         },
     }))
 
-    result = _read_parameter_file(path, 'eeg')
+    result = read_parameter_file(path, 'eeg')
 
     assert result['metadata']['InstitutionName'] == 'Test site'
     assert result['prepopulation'] == {
@@ -43,4 +43,4 @@ def test_parameter_file_requires_exact_nested_shape(tmp_path, parameters):
     path.write_text(json.dumps(parameters))
 
     with pytest.raises(ValueError):
-        _read_parameter_file(path, 'eeg')
+        read_parameter_file(path, 'eeg')
