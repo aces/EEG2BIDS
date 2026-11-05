@@ -105,7 +105,7 @@ export const ActiveBatch = ({batch, setBatch}) => {
             </div>
             <div>
               <b>Next:</b> choose the BIDS output folder below, then preview
-              and convert the batch on <b>3) Recording to BIDS</b>.
+              and convert the batch on the <b>Recording to BIDS</b> tab.
             </div>
           </div>
         }
