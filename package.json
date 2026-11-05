@@ -18,7 +18,7 @@
     "concurrently": "^10.0.6",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0",
-    "eslint": "^8.57.1",
+    "eslint": "^10.14.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.37.5",
     "vite": "^8.3.6",
