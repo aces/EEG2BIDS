@@ -5,25 +5,25 @@
   "desktopName": "eeg2bids.desktop",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "papaparse": "^5.5.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "papaparse": "^5.7.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-switch": "^7.1.0",
-    "react-tooltip": "6.0.8",
-    "socket.io-client": "^4.8.3"
+    "react-tooltip": "6.0.10",
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@vitejs/plugin-react": "^6.0.3",
-    "concurrently": "^9.2.4",
-    "electron": "^43.1.1",
-    "electron-builder": "^26.15.3",
+    "@playwright/test": "^1.64.1",
+    "@vitejs/plugin-react": "^6.2.1",
+    "concurrently": "^10.0.6",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
     "eslint": "^8.57.1",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-react": "^7.37.5",
-    "vite": "^8.1.5",
-    "vitest": "^4.1.10",
-    "wait-on": "^9.0.10"
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0",
+    "wait-on": "^9.5.1"
   },
   "scripts": {
     "dev": "concurrently -k --success first -n renderer,electron \"npm run dev:renderer\" \"wait-on http://localhost:3000/ && npm run electron-start\"",
@@ -93,6 +93,6 @@
     "url": "https://github.com/aces/eeg2bids"
   },
   "overrides": {
-    "brace-expansion": "5.0.9"
+    "brace-expansion": "5.0.12"
   }
 }
