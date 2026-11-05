@@ -167,9 +167,6 @@ jobs:
         shell: pwsh
         run: |
           $installer = Get-ChildItem dist/electron/*-setup.exe
-          if ($installer.Count -ne 1) {
-            throw "Expected exactly one NSIS installer, found $($installer.Count)"
-          }
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
           "$hash  $($installer.Name)" | Set-Content dist/electron/SHA256SUMS-windows-x64
 

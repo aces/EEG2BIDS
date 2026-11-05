@@ -119,8 +119,8 @@ including direct merges and merge-queue merges — must pass it.
 | CI job | What it enforces | Run it locally |
 | --- | --- | --- |
 | `backend` (Python 3.11, 3.12, 3.13) | Lockfile is current, deps install frozen, full backend suite passes, and locked **production** deps have no known vulnerabilities. Package imports and Socket.IO startup are covered by the suite. | `uv lock --check`<br>`uv sync --frozen`<br>`uv run pytest`<br>`uv export --frozen --no-dev --no-emit-project -o requirements-audit.txt && uvx pip-audit -r requirements-audit.txt` |
-| `node` | `package-lock.json` is enforced, no high/critical npm advisories, lint passes, production renderer build succeeds. | `npm ci`<br>`npm audit --audit-level=high`<br>`npm run lint`<br>`npm run build` |
-| `electron` | The locked Electron runtime is installed explicitly, then the full Playwright Electron suite passes headlessly with Chromium sandboxing intact. | `npm run install:electron`<br>`xvfb-run -a npm run test:electron` |
+| `node` | `package-lock.json` is enforced, no high/critical npm advisories, lint and unit tests pass. | `npm ci`<br>`npm audit --audit-level=high`<br>`npm run lint`<br>`npm run test:unit` |
+| `electron` | The locked Electron runtime is installed explicitly, the production renderer build succeeds, then the full Playwright Electron suite passes headlessly with Chromium sandboxing intact. | `npm run install:electron`<br>`xvfb-run -a npm run test:electron` |
 
 The backend suite requires Deno for BIDS validation (see above); CI installs it.
 The Electron job installs Node **and** the uv-managed Python backend, because the
@@ -145,10 +145,10 @@ The Windows job also installs the package silently, confirms the managed backend
 remains available, closes the app, verifies process cleanup, and uninstalls it.
 Diagnostic logs are uploaded even when the smoke test fails.
 
-This workflow does not publish GitHub Releases. Release automation in #190 can
-reuse the native build interface, but must run `ci.yml` for the exact candidate
-commit and depend on it before publishing. Post-publication verification does
-not replace that gate.
+This workflow does not publish GitHub Releases itself.
+`release-candidate.yml` calls it together with `ci.yml` for the exact candidate
+tag and publishes only when both pass; `promote-release.yml` promotes a
+qualified candidate. See [Releasing](releasing.md).
 
 ## Test fixtures
 

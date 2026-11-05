@@ -63,7 +63,7 @@ Before testing, record:
 Verify the downloaded candidate before installation:
 
 ```sh
-sha256sum --check SHA256SUMS
+sha256sum --check SHA256SUMS-linux-x64     # or SHA256SUMS-windows-x64
 ```
 
 ## Scenarios
@@ -114,7 +114,7 @@ keyring boundary work together.
 
 **Prerequisites:** A fresh supported Ubuntu 24.04 x86_64 VM with a normal desktop
 session and secret service, no prior EEG2BIDS install, and no Node, npm, uv, or
-Python development environment. Transfer the approved `.deb`, `SHA256SUMS`, and
+Python development environment. Transfer the approved `.deb`, `SHA256SUMS-linux-x64`, and
 synthetic test data separately.
 
 **Steps:**
@@ -242,8 +242,8 @@ and candidate artifacts.
 
 ## Windows scenarios
 
-Use the exact Windows installer and `SHA256SUMS` downloaded together from the
-packaging workflow. Record the full commit SHA and workflow run URL. The initial
+Use the exact Windows installer and `SHA256SUMS-windows-x64` downloaded together
+from the packaging workflow. Record the full commit SHA and workflow run URL. The initial
 installer is unsigned, so SmartScreen behavior is an expected observation, not
 something automation should suppress.
 

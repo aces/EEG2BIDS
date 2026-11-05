@@ -24,8 +24,10 @@ The packages under `devDependencies` are development/build tooling and are not
 application runtime dependencies:
 
 - Electron and Vite: `electron`, `vite`, `@vitejs/plugin-react`
+- Packaging: `electron-builder`
 - Workflow orchestration: `concurrently`, `wait-on`
 - Linting: `eslint`, `eslint-config-google`, `eslint-plugin-react`
+- Testing: `vitest`, `@playwright/test`
 
 Audit the locked graph with:
 
@@ -83,20 +85,12 @@ changing packaging.
 
 ## Automated updates and CI
 
-`.github/dependabot.yml` checks npm and uv weekly. uv support is enabled as a
-Dependabot beta ecosystem so updates modify the authoritative `uv.lock`
-rather than recreating a legacy requirements file.
+`.github/dependabot.yml` checks npm, uv, and GitHub Actions weekly. uv support
+is enabled as a Dependabot beta ecosystem so updates modify the authoritative
+`uv.lock` rather than recreating a legacy requirements file.
 
-The required CI workflow runs, at minimum:
-
-```sh
-npm ci
-npm audit
-npm run lint
-npm run build
-uv lock --check
-# Run the temporary-export pip-audit procedure shown above.
-```
+The required CI checks, including both dependency audits, are listed in
+[Testing](testing.md).
 
 Security findings must be fixed, or dismissed only with a rationale recording
 why the affected package is unreachable, development-only, obsolete, or a

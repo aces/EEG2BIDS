@@ -36,7 +36,6 @@
     "test:unit": "vitest run",
     "test:electron": "npm run build && playwright test",
     "freeze:backend": "uv run --frozen --group packaging pyinstaller --noconfirm --distpath dist --workpath dist/.pyinstaller-work tools/eeg2bids-backend.spec",
-    "dist:dir": "npm run build && npm run freeze:backend && electron-builder --linux dir --publish never",
     "dist:linux": "npm run build && npm run freeze:backend && electron-builder --linux deb --publish never",
     "dist:windows": "npm run build && npm run freeze:backend && electron-builder --win nsis --x64 --publish never"
   },

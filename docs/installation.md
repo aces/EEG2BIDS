@@ -50,14 +50,15 @@ Uninstall removes package-owned files, commands, and AppArmor policy.
 
 ## Windows 11
 
-Download the x64 NSIS installer and its `SHA256SUMS` from the same successful
-`Package` workflow artifact. Verify the checksum before installation, then run
+Download the x64 NSIS installer and `SHA256SUMS-windows-x64` from the same
+[GitHub Release](https://github.com/aces/EEG2BIDS/releases). Verify the checksum
+before installation, then run
 the assisted installer. It installs per-user without administrator access and
 adds EEG2BIDS to the Start menu.
 
 The initial Windows installer is unsigned. Windows SmartScreen may identify it
-as an unrecognized application. Confirm the file came from the project workflow
-and that its checksum matches; the application does not disable or bypass
+as an unrecognized application. Confirm the file came from the project's GitHub
+Release and that its checksum matches; the application does not disable or bypass
 Windows security controls.
 
 Run a newer installer to upgrade in place. Uninstall EEG2BIDS through Windows

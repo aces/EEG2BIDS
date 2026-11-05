@@ -94,9 +94,6 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
-      - name: Production renderer build
-        run: npm run build
-
   # Playwright Electron integration suite, run once. Needs both Node and the
   # uv-managed Python backend (the app spawns `uv run --frozen python -m
   # eeg2bids`), plus a virtual display.
@@ -178,15 +175,9 @@ jobs:
     needs: [backend, node, electron]
     runs-on: ubuntu-latest
     steps:
-      - name: Verify all required jobs succeeded
-        run: |
-          echo "backend:  ${{ needs.backend.result }}"
-          echo "node:     ${{ needs.node.result }}"
-          echo "electron: ${{ needs.electron.result }}"
-          if [ "${{ needs.backend.result }}" != "success" ] \
-            || [ "${{ needs.node.result }}" != "success" ] \
-            || [ "${{ needs.electron.result }}" != "success" ]; then
-            echo "One or more required jobs did not succeed."
-            exit 1
-          fi
-          echo "All required jobs succeeded."
+      - name: Fail if any required job did not succeed
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled') ||
+          contains(needs.*.result, 'skipped')
+        run: exit 1

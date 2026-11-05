@@ -42,7 +42,7 @@ uv run python -m eeg2bids  # backend only (127.0.0.1:7301)
 
 - **Node/uv missing or deps not installed** — `npm run dev` fails fast; if the
   backend cannot be launched, the main process logs `[backend] could not
-  launch the backend through uv: … Is uv installed and on PATH?` and the
+  launch the backend: …. Is uv installed and on PATH?` and the
   backend status shows *unavailable*.
 - **Port 3000 in use** — Vite exits with `Port 3000 is already in use` and the
   launch aborts (no orphaned Electron).
@@ -68,7 +68,8 @@ Development output identifies its source by prefix:
 
 | Prefix | Source |
 | --- | --- |
-| `[electron:main]` | Electron main process (lifecycle, IPC handler failures, renderer load failures) |
+| `[electron:main]` | Electron main process (lifecycle, renderer load failures) |
+| `Error occurred in handler for '<channel>':` | IPC handler failures (Electron's own message) |
 | `[backend stdout]` / `[backend stderr]` | forwarded Python output |
 | `[backend]` | backend process lifecycle (spawn, exit, restart) |
 | `[socket]` | renderer Socket.IO transitions (in the DevTools console) |

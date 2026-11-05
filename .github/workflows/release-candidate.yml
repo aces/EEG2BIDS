@@ -64,17 +64,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download Linux candidate
+      - name: Download Linux and Windows candidates
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: eeg2bids-linux-x64-${{ github.sha }}
-          path: release-assets/linux
-
-      - name: Download Windows candidate
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          name: eeg2bids-windows-x64-${{ github.sha }}
-          path: release-assets/windows
+          pattern: eeg2bids-*-x64-${{ github.sha }}
+          path: release-assets
+          merge-multiple: true
 
       - name: Record source provenance
         env:

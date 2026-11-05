@@ -1,12 +1,10 @@
 const {app, safeStorage} = require('electron');
 const fs = require('fs');
 const path = require('path');
-const settings = require('./settings');
 
-// LORIS credential persistence. The username/password pair is encrypted
-// with Electron safeStorage and written under the userData directory; the
-// LORIS URL is not a secret and lives in the ordinary settings store.
-// Credential and token values must never be logged here.
+// LORIS credential persistence. The LORIS URL, username and password are
+// encrypted together with Electron safeStorage and written under the userData
+// directory. Credential and token values must never be logged here.
 
 /**
  * Path of the encrypted credentials file.
@@ -18,33 +16,12 @@ const credentialsFile = () =>
 let backendChecked = false;
 
 /**
- * Warn once when Linux has no usable secret service and safeStorage falls
- * back to its 'basic_text' backend, which obfuscates with a hardcoded key
- * rather than encrypting with an OS-backed secret.
- */
-const checkStorageBackend = () => {
-  if (backendChecked || process.platform !== 'linux') {
-    return;
-  }
-  backendChecked = true;
-  const backend = safeStorage.getSelectedStorageBackend();
-  if (backend === 'basic_text' || backend === 'unknown') {
-    console.warn(
-        `[credentials] safeStorage backend is '${backend}': no usable ` +
-        `secret service (GNOME Keyring / KWallet) was found, so stored ` +
-        `credentials are only obfuscated, NOT securely encrypted.`,
-    );
-  }
-};
-
-/**
  * Read the stored LORIS credentials.
  * @return {Promise<object>} lorisURL, lorisUsername and lorisPassword,
  *   each '' when unset or undecryptable
  */
 const get = async () => {
-  const lorisURL = settings.get('lorisURL') ?? '';
-  const empty = {lorisURL, lorisUsername: '', lorisPassword: ''};
+  const empty = {lorisURL: '', lorisUsername: '', lorisPassword: ''};
   let encrypted;
   try {
     encrypted = fs.readFileSync(credentialsFile());
@@ -54,7 +31,7 @@ const get = async () => {
   try {
     const decrypted = JSON.parse(safeStorage.decryptString(encrypted));
     return {
-      lorisURL,
+      lorisURL: decrypted.lorisURL ?? '',
       lorisUsername: decrypted.lorisUsername ?? '',
       lorisPassword: decrypted.lorisPassword ?? '',
     };
@@ -72,7 +49,20 @@ const get = async () => {
  * @param {object} values - lorisURL, lorisUsername and lorisPassword
  */
 const set = async (values) => {
-  checkStorageBackend();
+  // Warn once when Linux has no usable secret service and safeStorage falls
+  // back to its 'basic_text' backend, which obfuscates with a hardcoded key
+  // rather than encrypting with an OS-backed secret.
+  if (!backendChecked && process.platform === 'linux') {
+    backendChecked = true;
+    const backend = safeStorage.getSelectedStorageBackend();
+    if (backend === 'basic_text' || backend === 'unknown') {
+      console.warn(
+          `[credentials] safeStorage backend is '${backend}': no usable ` +
+          `secret service (GNOME Keyring / KWallet) was found, so stored ` +
+          `credentials are only obfuscated, NOT securely encrypted.`,
+      );
+    }
+  }
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error(
         'safeStorage reports no encryption backend; refusing to persist ' +
@@ -81,11 +71,11 @@ const set = async (values) => {
     );
   }
   const encrypted = safeStorage.encryptString(JSON.stringify({
+    lorisURL: values.lorisURL,
     lorisUsername: values.lorisUsername,
     lorisPassword: values.lorisPassword,
   }));
   fs.writeFileSync(credentialsFile(), encrypted, {mode: 0o600});
-  settings.set('lorisURL', values.lorisURL);
 };
 
 /**
@@ -93,7 +83,6 @@ const set = async (values) => {
  */
 const remove = async () => {
   fs.rmSync(credentialsFile(), {force: true});
-  settings.set('lorisURL', '');
 };
 
 module.exports = {get, set, remove};

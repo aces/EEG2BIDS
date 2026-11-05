@@ -29,8 +29,9 @@ integration for Ubuntu 24.04+. See [Packaging](#packaging) to build it and the
 build landed in [#188](https://github.com/aces/EEG2BIDS/issues/188), including a
 frozen backend, Windows process lifecycle support, and native CI smoke testing.
 See the [Windows packaging guide](docs/windows-packaging.md). macOS packaging is
-tracked in [#189](https://github.com/aces/EEG2BIDS/issues/189), and coordinated
-release automation in [#190](https://github.com/aces/EEG2BIDS/issues/190).
+tracked in [#189](https://github.com/aces/EEG2BIDS/issues/189). Release
+automation ([#190](https://github.com/aces/EEG2BIDS/issues/190)) is described in
+the [release-candidate guide](docs/releasing.md).
 
 Automated backend and Electron integration suites are available for the
 supported Linux environment; see the [testing guide](docs/testing.md).
@@ -84,29 +85,8 @@ npm ci       # install frontend dependencies from the lockfile
 npm run dev  # renderer (Vite on port 3000) + Electron + Python backend
 ```
 
-`npm run dev` is the single top-level development command (`npm start` is an
-alias). It runs the Vite dev server and Electron together; when either side
-exits — including Ctrl+C — the other is shut down with it, so no dev server
-is left behind. Electron owns the backend process: it launches
-`uv run --frozen python -m eeg2bids`, captures its output into the terminal
-with a `[backend]` prefix, reports availability to the renderer, and
-terminates the whole process group on shutdown so no Python process is left
-behind. If something already listens on `127.0.0.1:7301` — for example a
-manually started backend — Electron uses the existing service instead of
-starting its own.
-
-The pieces also run separately:
-
-```sh
-npm run dev:renderer       # Vite dev server only (http://localhost:3000)
-npm run electron-start     # Electron only (expects the dev server)
-npm run build              # renderer production build into build/
-npm run lint               # ESLint over src/ and electron/
-uv run python -m eeg2bids  # backend only (127.0.0.1:7301)
-```
-
-Chromium DevTools open automatically in development, and Vite provides hot
-module replacement and renderer source maps.
+See [Launching](docs/development.md#launching) for how Electron owns the
+backend process and how to run the pieces separately.
 
 ### Testing
 
@@ -126,9 +106,9 @@ On headless Linux, run the Electron suite with
 
 - `src/` — the React renderer (Vite root: `index.html` + `src/index.jsx`)
 - `electron/main/` — the Electron main process, split by concern: lifecycle
-  (`index.js`), window creation (`windows.js`), IPC registration (`ipc.js`),
-  credential and settings persistence, backend process ownership
-  (`backend-service.js`), and the external-link allowlist
+  (`index.js`), window creation (`windows.js`), IPC registration and the
+  external-link allowlist (`ipc.js`), credential persistence
+  (`credentials.js`), and backend process ownership (`backend-service.js`)
 - `electron/preload/` — the `window.eeg2bids` context bridge, the only
   renderer/main interface: fixed IPC channels, serializable values, no
   Electron objects exposed to the renderer
@@ -137,10 +117,10 @@ On headless Linux, run the Electron suite with
 
 ### Credential storage
 
-LORIS credentials are encrypted with Electron `safeStorage` and persisted
-under the application `userData` directory (`~/.config/eeg2bids/` on Linux,
-`%APPDATA%\eeg2bids\` on Windows), separate from ordinary settings such as the
-LORIS URL. On Linux, secure encryption
+LORIS credentials (URL, username, and password) are encrypted with Electron
+`safeStorage` and persisted under the application `userData` directory
+(`~/.config/eeg2bids/` on Linux, `%APPDATA%\eeg2bids\` on Windows). On Linux,
+secure encryption
 requires a secret service (GNOME Keyring or KWallet). When only the
 `basic_text` fallback is available, the app logs an explicit warning that
 credentials are obfuscated rather than encrypted; when no backend exists at

@@ -1,14 +1,10 @@
 const {app} = require('electron');
-const {
-  createMainWindow,
-  getMainWindow,
-  isAllowedRendererUrl,
-} = require('./windows');
+const {createMainWindow, RENDERER_URL} = require('./windows');
 const {registerIpcHandlers} = require('./ipc');
 const backendService = require('./backend-service');
 const {initializeLogging} = require('./logging');
 
-// Redirect all user data (settings + encrypted credentials) to an isolated
+// Redirect all user data (logs + encrypted credentials) to an isolated
 // directory when asked. Integration tests point this at a temporary dir so
 // they can never read or modify the real user's credentials. This must run
 // before anything reads app.getPath('userData').
@@ -25,7 +21,7 @@ registerIpcHandlers();
 app.on('web-contents-created', (event, contents) => {
   contents.setWindowOpenHandler(() => ({action: 'deny'}));
   contents.on('will-navigate', (navigation, targetUrl) => {
-    if (!isAllowedRendererUrl(targetUrl)) {
+    if (!targetUrl.startsWith(RENDERER_URL)) {
       navigation.preventDefault();
     }
   });
@@ -73,23 +69,13 @@ app.whenReady().then(() => {
   createMainWindow();
 });
 
-app.on('window-all-closed', () => {
-  app.quit();
-});
-
 // Hold quit until the owned backend process group is terminated, so no
 // python process is ever orphaned.
 app.on('will-quit', (event) => {
-  if (backendService.isRunning()) {
+  if (backendService.getOwnedPid() !== null) {
     console.info('[electron:main] quitting, stopping the backend process');
     event.preventDefault();
     backendService.stop().then(() => app.quit());
-  }
-});
-
-app.on('activate', () => {
-  if (!getMainWindow()) {
-    createMainWindow();
   }
 });
 

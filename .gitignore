@@ -20,7 +20,6 @@ requirements-audit.txt
 # playwright electron test output
 test-results/
 playwright-report/
-.playwright/
 
 # workflow tools
 .agents

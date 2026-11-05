@@ -20,9 +20,10 @@ The installer is written to `dist/electron/`. It includes Electron, the renderer
 and the frozen Python backend; users do not need Node, npm, uv, or Python.
 
 `.github/workflows/package.yml` performs this build on a GitHub-hosted Windows
-runner and uploads the installer and `SHA256SUMS` as workflow artifacts. It does
-not publish releases. The same workflow builds the Linux `.deb`, giving future
-release automation one native build interface to consume.
+runner and uploads the installer and `SHA256SUMS-windows-x64` as workflow
+artifacts. It does not publish releases itself; `release-candidate.yml` calls it
+and publishes the Linux and Windows artifacts as a GitHub prerelease (see
+[Releasing](releasing.md)).
 
 ## Installation lifecycle
 

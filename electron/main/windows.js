@@ -7,9 +7,8 @@ const icon = nativeImage.createFromPath(
     path.join(__dirname, '../../public/logo512.png'),
 );
 
-let mainWindow = null;
-
-// The renderer URL for development or a production build.
+// The renderer URL for development or a production build. Windows may only
+// navigate within it; external sites and arbitrary files must not load.
 const RENDERER_URL = process.env.DEV ?
   'http://localhost:3000/' :
   url.pathToFileURL(path.join(__dirname, '../../build/index.html')).href;
@@ -26,19 +25,10 @@ const webPreferences = {
 };
 
 /**
- * Whether a navigation target is one of our own renderer URLs. Anything
- * else (external sites, arbitrary files) must not load in a window.
- * @param {string} targetUrl - the URL a window is trying to navigate to
- * @return {boolean} true if navigation is allowed
- */
-const isAllowedRendererUrl = (targetUrl) =>
-  targetUrl.startsWith(RENDERER_URL);
-
-/**
  * Create the main window.
  */
 const createMainWindow = () => {
-  mainWindow = new BrowserWindow({
+  const window = new BrowserWindow({
     icon,
     webPreferences,
     width: 1050,
@@ -47,11 +37,11 @@ const createMainWindow = () => {
     minHeight: 880,
     backgroundColor: '#094580',
   });
-  mainWindow.removeMenu();
+  window.removeMenu();
 
-  mainWindow.loadURL(RENDERER_URL).then(() => {
+  window.loadURL(RENDERER_URL).then(() => {
     if (process.env.DEV) {
-      mainWindow.webContents.openDevTools();
+      window.webContents.openDevTools();
     }
   }).catch((error) => {
     console.error(
@@ -61,20 +51,6 @@ const createMainWindow = () => {
           ' Is the Vite dev server running (npm run dev)?' : ''),
     );
   });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
 };
 
-/**
- * Get the main window, if one exists.
- * @return {BrowserWindow|null} the main window or null
- */
-const getMainWindow = () => mainWindow;
-
-module.exports = {
-  createMainWindow,
-  getMainWindow,
-  isAllowedRendererUrl,
-};
+module.exports = {createMainWindow, RENDERER_URL};

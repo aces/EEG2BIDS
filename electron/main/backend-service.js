@@ -36,7 +36,7 @@ let status = {state: 'stopped', error: null};
  * installed production build. In development (and in the Playwright tests,
  * which run unpackaged) we run it through uv against the repo. In a packaged
  * app there is no uv or Python interpreter present, so we spawn the
- * self-contained binary produced by the freeze step (tools/freeze-backend.sh)
+ * self-contained binary produced by the freeze step (npm run freeze:backend)
  * and shipped by electron-builder as an unpacked resource under
  * resources/backend/. See docs/linux-packaging-design.md (issue #170).
  * @return {{command: string, args: string[], cwd: string}} spawn parameters
@@ -72,12 +72,6 @@ const setStatus = (state, error = null) => {
  * @return {object} state and error
  */
 const getStatus = () => status;
-
-/**
- * Whether this process owns a running backend.
- * @return {boolean} true when a child process exists
- */
-const isRunning = () => child !== null;
 
 /**
  * The pid of the owned backend process, which (because the child is spawned
@@ -183,6 +177,7 @@ const start = async () => {
       ...process.env,
       EEG2BIDS_OWNER_PID: String(process.pid),
       EEG2BIDS_BACKEND_PORT: String(BACKEND_PORT),
+      EEG2BIDS_VERSION: app.getVersion(),
     },
   });
   logOutput(child.stdout, 'stdout');
@@ -281,21 +276,19 @@ const stop = () => new Promise((resolve) => {
  * Restart the owned backend: stop the current process (if any) and start a
  * fresh one. Does nothing when the backend is externally managed, since this
  * process does not own it.
- * @return {Promise<object>} {restarted, reason?}
  */
 const restart = async () => {
   if (status.state === 'external') {
     console.info(
         '[backend] restart ignored: the backend is externally managed',
     );
-    return {restarted: false, reason: 'external'};
+    return;
   }
   console.info('[backend] restart requested');
   await stop();
   await start();
-  return {restarted: true};
 };
 
 module.exports = {
-  start, stop, restart, getStatus, isRunning, getOwnedPid, BACKEND_PORT,
+  start, stop, restart, getStatus, getOwnedPid, BACKEND_PORT,
 };
