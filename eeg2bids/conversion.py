@@ -1,52 +1,14 @@
-"""Recording inspection and BIDS conversion orchestration.
+"""Recording inspection and BIDS conversion, independent of Socket.IO."""
 
-These are ordinary backend functions with no Socket.IO or Electron
-dependency, so they can be invoked and tested independently of the transport
-layer. The Socket.IO handlers in ``server.py`` are thin adapters that call
-into this module and forward the returned dict to the renderer.
-
-Every function returns a serializable ``dict``. On failure the dict carries
-an ``error`` key with an actionable message (a string, or a list of strings
-for the multi-validation conversion path); the caller owns transport.
-"""
-
+import re
 from datetime import datetime
 
-from eeg2bids import converter
+from eeg2bids import Modifier, converter
 from eeg2bids.converter import ReadError, WriteError
-from eeg2bids.Modifier import Modifier
-
-
-def _meas_date_str(raw):
-    """Recording start as 'YYYY-MM-DD HH:MM:SS', or None when MNE has none.
-
-    MNE stores ``meas_date`` as a timezone-aware datetime; the renderer
-    reparses this string with ``new Date(...)``, so the wall-clock components
-    are emitted without a timezone suffix to match the prior format.
-    """
-    meas_date = raw.info.get('meas_date')
-    if meas_date is None:
-        return None
-    return meas_date.strftime('%Y-%m-%d %H:%M:%S')
-
-
-def _subject_id(raw):
-    """MNE-provided subject identifier, or 'n/a' when absent."""
-    subject_info = raw.info.get('subject_info') or {}
-    return subject_info.get('his_id') or 'n/a'
 
 
 def inspect_recording(files):
-    """Inspect the selected recording file(s) and summarize their metadata.
-
-    ``files`` is a list of ``{'path': ..., 'name': ...}`` entries describing a
-    single recording (possibly split across several files). Each entry point is
-    opened through MNE's generic ``read_raw`` dispatcher, so format selection
-    and companion-file resolution are delegated to MNE. Returns a dict with the
-    sorted files plus subject identifier and start date (missing optional
-    values as ``n/a`` / empty), or ``{'error': ...}`` when the recording cannot
-    be read or the selection spans more than one recording.
-    """
+    """Summarize the selected file(s) of one recording, or return an error."""
     if not files:
         return {'error': 'No recording file selected.'}
 
@@ -54,10 +16,12 @@ def inspect_recording(files):
     try:
         for file in files:
             raw = converter.read_raw_recording(file['path'])
+            # No timezone suffix: the renderer reparses this with new Date().
+            meas_date = raw.info.get('meas_date')
             recordings.append({
                 'file': file,
                 'raw': raw,
-                'date': _meas_date_str(raw),
+                'date': meas_date and meas_date.strftime('%Y-%m-%d %H:%M:%S'),
             })
 
         if len({frozenset(r['raw'].ch_names) for r in recordings}) > 1:
@@ -66,11 +30,11 @@ def inspect_recording(files):
 
         # sort the recording splits by date (blank dates sort first)
         recordings = sorted(recordings, key=lambda r: r['date'] or '')
-        first = recordings[0]['raw']
+        subject_info = recordings[0]['raw'].info.get('subject_info') or {}
 
         return {
             'files': [r['file'] for r in recordings],
-            'subjectID': _subject_id(first),
+            'subjectID': subject_info.get('his_id') or 'n/a',
             'recordingID': 'n/a',
             'date': recordings[0]['date'] or '',
         }
@@ -80,13 +44,7 @@ def inspect_recording(files):
 
 
 def convert_recording(data):
-    """Convert the selected recording(s) to BIDS and apply post-write edits.
-
-    Validates the request, runs the MNE-BIDS conversion, then applies the
-    dataset, participant, and event modifications. Returns
-    ``{'output_time': ...}`` on success or ``{'error': [...]}`` with one or
-    more actionable messages.
-    """
+    """Convert to BIDS; return ``{'output_time': ...}`` or ``{'error': [...]}``."""
     error_messages = []
     if not data.get('recordingData', {}).get('files'):
         error_messages.append('No recording file(s) to convert.')
@@ -104,18 +62,21 @@ def convert_recording(data):
     if error_messages:
         return {'error': error_messages}
 
-    # The request is owned by the caller. Keep generated output paths and run
-    # basenames in the conversion pipeline rather than writing into that input.
-    request = {**data, 'output_time': datetime.now().strftime(
-        'output-%Y-%m-%d-%Hh%Mm%Ss')}
-
     try:
-        written_runs = converter.Converter(request).write_runs()
-        Modifier(request, written_runs).apply()
+        # Copy rather than mutate the caller's request. BIDS subject labels
+        # are alphanumeric, so drop separators once for every path built.
+        request = {
+            **data,
+            'participantID': re.sub(r'[_\- ]', '', data['participantID']),
+            'output_time': datetime.now().strftime('output-%Y-%m-%d-%Hh%Mm%Ss'),
+        }
+        Modifier.apply(request, converter.write_runs(request))
         return {'output_time': request['output_time']}
     except ReadError as e:
         error_messages.append('Cannot read file - ' + str(e))
     except WriteError as e:
         error_messages.append('Cannot write file - ' + str(e))
+    except Exception as e:
+        error_messages.append(str(e))
 
     return {'error': error_messages}

@@ -5,14 +5,7 @@ Freezes eeg2bids/__main__.py into a self-contained --onedir bundle so the
 Electron app can spawn the backend without uv or a Python interpreter present
 on the end user's machine. See docs/linux-packaging-design.md (issue #170).
 
-Build with the wrapper (recommended), which pins output to dist/eeg2bids-backend:
-
-    tools/freeze-backend.sh
-
-or directly:
-
-    uv run --frozen --group packaging pyinstaller --noconfirm \
-        --distpath dist tools/eeg2bids-backend.spec
+Build with ``npm run freeze:backend`` (output: dist/eeg2bids-backend).
 
 The hidden imports and collect_all calls below exist because these deps are
 loaded dynamically and PyInstaller's static analysis cannot see them:

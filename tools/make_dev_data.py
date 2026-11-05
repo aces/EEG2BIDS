@@ -152,12 +152,6 @@ _MAT_FIXED_DESCRIPTION = (
 ).ljust(_MAT_HEADER_TEXT_LEN, b' ')
 
 
-def _normalize_mat_header(mat_path):
-    """Replace the .mat header's timestamped description with a fixed string."""
-    with open(mat_path, 'r+b') as fd:
-        fd.write(_MAT_FIXED_DESCRIPTION)
-
-
 def _write_embedded_set(raw, set_path):
     """Write an EEGLAB .set with the data embedded in the .set file itself.
 
@@ -248,7 +242,8 @@ def write_test_fixtures(fixtures_dir):
     # Strip the timestamped .mat header so the committed .set bytes are stable.
     for set_name in ('eeg_embedded.set', 'eeg_events.set', 'eeg_split.set',
                      'eeg_epoched.set'):
-        _normalize_mat_header(fixtures_dir / set_name)
+        with open(fixtures_dir / set_name, 'r+b') as fd:
+            fd.write(_MAT_FIXED_DESCRIPTION)
 
     _write_metadata_pair(fixtures_dir, 'EEG2BIDS Test Fixture',
                          'Synthetic fixture (not real data).',

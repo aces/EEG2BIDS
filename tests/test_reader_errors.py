@@ -49,18 +49,12 @@ def test_convert_reports_missing_source_at_write_seam(make_convert_data):
     ]
 
 
-def test_convert_rejects_unsupported_output_format(fixtures_dir):
-    data = {
-        'recordingData': {'files': [
-            {'path': str(fixtures_dir / 'eeg_continuous.edf'), 'name': 'e.edf'},
-        ]},
-        'bids_directory': str(fixtures_dir),  # never written to: rejected first
-        'session': '01',
-        'outputFormat': 'fif',
-    }
-    result = convert_recording(data)
-    assert 'error' in result
-    assert any('Unsupported output format' in m for m in result['error'])
+def test_convert_rejects_unsupported_output_format(make_convert_data):
+    result = convert_recording(
+        make_convert_data('eeg_continuous.edf', output_format='fif'))
+    assert result == {'error': [
+        "Unsupported output format 'fif'. Choose Auto, EDF, BrainVision, "
+        'or EEGLAB.']}
 
 
 def test_convert_reports_all_missing_required_fields():

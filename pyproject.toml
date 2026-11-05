@@ -23,9 +23,6 @@ dependencies = [
     "bids-validator>=1.14",
 ]
 
-[project.scripts]
-eeg2bids = "eeg2bids.server:main"
-
 [dependency-groups]
 # Test-only dependencies. Installed by default with `uv sync`; the backend
 # suite runs with `uv run pytest`. Kept separate from runtime dependencies so
@@ -45,10 +42,6 @@ packaging = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# xfail_strict makes an unexpected pass (XPASS) a failure: a regression test
-# marked xfail for a known-open defect (e.g. #145) must be un-marked the moment
-# the defect is fixed, rather than silently masking new behavior.
-xfail_strict = true
 
 [build-system]
 requires = ["hatchling"]

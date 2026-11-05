@@ -34,5 +34,4 @@ def read_parameter_file(file_path, modality):
         'metadata': metadata,
         'prepopulation': prepopulation,
         'ignored_keys': empty_values + sorted(unsupported - set(empty_values)),
-        'source_file': str(file_path),
     }

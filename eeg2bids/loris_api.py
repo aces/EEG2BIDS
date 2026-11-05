@@ -52,16 +52,13 @@ class LorisAPI:
         return self._request('GET', 'projects').json().get('Projects')
 
     def get_subprojects(self, project):
-        return self.get_project(project).get('Subprojects')
+        return self._request('GET', 'projects/' + quote(project)).json().get('Subprojects')
 
     def get_visits(self, subproject):
         return self._request('GET', 'subprojects/' + quote(subproject)).json().get('Visits')
 
     def get_sites(self):
         return self._request('GET', 'sites').json().get('Sites')
-
-    def get_project(self, project):
-        return self._request('GET', 'projects/' + quote(project)).json()
 
     def start_next_stage(self, candid, visit, site, subproject, project, date):
         self._request(

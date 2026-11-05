@@ -2,9 +2,9 @@
 
 Problem (freeze-only; dev and the pytest suite are unaffected):
 MNE records the arguments a ``read_raw_*`` call was made with by walking the
-call stack in ``mne.io.base._get_argvalues`` and capturing the reader frame's
-locals — but ONLY if that frame's ``co_filename`` matches the glob
-``*/mne/io/*``. In a PyInstaller bundle, frozen modules carry bundle-relative
+call stack in ``mne.utils.misc._get_argvalues`` (imported into ``mne.io.base``)
+and capturing the reader frame's locals — but ONLY if that frame's
+``co_filename`` matches the glob ``*/mne/io/*``. In a PyInstaller bundle, frozen modules carry bundle-relative
 code filenames like ``mne/io/edf/edf.py`` (no leading path separator), which
 fail that glob, so ``_get_argvalues`` returns ``None`` and every file-backed
 Raw ends up with ``raw._init_kwargs = None``.
@@ -16,7 +16,7 @@ EEG2BIDS's primary "preserve the source EDF byte-for-byte" conversion, so the
 frozen backend cannot convert EDF without this fix. See #170 and
 docs/linux-packaging-design.md.
 
-Fix: replace ``mne.io.base._get_argvalues`` with MNE's own implementation, with
+Fix: rebind ``mne.io.base._get_argvalues`` to MNE's own implementation, with
 the filename test loosened to match ``mne/io/`` anywhere in a normalized path
 (covers both the absolute dev path and the bundle-relative frozen path, and
 still returns ``None`` for non-io callers like ``<decorator-gen-N>`` exactly as
@@ -29,7 +29,7 @@ import inspect
 def _get_argvalues():
     """Return the read_raw_* arguments (except self), tolerant of frozen paths.
 
-    Mirrors mne.io.base._get_argvalues; only the co_filename gate is relaxed.
+    Mirrors mne.utils.misc._get_argvalues; only the co_filename gate is relaxed.
     Returns the reader's arguments, or None for non-io callers.
     """
     frame = inspect.currentframe()

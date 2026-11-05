@@ -6,12 +6,12 @@ from mne_bids import (BIDSPath, get_anonymization_daysback,
                       write_raw_bids)
 
 
-class ReadError(PermissionError):
-    """Raised when a PermissionError is thrown while reading a file"""
+class ReadError(Exception):
+    pass
 
 
-class WriteError(PermissionError):
-    """Raised when a PermissionError is thrown while writing a file"""
+class WriteError(Exception):
+    pass
 
 
 def read_raw_recording(path):
@@ -42,7 +42,7 @@ def infer_channel_type(ch_name):
     """Best-effort channel type from a channel name, or None when unknown.
 
     Used only as a fallback for channels MNE left as the generic ``eeg``
-    default; MNE-provided types are preferred (see ``Converter.to_bids``).
+    default; MNE-provided types are preferred (see ``to_bids``).
     """
     name = ch_name.lower()
     if 'eeg' in name:
@@ -197,149 +197,86 @@ metadata = {
 }
 
 
-# Converter - Creates the BIDS output by edf file.
-class Converter:
-    @staticmethod
-    def _anonymization_daysback(eeg_runs, participant_id):
-        """Choose one valid, deterministic date shift for all requested runs."""
-        raws = [read_raw_recording(run['recordingFile']) for run in eeg_runs]
+def write_runs(data):
+    """Write each run with MNE-BIDS; return basenames paired with event files."""
+    daysback = None
+    if data.get('anonymize', False):
+        raws = [read_raw_recording(run['recordingFile'])
+                for run in data['eegRuns']]
         minimum, maximum = get_anonymization_daysback(raws, verbose=False)
-        digest = hashlib.sha256(participant_id.encode('utf-8')).digest()
-        return minimum + int.from_bytes(digest[:8], 'big') % (maximum - minimum + 1)
+        digest = hashlib.sha256(data['participantID'].encode('utf-8')).digest()
+        daysback = minimum + int.from_bytes(digest[:8], 'big') % (
+            maximum - minimum + 1)
 
-    def __init__(self, data):
-        self.data = data
+    multi_run = len(data['eegRuns']) > 1
+    return [{
+        'recordingBIDSBasename': to_bids(
+            data, eeg_run, (index + 1) if multi_run else None, daysback),
+        'eventFile': eeg_run['eventFile'],
+    } for index, eeg_run in enumerate(data['eegRuns'])]
 
-    def write_runs(self):
-        """Write source runs and return BIDS basenames paired with event files."""
-        data = self.data
-        modality = 'eeg' if data['modality'] == 'eeg' else 'seeg'
 
-        anonymize = data.get('anonymize', False)
-        daysback = None
-        if anonymize:
-            daysback = self._anonymization_daysback(
-                data['eegRuns'], data['participantID'])
+def to_bids(data, eeg_run, run, daysback):
+    source_path = eeg_run['recordingFile']
+    if not os.path.isfile(source_path):
+        raise ReadError(f'Recording file not found: {source_path}')
 
-        written_runs = []
-        for index, eeg_run in enumerate(data['eegRuns']):
-            basename = self.to_bids(
-                eeg_run=eeg_run,
-                ch_type=modality,
-                task=data['taskName'],
-                bids_directory=data['bids_directory'],
-                subject_id=data['participantID'],
-                session=data['session'],
-                run=((index + 1) if len(data['recordingData']['files']) > 1 else None),
-                output_time=data['output_time'],
-                line_freq=data['line_freq'],
-                output_format=data.get('outputFormat', 'auto'),
-                anonymize=anonymize,
-                daysback=daysback
-            )
-            written_runs.append({
-                'recordingBIDSBasename': basename,
-                'eventFile': eeg_run['eventFile'],
-            })
-        return written_runs
+    raw = read_raw_recording(source_path)
+    ch_type = 'eeg' if data['modality'] == 'eeg' else 'seeg'
 
-    def to_bids(self,
-                eeg_run,
-                bids_directory,
-                subject_id,
-                session,
-                output_time,
-                task,
-                run,
-                ch_type,
-                line_freq,
-                output_format,
-                anonymize,
-                daysback):
-        source_path = eeg_run['recordingFile']
+    # Preserve the channel types MNE resolved from the source. Only channels
+    # MNE left as the generic 'eeg' default fall back to name-based inference
+    # and, failing that, the user-selected modality.
+    ch_types = {}
+    for ch, mne_type in zip(raw.ch_names, raw.get_channel_types()):
+        if mne_type == 'eeg':
+            ch_types[ch] = infer_channel_type(ch) or ch_type
+    if ch_types:
+        raw.set_channel_types(ch_types)
 
-        if not os.path.isfile(source_path):
-            raise ReadError(f'Recording file not found: {source_path}')
+    # Drop a montage that carries no real electrode positions before
+    # writing. An EEGLAB .set always stores a channel-location block, so
+    # MNE reports a montage even for a recording that was never
+    # digitized -- the positions then come back as all-NaN. mne-bids
+    # will not write the BIDS electrodes sidecar for such a montage: it
+    # requires fiducials (nasion + left/right pre-auricular points) that
+    # a positionless recording does not have, and raises instead of
+    # writing (an EDF, which has no location block, never hits this).
+    # EEG2BIDS has no electrode-digitization step, so there are no real
+    # coordinates to preserve here; clearing the empty montage lets the
+    # SET convert. A montage with real positions is left untouched.
+    if raw.get_montage() is not None:
+        positions = np.array([ch['loc'][:3] for ch in raw.info['chs']])
+        if np.all(np.isnan(positions)):
+            raw.set_montage(None)
 
-        # Reading is delegated to MNE's generic dispatcher, which selects
-        # the format reader and resolves companion files from the file
-        # itself.
-        raw = read_raw_recording(source_path)
+    line_freq = data['line_freq']
+    raw.info['line_freq'] = int(line_freq) if line_freq.isnumeric() else None
 
-        # Preserve the channel types MNE resolved from the source. Only
-        # channels MNE left as the generic 'eeg' default fall back to
-        # name-based inference and, failing that, the user-selected
-        # modality (ch_type).
-        ch_types = {}
-        for ch, mne_type in zip(raw.ch_names, raw.get_channel_types()):
-            if mne_type != 'eeg':
-                continue
-            inferred = infer_channel_type(ch)
-            ch_types[ch] = inferred if inferred is not None else ch_type
+    try:
+        # Name the datatype explicitly; MNE-BIDS inference is ambiguous when
+        # the recording has several data-class channel types (e.g. eeg + emg).
+        bids_path = BIDSPath(
+            subject=data['participantID'], session=data['session'],
+            task=data['taskName'], run=run, acquisition=ch_type,
+            datatype='eeg' if ch_type == 'eeg' else 'ieeg',
+            root=os.path.join(data['bids_directory'], data['output_time']))
 
-        if ch_types:
-            raw.set_channel_types(ch_types)
+        write_kwargs = {'overwrite': False, 'verbose': False}
+        write_kwargs.update(resolve_write_kwargs(
+            raw, source_path, data.get('outputFormat', 'auto')))
+        if daysback is not None:
+            write_kwargs['anonymize'] = {'daysback': daysback, 'keep_his': False}
+        written_path = write_raw_bids(raw, bids_path, **write_kwargs)
 
-        # Drop a montage that carries no real electrode positions before
-        # writing. An EEGLAB .set always stores a channel-location block, so
-        # MNE reports a montage even for a recording that was never
-        # digitized -- the positions then come back as all-NaN. mne-bids
-        # will not write the BIDS electrodes sidecar for such a montage: it
-        # requires fiducials (nasion + left/right pre-auricular points) that
-        # a positionless recording does not have, and raises instead of
-        # writing (an EDF, which has no location block, never hits this).
-        # EEG2BIDS has no electrode-digitization step, so there are no real
-        # coordinates to preserve here; clearing the empty montage lets the
-        # SET convert. A montage with real positions is left untouched.
-        montage = raw.get_montage()
-        if montage is not None:
-            positions = np.array([ch['loc'][:3] for ch in raw.info['chs']])
-            if np.all(np.isnan(positions)):
-                raw.set_montage(None)
+        # MNE anonymizes the common metadata model. EDF additionally
+        # has a standardized recording-identification field that MNE
+        # does not expose, so clear it after serialization.
+        if daysback is not None and written_path.extension == '.edf':
+            with open(written_path.fpath, 'r+b') as f:
+                f.seek(8)
+                f.write(b'X X X X'.ljust(80) * 2)
 
-        subject = subject_id.replace('_', '').replace('-', '').replace(' ', '')
-
-        raw.info['line_freq'] = int(line_freq) if line_freq.isnumeric() else None
-
-        try:
-            bids_root = os.path.join(bids_directory, output_time)
-            os.makedirs(bids_root, exist_ok=True)
-
-            # Name the datatype explicitly (eeg/ieeg) rather than letting
-            # MNE-BIDS infer it; inference is ambiguous when the recording
-            # carries multiple data-class channel types (e.g. eeg + emg).
-            datatype = 'eeg' if ch_type == 'eeg' else 'ieeg'
-
-            bids_basename = BIDSPath(subject=subject, session=session, task=task, run=run,
-                                     acquisition=ch_type, datatype=datatype, root=bids_root)
-
-            # write_raw_bids returns the BIDSPath of the file it actually
-            # wrote (with datatype/suffix/extension resolved). The output
-            # format (preserve source vs. convert) is resolved from the
-            # user's selection; a preserved lazily-read source is copied
-            # file-as-is.
-            write_kwargs = {'overwrite': False, 'verbose': False}
-            write_kwargs.update(
-                resolve_write_kwargs(raw, source_path, output_format))
-            if anonymize:
-                write_kwargs['anonymize'] = {
-                    'daysback': daysback,
-                    'keep_his': False,
-                }
-            written_path = write_raw_bids(
-                raw, bids_basename, **write_kwargs)
-
-            # MNE anonymizes the common metadata model. EDF additionally
-            # has a standardized recording-identification field that MNE
-            # does not expose, so clear it after serialization.
-            if anonymize and written_path.extension == '.edf':
-                with open(written_path.fpath, 'r+b') as f:
-                    f.seek(8)
-                    f.write(b'X X X X'.ljust(80) * 2)
-
-            print('finished')
-
-            return bids_basename.basename
-
-        except PermissionError as ex:
-            raise WriteError(ex) from ex
+        return bids_path.basename
+    except PermissionError as ex:
+        raise WriteError(ex) from ex

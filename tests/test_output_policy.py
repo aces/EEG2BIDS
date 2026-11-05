@@ -1,11 +1,4 @@
-"""Output-format policy helpers (no writing).
-
-Covers which output formats are accepted, the source-preserving default, and
-the ``write_raw_bids`` kwargs that implement preserve-vs-convert. ``auto``
-preserves the source format; a lazily-read source (EDF, and -- with the current
-MNE -- EEGLAB SET) is copied file-as-is (no extra kwargs), while an explicit
-format that differs from the source loads the data and re-writes it.
-"""
+"""Output-format policy helpers (no writing)."""
 import pytest
 
 from eeg2bids import converter
@@ -38,37 +31,15 @@ def test_default_output_format(source, expected):
     assert converter.default_output_format(source) == expected
 
 
-def _kwargs(fixtures_dir, name, fmt):
-    # resolve_write_kwargs may call load_data(), which mutates the Raw; use a
-    # fresh read for each resolution.
-    raw = converter.read_raw_recording(str(fixtures_dir / name))
-    return converter.resolve_write_kwargs(raw, str(fixtures_dir / name), fmt)
-
-
-def test_edf_auto_copies_as_is(fixtures_dir):
-    assert _kwargs(fixtures_dir, 'eeg_continuous.edf', 'auto') == {}
-
-
-def test_edf_explicit_edf_copies_as_is(fixtures_dir):
-    # Explicit choice already matches the source format -> copy, no conversion.
-    assert _kwargs(fixtures_dir, 'eeg_continuous.edf', 'edf') == {}
-
-
-def test_edf_to_eeglab_converts(fixtures_dir):
-    assert _kwargs(fixtures_dir, 'eeg_continuous.edf', 'eeglab') == {
-        'allow_preload': True, 'format': 'EEGLAB'}
-
-
-def test_set_auto_copies_as_is(fixtures_dir):
-    # The current MNE reads EEGLAB lazily, so Auto preserves the SET by copying
-    # it file-as-is rather than re-encoding.
-    assert _kwargs(fixtures_dir, 'eeg_embedded.set', 'auto') == {}
-
-
-def test_set_explicit_eeglab_copies_as_is(fixtures_dir):
-    assert _kwargs(fixtures_dir, 'eeg_embedded.set', 'eeglab') == {}
-
-
-def test_set_to_edf_converts(fixtures_dir):
-    assert _kwargs(fixtures_dir, 'eeg_embedded.set', 'edf') == {
-        'allow_preload': True, 'format': 'EDF'}
+@pytest.mark.parametrize('name, fmt, expected', [
+    ('eeg_continuous.edf', 'auto', {}),
+    ('eeg_continuous.edf', 'edf', {}),  # already the source format: copy
+    ('eeg_continuous.edf', 'eeglab', {'allow_preload': True, 'format': 'EEGLAB'}),
+    ('eeg_embedded.set', 'auto', {}),  # MNE reads EEGLAB lazily: copy
+    ('eeg_embedded.set', 'eeglab', {}),
+    ('eeg_embedded.set', 'edf', {'allow_preload': True, 'format': 'EDF'}),
+])
+def test_resolve_write_kwargs(fixtures_dir, name, fmt, expected):
+    path = str(fixtures_dir / name)
+    raw = converter.read_raw_recording(path)
+    assert converter.resolve_write_kwargs(raw, path, fmt) == expected

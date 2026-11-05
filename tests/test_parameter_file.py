@@ -29,7 +29,6 @@ def test_nested_parameter_file_separates_bids_and_prepopulation(tmp_path):
         'LineFrequency': 60,
     }
     assert set(result['ignored_keys']) == {'TaskDescription', 'NotABidsField'}
-    assert result['source_file'] == str(path)
 
 
 @pytest.mark.parametrize('parameters', [

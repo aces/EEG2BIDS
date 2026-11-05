@@ -1,9 +1,4 @@
-"""Shared pytest fixtures for the EEG2BIDS backend suite.
-
-Committed source fixtures live under ``tests/fixtures/`` (small, synthetic,
-de-identified inputs; see that directory's README for provenance). Generated
-BIDS output always goes to a pytest ``tmp_path`` and is never committed.
-"""
+"""Shared fixtures. Source inputs live in ``tests/fixtures/`` (see its README)."""
 import json
 import os
 import subprocess
@@ -16,29 +11,18 @@ from eeg2bids.conversion import convert_recording
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-# The current official dataset-level BIDS Validator is the Deno CLI, pinned here
-# for reproducibility. It is a required part of the suite: the validator tests
-# fail (not skip) when it cannot be run, so a missing validator is a visible
-# failure rather than silently-skipped coverage.
+# Official BIDS Validator CLI, pinned. Required: tests fail, not skip, without it.
 BIDS_VALIDATOR_SPEC = "jsr:@bids/validator@3.0.0"
 
 
 @pytest.fixture(scope="session")
 def fixtures_dir():
-    """Absolute path to the committed source-fixture directory."""
     return FIXTURES_DIR
 
 
 @pytest.fixture
 def make_convert_data(fixtures_dir, tmp_path):
-    """Factory for a complete ``convert_recording`` request payload.
-
-    Fills every field the pipeline (Converter + Modifier) reads with valid
-    defaults for a single-run recording, writing output under the test's
-    ``tmp_path``. Pass ``modality`` ('eeg'/'ieeg'), ``output_format``, or any
-    keyword override; pass ``eeg_runs`` to supply custom run entries used by
-    the events tests.
-    """
+    """Factory for a valid single-run request; keyword args override fields."""
     def _make(recording, *, modality="eeg", output_format="auto",
               eeg_runs=None, event_file="", **overrides):
         path = str(fixtures_dir / recording)
@@ -74,11 +58,7 @@ def make_convert_data(fixtures_dir, tmp_path):
 
 @pytest.fixture
 def run_conversion():
-    """Run ``convert_recording`` and return ``(result, output_root)``.
-
-    ``output_root`` is the ``output-<timestamp>`` BIDS dataset directory on
-    success, or ``None`` when conversion returned an error.
-    """
+    """Run ``convert_recording``; return ``(result, output_root or None)``."""
     def _run(data):
         result = convert_recording(data)
         root = None
@@ -89,7 +69,6 @@ def run_conversion():
 
 
 def _find_deno():
-    """Locate the deno executable, on PATH or in the default install dir."""
     extra = [os.path.join(base, "bin") for base in
              (os.environ.get("DENO_INSTALL"), os.path.expanduser("~/.deno"))
              if base]
@@ -98,12 +77,7 @@ def _find_deno():
 
 @pytest.fixture(scope="session")
 def bids_validator():
-    """Return a callable that runs the official BIDS Validator on a dataset.
-
-    The callable returns the list of error-severity issues (empty when the
-    dataset is valid; warnings are ignored). Required: fails with an actionable
-    message when deno is unavailable rather than skipping.
-    """
+    """Callable returning a dataset's error-severity validator issues."""
     deno = _find_deno()
     if deno is None:
         pytest.fail(

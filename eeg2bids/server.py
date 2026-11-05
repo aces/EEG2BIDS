@@ -17,9 +17,7 @@ from eeg2bids.runtime.owner_process import watch_owner_process
 HOST = '127.0.0.1'
 PORT = int(os.environ.get('EEG2BIDS_BACKEND_PORT') or 7301)
 
-# Create socket listener. The threading async mode keeps the event handlers
-# synchronous (they perform blocking file IO and BIDS conversion) and avoids
-# the eventlet green-thread runtime that the backend previously depended on.
+# Threading mode keeps handlers synchronous; they do blocking file IO.
 sio = socketio.Server(async_mode='threading', cors_allowed_origins='*')
 app = socketio.WSGIApp(sio)
 
@@ -44,9 +42,6 @@ def tarfile_bids(sid, bids_directory):
 
 @sio.event
 def get_participant_data(sid, data):
-    if not data.get('candID'):
-        return
-
     candidate_id = data['candID']
     candidate = loris_api.get_candidate(candidate_id)
     sio.emit('participant_data', {
@@ -59,10 +54,6 @@ def get_participant_data(sid, data):
 def set_loris_credentials(sid, data):
     # Never print the credentials payload: it contains the LORIS password
     # and this output is forwarded into the development logs.
-    if 'lorisURL' not in data:
-        print('set_loris_credentials: lorisURL missing from credentials payload')
-        return
-
     loris_api.url = data['lorisURL'].removesuffix('/') + '/api/v0.0.4-dev/'
     loris_api.username = data['lorisUsername']
     loris_api.password = data['lorisPassword']
@@ -72,10 +63,7 @@ def set_loris_credentials(sid, data):
         sio.emit('loris_login_response', {'error': resp.get('error')})
         return
 
-    sio.emit('loris_login_response', {
-        'success': 200,
-        'lorisUsername': loris_api.username
-    })
+    sio.emit('loris_login_response', {'lorisUsername': loris_api.username})
     # Login succeeded, but a later metadata request could still fail; that
     # must not raise out of the handler and leave the renderer waiting.
     try:
@@ -116,23 +104,18 @@ def get_recording_data(sid, data):
 @sio.event
 def get_bids_metadata(sid, data):
     if not data.get('file_path'):
-        msg = 'No metadata file selected.'
-        print(msg)
-        response = {'error': msg}
+        response = {'error': 'No metadata file selected.'}
     elif data.get('modality') not in ('ieeg', 'eeg'):
-        msg = 'No valid modality found.'
-        print(msg)
-        response = {'error': msg}
+        response = {'error': 'No valid modality found.'}
     else:
         try:
             response = read_parameter_file(data['file_path'], data['modality'])
         except (ValueError, TypeError) as e:
-            print(e)
             response = {'error': f'Metadata file format is not valid: {e}'}
         except OSError:
-            msg = 'Could not read the metadata file.'
-            print(msg)
-            response = {'error': msg}
+            response = {'error': 'Could not read the metadata file.'}
+    if 'error' in response:
+        print(response['error'])
 
     # Echo the request identity even on errors. The renderer may select a
     # different file or modality before this blocking read completes.
@@ -143,21 +126,12 @@ def get_bids_metadata(sid, data):
 
 @sio.event
 def recording_to_bids(sid, data):
-    # data = { recordingData: {files: [{path, name}]}, eegRuns: [], modality: '',
-    # bids_directory: '', session: '', participantID: '',
-    # taskName: '', line_freq: '', site_id: '', project_id: '',
-    # sub_project_id: '', ... } (see beginBidsCreation in Configuration.jsx)
-    response = conversion.convert_recording(data)
-    sio.emit('bids', response)
+    sio.emit('bids', conversion.convert_recording(data))
 
 
 @sio.event
 def validate_bids(sid, bids_directory):
-    if not bids_directory:
-        response = {'error': ['The BIDS output directory is missing.']}
-    else:
-        response = BIDS.validate(bids_directory)
-    sio.emit('response', response)
+    sio.emit('response', BIDS.validate(bids_directory))
 
 
 @sio.event

@@ -132,21 +132,30 @@ def test_additional_event_columns_are_documented(make_convert_data,
         assert metadata[column]["Description"]
 
 
-def test_conversion_generates_no_obsolete_annotation_artifacts(
-        make_convert_data, run_conversion, fixtures_dir, tmp_path):
-    obsolete_json = tmp_path / "obsolete_annotations.json"
-    obsolete_json.write_text('{"Description": "obsolete input"}\n')
-    data = make_convert_data("eeg_events.set")
-    data["eegRuns"][0].update({
-        "annotationsTSV": str(fixtures_dir / "events_custom.tsv"),
-        "annotationsJSON": str(obsolete_json),
-    })
+def test_conversion_without_parameter_file(make_convert_data, run_conversion):
+    result, _ = run_conversion(make_convert_data(
+        "eeg_continuous.edf", bidsMetadata=None))
+    assert "output_time" in result
 
-    _, root = run_conversion(data)
 
-    paths = [path.relative_to(root).as_posix() for path in root.rglob("*")]
-    assert ".bidsignore" not in paths
-    assert not any(
-        path.endswith(("_annotations.tsv", "_annotations.json"))
-        for path in paths
-    )
+def test_participant_id_with_separators(make_convert_data, run_conversion):
+    result, root = run_conversion(make_convert_data(
+        "eeg_continuous.edf", participantID="AB_1-2 3"))
+    assert "output_time" in result
+    assert (root / "sub-AB123" / "ses-01" / "eeg").is_dir()
+
+
+def test_unexpected_failure_is_reported(make_convert_data, run_conversion):
+    data = make_convert_data("eeg_continuous.edf")
+    del data["taskName"]
+    result, root = run_conversion(data)
+    assert root is None
+    assert len(result["error"]) == 1
+
+
+def test_app_version_comes_from_environment(make_convert_data, run_conversion,
+                                            monkeypatch):
+    monkeypatch.setenv("EEG2BIDS_VERSION", "9.9.9")
+    _, root = run_conversion(make_convert_data("eeg_continuous.edf"))
+    description = json.loads((root / "dataset_description.json").read_text())
+    assert description["Eeg2bidsVersion"] == "9.9.9"

@@ -45,7 +45,7 @@ def test_inspect_no_files_errors():
     assert inspect_recording(None) == {'error': 'No recording file selected.'}
 
 
-def test_inspect_mismatched_files_are_one_recording(fixtures_dir):
+def test_inspect_rejects_files_from_different_recordings(fixtures_dir):
     # Two files with different channel sets are not splits of one recording.
     result = inspect_recording([
         _entry(fixtures_dir, 'eeg_continuous.edf'),
