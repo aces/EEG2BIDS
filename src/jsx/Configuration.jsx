@@ -8,6 +8,7 @@ import {buildConversionReview} from './configuration/conversionReview';
 import {formValues} from './configuration/prepopulation';
 import {initialState} from './configuration/initialState';
 import ConfigurationForm from './configuration/ConfigurationForm';
+import {ActiveBatch, BatchPlan} from './configuration/batch';
 import {recordingDateFormat} from './configuration/recordingDateFormat';
 import {TextInput} from './elements/inputs';
 import {SocketContext, useSocketStatus} from './socket.io';
@@ -367,15 +368,27 @@ const Configuration = (props) => {
   };
 
   if (props.appMode === 'Configuration') {
-    return <ConfigurationForm
-      form={form}
-      onUserInput={onUserInput}
-      reset={reset}
-      isAuthenticated={isAuthenticated}
-      login={login}
-      authCredentialsVisible={authCredentialsVisible}
-      setAuthCredentialsVisible={setAuthCredentialsVisible}
-    />;
+    return <>
+      <ActiveBatch batch={props.batch} setBatch={props.setBatch}/>
+      <ConfigurationForm
+        form={form}
+        onUserInput={onUserInput}
+        reset={reset}
+        isAuthenticated={isAuthenticated}
+        login={login}
+        authCredentialsVisible={authCredentialsVisible}
+        setAuthCredentialsVisible={setAuthCredentialsVisible}
+      />
+    </>;
+  } else if (props.appMode === 'Converter' && props.batch) {
+    return (
+      <>
+        <span className='header'>
+          Recording to BIDS
+        </span>
+        <BatchPlan batch={props.batch} form={form}/>
+      </>
+    );
   } else if (props.appMode === 'Converter') {
     return (
       <>

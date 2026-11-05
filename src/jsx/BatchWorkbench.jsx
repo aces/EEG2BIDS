@@ -626,10 +626,11 @@ NeedsAttentionPanel.propTypes = {
  * @param {?object} props.handoff - last save/handoff status {kind, message}
  * @param {boolean} props.busy - whether a save/handoff is in progress
  * @param {function} props.onSave - save-batch-file handler
+ * @param {function} props.onLoad - load-into-Configuration handler
  * @return {JSX.Element}
  */
 const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
-  onSave}) => {
+  onSave, onLoad}) => {
   const included = recordings.filter((row) => !row.excluded);
   const excludedCount = recordings.length - included.length;
   const readyCount = included.filter((row) => row.ready).length;
@@ -666,7 +667,7 @@ const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
       {empty ? (
         <p className='bw-empty'>
           Nothing to review yet. Add recordings and assign them, then return
-          here to save the batch.
+          here to save the batch or load it into Configuration.
         </p>
       ) : problems.length === 0 ? (
         <p className='bw-review-ok'>
@@ -692,11 +693,19 @@ const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
       <div className='bw-handoff-actions'>
         <button
           type='button'
-          className='bw-btn bw-btn-primary'
+          className='bw-btn'
           disabled={empty || busy}
           onClick={onSave}
         >
           Save batch file
+        </button>
+        <button
+          type='button'
+          className='bw-btn bw-btn-primary'
+          disabled={empty || busy}
+          onClick={onLoad}
+        >
+          Load into Configuration
         </button>
       </div>
 
@@ -719,6 +728,7 @@ ReviewPanel.propTypes = {
   handoff: PropTypes.object,
   busy: PropTypes.bool,
   onSave: PropTypes.func,
+  onLoad: PropTypes.func,
 };
 
 /**
@@ -749,9 +759,11 @@ const addAndPrefill = (manifest, files) => {
  * stay correctable. Participants are reviewed on their own surface — renamed
  * (propagating to every linked recording), given demographics, traced to their
  * recordings, and checked for near-duplicate ids. The versioned manifest can be
- * saved to a file and reopened here later.
+ * saved to a file and reopened here later, or loaded into Configuration.
  * @param {object} props
  * @param {boolean} props.visible - whether this view is active
+ * @param {function} props.onLoadIntoConfiguration - receives the serialized
+ *   manifest when the user hands the batch to Configuration
  * @return {JSX.Element}
  */
 const BatchWorkbench = (props) => {
@@ -889,6 +901,17 @@ const BatchWorkbench = (props) => {
     } finally {
       setHandoffBusy(false);
     }
+  };
+
+  /**
+   * onLoadIntoConfiguration - hand the batch to Configuration in memory.
+   * It is the same serialized document a save would write, so a handed-off
+   * batch and a reopened file are indistinguishable downstream.
+   */
+  const onLoadIntoConfiguration = async () => {
+    const paths = manifest.recordings.map((row) => row.sourceFile);
+    const signatures = await window.eeg2bids.statPaths(paths);
+    props.onLoadIntoConfiguration(serializeManifest(manifest, {signatures}));
   };
 
   /**
@@ -1053,6 +1076,7 @@ const BatchWorkbench = (props) => {
           handoff={handoff}
           busy={handoffBusy}
           onSave={onSaveBatchFile}
+          onLoad={onLoadIntoConfiguration}
         />
       ) : section === 'participants' ? (
         <ParticipantsPanel
@@ -1093,6 +1117,7 @@ const BatchWorkbench = (props) => {
 };
 BatchWorkbench.propTypes = {
   visible: PropTypes.bool,
+  onLoadIntoConfiguration: PropTypes.func,
 };
 
 export default BatchWorkbench;

@@ -33,6 +33,9 @@ const TABS = [
 
 const App = () => {
   const [appMode, setAppMode] = useState('SplashScreen');
+  // The active batch: {document, filePath?}, where document is the serialized
+  // manifest (see batchFile.js). Set by the workbench or a file open.
+  const [batch, setBatch] = useState(null);
   const task = useRef({});
 
   useEffect(() => {
@@ -64,8 +67,14 @@ const App = () => {
         />
         <SplashScreen visible={appMode === 'SplashScreen'}/>
         <Welcome visible={appMode === 'Welcome'}/>
-        <Configuration appMode={appMode}/>
-        <BatchWorkbench visible={appMode === 'BatchWorkbench'}/>
+        <Configuration appMode={appMode} batch={batch} setBatch={setBatch}/>
+        <BatchWorkbench
+          visible={appMode === 'BatchWorkbench'}
+          onLoadIntoConfiguration={(document) => {
+            setBatch({document});
+            setAppMode('Configuration');
+          }}
+        />
         <Validator visible={appMode === 'Validator'}/>
         <Tooltip anchorSelect='[data-tooltip-content]'/>
       </AppContext.Provider>

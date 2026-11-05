@@ -87,6 +87,14 @@ describe('proposedDestination', () => {
     expect(dest.extension).toBe('.vhdr');
   });
 
+  it('uses the extension of an explicitly chosen output format', () => {
+    const dest = proposedDestination(
+        {participant: '01', task: 'rest', session: '', run: '',
+          sourceFile: '/raw/rest.edf', format: 'EDF'},
+        {modality: 'eeg', outputFormat: 'brainvision'});
+    expect(dest.path).toBe('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.vhdr');
+  });
+
   it('falls back to the default modality for an unknown modality', () => {
     const dest = proposedDestination(
         {participant: '01', task: 'rest', session: '', run: '',

@@ -80,6 +80,14 @@ const FORMAT_EXTENSION = {
   FIF: '.fif',
 };
 
+// An explicitly chosen output format (see converter.py _OUTPUT_FORMATS) fixes
+// the written extension regardless of the source format.
+const OUTPUT_FORMAT_EXTENSION = {
+  edf: '.edf',
+  brainvision: '.vhdr',
+  eeglab: '.set',
+};
+
 /**
  * toPosix - normalize path separators to forward slashes for comparison.
  * @param {string} value - a path
@@ -143,7 +151,7 @@ function sourceExtension(recording) {
  * no reliable destination can be formed; such rows are reported as unresolved
  * rather than given a guessed path.
  * @param {object} recording - a recording row (participant/session/task/run)
- * @param {object} [options] - {modality}
+ * @param {object} [options] - {modality, outputFormat}
  * @return {?object} {modality, datatype, dir, stem, key, extension, path}, or
  *   null when a required entity is missing
  */
@@ -171,7 +179,9 @@ export function proposedDestination(recording, options = {}) {
   const dir = dirParts.join('/');
 
   const key = `${dir}/${stem}`;
-  const extension = sourceExtension(recording);
+  const extension =
+    OUTPUT_FORMAT_EXTENSION[String(options.outputFormat).toLowerCase()] ||
+    sourceExtension(recording);
   return {
     modality,
     datatype: profile.datatype,
@@ -273,7 +283,7 @@ function emptyCounts() {
  * I/O and mutates nothing.
  * @param {object} manifest - the current manifest
  * @param {Array<string|object>} [existingOutputs] - existing output paths
- * @param {object} [options] - {modality, root}
+ * @param {object} [options] - {modality, outputFormat, root}
  * @return {object} {modality, datatype, recordings, readyIds, conflicts,
  *   counts, total, readyCount}
  */
@@ -289,7 +299,8 @@ export function preflightBatch(manifest, existingOutputs = [], options = {}) {
   const prelim = validated.recordings.map((row) => {
     if (row.excluded) return {row, status: PREFLIGHT_STATUS.EXCLUDED};
     if (!row.ready) return {row, status: PREFLIGHT_STATUS.UNRESOLVED};
-    const destination = proposedDestination(row, {modality});
+    const destination = proposedDestination(row,
+        {modality, outputFormat: options.outputFormat});
     if (!destination) return {row, status: PREFLIGHT_STATUS.UNRESOLVED};
     return {row, destination};
   });
