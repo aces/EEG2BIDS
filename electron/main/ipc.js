@@ -1,8 +1,9 @@
 const {BrowserWindow, dialog, ipcMain, shell} = require('electron');
 const credentials = require('./credentials');
 const backendService = require('./backend-service');
-const {scanDirectory} = require('./discovery');
-const {saveBatchFile, openBatchFile, statPaths} = require('./batch-io');
+const {
+  scanDirectory, saveBatchFile, openBatchFile, statPaths,
+} = require('./batch-io');
 
 // The only external destinations the renderer may open. Validation happens
 // here in the main process; the renderer only ever passes a string.

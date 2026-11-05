@@ -131,9 +131,8 @@ def recording_to_bids(sid, data):
 
 @sio.event
 def batch_recording_to_bids(sid, data):
-    # Answered through the Socket.IO acknowledgement, so each batch
-    # recording gets its own result and the single-recording 'bids' listener
-    # never sees it.
+    # Answered by acknowledgement, so the single-recording 'bids' listener
+    # never sees batch results.
     return conversion.convert_recording(data, into_root=True)
 
 

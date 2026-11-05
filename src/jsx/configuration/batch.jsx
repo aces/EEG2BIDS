@@ -24,11 +24,8 @@ const PLAN_COLUMNS = {
 };
 
 /**
- * The active batch in Configuration: open a batch file, see what it holds,
- * and whether its sources still match disk. Nothing here writes the manifest.
+ * The active batch in Configuration and whether its sources match disk.
  * @param {object} props
- * @param {?object} props.batch - {document, filePath?}
- * @param {function} props.setBatch
  * @return {JSX.Element}
  */
 export const ActiveBatch = ({batch, setBatch}) => {
@@ -114,14 +111,9 @@ export const ActiveBatch = ({batch, setBatch}) => {
 };
 
 /**
- * Recording to BIDS for a batch: every recording's proposed destination and
- * whether it will convert, checked against what the output folder holds.
- * Converting runs each ready recording on its own, so one failure never stops
- * the rest. Converted recordings then show as already in the dataset, so
- * converting again only retries what failed.
+ * Each recording's destination and status. Recordings convert one at a time,
+ * so a failure never stops the rest; converting again retries only failures.
  * @param {object} props
- * @param {object} props.batch - {document, filePath?}
- * @param {object} props.form - the Configuration form values
  * @return {JSX.Element}
  */
 export const BatchPlan = ({batch, form}) => {
@@ -144,8 +136,8 @@ export const BatchPlan = ({batch, form}) => {
 
   const convert = async () => {
     // Preflight again right before writing: the folder may have changed.
-    let outputs = await window.eeg2bids.scanDirectory(root);
-    const {readyIds} = preflightBatch(manifest, outputs, options);
+    const {readyIds} = preflightBatch(
+        manifest, await window.eeg2bids.scanDirectory(root), options);
     for (const id of readyIds) {
       setConverting(id);
       const row = manifest.recordings.find((recording) => recording.id === id);
@@ -172,8 +164,7 @@ export const BatchPlan = ({batch, form}) => {
       setResults((previous) => ({...previous, [id]: result.error ?
         {ok: false, message: result.error.join(' ')} : {ok: true}}));
     }
-    outputs = await window.eeg2bids.scanDirectory(root);
-    setExisting(outputs);
+    setExisting(await window.eeg2bids.scanDirectory(root));
     setConverting(null);
   };
 
@@ -192,10 +183,6 @@ export const BatchPlan = ({batch, form}) => {
   const plan = preflightBatch(manifest, existing, options);
   const collidingIds = new Set(plan.conflicts.flatMap(({ids}) => ids));
   const reason = (row) => {
-    if (results[row.id]?.ok) return null;
-    if (results[row.id] && row.status === PREFLIGHT_STATUS.NEW) {
-      return results[row.id].message;
-    }
     switch (row.status) {
       case PREFLIGHT_STATUS.UNRESOLVED:
         return Object.values(row.errors)[0];
@@ -227,30 +214,30 @@ export const BatchPlan = ({batch, form}) => {
         <div className='bw-row bw-head' style={PLAN_COLUMNS}>
           <span>Source file</span><span>Status</span><span>Destination</span>
         </div>
-        {plan.recordings.map((row) =>
-          <div key={row.id} className='bw-row' style={PLAN_COLUMNS}
-            data-status={row.status}
-            data-result={results[row.id] &&
-              (results[row.id].ok ? 'converted' : 'failed')}>
-            <span className='bw-file'>{row.filename}</span>
-            {converting === row.id ?
-              <span className='bw-badge bw-ready'>Converting…</span> :
-              results[row.id]?.ok ?
-                <span className='bw-badge bw-ready'>Converted</span> :
-                results[row.id] && row.status === PREFLIGHT_STATUS.NEW ?
-                  <span className='bw-badge bw-unready'>Failed</span> :
-                  <span className={'bw-badge ' + (row.status ===
-                    PREFLIGHT_STATUS.NEW ? 'bw-ready' : 'bw-unready')}>
-                    {STATUS_LABELS[row.status]}
-                  </span>
-            }
-            <span className='bw-file'>
-              {row.destination && <span>{row.destination.path}</span>}
-              {reason(row) &&
-                <small style={{whiteSpace: 'normal'}}>{reason(row)}</small>}
-            </span>
-          </div>,
-        )}
+        {plan.recordings.map((row) => {
+          const result = results[row.id];
+          const failed = result && !result.ok &&
+            row.status === PREFLIGHT_STATUS.NEW;
+          const [label, good] = converting === row.id ? ['Converting…', true] :
+            result?.ok ? ['Converted', true] :
+            failed ? ['Failed', false] :
+            [STATUS_LABELS[row.status], row.status === PREFLIGHT_STATUS.NEW];
+          const note = result?.ok ? null :
+            failed ? result.message : reason(row);
+          return (
+            <div key={row.id} className='bw-row' style={PLAN_COLUMNS}
+              data-status={row.status}
+              data-result={result && (result.ok ? 'converted' : 'failed')}>
+              <span className='bw-file'>{row.filename}</span>
+              <span className={good ?
+                'bw-badge bw-ready' : 'bw-badge bw-unready'}>{label}</span>
+              <span className='bw-file'>
+                {row.destination && <span>{row.destination.path}</span>}
+                {note && <small style={{whiteSpace: 'normal'}}>{note}</small>}
+              </span>
+            </div>
+          );
+        })}
       </div>
       <div className='small-pad'>
         <TextInput id='batchPreparedBy'

@@ -1,5 +1,4 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import PropTypes from 'prop-types';
 import '../css/BatchWorkbench.css';
 
 import {FileInput, DirectoryInput} from './elements/inputs';
@@ -32,79 +31,28 @@ import {
   SOURCE_STATUS,
 } from './types/batchFile';
 
-// Human-readable explanation for each reason a discovered file is held out of
-// the ready conversion set. Keyed by the discovery module's reason codes.
 const ATTENTION_LABELS = {
   [ATTENTION_REASONS.UNKNOWN]: 'Unrecognized file',
   [ATTENTION_REASONS.ORPHAN_COMPANION]: 'Companion with no recording',
   [ATTENTION_REASONS.DUPLICATE_CANDIDATE]: 'Ambiguous duplicate',
 };
 
-// Fixed option lists for the demographic selectors (BIDS participants.tsv
-// conventions). Age is free text so ranges and units stay the user's choice.
+// BIDS participants.tsv values; age stays free text.
 const DEMOGRAPHIC_OPTIONS = {
-  sex: ['n/a', 'F', 'M', 'O'],
-  handedness: ['n/a', 'R', 'L', 'A'],
+  sex: ['F', 'M', 'O'],
+  handedness: ['R', 'L', 'A'],
 };
 
-/**
- * pluralize - a count with its noun, adding a plural "s" unless the count is 1.
- * @param {number} count - the quantity
- * @param {string} noun - the singular noun
- * @return {string} e.g. "1 file" or "3 files"
- */
 const pluralize = (count, noun) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/**
- * ReadinessBadge - per-row readiness indicator.
- * @param {object} props
- * @param {boolean} props.ready - whether the row is ready
- * @param {Object<string, string>} props.errors - field errors, if any
- * @return {JSX.Element}
- */
-const ReadinessBadge = ({ready, errors}) => {
-  if (ready) {
-    return <span className='bw-badge bw-ready'>Ready</span>;
-  }
-  const title = Object.values(errors).join('\n');
-  return (
-    <span className='bw-badge bw-unready' title={title}>
-      Needs attention
-    </span>
-  );
-};
-ReadinessBadge.propTypes = {
-  ready: PropTypes.bool,
-  errors: PropTypes.object,
-};
-
-/**
- * BulkAssignBar - assign fixed values to every selected recording at once.
- * Any subset of participant/session/task/run can be set together; a field left
- * blank is not touched, so a bulk change never clears assignments outside what
- * the user typed and unselected rows and unentered fields stay as they were.
- * Any row can still be corrected individually afterwards. Disabled until at
- * least one recording is selected.
- * @param {object} props
- * @param {number} props.selectedCount - number of selected recordings
- * @param {function} props.onApply - (changes) bulk-assign handler
- * @return {JSX.Element}
- */
+// Assign the typed (non-blank) fields to every selected recording.
 const BulkAssignBar = ({selectedCount, onApply}) => {
   const [values, setValues] = useState({});
   const active = selectedCount > 0;
-
-  const setField = (field, value) =>
-    setValues((current) => ({...current, [field]: value}));
-
-  // Only non-blank fields are assigned, so a blank field is "leave as-is"
-  // rather than "clear", preserving assignments the user did not touch.
-  const changes = ASSIGNMENT_FIELDS.reduce((acc, field) => {
-    const value = (values[field] || '').trim();
-    if (value) acc[field] = value;
-    return acc;
-  }, {});
+  const changes = Object.fromEntries(ASSIGNMENT_FIELDS
+      .map((field) => [field, (values[field] || '').trim()])
+      .filter(([, value]) => value));
   const hasInput = Object.keys(changes).length > 0;
 
   const apply = () => {
@@ -129,7 +77,7 @@ const BulkAssignBar = ({selectedCount, onApply}) => {
             disabled={!active}
             placeholder='—'
             aria-label={`Bulk ${field}`}
-            onChange={(e) => setField(field, e.target.value)}
+            onChange={(e) => setValues({...values, [field]: e.target.value})}
             onKeyDown={(e) => {
               if (e.key === 'Enter') apply();
             }}
@@ -147,25 +95,8 @@ const BulkAssignBar = ({selectedCount, onApply}) => {
     </div>
   );
 };
-BulkAssignBar.propTypes = {
-  selectedCount: PropTypes.number,
-  onApply: PropTypes.func,
-};
 
-/**
- * TokenMappingPanel - define, preview, and confirm a filename/path token
- * mapping. The user describes exactly how to read a value from each recording's
- * path (source, delimiter, segment, optional regex transform) and which field
- * it becomes; the live preview shows the extracted value and every affected
- * recording BEFORE anything changes. Nothing is guessed and no prefix is
- * silently stripped: the mapping is entirely the user's structure. Applying it
- * writes plain assignments, so it never has to be rerun.
- * @param {object} props
- * @param {object} props.manifest - the current manifest (read for preview)
- * @param {string[]} props.selectedIds - recordings the mapping applies to
- * @param {function} props.onApply - (spec, ids) confirmed-mapping handler
- * @return {JSX.Element}
- */
+// Define, preview, then apply a user-defined filename/path token mapping.
 const TokenMappingPanel = ({manifest, selectedIds, onApply}) => {
   const [spec, setSpec] = useState({
     source: 'filename',
@@ -174,17 +105,12 @@ const TokenMappingPanel = ({manifest, selectedIds, onApply}) => {
     pattern: '',
     field: 'participant',
   });
-
   const active = selectedIds.length > 0;
-  const updateSpec = (changes) =>
-    setSpec((current) => ({...current, ...changes}));
-
+  const updateSpec = (changes) => setSpec({...spec, ...changes});
   const preview = useMemo(
       () => previewMapping(manifest, spec, selectedIds),
       [manifest, spec, selectedIds],
   );
-
-  const canApply = active && !preview.patternError && preview.affectedCount > 0;
 
   return (
     <details className='bw-mapping'>
@@ -300,34 +226,18 @@ const TokenMappingPanel = ({manifest, selectedIds, onApply}) => {
           <button
             type='button'
             className='bw-btn bw-btn-primary'
-            disabled={!canApply}
+            disabled={!!preview.patternError || !preview.affectedCount}
             onClick={() => onApply(spec, selectedIds)}
           >
-            Apply mapping to {preview.affectedCount} recording
-            {preview.affectedCount === 1 ? '' : 's'}
+            Apply mapping to {pluralize(preview.affectedCount, 'recording')}
           </button>
         </>
       )}
     </details>
   );
 };
-TokenMappingPanel.propTypes = {
-  manifest: PropTypes.object,
-  selectedIds: PropTypes.array,
-  onApply: PropTypes.func,
-};
 
-/**
- * RecordingsTable - one independently editable, selectable row per recording.
- * @param {object} props
- * @param {object[]} props.rows - validated recordings
- * @param {Set<string>} props.selected - ids of selected rows
- * @param {function} props.onToggle - (id) selection toggle handler
- * @param {function} props.onToggleAll - (checked) select-all handler
- * @param {function} props.onChange - (id, changes) assignment handler
- * @param {function} props.onRemove - (id) remove handler
- * @return {JSX.Element}
- */
+// One editable, selectable row per recording.
 const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
   onChange, onRemove}) => {
   if (rows.length === 0) {
@@ -339,34 +249,20 @@ const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
     );
   }
 
-  const allSelected = rows.every((row) => selected.has(row.id));
-
-  /**
-   * field - an inline assignment input flagged when invalid.
-   * A field still holding the value read from its filename entity is marked
-   * "from filename"; the mark disappears once the user edits it away.
-   * @param {object} row - the recording row
-   * @param {string} name - the assignment field name
-   * @param {string} placeholder - the input placeholder
-   * @param {Object<string, string>} inferred - proven values for this row
-   * @return {JSX.Element}
-   */
-  const field = (row, name, placeholder, inferred) => {
-    const fromFilename = !!inferred[name] && inferred[name] === row[name];
-    return (
-      <div className='bw-cell'>
-        <input
-          className={row.errors[name] ? 'bw-input bw-invalid' : 'bw-input'}
-          value={row[name]}
-          placeholder={placeholder}
-          title={row.errors[name] || ''}
-          aria-label={`${name} for ${row.filename}`}
-          onChange={(e) => onChange(row.id, {[name]: e.target.value})}
-        />
-        {fromFilename && <small className='bw-from'>from filename</small>}
-      </div>
-    );
-  };
+  const field = (row, name, placeholder, inferred) => (
+    <div className='bw-cell'>
+      <input
+        className={row.errors[name] ? 'bw-input bw-invalid' : 'bw-input'}
+        value={row[name]}
+        placeholder={placeholder}
+        title={row.errors[name] || ''}
+        aria-label={`${name} for ${row.filename}`}
+        onChange={(e) => onChange(row.id, {[name]: e.target.value})}
+      />
+      {inferred[name] && inferred[name] === row[name] &&
+        <small className='bw-from'>from filename</small>}
+    </div>
+  );
 
   return (
     <div className='bw-table' role='table'>
@@ -374,7 +270,7 @@ const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
         <span className='bw-check'>
           <input
             type='checkbox'
-            checked={allSelected}
+            checked={rows.every((row) => selected.has(row.id))}
             aria-label='Select all recordings'
             onChange={(e) => onToggleAll(e.target.checked)}
           />
@@ -406,7 +302,7 @@ const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
             <span className='bw-file' title={row.sourceFile}>
               <strong>{row.filename}</strong>
               <small>{row.sourceFile}</small>
-              {row.companions && row.companions.length > 0 && (
+              {row.companions?.length > 0 && (
                 <small
                   className='bw-companions'
                   title={row.companions.join('\n')}
@@ -419,7 +315,12 @@ const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
             {field(row, 'session', 'Optional', inferred)}
             {field(row, 'task', 'Required', inferred)}
             {field(row, 'run', 'Optional', inferred)}
-            <ReadinessBadge ready={row.ready} errors={row.errors}/>
+            {row.ready ?
+              <span className='bw-badge bw-ready'>Ready</span> :
+              <span className='bw-badge bw-unready'
+                title={Object.values(row.errors).join('\n')}>
+                Needs attention
+              </span>}
             <button
               type='button'
               className='bw-remove'
@@ -435,28 +336,8 @@ const RecordingsTable = ({rows, selected, onToggle, onToggleAll,
     </div>
   );
 };
-RecordingsTable.propTypes = {
-  rows: PropTypes.array,
-  selected: PropTypes.object,
-  onToggle: PropTypes.func,
-  onToggleAll: PropTypes.func,
-  onChange: PropTypes.func,
-  onRemove: PropTypes.func,
-};
 
-/**
- * ParticipantsPanel - review participants separately from recording metadata:
- * rename (propagating to linked rows), edit demographics, and trace the exact
- * recordings each participant covers. Near-duplicate ids (e.g. a prefixed and
- * an unprefixed form of the same participant) are flagged so two BIDS folders
- * are not created for one person.
- * @param {object} props
- * @param {object[]} props.participants - distinct assigned participants
- * @param {Array} props.conflicts - groups of near-duplicate labels
- * @param {function} props.onRename - (fromId, toId) rename handler
- * @param {function} props.onDemographics - (id, changes) demographics handler
- * @return {JSX.Element}
- */
+// Rename participants, edit demographics, and flag near-duplicate ids.
 const ParticipantsPanel = ({participants, conflicts, onRename,
   onDemographics}) => {
   if (participants.length === 0) {
@@ -468,7 +349,6 @@ const ParticipantsPanel = ({participants, conflicts, onRename,
     );
   }
 
-  // Labels that collide with another label under near-duplicate normalization.
   const conflicting = new Set(conflicts.flat());
 
   return (
@@ -500,9 +380,7 @@ const ParticipantsPanel = ({participants, conflicts, onRename,
                 aria-label={`Rename participant ${person.participant}`}
                 onBlur={(e) => {
                   const next = e.target.value.trim();
-                  // A blank or unchanged target is a no-op rename that returns
-                  // the same manifest (so no re-render restores the field);
-                  // snap the input back to the current label to stay in sync.
+                  // A no-op rename doesn't re-render, so restore the field.
                   if (!next || next === person.participant) {
                     e.target.value = person.participant;
                     return;
@@ -513,34 +391,25 @@ const ParticipantsPanel = ({participants, conflicts, onRename,
             </label>
             {DEMOGRAPHIC_FIELDS.map((demoField) => {
               const options = DEMOGRAPHIC_OPTIONS[demoField];
-              const value = person.demographics[demoField] || '';
+              const inputProps = {
+                'className': 'bw-input',
+                'value': person.demographics[demoField] || '',
+                'aria-label': `${demoField} for ${person.participant}`,
+                'onChange': (e) => onDemographics(person.participant,
+                    {[demoField]: e.target.value}),
+              };
               return (
                 <label key={demoField} className='bw-demo'>
                   {demoField[0].toUpperCase() + demoField.slice(1)}
                   {options ? (
-                    <select
-                      className='bw-input'
-                      value={value}
-                      aria-label={`${demoField} for ${person.participant}`}
-                      onChange={(e) =>
-                        onDemographics(person.participant,
-                            {[demoField]: e.target.value})}
-                    >
+                    <select {...inputProps}>
                       <option value=''>n/a</option>
-                      {options.filter((o) => o !== 'n/a').map((o) => (
+                      {options.map((o) => (
                         <option key={o} value={o}>{o}</option>
                       ))}
                     </select>
                   ) : (
-                    <input
-                      className='bw-input'
-                      value={value}
-                      placeholder='Optional'
-                      aria-label={`${demoField} for ${person.participant}`}
-                      onChange={(e) =>
-                        onDemographics(person.participant,
-                            {[demoField]: e.target.value})}
-                    />
+                    <input {...inputProps} placeholder='Optional'/>
                   )}
                 </label>
               );
@@ -562,22 +431,8 @@ const ParticipantsPanel = ({participants, conflicts, onRename,
     </div>
   );
 };
-ParticipantsPanel.propTypes = {
-  participants: PropTypes.array,
-  conflicts: PropTypes.array,
-  onRename: PropTypes.func,
-  onDemographics: PropTypes.func,
-};
 
-/**
- * NeedsAttentionPanel - files discovery could not confidently import.
- * Each entry names why it was held out of the ready set and shows its full
- * source path so the user can trace and resolve it. These files are excluded
- * from conversion by default.
- * @param {object} props
- * @param {object[]} props.items - needs-attention entries from discovery
- * @return {JSX.Element}
- */
+// Files discovery held out of the batch, with why.
 const NeedsAttentionPanel = ({items}) => {
   if (items.length === 0) {
     return (
@@ -604,42 +459,12 @@ const NeedsAttentionPanel = ({items}) => {
     </div>
   );
 };
-NeedsAttentionPanel.propTypes = {
-  items: PropTypes.array,
-};
 
-/**
- * ReviewPanel - the final review surface.
- *
- * It summarises the manifest's completeness — participant and recording counts,
- * how many recordings are included versus excluded, how many are ready versus
- * unresolved, and any validation problems — and offers saving the versioned
- * manifest to a file. This is a manifest review, deliberately NOT a conversion
- * preview: it selects no output directory or modality, proposes no BIDS
- * destinations, runs no output preflight, and starts no conversion. Those
- * dataset-wide, output-facing responsibilities belong to Configuration and
- * Recording to BIDS.
- * @param {object} props
- * @param {object[]} props.participants - distinct assigned participants
- * @param {object[]} props.recordings - validated recordings (ready + errors)
- * @param {Array} props.conflicts - groups of near-duplicate participant labels
- * @param {?object} props.handoff - last save/handoff status {kind, message}
- * @param {boolean} props.busy - whether a save/handoff is in progress
- * @param {function} props.onSave - save-batch-file handler
- * @param {function} props.onLoad - load-into-Configuration handler
- * @return {JSX.Element}
- */
-const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
+// Manifest completeness, then save or hand off. Not a conversion preview.
+const ReviewPanel = ({participants, recordings, conflicts, message, busy,
   onSave, onLoad}) => {
   const included = recordings.filter((row) => !row.excluded);
-  const excludedCount = recordings.length - included.length;
-  const readyCount = included.filter((row) => row.ready).length;
   const unresolved = included.filter((row) => !row.ready);
-
-  // Every reason this manifest is not yet internally consistent, phrased for
-  // the person handing it off. These are manifest problems only (unresolved
-  // assignments and duplicate participant ids) — never output or conversion
-  // concerns, which this surface does not touch.
   const problems = [
     ...unresolved.map((row) => ({
       key: `unresolved-${row.id}`,
@@ -650,17 +475,16 @@ const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
       text: `Possible duplicate participant: ${group.join(' · ')}`,
     })),
   ];
-
   const empty = recordings.length === 0;
 
   return (
     <div className='bw-review'>
-      <div className='bw-review-stats' data-testid='batch-review-stats'>
+      <div className='bw-review-stats'>
         <span><b>{participants.length}</b> participants</span>
         <span><b>{recordings.length}</b> recordings</span>
         <span><b>{included.length}</b> included</span>
-        <span><b>{excludedCount}</b> excluded</span>
-        <span><b>{readyCount}</b> ready</span>
+        <span><b>{recordings.length - included.length}</b> excluded</span>
+        <span><b>{included.length - unresolved.length}</b> ready</span>
         <span><b>{unresolved.length}</b> unresolved</span>
       </div>
 
@@ -708,62 +532,23 @@ const ReviewPanel = ({participants, recordings, conflicts, handoff, busy,
           Load into Configuration
         </button>
       </div>
-
-      {handoff && (
-        <p
-          className={handoff.kind === 'error' ?
-            'bw-handoff-msg bw-handoff-error' : 'bw-handoff-msg'}
-          role='status'
-        >
-          {handoff.message}
-        </p>
-      )}
+      {message}
     </div>
   );
 };
-ReviewPanel.propTypes = {
-  participants: PropTypes.array,
-  recordings: PropTypes.array,
-  conflicts: PropTypes.array,
-  handoff: PropTypes.object,
-  busy: PropTypes.bool,
-  onSave: PropTypes.func,
-  onLoad: PropTypes.func,
-};
 
-/**
- * addAndPrefill - append recordings, then pre-fill only the new rows.
- * Pre-filling is scoped to the rows just added so a field the user has already
- * edited or cleared on an existing row is never re-filled.
- * @param {object} manifest - the current manifest
- * @param {Array<object>} files - files to add (see addRecordings)
- * @return {object} a new manifest with the new rows added and pre-filled
- */
+// Pre-fill only the rows just added, never fields the user already edited.
 const addAndPrefill = (manifest, files) => {
   const withAdded = addRecordings(manifest, files);
   const existing = new Set(manifest.recordings.map((row) => row.id));
-  const newIds = withAdded.recordings
+  return prefillFromPaths(withAdded, withAdded.recordings
       .filter((row) => !existing.has(row.id))
-      .map((row) => row.id);
-  return prefillFromPaths(withAdded, newIds);
+      .map((row) => row.id));
 };
 
 /**
- * BatchWorkbench - manually populated batch import workbench.
- *
- * Users add recording entry-point files (by selection or by scanning a
- * folder); each becomes one independently editable, selectable recording row
- * with explicit participant, session, task and run assignments. Selected rows
- * can be bulk-assigned a fixed value or driven by a user-defined filename/path
- * token mapping (previewed before it is applied); either way individual rows
- * stay correctable. Participants are reviewed on their own surface — renamed
- * (propagating to every linked recording), given demographics, traced to their
- * recordings, and checked for near-duplicate ids. The versioned manifest can be
- * saved to a file and reopened here later, or loaded into Configuration.
+ * Build a batch of recordings, then save it or load it into Configuration.
  * @param {object} props
- * @param {boolean} props.visible - whether this view is active
- * @param {function} props.onLoadIntoConfiguration - receives the serialized
- *   manifest when the user hands the batch to Configuration
  * @return {JSX.Element}
  */
 const BatchWorkbench = (props) => {
@@ -781,8 +566,7 @@ const BatchWorkbench = (props) => {
   const conflicts = useMemo(
       () => findParticipantConflicts(manifest), [manifest]);
 
-  // Selection only ever references live recording ids; drop ids for rows that
-  // have since been removed so counts and bulk targets stay accurate.
+  // Row ids are reused after removal, so drop selections of removed rows.
   useEffect(() => {
     setSelected((current) => {
       const live = new Set(manifest.recordings.map((row) => row.id));
@@ -798,33 +582,11 @@ const BatchWorkbench = (props) => {
       [validated, selected],
   );
 
-  /**
-   * onSelectFiles - add one recording row per selected entry-point file.
-   * @param {string} _ - input id (unused)
-   * @param {File[]} files - selected files with a resolved native path
-   */
-  const onSelectFiles = (_, files) => {
-    setManifest((current) => addAndPrefill(current, files.map((file) => ({
-      name: file.name,
-      path: file.path,
-    }))));
-  };
-
-  /**
-   * onScanFolder - recursively discover recordings under a chosen folder.
-   * The main process walks the tree; the pure discovery module classifies the
-   * paths into recording rows (with companions linked) and needs-attention
-   * items. Discovered recordings are appended to the manifest (duplicates by
-   * source path are ignored) and the attention list replaces the last scan's.
-   * @param {string} _ - input id (unused)
-   * @param {string} root - the selected root folder
-   */
   const onScanFolder = async (_, root) => {
-    if (!root || !window.eeg2bids?.scanDirectory) return;
     setScanning(true);
     try {
-      const paths = await window.eeg2bids.scanDirectory(root);
-      const result = discoverRecordings(paths);
+      const result = discoverRecordings(
+          await window.eeg2bids.scanDirectory(root));
       setManifest((current) => addAndPrefill(current,
           result.recordings.map((rec) => ({
             name: rec.filename,
@@ -843,54 +605,18 @@ const BatchWorkbench = (props) => {
     }
   };
 
-  const onToggleRow = (id) =>
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  // Signed with each source's stat so reopening can spot changed files.
+  const signedDocument = async () => serializeManifest(manifest, {
+    signatures: await window.eeg2bids.statPaths(
+        manifest.recordings.map((row) => row.sourceFile)),
+  });
 
-  const onToggleAll = (checked) =>
-    setSelected(checked ?
-      new Set(validated.recordings.map((row) => row.id)) : new Set());
-
-  const onBulkAssign = (changes) =>
-    setManifest((current) => bulkAssign(current, selectedIds, changes));
-
-  const onApplyMapping = (spec, ids) =>
-    setManifest((current) => applyMapping(current, spec, ids));
-
-  const onChangeRow = (id, changes) =>
-    setManifest((current) => updateRecording(current, id, changes));
-
-  const onRemoveRow = (id) =>
-    setManifest((current) => removeRecording(current, id));
-
-  const onRenameParticipant = (fromId, toId) =>
-    setManifest((current) => renameParticipant(current, fromId, toId));
-
-  const onUpdateDemographics = (participant, changes) =>
-    setManifest((current) => updateDemographics(current, participant, changes));
-
-  /**
-   * onSaveBatchFile - write the versioned manifest to a user-chosen file.
-   * The current sources are statted first so the saved document records a
-   * signature per recording; reopening can then report whether each source is
-   * still present, missing, or changed. Saving is the only writer of a batch
-   * file and happens only on this explicit action.
-   */
   const onSaveBatchFile = async () => {
-    if (!window.eeg2bids?.saveBatchFile) return;
     setHandoffBusy(true);
     try {
-      const paths = manifest.recordings.map((row) => row.sourceFile);
-      const signatures = window.eeg2bids.statPaths ?
-        await window.eeg2bids.statPaths(paths) : {};
-      const data = serializeManifest(manifest, {signatures});
       const savedPath = await window.eeg2bids.saveBatchFile({
         suggestedName: 'batch-manifest.json',
-        data,
+        data: await signedDocument(),
       });
       setHandoff(savedPath ?
         {kind: 'ok', message: `Saved batch file to ${savedPath}`} :
@@ -903,32 +629,14 @@ const BatchWorkbench = (props) => {
     }
   };
 
-  /**
-   * onLoadIntoConfiguration - hand the batch to Configuration in memory.
-   * It is the same serialized document a save would write, so a handed-off
-   * batch and a reopened file are indistinguishable downstream.
-   */
-  const onLoadIntoConfiguration = async () => {
-    const paths = manifest.recordings.map((row) => row.sourceFile);
-    const signatures = await window.eeg2bids.statPaths(paths);
-    props.onLoadIntoConfiguration(serializeManifest(manifest, {signatures}));
-  };
-
-  /**
-   * onOpenBatchFile - reopen a saved manifest for further editing.
-   * The batch is rebuilt from the file's stored assignments only; discovery,
-   * prefilling and mappings are not rerun. Document problems and sources that
-   * are now missing or changed on disk are reported, never fatal.
-   */
   const onOpenBatchFile = async () => {
-    if (!window.eeg2bids?.openBatchFile) return;
     setHandoffBusy(true);
     try {
       const opened = await window.eeg2bids.openBatchFile();
       if (!opened) return;
       const {manifest: reopened, problems} = deserializeManifest(opened.data);
-      const paths = reopened.recordings.map((row) => row.sourceFile);
-      const signatures = await window.eeg2bids.statPaths(paths);
+      const signatures = await window.eeg2bids.statPaths(
+          reopened.recordings.map((row) => row.sourceFile));
       const stale = reconcileSources(reopened, signatures)
           .filter((source) => source.status !== SOURCE_STATUS.PRESENT)
           .map((source) => `${source.sourceFile} is ${source.status}.`);
@@ -948,10 +656,27 @@ const BatchWorkbench = (props) => {
     }
   };
 
+  if (!props.visible) return null;
+
   const {totalCount, readyCount} = validated;
   const percent = totalCount ? Math.round((readyCount / totalCount) * 100) : 0;
+  const message = handoff && (
+    <p
+      className={handoff.kind === 'error' ?
+        'bw-handoff-msg bw-handoff-error' : 'bw-handoff-msg'}
+      role='status'
+    >
+      {handoff.message}
+    </p>
+  );
+  const tabs = [
+    ['recordings', `Recordings (${totalCount})`],
+    ['participants', `Participants (${participants.length})`],
+    ['attention', `Needs attention (${needsAttention.length})`],
+    ['review', 'Review & save'],
+  ];
 
-  return props.visible ? (
+  return (
     <>
       <span className='header'>
         Batch workbench
@@ -964,7 +689,11 @@ const BatchWorkbench = (props) => {
             accept='.edf,.EDF,.set,.SET'
             placeholder='Select recording file(s)'
             label='Add recordings to the batch'
-            onUserInput={onSelectFiles}
+            onUserInput={(_, files) => setManifest((current) =>
+              addAndPrefill(current, files.map((file) => ({
+                name: file.name,
+                path: file.path,
+              }))))}
             help='Each selected recording becomes one editable row. Assign a
             participant and task per recording; session and run are optional.'
           />
@@ -1011,15 +740,7 @@ const BatchWorkbench = (props) => {
               current batch.
             </small>
           </div>
-          {handoff && section !== 'review' && (
-            <p
-              className={handoff.kind === 'error' ?
-                'bw-handoff-msg bw-handoff-error' : 'bw-handoff-msg'}
-              role='status'
-            >
-              {handoff.message}
-            </p>
-          )}
+          {section !== 'review' && message}
         </div>
       </div>
 
@@ -1038,34 +759,16 @@ const BatchWorkbench = (props) => {
       </div>
 
       <div className='bw-tabs'>
-        <button
-          type='button'
-          className={section === 'recordings' ? 'active' : ''}
-          onClick={() => setSection('recordings')}
-        >
-          Recordings ({totalCount})
-        </button>
-        <button
-          type='button'
-          className={section === 'participants' ? 'active' : ''}
-          onClick={() => setSection('participants')}
-        >
-          Participants ({participants.length})
-        </button>
-        <button
-          type='button'
-          className={section === 'attention' ? 'active' : ''}
-          onClick={() => setSection('attention')}
-        >
-          Needs attention ({needsAttention.length})
-        </button>
-        <button
-          type='button'
-          className={section === 'review' ? 'active' : ''}
-          onClick={() => setSection('review')}
-        >
-          Review &amp; save
-        </button>
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            type='button'
+            className={section === key ? 'active' : ''}
+            onClick={() => setSection(key)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {section === 'review' ? (
@@ -1073,17 +776,20 @@ const BatchWorkbench = (props) => {
           participants={participants}
           recordings={validated.recordings}
           conflicts={conflicts}
-          handoff={handoff}
+          message={message}
           busy={handoffBusy}
           onSave={onSaveBatchFile}
-          onLoad={onLoadIntoConfiguration}
+          onLoad={async () =>
+            props.onLoadIntoConfiguration(await signedDocument())}
         />
       ) : section === 'participants' ? (
         <ParticipantsPanel
           participants={participants}
           conflicts={conflicts}
-          onRename={onRenameParticipant}
-          onDemographics={onUpdateDemographics}
+          onRename={(fromId, toId) => setManifest((current) =>
+            renameParticipant(current, fromId, toId))}
+          onDemographics={(participant, changes) => setManifest((current) =>
+            updateDemographics(current, participant, changes))}
         />
       ) : section === 'attention' ? (
         <NeedsAttentionPanel items={needsAttention}/>
@@ -1093,31 +799,36 @@ const BatchWorkbench = (props) => {
             <div className='bw-bulk-tools'>
               <BulkAssignBar
                 selectedCount={selectedIds.length}
-                onApply={onBulkAssign}
+                onApply={(changes) => setManifest((current) =>
+                  bulkAssign(current, selectedIds, changes))}
               />
               <TokenMappingPanel
                 manifest={manifest}
                 selectedIds={selectedIds}
-                onApply={onApplyMapping}
+                onApply={(spec, ids) => setManifest((current) =>
+                  applyMapping(current, spec, ids))}
               />
             </div>
           )}
           <RecordingsTable
             rows={validated.recordings}
             selected={selected}
-            onToggle={onToggleRow}
-            onToggleAll={onToggleAll}
-            onChange={onChangeRow}
-            onRemove={onRemoveRow}
+            onToggle={(id) => setSelected((current) => {
+              const next = new Set(current);
+              if (!next.delete(id)) next.add(id);
+              return next;
+            })}
+            onToggleAll={(checked) => setSelected(checked ?
+              new Set(validated.recordings.map((row) => row.id)) : new Set())}
+            onChange={(id, changes) => setManifest((current) =>
+              updateRecording(current, id, changes))}
+            onRemove={(id) => setManifest((current) =>
+              removeRecording(current, id))}
           />
         </>
       )}
     </>
-  ) : null;
-};
-BatchWorkbench.propTypes = {
-  visible: PropTypes.bool,
-  onLoadIntoConfiguration: PropTypes.func,
+  );
 };
 
 export default BatchWorkbench;

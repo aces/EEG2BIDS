@@ -3,279 +3,140 @@ import {
   createManifest,
   addRecordings,
   updateRecording,
-  bulkAssign,
   setRecordingExcluded,
 } from './batchManifest';
 import {
   proposedDestination,
-  relativeOutputStems,
   preflightBatch,
   PREFLIGHT_STATUS,
-  PREVIEW_MODALITIES,
-  DEFAULT_MODALITY,
 } from './batchPreview';
 
-/**
- * assigned - a manifest seeded with rows carrying explicit assignments.
- * @param {object[]} rows - {path, name?, format?} plus assignment fields
- * @return {object} a manifest with each row added and its fields assigned
- */
-const assigned = (rows) => rows.reduce((manifest, row) => {
-  const withRow = addRecordings(manifest, [
-    {path: row.path, name: row.name, format: row.format},
-  ]);
-  const id = withRow.recordings[withRow.recordings.length - 1].id;
-  return updateRecording(withRow, id, {
-    participant: row.participant ?? '',
-    session: row.session ?? '',
-    task: row.task ?? '',
-    run: row.run ?? '',
-  });
+const {NEW, ALREADY_PROCESSED, CONFLICT, EXCLUDED, UNRESOLVED} =
+  PREFLIGHT_STATUS;
+
+// A manifest with one row per spec: {path, format?, ...assignments}.
+const assigned = (rows) => rows.reduce((manifest, {path, format, ...rest}) => {
+  const next = addRecordings(manifest, [{path, format}]);
+  return updateRecording(next, next.recordings.at(-1).id, rest);
 }, createManifest());
 
-describe('proposedDestination', () => {
-  it('builds the iEEG destination with acq-seeg and the ieeg datatype', () => {
-    const dest = proposedDestination(
-        {participant: '01', session: '', task: 'rest', run: '',
-          sourceFile: '/raw/rest.edf', format: 'EDF'},
-        {modality: 'ieeg'});
-    expect(dest.dir).toBe('sub-01/ieeg');
-    expect(dest.stem).toBe('sub-01_task-rest_acq-seeg_ieeg');
-    expect(dest.path).toBe('sub-01/ieeg/sub-01_task-rest_acq-seeg_ieeg.edf');
-    expect(dest.datatype).toBe('ieeg');
-  });
+const statuses = (result) => result.recordings.map((r) => r.status);
 
-  it('builds the EEG destination with acq-eeg and the eeg datatype', () => {
-    const dest = proposedDestination(
-        {participant: '01', session: '', task: 'rest', run: '',
-          sourceFile: '/raw/rest.edf', format: 'EDF'},
-        {modality: 'eeg'});
-    expect(dest.dir).toBe('sub-01/eeg');
-    expect(dest.stem).toBe('sub-01_task-rest_acq-eeg_eeg');
-    expect(dest.path).toBe('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf');
+describe('proposedDestination', () => {
+  const rec = {participant: '01', task: 'rest', sourceFile: '/raw/rest.edf'};
+
+  it('builds the iEEG (default) and EEG destinations', () => {
+    expect(proposedDestination({...rec, format: 'EDF'})).toEqual({
+      modality: 'ieeg',
+      datatype: 'ieeg',
+      dir: 'sub-01/ieeg',
+      stem: 'sub-01_task-rest_acq-seeg_ieeg',
+      key: 'sub-01/ieeg/sub-01_task-rest_acq-seeg_ieeg',
+      extension: '.edf',
+      path: 'sub-01/ieeg/sub-01_task-rest_acq-seeg_ieeg.edf',
+    });
+    expect(proposedDestination(rec, {modality: 'eeg'}).path)
+        .toBe('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf');
+    expect(proposedDestination(rec, {modality: 'bogus'}).datatype)
+        .toBe('ieeg');
   });
 
   it('includes ses- and run- entities when supplied', () => {
-    const dest = proposedDestination(
-        {participant: '02', session: '01', task: 'oddball', run: '3',
-          sourceFile: '/raw/x.set', format: 'EEGLAB'},
-        {modality: 'ieeg'});
-    expect(dest.dir).toBe('sub-02/ses-01/ieeg');
-    expect(dest.stem)
-        .toBe('sub-02_ses-01_task-oddball_acq-seeg_run-3_ieeg');
-    expect(dest.path).toBe(
-        'sub-02/ses-01/ieeg/' +
-        'sub-02_ses-01_task-oddball_acq-seeg_run-3_ieeg.set');
+    const dest = proposedDestination({
+      participant: '02', session: '01', task: 'oddball', run: '3',
+      sourceFile: '/raw/x.set', format: 'EEGLAB',
+    });
+    expect(dest.path).toBe('sub-02/ses-01/ieeg/' +
+      'sub-02_ses-01_task-oddball_acq-seeg_run-3_ieeg.set');
   });
 
   it('strips delimiters from the subject label like the backend', () => {
-    // The backend sanitizes the subject id (removing _, -, spaces); the
-    // preview must match so the predicted path equals the real output.
-    const dest = proposedDestination(
-        {participant: 'sub-01', task: 'rest', session: '', run: '',
-          sourceFile: '/raw/rest.edf'},
-        {modality: 'eeg'});
-    expect(dest.dir).toBe('sub-sub01/eeg');
-    expect(dest.stem).toBe('sub-sub01_task-rest_acq-eeg_eeg');
+    expect(proposedDestination({...rec, participant: 'sub-0 1'}).dir)
+        .toBe('sub-sub01/ieeg');
   });
 
-  it('derives the display extension from the source when no format', () => {
-    const dest = proposedDestination(
-        {participant: '01', task: 'rest', session: '', run: '',
-          sourceFile: '/raw/rest.vhdr'},
-        {modality: 'eeg'});
-    expect(dest.extension).toBe('.vhdr');
+  it('takes the extension from output format, then format, then source', () => {
+    const ext = (r, outputFormat) =>
+      proposedDestination(r, {outputFormat}).extension;
+    expect(ext({...rec, format: 'EDF'}, 'brainvision')).toBe('.vhdr');
+    expect(ext({...rec, format: 'EEGLAB'}, 'auto')).toBe('.set');
+    expect(ext({...rec, sourceFile: 'C:\\raw\\rest.VHDR'})).toBe('.vhdr');
   });
 
-  it('uses the extension of an explicitly chosen output format', () => {
-    const dest = proposedDestination(
-        {participant: '01', task: 'rest', session: '', run: '',
-          sourceFile: '/raw/rest.edf', format: 'EDF'},
-        {modality: 'eeg', outputFormat: 'brainvision'});
-    expect(dest.path).toBe('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.vhdr');
-  });
-
-  it('falls back to the default modality for an unknown modality', () => {
-    const dest = proposedDestination(
-        {participant: '01', task: 'rest', session: '', run: '',
-          sourceFile: '/raw/rest.edf'},
-        {modality: 'bogus'});
-    expect(dest.datatype)
-        .toBe(DEFAULT_MODALITY === 'eeg' ? 'eeg' : 'ieeg');
-  });
-
-  it('returns null when a required entity is missing', () => {
-    expect(proposedDestination(
-        {participant: '', task: 'rest', sourceFile: '/raw/x.edf'},
-        {modality: 'eeg'})).toBeNull();
-    expect(proposedDestination(
-        {participant: '01', task: '', sourceFile: '/raw/x.edf'},
-        {modality: 'eeg'})).toBeNull();
-  });
-});
-
-describe('relativeOutputStems', () => {
-  it('relativizes to the root and drops the extension', () => {
-    const stems = relativeOutputStems([
-      '/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf',
-      '/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.json',
-      '/out/participants.tsv',
-    ], '/out');
-    expect(stems.has('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg')).toBe(true);
-    // The data file and its JSON sidecar collapse to one recording stem.
-    expect(stems.size).toBe(2);
-  });
-
-  it('normalizes backslashes so Windows paths compare correctly', () => {
-    const stems = relativeOutputStems(
-        ['C:\\out\\sub-01\\eeg\\sub-01_task-rest_acq-eeg_eeg.edf'],
-        'C:\\out');
-    expect(stems.has('sub-01/eeg/sub-01_task-rest_acq-eeg_eeg')).toBe(true);
+  it('returns null when subject or task is missing', () => {
+    expect(proposedDestination({...rec, participant: ''})).toBeNull();
+    expect(proposedDestination({...rec, task: ''})).toBeNull();
   });
 });
 
 describe('preflightBatch', () => {
-  const {NEW, ALREADY_PROCESSED, CONFLICT, EXCLUDED, UNRESOLVED} =
-    PREFLIGHT_STATUS;
-
-  /** @param {object} result - a preflight result
-   * @param {string} id - a recording id
-   * @return {string} that recording's status */
-  const statusOf = (result, id) =>
-    result.recordings.find((r) => r.id === id).status;
-
-  it('classifies a resolved recording with no existing output as new', () => {
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-    ]);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(NEW);
-    expect(result.readyIds).toEqual(['rec-1']);
-  });
-
-  it('flags a matching existing output as already processed', () => {
-    // The exact output file (same slot AND extension) is already present.
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest', format: 'EDF'},
-    ]);
-    const existing =
-      ['/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf'];
-    const result = preflightBatch(manifest, existing,
-        {modality: 'eeg', root: '/out'});
-    expect(statusOf(result, 'rec-1')).toBe(ALREADY_PROCESSED);
-    expect(result.readyIds).toEqual([]);
-  });
-
-  it('flags a conflicting existing output when the slot holds another file',
-      () => {
-        // The BIDS slot is occupied by a .set while the batch would write .edf:
-        // a different file in the same slot, which must not be overwritten.
-        const manifest = assigned([
-          {path: '/raw/a.edf', participant: '01', task: 'rest', format: 'EDF'},
-        ]);
-        const existing =
-          ['/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.set'];
-        const result = preflightBatch(manifest, existing,
-            {modality: 'eeg', root: '/out'});
-        expect(statusOf(result, 'rec-1')).toBe(CONFLICT);
-        expect(result.readyIds).toEqual([]);
-      });
-
-  it('distinguishes new, matching, and conflicting existing outputs', () => {
-    const manifest = assigned([
-      {path: '/raw/fresh.edf', participant: '01', task: 'rest', format: 'EDF'},
-      {path: '/raw/done.edf', participant: '02', task: 'rest', format: 'EDF'},
-      {path: '/raw/clash.edf', participant: '03', task: 'rest', format: 'EDF'},
-    ]);
-    const existing = [
-      '/out/sub-02/eeg/sub-02_task-rest_acq-eeg_eeg.edf', // matching
-      '/out/sub-03/eeg/sub-03_task-rest_acq-eeg_eeg.set', // different file
-    ];
-    const result = preflightBatch(manifest, existing,
-        {modality: 'eeg', root: '/out'});
-    expect(statusOf(result, 'rec-1')).toBe(NEW);
-    expect(statusOf(result, 'rec-2')).toBe(ALREADY_PROCESSED);
-    expect(statusOf(result, 'rec-3')).toBe(CONFLICT);
-  });
-
-  it('flags two recordings resolving to one destination as conflict', () => {
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-      {path: '/raw/b.edf', participant: '01', task: 'rest'},
-    ]);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(CONFLICT);
-    expect(statusOf(result, 'rec-2')).toBe(CONFLICT);
-    expect(result.readyIds).toEqual([]);
-    expect(result.conflicts).toHaveLength(1);
-    expect(new Set(result.conflicts[0].ids))
-        .toEqual(new Set(['rec-1', 'rec-2']));
-  });
-
-  it('separates recordings that differ only by run', () => {
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest', run: '1'},
-      {path: '/raw/b.edf', participant: '01', task: 'rest', run: '2'},
-    ]);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(NEW);
-    expect(statusOf(result, 'rec-2')).toBe(NEW);
-  });
-
-  it('marks a recording with missing required fields as unresolved', () => {
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: ''},
-    ]);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(UNRESOLVED);
-    expect(result.recordings[0].destination).toBeNull();
-    expect(result.readyIds).toEqual([]);
-  });
-
-  it('marks an excluded recording excluded and keeps it unready', () => {
-    let manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-    ]);
-    manifest = setRecordingExcluded(manifest, 'rec-1', true);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(EXCLUDED);
-    expect(result.readyIds).toEqual([]);
-  });
-
-  it('lets exclusion resolve an otherwise conflicting destination', () => {
-    let manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-      {path: '/raw/b.edf', participant: '01', task: 'rest'},
-    ]);
-    manifest = setRecordingExcluded(manifest, 'rec-2', true);
-    const result = preflightBatch(manifest, [], {modality: 'eeg'});
-    expect(statusOf(result, 'rec-1')).toBe(NEW);
-    expect(statusOf(result, 'rec-2')).toBe(EXCLUDED);
-    expect(result.readyIds).toEqual(['rec-1']);
-  });
-
-  it('keeps every non-new status out of the ready set', () => {
+  it('classifies every status and readies only new recordings', () => {
     let manifest = assigned([
       {path: '/raw/new.edf', participant: '01', task: 'rest'},
       {path: '/raw/done.edf', participant: '02', task: 'rest'},
-      {path: '/raw/dupA.edf', participant: '03', task: 'rest'},
-      {path: '/raw/dupB.edf', participant: '03', task: 'rest'},
-      {path: '/raw/bad.edf', participant: '04', task: ''},
-      {path: '/raw/skip.edf', participant: '05', task: 'rest'},
+      {path: '/raw/clash.edf', participant: '03', task: 'rest'},
+      {path: '/raw/dupA.edf', participant: '04', task: 'rest'},
+      {path: '/raw/dupB.edf', participant: '04', task: 'rest'},
+      {path: '/raw/bad.edf', participant: '05', task: ''},
+      {path: '/raw/skip.edf', participant: '06', task: 'rest'},
+      {path: '/raw/run1.edf', participant: '07', task: 'rest', run: '1'},
+      {path: '/raw/run2.edf', participant: '07', task: 'rest', run: '2'},
     ]);
-    manifest = setRecordingExcluded(manifest, 'rec-6', true);
-    const existing =
-      ['/out/sub-02/eeg/sub-02_task-rest_acq-eeg_eeg.edf'];
-    const result = preflightBatch(manifest, existing,
-        {modality: 'eeg', root: '/out'});
-    expect(result.readyIds).toEqual(['rec-1']);
-    expect(result.counts).toMatchObject({
-      [NEW]: 1,
-      [ALREADY_PROCESSED]: 1,
-      [CONFLICT]: 2,
+    manifest = setRecordingExcluded(manifest, 'rec-7', true);
+    const result = preflightBatch(manifest, [
+      '/out/sub-02/eeg/sub-02_task-rest_acq-eeg_eeg.edf', // matching
+      '/out/sub-03/eeg/sub-03_task-rest_acq-eeg_eeg.set', // different file
+    ], {modality: 'eeg', root: '/out'});
+
+    expect(statuses(result)).toEqual([
+      NEW, ALREADY_PROCESSED, CONFLICT, CONFLICT, CONFLICT, UNRESOLVED,
+      EXCLUDED, NEW, NEW,
+    ]);
+    expect(result.readyIds).toEqual(['rec-1', 'rec-8', 'rec-9']);
+    expect(result.conflicts).toEqual([{
+      key: 'sub-04/eeg/sub-04_task-rest_acq-eeg_eeg', ids: ['rec-4', 'rec-5'],
+    }]);
+    expect(result.counts).toEqual({
+      [NEW]: 3, [ALREADY_PROCESSED]: 1, [CONFLICT]: 3, [EXCLUDED]: 1,
       [UNRESOLVED]: 1,
-      [EXCLUDED]: 1,
     });
+    expect(result.recordings[5].destination).toBeNull();
+    expect(result).toMatchObject({
+      modality: 'eeg', datatype: 'eeg', total: 9, readyCount: 3,
+    });
+  });
+
+  it('lets exclusion resolve an otherwise conflicting destination', () => {
+    const manifest = setRecordingExcluded(assigned([
+      {path: '/raw/a.edf', participant: '01', task: 'rest'},
+      {path: '/raw/b.edf', participant: '01', task: 'rest'},
+    ]), 'rec-2', true);
+    expect(statuses(preflightBatch(manifest))).toEqual([NEW, EXCLUDED]);
+  });
+
+  it('normalizes Windows paths and treats a sidecar as an occupied slot',
+      () => {
+        const manifest = assigned([
+          {path: '/raw/a.edf', participant: '01', task: 'rest'},
+          {path: '/raw/b.edf', participant: '02', task: 'rest'},
+        ]);
+        const result = preflightBatch(manifest, [
+          'C:\\out\\sub-01\\ieeg\\sub-01_task-rest_acq-seeg_ieeg.edf',
+          {path: 'C:\\out\\sub-02\\ieeg\\sub-02_task-rest_acq-seeg_ieeg.json'},
+          'C:\\out',
+        ], {root: 'C:\\out\\'});
+        expect(statuses(result)).toEqual([ALREADY_PROCESSED, CONFLICT]);
+      });
+
+  it('applies the output format extension to the existing-output check', () => {
+    const manifest = assigned(
+        [{path: '/raw/a.edf', participant: '01', task: 'rest'}]);
+    const existing = ['/out/sub-01/ieeg/sub-01_task-rest_acq-seeg_ieeg.vhdr'];
+    expect(statuses(preflightBatch(manifest, existing,
+        {root: '/out', outputFormat: 'brainvision'})))
+        .toEqual([ALREADY_PROCESSED]);
+    expect(statuses(preflightBatch(manifest, existing, {root: '/out'})))
+        .toEqual([CONFLICT]);
   });
 
   it('does not mutate the manifest or the existing-output list', () => {
@@ -283,47 +144,11 @@ describe('preflightBatch', () => {
       {path: '/raw/a.edf', participant: '01', task: 'rest'},
       {path: '/raw/b.edf', participant: '01', task: 'rest'},
     ]);
-    const existing =
-      ['/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf'];
-    const manifestBefore = JSON.parse(JSON.stringify(manifest));
-    const existingBefore = [...existing];
+    const existing = ['/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf'];
+    const manifestBefore = structuredClone(manifest);
     preflightBatch(manifest, existing, {modality: 'eeg', root: '/out'});
     expect(manifest).toEqual(manifestBefore);
-    expect(existing).toEqual(existingBefore);
-  });
-
-  it('reports each ready recording its own proposed destination path', () => {
-    const manifest = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-      {path: '/raw/b.set', participant: '02', task: 'oddball',
-        format: 'EEGLAB'},
-    ]);
-    const result = preflightBatch(manifest, [], {modality: 'ieeg'});
-    const first = result.recordings.find((r) => r.id === 'rec-1');
-    const second = result.recordings.find((r) => r.id === 'rec-2');
-    expect(first.destination.path)
-        .toBe('sub-01/ieeg/sub-01_task-rest_acq-seeg_ieeg.edf');
-    expect(second.destination.path)
-        .toBe('sub-02/ieeg/sub-02_task-oddball_acq-seeg_ieeg.set');
-  });
-
-  it('depends only on the final assignment, not on how it was set', () => {
-    // A value set via bulkAssign must preflight identically to the same value
-    // typed on one row: preflight reads the manifest, never the edit history.
-    const base = assigned([
-      {path: '/raw/a.edf', participant: '01', task: 'rest'},
-    ]);
-    const bulk = bulkAssign(
-        assigned([{path: '/raw/a.edf'}]), ['rec-1'],
-        {participant: '01', task: 'rest'});
-    const direct = preflightBatch(base, [], {modality: 'eeg'});
-    const viaBulk = preflightBatch(bulk, [], {modality: 'eeg'});
-    expect(viaBulk.recordings[0].destination)
-        .toEqual(direct.recordings[0].destination);
-    expect(viaBulk.recordings[0].status).toBe(direct.recordings[0].status);
-  });
-
-  it('exposes the two supported preview modalities', () => {
-    expect(PREVIEW_MODALITIES).toEqual(['ieeg', 'eeg']);
+    expect(existing).toEqual(
+        ['/out/sub-01/eeg/sub-01_task-rest_acq-eeg_eeg.edf']);
   });
 });

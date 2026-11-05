@@ -15,8 +15,6 @@ contextBridge.exposeInMainWorld('eeg2bids', {
   // the preload, where webUtils can safely unwrap a renderer File object.
   getPathForFile: (file) => webUtils.getPathForFile(file),
   selectDirectory: () => ipcRenderer.invoke('dialog:select-directory'),
-  // Batch workbench: recursive folder listing, manifest file save/open, and
-  // source stats for reconciling a reopened manifest against disk.
   scanDirectory: (root) => ipcRenderer.invoke('discovery:scan-directory', root),
   saveBatchFile: (payload) => ipcRenderer.invoke('batch:save', payload),
   openBatchFile: () => ipcRenderer.invoke('batch:open'),
