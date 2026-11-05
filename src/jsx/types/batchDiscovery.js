@@ -1,0 +1,211 @@
+/**
+ * batchDiscovery - recursive recording discovery for the batch workbench.
+ *
+ * Given a flat list of file paths found under a selected root folder (the
+ * filesystem walk lives in the Electron main process; this module is pure so
+ * it can be unit-tested without Electron), classify every path into one of:
+ *
+ *   - a recording entry point, with any format-specific companion files
+ *     linked to it rather than emitted as their own rows, or
+ *   - a needs-attention item (unknown, orphan companion, or duplicate
+ *     candidate) that is surfaced but kept out of the ready conversion set.
+ *
+ * Discovery is deterministic: the same set of paths always yields the same
+ * result regardless of input order, because paths are sorted before grouping
+ * and every output list is sorted by path. Every proposed recording carries
+ * its source path (and companion paths), so each row traces back to disk.
+ *
+ * "Supported" mirrors the backend reader's format table
+ * (eeg2bids/converter.py `_PRESERVE_FORMAT_BY_EXT`): a source is a recording
+ * entry point only if the backend can read it.
+ */
+
+// Recording entry-point extensions, each mapped to its human-readable format
+// and the companion extensions that belong to that format. A companion shares
+// the recording's directory and stem but holds data/markers rather than being
+// an independently convertible recording (an EEGLAB .set may keep its data in
+// a sibling .fdt; a BrainVision .vhdr header points at sibling .vmrk/.eeg).
+export const RECORDING_FORMATS = {
+  '.edf': {format: 'EDF', companions: []},
+  '.set': {format: 'EEGLAB', companions: ['.fdt']},
+  '.vhdr': {format: 'BrainVision', companions: ['.vmrk', '.eeg']},
+  '.fif': {format: 'FIF', companions: []},
+};
+
+// Why a file landed in the needs-attention list. These are excluded from the
+// ready conversion set by default and surfaced for the user to resolve.
+export const ATTENTION_REASONS = {
+  // Extension is neither a recording entry point nor a known companion.
+  UNKNOWN: 'unknown',
+  // A companion-typed file with no recording to attach to in its directory.
+  ORPHAN_COMPANION: 'orphan-companion',
+  // Two entry points share a directory and stem, so which one is the
+  // recording is ambiguous; neither is trusted into the ready set.
+  DUPLICATE_CANDIDATE: 'duplicate-candidate',
+};
+
+// Every extension that is a companion of some format, for quick membership
+// tests. Derived from RECORDING_FORMATS so the two never drift.
+const COMPANION_EXTS = new Set(
+    Object.values(RECORDING_FORMATS).flatMap((f) => f.companions));
+
+/**
+ * splitPath - directory, filename, stem and lowercased extension of a path.
+ * Splitting on both slash styles keeps discovery portable across platforms.
+ * @param {string} filePath - a file path
+ * @return {{dir: string, filename: string, stem: string, ext: string}}
+ */
+function splitPath(filePath) {
+  const filename = filePath.split(/[\\/]/).pop();
+  const dir = filePath.slice(0, filePath.length - filename.length);
+  const dot = filename.lastIndexOf('.');
+  const stem = dot > 0 ? filename.slice(0, dot) : filename;
+  const ext = dot > 0 ? filename.slice(dot).toLowerCase() : '';
+  return {dir, filename, stem, ext};
+}
+
+/**
+ * normalizePath - the path string from a string or {path} file entry.
+ * @param {(string|{path: string})} entry - a scanned file entry
+ * @return {?string} the path, or null when absent
+ */
+function normalizePath(entry) {
+  const raw = typeof entry === 'string' ? entry : entry?.path;
+  return raw ? String(raw) : null;
+}
+
+/**
+ * groupKey - directory + stem, the identity companions and duplicate
+ * candidates are matched on. Case-insensitive so a `.FDT` still pairs with
+ * its `.set` on case-preserving filesystems.
+ * @param {{dir: string, stem: string}} parts - a split path
+ * @return {string} the grouping key
+ */
+function groupKey({dir, stem}) {
+  return `${dir}::${stem}`.toLowerCase();
+}
+
+/**
+ * discoverRecordings - classify scanned paths into recordings + attention.
+ *
+ * Entry points sharing a directory and stem are treated as duplicate
+ * candidates (ambiguous source) and excluded. A lone entry point becomes a
+ * recording and adopts any sibling companion files declared for its format;
+ * companion-typed files with no such parent, and files of unknown type, are
+ * reported for attention. Recordings and attention items are each sorted by
+ * path for a deterministic, order-independent result.
+ *
+ * @param {Array<(string|{path: string})>} files - scanned file entries
+ * @return {{
+ *   recordings: Array<{
+ *     sourceFile: string, filename: string, format: string,
+ *     companions: string[]
+ *   }>,
+ *   needsAttention: Array<{path: string, filename: string, reason: string}>,
+ *   scannedCount: number
+ * }} the discovery result
+ */
+export function discoverRecordings(files) {
+  // Sort up front so grouping and output order never depend on scan order.
+  const paths = (files || [])
+      .map(normalizePath)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+  const entries = [];
+  const companions = [];
+  const needsAttention = [];
+
+  for (const path of paths) {
+    const parts = splitPath(path);
+    if (RECORDING_FORMATS[parts.ext]) {
+      entries.push({path, ...parts});
+    } else if (COMPANION_EXTS.has(parts.ext)) {
+      companions.push({path, ...parts});
+    } else {
+      needsAttention.push({
+        path,
+        filename: parts.filename,
+        reason: ATTENTION_REASONS.UNKNOWN,
+      });
+    }
+  }
+
+  // Index both entries and companions under the same directory+stem key, so
+  // duplicate detection and companion linking match paths identically (no
+  // case-sensitivity mismatch between the two).
+  const entriesByKey = new Map();
+  for (const entry of entries) {
+    const key = groupKey(entry);
+    if (!entriesByKey.has(key)) entriesByKey.set(key, []);
+    entriesByKey.get(key).push(entry);
+  }
+  const companionsByKey = new Map();
+  for (const companion of companions) {
+    const key = groupKey(companion);
+    if (!companionsByKey.has(key)) companionsByKey.set(key, []);
+    companionsByKey.get(key).push(companion);
+  }
+
+  const recordings = [];
+  // Companions are consumed by the recording (or ambiguous cluster) they
+  // belong to; whatever is never consumed is a true orphan. Tracking
+  // consumption also keeps each companion reported at most once.
+  const consumed = new Set();
+
+  for (const entry of entries) {
+    const key = groupKey(entry);
+    const allowed = new Set(RECORDING_FORMATS[entry.ext].companions);
+    const siblings = (companionsByKey.get(key) || [])
+        .filter((c) => allowed.has(c.ext));
+
+    // Entry points that collide on directory+stem are ambiguous; which one is
+    // the recording cannot be decided, so every colliding entry and the
+    // companion files that belong to it are held for review together rather
+    // than one being trusted into the ready set.
+    if (entriesByKey.get(key).length > 1) {
+      needsAttention.push({
+        path: entry.path,
+        filename: entry.filename,
+        reason: ATTENTION_REASONS.DUPLICATE_CANDIDATE,
+      });
+      for (const c of siblings) {
+        if (consumed.has(c.path)) continue;
+        consumed.add(c.path);
+        needsAttention.push({
+          path: c.path,
+          filename: c.filename,
+          reason: ATTENTION_REASONS.DUPLICATE_CANDIDATE,
+        });
+      }
+      continue;
+    }
+
+    recordings.push({
+      sourceFile: entry.path,
+      filename: entry.filename,
+      format: RECORDING_FORMATS[entry.ext].format,
+      companions: siblings.map((c) => {
+        consumed.add(c.path);
+        return c.path;
+      }),
+    });
+  }
+
+  for (const companion of companions) {
+    if (consumed.has(companion.path)) continue;
+    needsAttention.push({
+      path: companion.path,
+      filename: companion.filename,
+      reason: ATTENTION_REASONS.ORPHAN_COMPANION,
+    });
+  }
+
+  return {
+    recordings: recordings.sort((a, b) =>
+      a.sourceFile.localeCompare(b.sourceFile)),
+    needsAttention: needsAttention.sort((a, b) =>
+      a.path.localeCompare(b.path)),
+    scannedCount: paths.length,
+  };
+}

@@ -8,6 +8,7 @@ import BackendStatus from './jsx/elements/backendStatus';
 import SplashScreen from './jsx/SplashScreen';
 import Welcome from './jsx/Welcome';
 import Configuration from './jsx/Configuration';
+import BatchWorkbench from './jsx/BatchWorkbench';
 import Validator from './jsx/Validator';
 
 // The backend port is configurable (see electron/main/backend-service.js); the
@@ -26,7 +27,8 @@ const TABS = [
   ['1) Getting started', 'Welcome'],
   ['2) Configuration', 'Configuration'],
   ['3) Recording to BIDS', 'Converter'],
-  ['4) Validate and package', 'Validator'],
+  ['4) Batch workbench', 'BatchWorkbench'],
+  ['5) Validate and package', 'Validator'],
 ];
 
 const App = () => {
@@ -63,6 +65,7 @@ const App = () => {
         <SplashScreen visible={appMode === 'SplashScreen'}/>
         <Welcome visible={appMode === 'Welcome'}/>
         <Configuration appMode={appMode}/>
+        <BatchWorkbench visible={appMode === 'BatchWorkbench'}/>
         <Validator visible={appMode === 'Validator'}/>
         <Tooltip anchorSelect='[data-tooltip-content]'/>
       </AppContext.Provider>
