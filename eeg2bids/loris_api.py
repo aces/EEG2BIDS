@@ -14,7 +14,7 @@ class LorisAPI:
         return requests.request(
             method, self.url + path,
             headers={'Authorization': f'Bearer {self.token}', 'LORIS-Overwrite': 'overwrite'},
-            verify=False, **kwargs)
+            **kwargs)
 
     def login(self):
         # A LORIS instance is optional; an unreachable or slow URL must not
@@ -27,7 +27,6 @@ class LorisAPI:
                     'username': self.username,
                     'password': self.password
                 },
-                verify=False,
                 timeout=10
             )
         except requests.exceptions.RequestException:
