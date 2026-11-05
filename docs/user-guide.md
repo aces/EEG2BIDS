@@ -6,8 +6,9 @@
 > [project status](../README.md#project-status) for the current support and
 > distribution details.
 
-EEG2BIDS converts one continuous EEG or stereo-iEEG recording into BIDS. Back
-up the source data before conversion.
+EEG2BIDS converts continuous EEG or stereo-iEEG recordings into BIDS, either
+one recording at a time or as a batch. Back up the source data before
+conversion.
 
 ## Supported formats
 
@@ -62,8 +63,40 @@ EEG2BIDS assigns BIDS run numbers in selection order (`run-1`, `run-2`, and so
 on). It does not derive run numbers from the source filenames.
 
 Convert recordings with different subjects, sessions, tasks, modalities, or
-metadata separately. The application does not merge separately generated BIDS
-datasets, so review the output carefully before combining datasets by hand.
+metadata separately, or use a batch (below). The application does not merge
+separately generated BIDS datasets, so review the output carefully before
+combining datasets by hand.
+
+## Batch conversion
+
+Use the **Batch workbench** tab to convert many recordings into one BIDS
+dataset.
+
+1. Add recordings by selecting files or by choosing a folder. A folder is
+   searched at any depth. Files already named with BIDS entities (`sub-01`,
+   `ses-1`, `task-rest`, `run-1`) have those values filled in. EEG2BIDS never
+   guesses anything else from a file or folder name. Use the token mapping to
+   tell it how your own names encode participant, session, task, or run.
+2. Fix anything unresolved. Each recording needs a participant and a task.
+   Session and run are optional. Participant demographics are edited on the
+   **Participants** tab, and renaming a participant updates all of their
+   recordings.
+3. On **Review & save**, save the batch file to come back to it later, or
+   choose **Load into Configuration**. A saved batch file can also be opened
+   from the Configuration tab.
+4. On the Configuration tab, choose the BIDS output folder and the settings
+   that apply to every recording: modality, output format, anonymization, and
+   recording details. Participant, session, task, and run come from the batch.
+5. **Recording to BIDS** lists every recording with its BIDS destination.
+   Only recordings marked **Will convert** are written. A recording already in
+   the output folder is skipped and never overwritten. A conflict, such as two
+   recordings with the same destination, has to be fixed in the workbench.
+
+A batch is written straight into the chosen output folder, not into a
+timestamped `output-*` folder, so running more batches into the same folder
+builds one dataset. Each recording converts on its own. If one fails, the rest
+still convert, and converting again retries only the recordings that are not
+yet in the dataset.
 
 ## Recording metadata
 

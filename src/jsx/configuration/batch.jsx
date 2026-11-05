@@ -1,9 +1,15 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import {
   deserializeManifest, reconcileSources, SOURCE_STATUS,
 } from '../types/batchFile';
 import {getParticipants, validateManifest} from '../types/batchManifest';
 import {preflightBatch, PREFLIGHT_STATUS} from '../types/batchPreview';
+import {buildConversionRequest} from '../types/conversionRequest';
+import {TextInput} from '../elements/inputs';
+import {SocketContext} from '../socket.io';
+
+// Generous: one recording converts in seconds, but large files take longer.
+const CONVERSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 const STATUS_LABELS = {
   [PREFLIGHT_STATUS.NEW]: 'Will convert',
@@ -110,21 +116,66 @@ export const ActiveBatch = ({batch, setBatch}) => {
 /**
  * Recording to BIDS for a batch: every recording's proposed destination and
  * whether it will convert, checked against what the output folder holds.
+ * Converting runs each ready recording on its own, so one failure never stops
+ * the rest. Converted recordings then show as already in the dataset, so
+ * converting again only retries what failed.
  * @param {object} props
  * @param {object} props.batch - {document, filePath?}
  * @param {object} props.form - the Configuration form values
  * @return {JSX.Element}
  */
 export const BatchPlan = ({batch, form}) => {
+  const socket = useContext(SocketContext);
   const [existing, setExisting] = useState(null);
+  const [preparedBy, setPreparedBy] = useState('');
+  const [converting, setConverting] = useState(null);
+  const [results, setResults] = useState({});
   const root = form.bidsDirectory;
   const {manifest} = useMemo(
       () => deserializeManifest(batch.document), [batch]);
+  const options = {
+    modality: form.modality, outputFormat: form.outputFormat, root,
+  };
 
   useEffect(() => {
     setExisting(null);
     if (root) window.eeg2bids.scanDirectory(root).then(setExisting);
   }, [root]);
+
+  const convert = async () => {
+    // Preflight again right before writing: the folder may have changed.
+    let outputs = await window.eeg2bids.scanDirectory(root);
+    const {readyIds} = preflightBatch(manifest, outputs, options);
+    for (const id of readyIds) {
+      setConverting(id);
+      const row = manifest.recordings.find((recording) => recording.id === id);
+      const demographics = manifest.demographics[row.participant] || {};
+      let result;
+      try {
+        result = await socket.timeout(CONVERSION_TIMEOUT_MS).emitWithAck(
+            'batch_recording_to_bids', {
+              ...buildConversionRequest(form, preparedBy),
+              recordingData: {files: [{path: row.sourceFile,
+                name: row.filename}]},
+              eegRuns: [{recordingFile: row.sourceFile, eventFile: null,
+                run: row.run || null}],
+              participantID: row.participant,
+              session: row.session,
+              taskName: row.task,
+              age: demographics.age || 'n/a',
+              sex: demographics.sex || 'n/a',
+              hand: demographics.handedness || 'n/a',
+            });
+      } catch {
+        result = {error: ['The backend did not respond.']};
+      }
+      setResults((previous) => ({...previous, [id]: result.error ?
+        {ok: false, message: result.error.join(' ')} : {ok: true}}));
+    }
+    outputs = await window.eeg2bids.scanDirectory(root);
+    setExisting(outputs);
+    setConverting(null);
+  };
 
   if (!root) {
     return (
@@ -138,11 +189,13 @@ export const BatchPlan = ({batch, form}) => {
     return <div className='info report'>Checking the output folder…</div>;
   }
 
-  const plan = preflightBatch(manifest, existing, {
-    modality: form.modality, outputFormat: form.outputFormat, root,
-  });
+  const plan = preflightBatch(manifest, existing, options);
   const collidingIds = new Set(plan.conflicts.flatMap(({ids}) => ids));
   const reason = (row) => {
+    if (results[row.id]?.ok) return null;
+    if (results[row.id] && row.status === PREFLIGHT_STATUS.NEW) {
+      return results[row.id].message;
+    }
     switch (row.status) {
       case PREFLIGHT_STATUS.UNRESOLVED:
         return Object.values(row.errors)[0];
@@ -176,21 +229,49 @@ export const BatchPlan = ({batch, form}) => {
         </div>
         {plan.recordings.map((row) =>
           <div key={row.id} className='bw-row' style={PLAN_COLUMNS}
-            data-status={row.status}>
+            data-status={row.status}
+            data-result={results[row.id] &&
+              (results[row.id].ok ? 'converted' : 'failed')}>
             <span className='bw-file'>{row.filename}</span>
-            <span className={'bw-badge ' + (row.status ===
-              PREFLIGHT_STATUS.NEW ? 'bw-ready' : 'bw-unready')}>
-              {STATUS_LABELS[row.status]}
-            </span>
+            {converting === row.id ?
+              <span className='bw-badge bw-ready'>Converting…</span> :
+              results[row.id]?.ok ?
+                <span className='bw-badge bw-ready'>Converted</span> :
+                results[row.id] && row.status === PREFLIGHT_STATUS.NEW ?
+                  <span className='bw-badge bw-unready'>Failed</span> :
+                  <span className={'bw-badge ' + (row.status ===
+                    PREFLIGHT_STATUS.NEW ? 'bw-ready' : 'bw-unready')}>
+                    {STATUS_LABELS[row.status]}
+                  </span>
+            }
             <span className='bw-file'>
               {row.destination && <span>{row.destination.path}</span>}
-              {reason(row) && <small>{reason(row)}</small>}
+              {reason(row) &&
+                <small style={{whiteSpace: 'normal'}}>{reason(row)}</small>}
             </span>
           </div>,
         )}
       </div>
       <div className='small-pad'>
-        Converting a batch is not available yet.
+        <TextInput id='batchPreparedBy'
+          required={true}
+          label='Prepared by'
+          value={preparedBy}
+          placeholder='Enter your name'
+          onUserInput={(_, value) => setPreparedBy(value.trim())}
+          help='Name of person performing data conversion and validation is
+          required.'
+        />
+      </div>
+      <div className='small-pad convert-bids-row'>
+        <input type='button'
+          id='convertBatch'
+          className='start_task primary-btn'
+          onClick={convert}
+          value={`Convert ${plan.readyCount} recording` +
+            (plan.readyCount === 1 ? '' : 's')}
+          disabled={!preparedBy || !plan.readyCount || converting !== null}
+        />
       </div>
     </div>
   );

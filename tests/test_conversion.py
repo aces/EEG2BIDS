@@ -124,3 +124,47 @@ def test_output_format(make_convert_data, run_conversion, recording,
     _, root = run_conversion(
         make_convert_data(recording, output_format=output_format))
     assert _recording_file(root, "eeg").suffix == suffix
+
+
+def test_batch_recordings_share_one_dataset(make_convert_data, tmp_path,
+                                            bids_validator):
+    from eeg2bids.conversion import convert_recording
+
+    def convert(participant, run, **overrides):
+        request = make_convert_data(
+            "eeg_continuous.edf", participantID=participant, session="",
+            eeg_runs=[{"recordingFile": make_convert_data(
+                "eeg_continuous.edf")["eegRuns"][0]["recordingFile"],
+                "eventFile": None, "run": run}],
+            **overrides)
+        return convert_recording(request, into_root=True)
+
+    assert convert("01", "1", age="30") == {"output_time": ""}
+    assert convert("01", "2", age="30", reference="Cz") == {"output_time": ""}
+    assert convert("02", None, age="41") == {"output_time": ""}
+
+    root = tmp_path / "bids"
+    sub01 = sorted(p.name for p in (root / "sub-01" / "eeg").iterdir())
+    assert sub01 == [
+        "sub-01_task-rest_acq-eeg_run-1_channels.tsv",
+        "sub-01_task-rest_acq-eeg_run-1_eeg.edf",
+        "sub-01_task-rest_acq-eeg_run-1_eeg.json",
+        "sub-01_task-rest_acq-eeg_run-2_channels.tsv",
+        "sub-01_task-rest_acq-eeg_run-2_eeg.edf",
+        "sub-01_task-rest_acq-eeg_run-2_eeg.json",
+    ]
+    with open(root / "participants.tsv") as fd:
+        ages = {row["participant_id"]: row["age"]
+                for row in csv.DictReader(fd, delimiter="\t")}
+    assert ages == {"sub-01": "30", "sub-02": "41"}
+
+    def reference(run):
+        with open(root / "sub-01" / "eeg" /
+                  f"sub-01_task-rest_acq-eeg_run-{run}_eeg.json") as fd:
+            return json.load(fd)["EEGReference"]
+    assert (reference(1), reference(2)) == ("n/a", "Cz")
+
+    assert bids_validator(root) == []
+
+    # Converting an existing recording again fails instead of overwriting.
+    assert "error" in convert("02", None)

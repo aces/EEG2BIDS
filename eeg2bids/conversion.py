@@ -43,14 +43,19 @@ def inspect_recording(files):
         return {'error': str(e)}
 
 
-def convert_recording(data):
-    """Convert to BIDS; return ``{'output_time': ...}`` or ``{'error': [...]}``."""
+def convert_recording(data, into_root=False):
+    """Convert to BIDS; return ``{'output_time': ...}`` or ``{'error': [...]}``.
+
+    A single recording gets its own timestamped ``output-*`` folder. A batch
+    recording (``into_root``) is written straight into the BIDS directory, so
+    a batch builds one dataset and preflight can see what is already there.
+    """
     error_messages = []
     if not data.get('recordingData', {}).get('files'):
         error_messages.append('No recording file(s) to convert.')
     if not data.get('bids_directory'):
         error_messages.append('The BIDS output folder is missing.')
-    if not data.get('session'):
+    if not into_root and not data.get('session'):
         error_messages.append('The LORIS Visit Label is missing.')
     if not data.get('eegRuns'):
         error_messages.append('No recording run(s) to convert.')
@@ -68,7 +73,9 @@ def convert_recording(data):
         request = {
             **data,
             'participantID': re.sub(r'[_\- ]', '', data['participantID']),
-            'output_time': datetime.now().strftime('output-%Y-%m-%d-%Hh%Mm%Ss'),
+            'output_time': '' if into_root else
+            datetime.now().strftime('output-%Y-%m-%d-%Hh%Mm%Ss'),
+            'into_root': into_root,
         }
         Modifier.apply(request, converter.write_runs(request))
         return {'output_time': request['output_time']}
