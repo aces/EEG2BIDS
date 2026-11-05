@@ -5,12 +5,12 @@
   "desktopName": "eeg2bids.desktop",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "papaparse": "^5.5.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "papaparse": "^5.7.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-switch": "^7.1.0",
-    "react-tooltip": "6.0.8",
-    "socket.io-client": "^4.8.3"
+    "react-tooltip": "6.0.9",
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
