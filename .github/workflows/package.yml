@@ -203,6 +203,10 @@ jobs:
         run: npm run install:electron
 
       - name: Build macOS package
+        # electron-builder skips signing on PR builds by default. Ad-hoc
+        # signing uses no secrets, so it is safe to force here.
+        env:
+          CSC_FOR_PULL_REQUEST: 'true'
         run: npm run dist:mac
 
       - name: Smoke test installed application
