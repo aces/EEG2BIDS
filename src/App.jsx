@@ -1,9 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {Tooltip} from 'react-tooltip';
 import {AppContext} from './context';
 import './css/App.css';
-
-// Socket.io
 import {Socket} from './jsx/socket.io';
+import Menu from './jsx/elements/menu';
+import BackendStatus from './jsx/elements/backendStatus';
+import SplashScreen from './jsx/SplashScreen';
+import Welcome from './jsx/Welcome';
+import Configuration from './jsx/Configuration';
+import Validator from './jsx/Validator';
+
 // The backend port is configurable (see electron/main/backend-service.js); the
 // preload bridge exposes the value the main process chose.
 const backendPort = window.eeg2bids.getBackendPort();
@@ -16,18 +22,6 @@ const options = {
   reconnectionDelayMax: 10000,
 };
 
-// Main components
-import Menu from './jsx/elements/menu';
-import BackendStatus from './jsx/elements/backendStatus';
-import SplashScreen from './jsx/SplashScreen';
-import Welcome from './jsx/Welcome';
-import Configuration from './jsx/Configuration';
-import Validator from './jsx/Validator';
-
-/**
- * App - the main window.
- * @return {JSX.Element}
- */
 const TABS = [
   ['1) Getting started', 'Welcome'],
   ['2) Configuration', 'Configuration'],
@@ -36,24 +30,13 @@ const TABS = [
 ];
 
 const App = () => {
-  // React State
   const [appMode, setAppMode] = useState('SplashScreen');
   const task = useRef({});
 
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
   useEffect(() => {
-    setTimeout(
-        () => {
-          setAppMode('Welcome');
-        }, 1500);
+    setTimeout(() => setAppMode('Welcome'), 1500);
   }, []);
 
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return (
     <Socket uri={uri} options={options}>
       <AppContext.Provider value={{
@@ -62,27 +45,26 @@ const App = () => {
         },
         getFromTask: (key) => task.current[key] ?? '',
       }}>
-        <>
-          {/* Stable readiness anchor for integration tests: always present,
-              carries the current app mode, and renders no box of its own. */}
-          <div
-            data-testid='app-root'
-            data-appmode={appMode}
-            style={{display: 'contents'}}
-          />
-          <BackendStatus/>
-          <Menu visible={appMode !== 'SplashScreen'}
-            tabs={TABS.map(([title, mode]) => ({
-              title,
-              onClick: () => setAppMode(mode),
-            }))}
-            activeTab={TABS.findIndex(([, mode]) => mode === appMode)}
-          />
-          <SplashScreen visible={appMode === 'SplashScreen'}/>
-          <Welcome visible={appMode === 'Welcome'}/>
-          <Configuration appMode={appMode}/>
-          <Validator visible={appMode === 'Validator'}/>
-        </>
+        {/* Stable readiness anchor for integration tests: always present,
+            carries the current app mode, and renders no box of its own. */}
+        <div
+          data-testid='app-root'
+          data-appmode={appMode}
+          style={{display: 'contents'}}
+        />
+        <BackendStatus/>
+        <Menu visible={appMode !== 'SplashScreen'}
+          tabs={TABS.map(([title, mode]) => ({
+            title,
+            onClick: () => setAppMode(mode),
+          }))}
+          activeTab={TABS.findIndex(([, mode]) => mode === appMode)}
+        />
+        <SplashScreen visible={appMode === 'SplashScreen'}/>
+        <Welcome visible={appMode === 'Welcome'}/>
+        <Configuration appMode={appMode}/>
+        <Validator visible={appMode === 'Validator'}/>
+        <Tooltip anchorSelect='[data-tooltip-content]'/>
       </AppContext.Provider>
     </Socket>
   );

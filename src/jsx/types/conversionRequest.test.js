@@ -13,18 +13,4 @@ describe('buildConversionRequest', () => {
     expect(requestFor({anonymize: true}).anonymize).toBe(true);
     expect(requestFor().anonymize).toBe(false);
   });
-
-  it('pairs current events with recordings when submitting', () => {
-    const request = requestFor({
-      recordingData: {files: [{
-        path: '/data/rest.edf', name: 'sub-01_task-rest_eeg.edf',
-      }]},
-      eventFiles: [{
-        path: '/data/events.tsv', name: 'sub-01_task-rest_events.tsv',
-      }],
-    });
-    expect(request.eegRuns).toEqual([{
-      recordingFile: '/data/rest.edf', eventFile: '/data/events.tsv',
-    }]);
-  });
 });

@@ -1,35 +1,28 @@
 import React from 'react';
 import '../../css/Modal.css';
 
-const Modal = (props) => {
-  const styleVisible = {visibility: props.show ? 'visible' : 'hidden'};
-  const styleAnimation = {width: props.width || 'auto'};
-  const styleContainer = {
-    opacity: props.show ? 1 : 0,
-    transform: props.show ? 'translateY(0)' : 'translateY(-25%)',
-  };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
+export const MODAL_TITLES = {
+  loading: '⏱ Task in Progress!',
+  success: '⭐ Task Finished!',
+  error: '❌ Task Error!',
+};
+
+const Modal = ({show, title, close, width = '500px', children}) => {
+  const styleVisible = {visibility: show ? 'visible' : 'hidden'};
   return (
-    <div className='modalOverlay'
-      style={styleVisible}>
-      <div className='modalContainer'
-        style={styleVisible}>
-        <div className='modalAnimation'
-          style={styleAnimation}>
-          <div className='modalDialog'
-            style={styleContainer}>
+    <div className='modalOverlay' style={styleVisible}>
+      <div className='modalContainer' style={styleVisible}>
+        <div className='modalAnimation' style={{width}}>
+          <div className='modalDialog' style={{
+            opacity: show ? 1 : 0,
+            transform: show ? 'translateY(0)' : 'translateY(-25%)',
+          }}>
             <span className='modalHeader'>
-              {props.title}
-              <span className='modalHeaderClose'
-                onClick={props.close}>
-                ×
-              </span>
+              {title}
+              <span className='modalHeaderClose' onClick={close}>×</span>
             </span>
             <div className='modalContent'>
-              {props.children}
+              {children}
             </div>
           </div>
         </div>

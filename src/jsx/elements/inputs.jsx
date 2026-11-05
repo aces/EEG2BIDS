@@ -33,7 +33,7 @@ const styleSelect = {
  * @param {object} props
  * @return {JSX.Element}
  */
-const FieldLabel = ({id, label, required, help}) => (
+export const FieldLabel = ({id, label, required, help, children}) => (
   <label className='label' htmlFor={id}>
     <b>
       {label} {required && <span className='red'>*</span>}
@@ -41,21 +41,12 @@ const FieldLabel = ({id, label, required, help}) => (
         <i className='fas fa-question-circle' data-tooltip-content={help}/>
       }
     </b>
+    {children}
   </label>
 );
 
-/**
- * FileInput - the input type='file' component.
- * @param {object} props
- * @return {JSX.Element}
- */
 export const FileInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
   const handleChange = (event) => {
-    // Send current file to parent component
     const files = event.target.files ? Array.from(event.target.files) : [];
 
     // Chromium File objects no longer include Electron's historical `path`
@@ -68,32 +59,25 @@ export const FileInput = (props) => {
       });
     }
 
-    // Clear the input file
+    // Clear the input so selecting the same file again fires onChange.
     event.target.value = null;
 
     props.onUserInput(props.id, files);
   };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return (
     <>
       <FieldLabel label={props.label} required={props.required}
         help={props.help}/>
       <button>
         <label htmlFor={props.id}>
-          {
-            'Choose file' +
-            (props.multiple ? '(s)' : '')
-          }
+          {'Choose file' + (props.multiple ? '(s)' : '')}
         </label>
       </button>
       <input
         type='file'
         id={props.id}
         multiple={props.multiple}
-        name={props.name}
+        name={props.id}
         accept={props.accept}
         style={{display: 'none'}}
         onChange={handleChange}
@@ -104,33 +88,21 @@ export const FileInput = (props) => {
     </>
   );
 };
-/**
- * DirectoryInput - the directory select component.
- * @param {object} props
- * @return {JSX.Element}
- */
+
 export const DirectoryInput = (props) => {
-  /**
-   * handleClick - button by user.
-   */
   const handleClick = async () => {
-    // Send directory to parent component
     const path = await window.eeg2bids.selectDirectory();
     if (path !== null) {
       props.onUserInput(props.id, path);
     }
   };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return (
     <>
       <FieldLabel {...props}/>
       <input
         type='button'
         id={props.id}
-        name={props.name}
+        name={props.id}
         value='Choose folder'
         onClick={handleClick}
       />
@@ -141,25 +113,12 @@ export const DirectoryInput = (props) => {
   );
 };
 
-/**
- * TextInput - the input type='text' component.
- * @param {object} props
- * @return {JSX.Element}
- */
 export const TextInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
   const handleChange = (event) => {
     const value = event.target.value;
     if (props.bannedCharacters?.some((c) => value.includes(c))) return;
     props.onUserInput(props.id, value);
   };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
   return (
     <>
       {props.label &&
@@ -168,7 +127,7 @@ export const TextInput = (props) => {
       <input
         type='text'
         id={props.id}
-        name={props.name}
+        name={props.id}
         value={props.value}
         onChange={handleChange}
         className={props.readonly ? 'readonly' : null}
@@ -178,130 +137,65 @@ export const TextInput = (props) => {
     </>
   );
 };
-/**
- * RadioInput - the input type='radio' component.
- * @param {object} props
- * @return {JSX.Element}
- */
-export const RadioInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
-  const handleChange = (event) => {
-    props.onUserInput(
-        props.id,
-        event.target.value,
-    );
-  };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
-  return (
-    <div style={styleRow}>
+
+export const RadioInput = (props) => (
+  <div style={styleRow}>
+    <FieldLabel {...props}/>
+    {Object.entries(props.options).map(([key, label]) => (
+      <div key={key} style={styleColumn}>
+        <span style={{cursor: 'pointer'}}>
+          <input
+            type='radio'
+            id={`${props.id}_${key}`}
+            name={`${props.id}_${key}`}
+            value={key}
+            checked={props.checked === key}
+            onChange={(event) =>
+              props.onUserInput(props.id, event.target.value)}
+            style={styleRadioInput}
+          />
+          <label htmlFor={`${props.id}_${key}`}
+            style={styleRadioLabel}
+          >
+            {label}
+          </label>
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+export const SelectInput = (props) => (
+  <>
+    {props.label &&
       <FieldLabel {...props}/>
-      {Object.entries(props.options).map(([key, label]) => (
-        <div key={key} style={styleColumn}>
-          <span style={{cursor: 'pointer'}}>
-            <input
-              type='radio'
-              id={`${props.id}_${key}`}
-              name={`${props.name}_${key}`}
-              value={key}
-              checked={props.checked === key}
-              onChange={handleChange}
-              style={styleRadioInput}
-            />
-            <label htmlFor={`${props.id}_${key}`}
-              style={styleRadioLabel}
-            >
-              {label}
-            </label>
-          </span>
-        </div>
+    }
+    <select
+      id={props.id}
+      name={props.id}
+      value={props.value || ''}
+      onChange={(event) => props.onUserInput(props.id, event.target.value)}
+      style={styleSelect}
+    >
+      {props.emptyOption && <option>{props.emptyOption}</option>}
+      {Object.keys(props.options).map((key, index) => (
+        <option value={key} key={index}>
+          {props.options[key]}
+        </option>
       ))}
-    </div>
-  );
-};
+    </select>
+  </>
+);
 
-/**
- * SelectInput - the select component.
- * @param {object} props
- * @return {JSX.Element}
- */
-export const SelectInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
-  const handleChange = (event) => {
-    props.onUserInput(
-        props.id,
-        event.target.value,
-    );
-  };
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for component.
-   */
-  return (
-    <>
-      {props.label &&
-        <FieldLabel {...props}/>
-      }
-      <select
-        id={props.id}
-        name={props.name}
-        value={props.value || ''}
-        onChange={handleChange}
-        style={styleSelect}
-      >
-        {props.emptyOption && <option>{props.emptyOption}</option>}
-        {Object.keys(props.options).map((key, index) => (
-          <option value={key} key={index}>
-            {props.options[key]}
-          </option>
-        ))}
-      </select>
-    </>
-  );
-};
-
-/**
- * TextareaInput - the textarea component
- * @param {object} props
- * @return {JSX.Element}
- */
-export const TextareaInput = (props) => {
-  /**
-   * handleChange - input change by user.
-   * @param {object} event - input event
-   */
-  const handleChange = (event) => {
-    props.onUserInput(
-        props.name,
-        event.target.value,
-    );
-  };
-
-  /**
-   * Renders the React component.
-   * @return {JSX.Element} - React markup for the component
-   */
-  return (
-    <>
-      <FieldLabel {...props}/>
-      <textarea
-        cols={props.cols}
-        rows={props.rows}
-        className="form-control"
-        name={props.name}
-        id={props.id}
-        value={props.value || ''}
-        onChange={handleChange}
-      >
-      </textarea>
-    </>
-  );
-};
+export const TextareaInput = (props) => (
+  <>
+    <FieldLabel {...props}/>
+    <textarea
+      name={props.id}
+      id={props.id}
+      value={props.value || ''}
+      onChange={(event) => props.onUserInput(props.id, event.target.value)}
+    >
+    </textarea>
+  </>
+);

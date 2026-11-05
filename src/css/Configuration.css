@@ -4,7 +4,7 @@
     border: 1px none #3276b1;
     border-bottom-style: solid;
 }
-.readonly:focus, .readonly:focus{
+.readonly:focus {
     outline: none;
 }
 input[type="button"].primary-btn {

@@ -21,7 +21,6 @@
     pointer-events: none;
 }
 .modalAnimation {
-    width: auto;
     z-index: 105;
     display: flex;
     overflow: hidden;
@@ -36,7 +35,6 @@
     width: 100%;
     z-index: 105;
     display: flex;
-    overflow: scroll;
     position: relative;
     border-radius: 3px;
     color: #222428;
@@ -45,7 +43,6 @@
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 500px;
-    -webkit-overflow-scrolling: touch;
     transition: transform .3s ease-out;
     will-change: transform;
     background-color: #eaecef;
@@ -57,20 +54,17 @@
     font-size: 18pt;
     align-items: center;
     flex-direction: row;
-    -webkit-overflow-scrolling: touch;
 }
 .modalHeaderClose {
     color: #929192;
     cursor: pointer;
     font-size: 18pt;
     margin-left: auto;
-    -webkit-overflow-scrolling: touch;
 }
 .modalContent {
     font-size: 14pt;
     min-height: 80px;
     padding: 30px;
-    -webkit-overflow-scrolling: touch;
 }
 .bids-errors {
     font-size: 12pt;

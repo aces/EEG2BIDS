@@ -10,12 +10,9 @@
     justify-content: space-around;
 }
 
-.menuTab {
+.menu-title {
     user-select: none;
     -webkit-user-select: none;
-}
-
-.menu-title {
     height: 25px;
     color: black;
     display: block;

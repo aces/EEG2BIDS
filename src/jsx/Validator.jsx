@@ -1,13 +1,27 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {AppContext} from '../context';
 import '../css/Validator.css';
-
-// Display Loading, Success, Error
-import Modal from './elements/modal';
-
-// Socket.io
-import {Event, SocketContext, useSocketStatus} from './socket.io';
+import Modal, {MODAL_TITLES} from './elements/modal';
+import {SocketContext, useSocketStatus} from './socket.io';
 import {DirectoryInput, RadioInput} from './elements/inputs';
+
+const MODAL_MESSAGES = {
+  loading: <span style={{padding: '40px'}}>
+    <span className='bids-loading'>
+        BIDS compression in progress
+      <span>.</span><span>.</span><span>.</span>
+        😴
+    </span>
+  </span>,
+  success: <span style={{padding: '40px'}}>
+    <span className='bids-success'>
+      Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
+    </span></span>,
+  error: <span style={{padding: '40px'}}>
+    <span className='red'>&#x274C;</span> The backend is not connected.
+    Wait for it to reconnect or use “Restart backend”, then try again.
+  </span>,
+};
 
 /**
  * Validator - the Validation confirmation component.
@@ -15,114 +29,41 @@ import {DirectoryInput, RadioInput} from './elements/inputs';
  * @return {JSX.Element}
  */
 const Validator = (props) => {
-  // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
   const socketStatus = useSocketStatus();
 
-  // React State
   const [validator, setValidator] = useState({});
-  const [validationMode, setValidationMode] = useState('lastRun');
+  const [validationMode, setValidationMode] = useState('folder');
   const [bidsDirectory, setBidsDirectory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalText, setModalText] = useState({
-    mode: 'loading',
-    title: {
-      loading: '⏱ Task in Progress!',
-      success: '⭐ Task Finished!',
-      error: '❌ Task Error!',
-    },
-    message: {
-      loading: <span style={{padding: '40px'}}>
-        <span className='bids-loading'>
-            BIDS compression in progress
-          <span>.</span><span>.</span><span>.</span>
-            😴
-        </span>
-      </span>,
-      success: <span style={{padding: '40px'}}>
-        <span className='bids-success'>
-          Success compressing BIDS! <a className='checkmark'> &#x2714;</a>
-        </span></span>,
-      error: '',
-    },
-  });
+  const [modalMode, setModalMode] = useState('loading');
+
+  const outputTime = appContext.getFromTask('output_time');
+  const lastRunDir = appContext.getFromTask('bidsDirectory');
+  const target = validationMode === 'lastRun' ?
+    (lastRunDir && outputTime && `${lastRunDir}/${outputTime}`) :
+    bidsDirectory;
 
   /**
-   * getBIDSDir - get BIDS directory.
-   *
-   * @return {string}
+   * send - emit a request for the target, or report a missing backend.
+   * @param {string} event - socket event name
+   * @return {boolean} true when the request was sent
    */
-  const getBIDSDir = () => {
-    if (validationMode !== 'lastRun') {
-      if (!bidsDirectory) console.error('No bidsDirectory.');
-      return bidsDirectory || null;
-    }
-    const dir = appContext.getFromTask('bidsDirectory');
-    const time = appContext.getFromTask('output_time');
-    if (!dir || !time) {
-      console.error('No bidsDirectory or output_time.');
-      return null;
-    }
-    return `${dir}/${time}`;
-  };
-
-  /**
-   * requireBackend - display the backend-disconnected error modal.
-   * @return {boolean} true when the backend is connected, false otherwise
-   */
-  const requireBackend = () => {
-    if (socketStatus === 'connected') {
-      return true;
-    }
-    setModalText((prevState) => {
-      prevState.message['error'] = (
-        <span style={{padding: '40px'}}>
-          <span className='red'>&#x274C;</span> The backend is not connected.
-          Wait for it to reconnect or use “Restart backend”, then try again.
-        </span>
-      );
-      return {...prevState, ['mode']: 'error'};
-    });
-    setModalVisible(true);
-    return false;
-  };
-
-  /**
-   * validateBIDS - get validated BIDS format.
-   *   Sent by socket to python: validate_bids.
-   */
-  const validateBIDS = () => {
-    console.info('validateBIDS();');
-
-    const bidsDirectory = getBIDSDir();
-    if (bidsDirectory) {
-      if (!requireBackend()) {
-        return;
-      }
-      socketContext.emit('validate_bids', bidsDirectory);
-    }
-  };
-
-  /**
-   * packageBIDS - package BIDS format to tarfile.
-   *   Sent by socket to python: tarfile_bids.
-   */
-  const packageBIDS = () => {
-    console.info('packageBIDS();');
-
-    const bidsDirectory = getBIDSDir();
-    if (bidsDirectory) {
-      if (!requireBackend()) {
-        return;
-      }
-      setModalText((prevState) => {
-        return {...prevState, ['mode']: 'loading'};
-      });
+  const send = (event) => {
+    if (socketStatus !== 'connected') {
+      setModalMode('error');
       setModalVisible(true);
-
-      socketContext.emit('tarfile_bids', bidsDirectory);
+      return false;
     }
+    socketContext.emit(event, target);
+    return true;
+  };
+
+  const packageBIDS = () => {
+    if (!send('tarfile_bids')) return;
+    setModalMode('loading');
+    setModalVisible(true);
   };
 
   useEffect(() => {
@@ -130,40 +71,28 @@ const Validator = (props) => {
   }, [validationMode, bidsDirectory]);
 
   useEffect(() => {
-    if (socketContext) {
-      socketContext.on('bids', (message) => {
-        if (message['output_time']) {
-          setValidator({});
-        }
-      });
-    }
-  }, [socketContext]);
+    setValidationMode(outputTime ? 'lastRun' : 'folder');
+  }, [props.visible]);
 
   useEffect(() => {
-    if (!appContext.getFromTask('output_time')) {
-      setValidationMode('folder');
-    } else {
-      setValidationMode('lastRun');
-    }
-  }, [props.visible]);
-  /**
-   * onMessage - received message from python.
-   * @param {object} message - response
-   */
-  const onMessage = (message) => {
-    console.info(message);
-    if (message['file_paths'] && message['result']) {
-      setValidator(message);
-    } else if (message['compression_time']) {
-      setModalText((prevState) => {
-        return {...prevState, ['mode']: 'success'};
-      });
-    }
-  };
-
-  const noTarget = validationMode === 'lastRun' ?
-    !appContext.getFromTask('output_time') :
-    !bidsDirectory;
+    if (!socketContext) return;
+    const onResponse = (message) => {
+      if (message['file_paths'] && message['result']) {
+        setValidator(message);
+      } else if (message['compression_time']) {
+        setModalMode('success');
+      }
+    };
+    const onBids = (message) => {
+      if (message['output_time']) setValidator({});
+    };
+    socketContext.on('response', onResponse);
+    socketContext.on('bids', onBids);
+    return () => {
+      socketContext.off('response', onResponse);
+      socketContext.off('bids', onBids);
+    };
+  }, [socketContext]);
 
   return props.visible ? (
     <>
@@ -173,30 +102,24 @@ const Validator = (props) => {
       <div className='info'>
         <div className='small-pad'>
           <RadioInput id='validationMode'
-            name='validationMode'
             label='BIDS files to validate:'
             onUserInput={(_, value) => setValidationMode(value)}
-            options={
-              appContext.getFromTask('output_time') ?
-              {
-                folder: 'Select a folder',
+            options={{
+              folder: 'Select a folder',
+              ...(outputTime && {
                 lastRun: `Current recording:
                   ${appContext.getFromTask('participantID')}
                   ${appContext.getFromTask('session')}
                   ${appContext.getFromTask('taskName')}`,
-              } :
-              {
-                folder: 'Select a folder',
-              }
-            }
+              }),
+            }}
             checked={validationMode}
           />
         </div>
-        {validationMode == 'folder' &&
+        {validationMode === 'folder' &&
           <div className='small-pad'>
             <DirectoryInput id='bidsDirectory'
-              name='bidsDirectory'
-              required={validationMode == 'folder'}
+              required
               label='BIDS folder'
               placeholder={bidsDirectory}
               onUserInput={(_, value) => setBidsDirectory(value)}
@@ -204,18 +127,18 @@ const Validator = (props) => {
           </div>
         }
         <div className='small-pad'>
-          <input onClick={validateBIDS}
+          <input onClick={() => send('validate_bids')}
             type='button'
             value='Validate BIDS'
             className='primary-btn'
             style={{marginRight: '10px'}}
-            disabled={noTarget}
+            disabled={!target}
           />
           <input onClick={packageBIDS}
             type='button'
             value='Package BIDS'
             className='primary-btn'
-            disabled={noTarget}
+            disabled={!target}
           />
         </div>
       </div>
@@ -229,14 +152,12 @@ const Validator = (props) => {
         ))}
       </div>
       <Modal
-        title={modalText.title[modalText.mode]}
+        title={MODAL_TITLES[modalMode]}
         show={modalVisible}
         close={() => setModalVisible(false)}
-        width='500px'
       >
-        {modalText.message[modalText.mode]}
+        {MODAL_MESSAGES[modalMode]}
       </Modal>
-      <Event event='response' handler={onMessage} />
     </>
   ) : null;
 };

@@ -1,8 +1,7 @@
 import React, {useContext, useState, useEffect, useRef} from 'react';
 import {AppContext} from '../context';
-import {Tooltip} from 'react-tooltip';
 import '../css/Configuration.css';
-import '../../node_modules/@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/css/all.css';
 import {buildConversionRequest} from './types/conversionRequest';
 import {invalidFiles, isJSON, isTSV} from './configuration/recordingFiles';
 import {buildConversionReview} from './configuration/conversionReview';
@@ -11,20 +10,12 @@ import {initialState} from './configuration/initialState';
 import ConfigurationForm from './configuration/ConfigurationForm';
 import {recordingDateFormat} from './configuration/recordingDateFormat';
 import {TextInput} from './elements/inputs';
-
-// Socket.io
 import {SocketContext, useSocketStatus} from './socket.io';
-
 import '../css/Converter.css';
+import Modal, {MODAL_TITLES} from './elements/modal';
 
-// Display Loading, Success, Error
-import Modal from './elements/modal';
-
-const MODAL_TITLES = {
-  loading: '⏱ Task in Progress!',
-  success: '⭐ Task Finished!',
-  error: '❌ Task Error!',
-};
+// Form fields the Validator reads back through the shared task store.
+const TASK_KEYS = ['bidsDirectory', 'participantID', 'session', 'taskName'];
 
 const MODAL_MESSAGES = {
   loading: <span style={{padding: '40px'}}>
@@ -62,7 +53,6 @@ const getAge = (birthDate, visitDate) => {
  * @return {JSX.Element}
  */
 const Configuration = (props) => {
-  // React Context
   const appContext = useContext(AppContext);
   const socketContext = useContext(SocketContext);
   const socketStatus = useSocketStatus();
@@ -75,6 +65,7 @@ const Configuration = (props) => {
   }));
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [login, setLogin] = useState(null);
   const [authCredentialsVisible, setAuthCredentialsVisible] = useState(false);
   const [participantLookupError, setParticipantLookupError] = useState('');
 
@@ -93,8 +84,6 @@ const Configuration = (props) => {
       participantEntryMode: isAuthenticated ? 'existing_loris' : 'manual',
     };
     setForm(defaults);
-    Object.entries(defaults).forEach(([key, value]) =>
-      appContext.setTask(key, value));
     importedPrepopulationFile.current = null;
     setParticipantLookupError('');
   };
@@ -130,17 +119,32 @@ const Configuration = (props) => {
   };
 
   useEffect(() => {
-    if (isAuthenticated && form.LORIScompliant) {
-      setField('participantEntryMode', 'existing_loris');
-    } else {
-      setField('participantEntryMode', 'manual');
-    }
+    setField('participantEntryMode',
+        isAuthenticated && form.LORIScompliant ? 'existing_loris' : 'manual');
   }, [form.LORIScompliant, isAuthenticated]);
+
+  useEffect(() => {
+    TASK_KEYS.forEach((key) => appContext.setTask(key, form[key]));
+  });
+
+  // Log in with saved LORIS credentials on every (re)connect to the backend.
+  useEffect(() => {
+    if (!socketContext) return;
+    const login = () => window.eeg2bids.getLorisAuthenticationCredentials()
+        .then((credentials) => {
+          if (credentials?.lorisURL && credentials.lorisUsername &&
+              credentials.lorisPassword) {
+            socketContext.emit('set_loris_credentials', credentials);
+          }
+        });
+    socketContext.on('connect', login);
+    if (socketContext.connected) login();
+    return () => socketContext.off('connect', login);
+  }, [socketContext]);
 
   useEffect(() => {
     if (!socketContext) return;
     setField('participantID', '');
-    appContext.setTask('participantID', '');
     setParticipantLookupError('');
     if (form.participantCandID && form.participantPSCID) {
       socketContext.emit('get_participant_data', {
@@ -190,14 +194,6 @@ const Configuration = (props) => {
     </div>,
   );
 
-  const formatWarning = (msg) => {
-    return (
-      <>
-        <span className='warning'>&#x26A0;</span> {msg}
-      </>
-    );
-  };
-
   useEffect(() => {
     if (!form.participantCandID || !form.session ||
       !form.siteID || !form.projectID ||
@@ -219,16 +215,10 @@ const Configuration = (props) => {
     form.recordingData]);
 
   useEffect(() => {
-    Object.entries(initialState).forEach(([key, value]) =>
-      appContext.setTask(key, value));
-  }, []);
-
-  useEffect(() => {
     if (!form.recordingData?.date || !form.participantDOB) return;
 
     const age = getAge(form.participantDOB, form.recordingData.date);
     setField('participantAge', age);
-    appContext.setTask('participantAge', age);
   }, [form.participantDOB, form.recordingData]);
 
   useEffect(() => {
@@ -243,6 +233,7 @@ const Configuration = (props) => {
         setField('subprojectOptions', subprojects ?? []),
       loris_visits: (visits) => setField('sessionOptions', visits ?? []),
       loris_login_response: (data) => {
+        setLogin(data);
         if (!data.error) setIsAuthenticated(true);
       },
     };
@@ -258,7 +249,6 @@ const Configuration = (props) => {
     const selectedPaths = files.map(({path}) => path);
     setField('subjectID', '');
     setField('recordingData', []);
-    appContext.setTask('recordingData', []);
     if (!socketContext) return;
 
     const onRecordingData = (message) => {
@@ -271,7 +261,6 @@ const Configuration = (props) => {
       };
       setField('subjectID', recording.subjectID || '');
       setField('recordingData', recording);
-      appContext.setTask('recordingData', recording);
     };
     socketContext.on('recording_data', onRecordingData);
     socketContext.emit('get_recording_data', {files});
@@ -282,7 +271,6 @@ const Configuration = (props) => {
     const selectedFile = form.bidsMetadataFile[0]?.path;
     const modality = form.modality;
     setField('bidsMetadata', null);
-    appContext.setTask('bidsMetadata', null);
     if (!selectedFile) importedPrepopulationFile.current = null;
     if (!socketContext) return;
 
@@ -292,15 +280,11 @@ const Configuration = (props) => {
 
       if (message.error) console.error(message.error);
       setField('bidsMetadata', message);
-      appContext.setTask('bidsMetadata', message);
 
       if (message.prepopulation && selectedFile !==
           importedPrepopulationFile.current) {
         Object.entries(formValues(message.prepopulation))
-            .forEach(([field, value]) => {
-              setField(field, value);
-              appContext.setTask(field, value);
-            });
+            .forEach(([field, value]) => setField(field, value));
         importedPrepopulationFile.current = selectedFile;
       }
     };
@@ -321,20 +305,14 @@ const Configuration = (props) => {
       if (candidate?.error) {
         setParticipantLookupError(candidate.error);
         setField('participantID', '');
-        appContext.setTask('participantID', '');
       } else if (candidate?.PSCID &&
           form.participantPSCID === candidate.PSCID) {
         setParticipantLookupError('');
         setField('participantID', candidate.PSCID);
-        appContext.setTask('participantID', candidate.PSCID);
-
         setField('participantDOB', new Date(candidate.DoB));
-
         setField('participantSex', candidate.Sex);
-        appContext.setTask('participantSex', candidate.Sex);
       } else {
         setField('participantID', '');
-        appContext.setTask('participantID', '');
         setParticipantLookupError('The DDCID/PSCID pair you provided' +
             ' does not match an existing candidate.');
       }
@@ -371,42 +349,21 @@ const Configuration = (props) => {
       name = field;
     }
 
-    // Update the state of Configuration.
     switch (name) {
       case 'LORIScompliant':
         value = value === 'yes';
         break;
       case 'recordingID':
-        setField('recordingData', (prevState) => {
-          return {...prevState, [name]: value};
-        });
-        appContext.setTask(name, value);
-        break;
       case 'subjectID':
-        setField('recordingData', (prevState) => {
-          return {...prevState, [name]: value};
-        });
+        setField('recordingData', (previous) => ({...previous, [name]: value}));
         break;
       case 'anonymize':
-        if (value) {
-          setField('recordingData', (prevState) => {
-            return {...prevState, ['subjectID']: 'X X X X'};
-          });
-          appContext.setTask('subjectID', 'X X X X');
-        } else {
-          setField('recordingData', (prevState) => {
-            return {...prevState, ['subjectID']: form.subjectID};
-          });
-          appContext.setTask('subjectID', form.subjectID);
-        }
-        break;
-      default:
+        setField('recordingData', (previous) => ({
+          ...previous, subjectID: value ? 'X X X X' : form.subjectID,
+        }));
         break;
     }
-    if (name in initialState) {
-      setField(name, value);
-      appContext.setTask(name, value);
-    }
+    if (name in initialState) setField(name, value);
   };
 
   if (props.appMode === 'Configuration') {
@@ -415,6 +372,7 @@ const Configuration = (props) => {
       onUserInput={onUserInput}
       reset={reset}
       isAuthenticated={isAuthenticated}
+      login={login}
       authCredentialsVisible={authCredentialsVisible}
       setAuthCredentialsVisible={setAuthCredentialsVisible}
     />;
@@ -448,7 +406,8 @@ const Configuration = (props) => {
                 Subject ID: {form.recordingData.subjectID}
               </div> :
               <div>
-                {formatWarning('Subject ID is not modified.')}
+                <span className='warning'>&#x26A0;</span> Subject ID is not
+                modified.
               </div>
             }
             {form.recordingData?.date &&
@@ -472,7 +431,6 @@ const Configuration = (props) => {
 
           <div className='small-pad'>
             <TextInput id='preparedBy'
-              name='preparedBy'
               required={true}
               label='Prepared by'
               value={preparedBy}
@@ -507,11 +465,9 @@ const Configuration = (props) => {
           title={MODAL_TITLES[modal.mode]}
           show={modalVisible}
           close={() => setModalVisible(false)}
-          width='500px'
         >
           {modal.mode === 'error' ? modal.error : MODAL_MESSAGES[modal.mode]}
         </Modal>
-        <Tooltip anchorSelect='[data-tooltip-content]'/>
       </>
     );
   } else {

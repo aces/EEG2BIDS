@@ -1,8 +1,7 @@
 import React from 'react';
-import {Tooltip} from 'react-tooltip';
 import Switch from 'react-switch';
 import {
-  DirectoryInput, FileInput, RadioInput, TextInput, SelectInput,
+  DirectoryInput, FieldLabel, FileInput, RadioInput, TextInput, SelectInput,
   TextareaInput,
 } from '../elements/inputs';
 import {
@@ -19,11 +18,12 @@ const arrayToObject = (values) =>
  * @return {JSX.Element}
  */
 const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
-  authCredentialsVisible, setAuthCredentialsVisible}) => (
+  login, authCredentialsVisible, setAuthCredentialsVisible}) => (
   <>
     <div className='container'>
       <AuthenticationMessage
-        setAuthCredentialsVisible={setAuthCredentialsVisible}
+        login={login}
+        onLogIn={() => setAuthCredentialsVisible(true)}
       />
       <div className='small-pad resetBtn'>
         <input type='button'
@@ -39,7 +39,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
     <div className='info'>
       <div className='small-pad'>
         <FileInput id='recordingFiles'
-          name='recordingFiles'
           multiple={true}
           accept='.edf,.EDF,.set,.SET'
           placeholder={
@@ -60,7 +59,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       </div>
       <div className='small-pad'>
         <DirectoryInput id='bidsDirectory'
-          name='bidsDirectory'
           required={true}
           label='BIDS output folder'
           placeholder={form.bidsDirectory}
@@ -70,7 +68,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       </div>
       <div className='small-pad'>
         <RadioInput id='modality'
-          name='modality'
           label='Data Modality'
           required={true}
           onUserInput={onUserInput}
@@ -84,7 +81,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       </div>
       <div className='small-pad'>
         <SelectInput id='outputFormat'
-          name='outputFormat'
           label='Output format'
           value={form.outputFormat}
           options={{
@@ -100,7 +96,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       </div>
       <div className='small-pad'>
         <RadioInput id='LORIScompliant'
-          name='LORIScompliant'
           label='Will this data be loaded in LORIS?'
           required={true}
           onUserInput={onUserInput}
@@ -128,7 +123,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       <div className='info half'>
         <div className='small-pad'>
           <FileInput id='bidsMetadataFile'
-            name='bidsMetadataFile'
             accept='.json'
             placeholder={
               form.bidsMetadataFile.map(
@@ -146,7 +140,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       <div className='info half'>
         <div className='small-pad'>
           <FileInput id='eventFiles'
-            name='eventFiles'
             multiple={true}
             accept='.tsv'
             placeholder={
@@ -170,7 +163,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       <div className='info half'>
         <div className='small-pad'>
           <TextInput id='taskName'
-            name='taskName'
             required={true}
             label='Task Name'
             value={form.taskName}
@@ -189,19 +181,10 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
             form.subprojectOptions, form.subprojectUseAPI],
         ].map(([field, label, tooltip, options, useAPI]) =>
           <div className='small-pad' key={field}>
-            <label className="label" htmlFor={`#${field}_API`}>
-              <b>
-                {label} <span className="red">*</span>
-                <i className='fas fa-question-circle'
-                  data-tooltip-content={tooltip}
-                />
-              </b>
-            </label>
+            <FieldLabel id={`${field}_API`} label={label} required
+              help={tooltip}/>
             <div className='comboField'>
               <SelectInput id={`${field}_API`}
-                name={`${field}_API`}
-                label=''
-                required={true}
                 value={form[field]}
                 emptyOption='Enter manually'
                 options={arrayToObject(options)}
@@ -209,8 +192,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
               />
               {!useAPI &&
                 <TextInput id={`${field}_Manual`}
-                  name={`${field}_Manual`}
-                  label=''
                   placeholder='n/a'
                   value={form[field]}
                   onUserInput={onUserInput}
@@ -220,23 +201,16 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
           </div>,
         )}
         <div className='small-pad'>
-          <label className="label" htmlFor='#session_API'>
-            <b>
-              Session <span className="red">*</span>
-              <i className='fas fa-question-circle'
-                data-tooltip-content='Visit or TimePoint Label'
-              />
-            </b>
+          <FieldLabel
+            id={form.LORIScompliant ? 'session_API' : 'session_Manual'}
+            label='Session' required help='Visit or TimePoint Label'>
             {form.LORIScompliant &&
               <div><small>(LORIS Visit Label)</small></div>
             }
-          </label>
+          </FieldLabel>
           <div className='comboField'>
             {form.LORIScompliant &&
               <SelectInput id='session_API'
-                name='session_API'
-                label=''
-                required={true}
                 value={form.session}
                 emptyOption='Enter manually'
                 options={arrayToObject(form.sessionOptions)}
@@ -245,9 +219,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
             }
             {!form.sessionUseAPI &&
               <TextInput id='session_Manual'
-                name='session_Manual'
-                label=''
-                required={!form.LORIScompliant}
                 value={form.session}
                 bannedCharacters={['-', '_', ' ', '/']}
                 onUserInput={onUserInput}
@@ -259,7 +230,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       <div className='info half'>
         <div className='small-pad'>
           <TextareaInput id='reference'
-            name='reference'
             required={true}
             label='Reference'
             value={form.reference}
@@ -269,7 +239,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         </div>
         <div className='small-pad'>
           <SelectInput id='lineFreq'
-            name='lineFreq'
             label='Powerline Frequency'
             value={form.lineFreq}
             emptyOption='n/a'
@@ -283,7 +252,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         </div>
         <div className='small-pad'>
           <SelectInput id='recordingType'
-            name='recordingType'
             label='Recording Type'
             value={form.recordingType}
             emptyOption='n/a'
@@ -306,19 +274,13 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         isAuthenticated &&
         <div className='small-pad'>
           <RadioInput id='participantEntryMode'
-            name='participantEntryMode'
             label='Entry mode'
             required={true}
             onUserInput={onUserInput}
-            options={isAuthenticated === true ?
-              {
-                manual: 'Manual',
-                existing_loris: 'Use an existing LORIS candidate',
-              } :
-              {
-                manual: 'Manual',
-              }
-            }
+            options={{
+              manual: 'Manual',
+              existing_loris: 'Use an existing LORIS candidate',
+            }}
             checked={form.participantEntryMode}
             help='Specify participant details manually
             or by lookup in LORIS'
@@ -329,7 +291,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         <>
           <div className='small-pad'>
             <TextInput id='participantPSCID'
-              name='participantPSCID'
               label='LORIS PSCID'
               required={true}
               value={form.participantPSCID}
@@ -338,7 +299,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
           </div>
           <div className='small-pad'>
             <TextInput id='participantCandID'
-              name='participantCandID'
               label='LORIS DCCID'
               required={true}
               value={form.participantCandID}
@@ -351,7 +311,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         <>
           <div className='small-pad'>
             <TextInput id='participantID'
-              name='participantID'
               label='Participant ID'
               required={true}
               value={form.participantID}
@@ -365,7 +324,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
           </div>
           <div className='small-pad'>
             <TextInput id='participantAge'
-              name='participantAge'
               label='Participant age'
               placeholder='n/a'
               value={form.participantAge}
@@ -375,7 +333,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
           </div>
           <div className='small-pad'>
             <SelectInput id='participantSex'
-              name='participantSex'
               label='Biological Sex'
               value={form.participantSex}
               emptyOption='n/a'
@@ -392,7 +349,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       }
       <div className='small-pad'>
         <SelectInput id='participantHand'
-          name='participantHand'
           label='Handedness'
           value={form.participantHand}
           emptyOption='n/a'
@@ -433,7 +389,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       <div className='container'>
         <div className='half small-pad'>
           <TextInput id='subjectID'
-            name='subjectID'
             label='Subject ID'
             value={form.recordingData['subjectID'] || ''}
             onUserInput={onUserInput}
@@ -447,7 +402,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         </div>
         <div className='half small-pad'>
           <TextInput id='recordingID'
-            name='recordingID'
             label='Recording ID'
             value={form.recordingData?.['recordingID'] || ''}
             onUserInput={onUserInput}
@@ -461,7 +415,6 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
         </div>
         <div className='small-pad half'>
           <TextInput id='recording_date'
-            name='recording_date'
             label='Recording Date'
             readonly={true}
             value={form.recordingData?.['date'] ?
@@ -473,12 +426,9 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
       </div>
     </div>
     <AuthenticationCredentials
-      title='Login to LORIS'
       show={authCredentialsVisible}
       close={() => setAuthCredentialsVisible(false)}
-      width='500px'
     />
-    <Tooltip anchorSelect='[data-tooltip-content]'/>
   </>
 );
 

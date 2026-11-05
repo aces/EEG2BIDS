@@ -1,8 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styles from '../../css/Authentication.module.css';
 import Modal from './modal';
-
-// Socket.io
 import {SocketContext} from '../socket.io';
 
 /**
@@ -41,109 +39,42 @@ const AuthInput = ({id, label, value, onUserInput, password}) => {
   );
 };
 
-export const AuthenticationMessage = (props) => {
-  // React Context
+/**
+ * AuthenticationMessage - the LORIS login state and a link to log in.
+ * @param {object} props
+ * @param {object|null} props.login - the last loris_login_response
+ * @param {function} props.onLogIn - opens the credentials modal
+ * @return {JSX.Element}
+ */
+export const AuthenticationMessage = ({login, onLogIn}) => (
+  <div className={styles.authMessageContainer}>
+    <span className={styles.loginMessage}>
+      {!login ? '(Optional) You are not logged into a LORIS Account' :
+        login.error || `LORIS Account set as ${login.lorisUsername}`}
+    </span>
+    <a className={styles.loginLink} onClick={onLogIn}>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      {login && !login.error ? 'Sign in to another account..' : 'Log in...'}
+    </a>
+  </div>
+);
+
+const NO_CREDENTIALS = {lorisURL: '', lorisUsername: '', lorisPassword: ''};
+
+export const AuthenticationCredentials = ({show, close}) => {
   const socketContext = useContext(SocketContext);
+  const [creds, setCreds] = useState(NO_CREDENTIALS);
 
-  // React state
-  const [loginMessage, setLoginMessage] = useState(
-      '(Optional) You are not logged into a LORIS Account',
-  );
-  const [loginLink, setLoginLink] = useState(
-      'Log in...',
-  );
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect( () => {
-    /**
-     * getLorisCredentials - gets the LORIS credentials securely.
-     */
-    async function getLorisCredentials() {
-      const credentials =
-        await window.eeg2bids.getLorisAuthenticationCredentials();
-      if (credentials &&
-        credentials.lorisURL &&
-        credentials.lorisUsername &&
-        credentials.lorisPassword
-      ) {
-        socketContext.emit('set_loris_credentials', credentials);
-      }
-    }
-    getLorisCredentials();
-  }, []);
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
-  useEffect( () => {
-    if (socketContext) {
-      socketContext.on('loris_login_response', (data) => {
-        if (data.error) {
-          setLoginMessage(data.error);
-          setLoginLink('Log in...');
-        } else {
-          setLoginMessage(`LORIS Account set as ${data.lorisUsername}`);
-          setLoginLink('Sign in to another account..');
-        }
-      });
-    }
-  }, [socketContext]);
-
-  /**
-   * User clicked sign in.
-   */
-  const handleClick = () => {
-    props.setAuthCredentialsVisible(true);
-  };
-  return (
-    <div className={styles.authMessageContainer}>
-      <span className={styles.loginMessage}>
-        {loginMessage}
-      </span>
-      <a className={styles.loginLink} onClick={handleClick}>
-        &nbsp;&nbsp;&nbsp;&nbsp;{loginLink}
-      </a>
-    </div>
-  );
-};
-
-export const AuthenticationCredentials = (props) => {
-  // React Context
-  const socketContext = useContext(SocketContext);
-
-  // React state
-  const [lorisURL, setLorisURL] = useState('');
-  const [lorisUsername, setLorisUsername] = useState('');
-  const [lorisPassword, setLorisPassword] = useState('');
-
-  /**
-   * Similar to componentDidMount and componentDidUpdate.
-   */
   useEffect(() => {
-    /**
-     * getLorisCredentials - gets the LORIS credentials securely.
-     */
-    async function getLorisCredentials() {
-      const credentials =
-        await window.eeg2bids.getLorisAuthenticationCredentials();
-      setLorisURL(credentials.lorisURL);
-      setLorisUsername(credentials.lorisUsername);
-      setLorisPassword(credentials.lorisPassword);
-    }
-    getLorisCredentials();
+    window.eeg2bids.getLorisAuthenticationCredentials().then(setCreds);
   }, []);
 
   /**
-   * handleClear - Close the Authentication Credentials
-   *   but first update (?new) credentials.
+   * handleClear - forget the stored credentials and empty the fields.
    */
   const handleClear = () => {
     window.eeg2bids.removeLorisAuthenticationCredentials();
-    setLorisURL('');
-    setLorisUsername('');
-    setLorisPassword('');
+    setCreds(NO_CREDENTIALS);
   };
 
   /**
@@ -151,53 +82,35 @@ export const AuthenticationCredentials = (props) => {
    *   but first update (?new) credentials.
    */
   const handleClose = () => {
-    if (lorisURL && lorisUsername && lorisPassword) {
-      const credentials = {lorisURL, lorisUsername, lorisPassword};
-      window.eeg2bids.setLorisAuthenticationCredentials(credentials);
-      socketContext.emit('set_loris_credentials', credentials);
+    if (creds.lorisURL && creds.lorisUsername && creds.lorisPassword) {
+      window.eeg2bids.setLorisAuthenticationCredentials(creds);
+      socketContext.emit('set_loris_credentials', creds);
     }
-    props.close(true);
+    close();
   };
 
-  /**
-   * onUserInput - input change by user.
-   * @param {string} name - element name
-   * @param {object|string|boolean} value - element value
-   */
-  const onUserInput = (name, value) => {
-    switch (name) {
-      case 'lorisURL':
-        setLorisURL(value);
-        break;
-      case 'lorisUsername':
-        setLorisUsername(value);
-        break;
-      case 'lorisPassword':
-        setLorisPassword(value);
-        break;
-    }
-  };
+  const onUserInput = (id, value) =>
+    setCreds((previous) => ({...previous, [id]: value}));
 
   return (
     <Modal
-      title={<span className={styles.authTitle}>{props.title}</span>}
-      show={props.show}
+      title={<span className={styles.authTitle}>Login to LORIS</span>}
+      show={show}
       close={handleClose}
-      width={props.width}
     >
       <AuthInput id='lorisURL'
         label='LORIS URL: (Example: https://demo.loris.ca)'
-        value={lorisURL}
+        value={creds.lorisURL}
         onUserInput={onUserInput}
       />
       <AuthInput id='lorisUsername'
         label='Username'
-        value={lorisUsername}
+        value={creds.lorisUsername}
         onUserInput={onUserInput}
       />
       <AuthInput id='lorisPassword'
         label='Password'
-        value={lorisPassword}
+        value={creds.lorisPassword}
         onUserInput={onUserInput}
         password
       />

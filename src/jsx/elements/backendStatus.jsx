@@ -20,16 +20,11 @@ const resolveStatus = (socketState, backendState) => {
   if (socketState === 'connected') {
     return {key: 'connected', label: 'Backend connected', tone: 'ok'};
   }
-  if (backendState === 'failed') {
+  if (backendState === 'failed' || backendState === 'stopped') {
     return {
-      key: 'unavailable', label: 'Backend unavailable',
-      tone: 'error', restart: true,
-    };
-  }
-  if (backendState === 'stopped') {
-    return {
-      key: 'unavailable', label: 'Backend stopped',
-      tone: 'error', restart: true,
+      key: 'unavailable', tone: 'error', restart: true,
+      label: backendState === 'failed' ?
+        'Backend unavailable' : 'Backend stopped',
     };
   }
   if (backendState === 'starting' || socketState === 'connecting') {
@@ -89,7 +84,6 @@ const BackendStatus = () => {
 
   return (
     <div
-      className='backend-status'
       data-testid='backend-status'
       data-state={status.key}
       title={backend.error || status.label}
