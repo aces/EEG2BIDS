@@ -1,6 +1,9 @@
 const {BrowserWindow, dialog, ipcMain, shell} = require('electron');
 const credentials = require('./credentials');
 const backendService = require('./backend-service');
+const {
+  scanDirectory, saveBatchFile, openBatchFile, statPaths,
+} = require('./batch-io');
 
 // The only external destinations the renderer may open. Validation happens
 // here in the main process; the renderer only ever passes a string.
@@ -24,6 +27,14 @@ const registerIpcHandlers = () => {
     });
     return result.filePaths[0] ?? null;
   });
+
+  ipcMain.handle('discovery:scan-directory',
+      (event, root) => scanDirectory(root));
+  ipcMain.handle('batch:save', (event, payload) =>
+    saveBatchFile(BrowserWindow.fromWebContents(event.sender), payload));
+  ipcMain.handle('batch:open', (event) =>
+    openBatchFile(BrowserWindow.fromWebContents(event.sender)));
+  ipcMain.handle('files:stat', (event, paths) => statPaths(paths));
 
   ipcMain.handle('links:open-external', async (event, url) => {
     if (!ALLOWED_EXTERNAL_URLS.has(url)) {

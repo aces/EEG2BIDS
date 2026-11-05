@@ -211,7 +211,9 @@ def write_runs(data):
     multi_run = len(data['eegRuns']) > 1
     return [{
         'recordingBIDSBasename': to_bids(
-            data, eeg_run, (index + 1) if multi_run else None, daysback),
+            data, eeg_run,
+            eeg_run.get('run') or ((index + 1) if multi_run else None),
+            daysback),
         'eventFile': eeg_run['eventFile'],
     } for index, eeg_run in enumerate(data['eegRuns'])]
 
@@ -257,12 +259,22 @@ def to_bids(data, eeg_run, run, daysback):
         # Name the datatype explicitly; MNE-BIDS inference is ambiguous when
         # the recording has several data-class channel types (e.g. eeg + emg).
         bids_path = BIDSPath(
-            subject=data['participantID'], session=data['session'],
+            subject=data['participantID'], session=data['session'] or None,
             task=data['taskName'], run=run, acquisition=ch_type,
             datatype='eeg' if ch_type == 'eeg' else 'ieeg',
             root=os.path.join(data['bids_directory'], data['output_time']))
 
-        write_kwargs = {'overwrite': False, 'verbose': False}
+        # A batch writes into an existing dataset, where MNE-BIDS refuses to
+        # update a participant's row unless overwriting. Refuse to replace an
+        # existing recording here instead, then let MNE-BIDS update the rest.
+        into_root = data.get('into_root', False)
+        if into_root and bids_path.directory.is_dir() and any(
+                name.startswith(bids_path.basename + '_') and
+                '_' not in name[len(bids_path.basename) + 1:]
+                for name in os.listdir(bids_path.directory)):
+            raise WriteError(f'{bids_path.basename} is already in the dataset.')
+
+        write_kwargs = {'overwrite': into_root, 'verbose': False}
         write_kwargs.update(resolve_write_kwargs(
             raw, source_path, data.get('outputFormat', 'auto')))
         if daysback is not None:
