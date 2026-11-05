@@ -7,10 +7,10 @@ service) see the [README](../README.md). For the canonical automated test
 commands and fixture policy, see [Testing](testing.md).
 
 Linux is the supported development target. Production packages are available
-for Ubuntu and Windows 11 x64. See [Packaging](../README.md#packaging), the
-[installation guide](installation.md), and the
-[Windows packaging guide](windows-packaging.md). macOS packaging remains
-tracked in #189.
+for Ubuntu, Windows 11 x64, and macOS on Apple Silicon. See
+[Packaging](../README.md#packaging), the [installation guide](installation.md),
+the [Windows packaging guide](windows-packaging.md), and the
+[macOS packaging guide](macos-packaging.md).
 
 ## Launching
 

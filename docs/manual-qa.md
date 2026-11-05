@@ -285,6 +285,48 @@ menu integration are removed on uninstall; no owned process remains; user
 settings and credentials are retained according to policy without exposing their
 contents.
 
+## macOS scenarios
+
+Use the exact `.dmg` and `SHA256SUMS-macos-arm64` downloaded together from the
+release candidate. Download them through a browser so the file is quarantined
+like a real user's copy. The app is ad-hoc signed and not notarized, so the
+Gatekeeper warning is an expected observation.
+
+### QA-MACOS-001: Clean install and full workflow
+
+**Release gate:** yes.
+
+On an Apple Silicon Mac running macOS 15 or newer without Node, npm, uv, or
+Python, verify the checksum, drag EEG2BIDS to Applications, and launch it.
+Record the Gatekeeper warning and the exact path through **Open Anyway**.
+Confirm the backend connects, then perform the anonymized conversion and
+validation described in QA-LINUX-001 using synthetic data.
+
+**Expected:** Installation requires no development tooling; the installed
+renderer and frozen backend complete the representative workflow. The
+application does not disable or bypass Gatekeeper.
+
+### QA-MACOS-002: Shutdown process cleanup
+
+**Release gate:** yes.
+
+With the installed application connected, quit with **Cmd+Q**, wait ten
+seconds, and run `pgrep -fl eeg2bids`.
+
+**Expected:** No application-owned EEG2BIDS or frozen-backend process remains.
+
+### QA-MACOS-003: Upgrade and uninstall
+
+**Release gate:** yes.
+
+Replace an existing installation with a newer checksummed candidate. Confirm it
+launches, connects, and retains saved settings and credentials (allowing any
+Keychain access prompt). Then quit and move the app to the Trash.
+
+**Expected:** There is one upgraded installation; no owned process remains after
+uninstall; user data in `~/Library/Application Support/eeg2bids/` is retained
+according to policy without exposing its contents.
+
 ## Reporting results
 
 Use one result per scenario and do not report an overall pass if any required

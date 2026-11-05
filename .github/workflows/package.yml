@@ -1,4 +1,4 @@
-# Native packaging validation for the supported Linux and Windows targets.
+# Native packaging validation for the supported Linux, Windows, and macOS targets.
 # Never publishes; release-candidate.yml calls it and publishes the artifacts.
 name: Package
 
@@ -177,5 +177,95 @@ jobs:
           path: |
             dist/electron/*-setup.exe
             dist/electron/SHA256SUMS-windows-x64
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: macOS dmg (arm64)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          enable-cache: true
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Electron runtime
+        run: npm run install:electron
+
+      - name: Build macOS package
+        run: npm run dist:mac
+
+      - name: Smoke test installed application
+        run: |
+          set -euo pipefail
+          dmgs=(dist/electron/*.dmg)
+          if (( ${#dmgs[@]} != 1 )); then
+            echo "Expected exactly one dmg, found ${#dmgs[@]}" >&2
+            exit 1
+          fi
+          mount="$(mktemp -d)"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount" "${dmgs[0]}"
+          cp -R "$mount/EEG2BIDS.app" /Applications/
+          hdiutil detach "$mount"
+          codesign --verify --deep --strict /Applications/EEG2BIDS.app
+
+          /Applications/EEG2BIDS.app/Contents/MacOS/eeg2bids &
+          app_pid=$!
+          for _ in $(seq 120); do
+            nc -z 127.0.0.1 7301 && break
+            sleep 1
+          done
+          nc -z 127.0.0.1 7301 || { echo 'Backend did not open port 7301' >&2; exit 1; }
+          sleep 10
+          nc -z 127.0.0.1 7301 || { echo 'Backend did not stay available' >&2; exit 1; }
+
+          # SIGTERM goes through the normal app.quit() path.
+          kill -TERM "$app_pid"
+          wait "$app_pid" || true
+          sleep 5
+          if pgrep -f eeg2bids-backend; then
+            echo 'Frozen backend remained after application shutdown' >&2
+            exit 1
+          fi
+          rm -rf /Applications/EEG2BIDS.app
+
+      - name: Collect packaged application logs
+        if: always()
+        run: |
+          mkdir -p test-results/packaged-macos
+          log="$HOME/Library/Application Support/eeg2bids/logs/main.log"
+          if [ -f "$log" ]; then cp "$log" test-results/packaged-macos/main.log; fi
+
+      - name: Upload packaged application logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: eeg2bids-macos-smoke-logs-${{ github.sha }}
+          path: test-results/packaged-macos/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Generate checksum
+        run: |
+          cd dist/electron
+          shasum -a 256 -- *.dmg > SHA256SUMS-macos-arm64
+
+      - name: Upload macOS candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: eeg2bids-macos-arm64-${{ github.sha }}
+          path: |
+            dist/electron/*.dmg
+            dist/electron/SHA256SUMS-macos-arm64
           if-no-files-found: error
           retention-days: 14

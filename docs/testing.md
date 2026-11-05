@@ -139,10 +139,11 @@ The production-dependency audit exports a temporary `requirements-audit.txt` for
 
 [`.github/workflows/package.yml`](../.github/workflows/package.yml) runs for
 packaging-related pull requests and manual dispatches. It builds the Linux
-`.deb` on Ubuntu 24.04 and the unsigned Windows x64 NSIS installer on a native
-Windows runner, generates checksums, and uploads short-lived workflow artifacts.
-The Windows job also installs the package silently, confirms the managed backend
-remains available, closes the app, verifies process cleanup, and uninstalls it.
+`.deb` on Ubuntu 24.04, the unsigned Windows x64 NSIS installer on a native
+Windows runner, and the ad-hoc signed macOS arm64 `.dmg` on a `macos-15` runner,
+generates checksums, and uploads short-lived workflow artifacts. The Windows and
+macOS jobs also install the package, confirm the managed backend remains
+available, quit the app, verify process cleanup, and uninstall it.
 Diagnostic logs are uploaded even when the smoke test fails.
 
 This workflow does not publish GitHub Releases itself.

@@ -84,22 +84,25 @@ jobs:
           shopt -s nullglob
           debs=(*.deb)
           installers=(*-setup.exe)
-          if (( ${#debs[@]} != 1 || ${#installers[@]} != 1 )); then
-            echo "Expected exactly one Linux package and one Windows installer" >&2
+          dmgs=(*.dmg)
+          if (( ${#debs[@]} != 1 || ${#installers[@]} != 1 || ${#dmgs[@]} != 1 )); then
+            echo "Expected exactly one Linux package, Windows installer, and macOS dmg" >&2
             printf 'Downloaded: %s\n' * >&2
             exit 1
           fi
-          required=(SHA256SUMS-linux-x64 SHA256SUMS-windows-x64 SOURCE.txt)
+          required=(SHA256SUMS-linux-x64 SHA256SUMS-windows-x64 SHA256SUMS-macos-arm64 SOURCE.txt)
           for file in "${required[@]}"; do
             [[ -f "$file" ]] || { echo "Missing candidate asset: $file" >&2; exit 1; }
           done
           sha256sum --check SHA256SUMS-linux-x64
           sha256sum --check SHA256SUMS-windows-x64
+          sha256sum --check SHA256SUMS-macos-arm64
 
           rc_commit="$(git -C .. rev-parse "refs/tags/$RC_TAG^{}")"
           grep -Fx "tag=$RC_TAG" SOURCE.txt
           grep -Fx "commit=$rc_commit" SOURCE.txt
           grep -Fx 'windows_signing=unsigned' SOURCE.txt
+          grep -Fx 'macos_signing=adhoc' SOURCE.txt
           printf '%s\n' "$rc_commit" > ../rc-commit.txt
 
       - name: Create draft final release from exact RC assets
@@ -112,4 +115,4 @@ jobs:
             --target "$rc_commit" \
             --draft \
             --title "EEG2BIDS ${FINAL_TAG#v}" \
-            --notes "Promoted byte-for-byte from $RC_TAG after manual QA. The Windows installer is unsigned. Edit these notes before publishing this draft release."
+            --notes "Promoted byte-for-byte from $RC_TAG after manual QA. The Windows installer is unsigned and the macOS app is ad-hoc signed and not notarized. Edit these notes before publishing this draft release."

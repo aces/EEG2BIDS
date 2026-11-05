@@ -11,13 +11,14 @@ backend. End users do not need Node, npm, uv, or Python. To build a package see
 - **Ubuntu 22.04 LTS, amd64** — supported with the installer's AppArmor
   fallback.
 - **Windows 11, x64** — installed per-user with NSIS.
+- **macOS 15 or newer, Apple Silicon (arm64)** — drag-to-install `.dmg`.
 - A graphical desktop session.
 - On Linux, GNOME Keyring or KWallet is required to encrypt saved LORIS
   credentials. Without a secret service, the app warns that it can only
   obfuscate them.
 
 Other Debian-family distributions may work but are not verified. Other
-architectures, older Windows versions, and macOS are not supported.
+architectures, older Windows versions, and Intel Macs are not supported.
 
 ## Ubuntu
 
@@ -67,13 +68,31 @@ Run a newer installer to upgrade in place. Uninstall EEG2BIDS through Windows
 See [Windows production packaging](windows-packaging.md) for native build,
 workflow, lifecycle, diagnostics, and verification details.
 
+## macOS
+
+Download the `.dmg` and `SHA256SUMS-macos-arm64` from the same
+[GitHub Release](https://github.com/aces/EEG2BIDS/releases) and verify the
+checksum (`shasum -a 256 -c SHA256SUMS-macos-arm64`). Open the `.dmg` and drag
+**EEG2BIDS** to **Applications**.
+
+The app is not notarized, so macOS blocks the first launch. After the warning,
+open **System Settings > Privacy & Security** and click **Open Anyway** for
+EEG2BIDS. Confirm the file came from the project's GitHub Release first.
+
+To upgrade, replace the app in **Applications** with the newer one. To
+uninstall, quit EEG2BIDS and move it to the Trash.
+
+See [macOS production packaging](macos-packaging.md) for build, lifecycle,
+Keychain, and verification details.
+
 ## User data and credentials
 
-Uninstalling on either platform retains personal settings and saved LORIS
+Uninstalling on any platform retains personal settings and saved LORIS
 credentials:
 
 - Linux: `~/.config/eeg2bids/`
 - Windows: `%APPDATA%\eeg2bids\`
+- macOS: `~/Library/Application Support/eeg2bids/`
 
 Remove saved credentials inside the application before uninstalling, especially
 on a shared computer. Delete the corresponding profile directory only when you
@@ -89,4 +108,6 @@ intend to remove all retained application data.
 - **Windows launch/backend failure:** inspect
   `%APPDATA%\eeg2bids\logs\main.log`; it records main-process and captured
   backend diagnostics. Sanitize logs before sharing them.
+- **macOS launch/backend failure:** inspect
+  `~/Library/Application Support/eeg2bids/logs/main.log`.
 - **Linux credentials only obfuscated:** enable GNOME Keyring or KWallet.

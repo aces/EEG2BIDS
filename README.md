@@ -28,8 +28,10 @@ integration for Ubuntu 24.04+. See [Packaging](#packaging) to build it and the
 [installation guide](docs/installation.md) to install it. A Windows 11 x64 NSIS
 build landed in [#188](https://github.com/aces/EEG2BIDS/issues/188), including a
 frozen backend, Windows process lifecycle support, and native CI smoke testing.
-See the [Windows packaging guide](docs/windows-packaging.md). macOS packaging is
-tracked in [#189](https://github.com/aces/EEG2BIDS/issues/189). Release
+See the [Windows packaging guide](docs/windows-packaging.md). An ad-hoc signed
+Apple Silicon `.dmg` covers macOS
+([#189](https://github.com/aces/EEG2BIDS/issues/189)); see the
+[macOS packaging guide](docs/macos-packaging.md). Release
 automation ([#190](https://github.com/aces/EEG2BIDS/issues/190)) is described in
 the [release-candidate guide](docs/releasing.md).
 
@@ -119,7 +121,8 @@ On headless Linux, run the Electron suite with
 
 LORIS credentials (URL, username, and password) are encrypted with Electron
 `safeStorage` and persisted under the application `userData` directory
-(`~/.config/eeg2bids/` on Linux, `%APPDATA%\eeg2bids\` on Windows). On Linux,
+(`~/.config/eeg2bids/` on Linux, `%APPDATA%\eeg2bids\` on Windows,
+`~/Library/Application Support/eeg2bids/` on macOS). On Linux,
 secure encryption
 requires a secret service (GNOME Keyring or KWallet). When only the
 `basic_text` fallback is available, the app logs an explicit warning that
@@ -164,27 +167,29 @@ a Python interpreter:
 
 - Ubuntu amd64: `.deb`
 - Windows 11 x64: unsigned, per-user NSIS installer
+- macOS 15+ on Apple Silicon: ad-hoc signed, not notarized `.dmg`
 
 Build natively from the authoritative lockfiles:
 
 ```sh
 npm run dist:linux     # on Linux: .deb
 npm run dist:windows   # on Windows: x64 NSIS installer
+npm run dist:mac       # on an Apple Silicon Mac: arm64 dmg
 ```
 
 Artifacts are written to `dist/electron/`. PyInstaller must run on the target
-operating system; the Windows backend cannot be cross-compiled from Linux. The
+operating system; the Windows and macOS backends cannot be cross-compiled from Linux. The
 freeze step alone is `npm run freeze:backend`, using
 `tools/eeg2bids-backend.spec` and the locked `packaging` dependency group.
 
-The `Package` GitHub Actions workflow builds both platforms natively, smoke
-tests the installed Windows application and managed backend, generates
+The `Package` GitHub Actions workflow builds all three platforms natively, smoke
+tests the installed Windows and macOS applications and managed backend, generates
 platform-specific SHA-256 files, and uploads workflow artifacts. Immutable RC
 tags invoke that workflow and publish a GitHub prerelease for manual QA; see the
 [release-candidate guide](docs/releasing.md). Final promotion remains a separate,
 protected manual operation.
 
 See the [installation guide](docs/installation.md), the
-[Windows packaging guide](docs/windows-packaging.md), and the historical
-[Linux packaging design](docs/linux-packaging-design.md). macOS is not yet
-supported (#189).
+[Windows packaging guide](docs/windows-packaging.md), the
+[macOS packaging guide](docs/macos-packaging.md), and the historical
+[Linux packaging design](docs/linux-packaging-design.md).

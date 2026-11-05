@@ -1,4 +1,5 @@
-# Build and publish immutable Linux and unsigned Windows release candidates.
+# Build and publish immutable Linux, unsigned Windows, and ad-hoc signed macOS
+# release candidates.
 # Final releases are promoted separately after maintainer QA; this workflow
 # never publishes a production release.
 name: Release candidate
@@ -71,6 +72,12 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Download macOS candidate
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: eeg2bids-macos-arm64-${{ github.sha }}
+          path: release-assets
+
       - name: Record source provenance
         env:
           TAG: ${{ github.ref_name }}
@@ -81,6 +88,7 @@ jobs:
           repository=$GITHUB_REPOSITORY
           workflow_run=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
           windows_signing=unsigned
+          macos_signing=adhoc
           EOF
 
       - name: Publish immutable prerelease
@@ -95,4 +103,4 @@ jobs:
             --verify-tag \
             --prerelease \
             --title "EEG2BIDS ${TAG#v}" \
-            --notes "Automated release candidate for manual QA. The Windows installer is unsigned. Do not promote this candidate unless its recorded checksums pass QA."
+            --notes "Automated release candidate for manual QA. The Windows installer is unsigned and the macOS app is ad-hoc signed and not notarized. Do not promote this candidate unless its recorded checksums pass QA."

@@ -1,9 +1,10 @@
 # Release candidates
 
 EEG2BIDS releases use immutable release candidates so maintainers can manually
-qualify the exact Linux and Windows files that may later become a final release.
-macOS is tracked separately in issue #189. Windows installers are currently
-unsigned and may trigger a SmartScreen warning.
+qualify the exact Linux, Windows, and macOS files that may later become a final
+release. Windows installers are currently unsigned and may trigger a SmartScreen
+warning. The macOS app is ad-hoc signed and not notarized, so Gatekeeper
+requires **Open Anyway** on first launch.
 
 ## Create a candidate
 
@@ -18,8 +19,9 @@ unsigned and may trigger a SmartScreen warning.
    ```
 
 3. The release-candidate workflow runs the exact-tag test suite and native
-   Linux/Windows package jobs. If all jobs pass, it creates a GitHub prerelease
-   containing the `.deb`, unsigned Windows installer, platform-specific SHA-256
+   Linux/Windows/macOS package jobs. If all jobs pass, it creates a GitHub
+   prerelease containing the `.deb`, unsigned Windows installer, macOS `.dmg`,
+   platform-specific SHA-256
    files, and `SOURCE.txt` provenance.
 
 The tag must match `v<package-version>-rc.<positive-number>`. The workflow
@@ -51,7 +53,7 @@ review protection configured.
    `v3.0.0-rc.2` and `v3.0.0`).
 3. A maintainer other than the initiator reviews the recorded QA evidence and
    approves the `production-release` environment deployment.
-4. The workflow verifies the prerelease, checks both artifact hashes and its
+4. The workflow verifies the prerelease, checks all three artifact hashes and its
    source provenance, creates the final tag at the RC commit, and copies every
    RC asset without rebuilding.
 5. Open the resulting **draft** GitHub Release, write or edit the release notes,

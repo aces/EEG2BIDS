@@ -37,7 +37,8 @@
     "test:electron": "npm run build && playwright test",
     "freeze:backend": "uv run --frozen --group packaging pyinstaller --noconfirm --distpath dist --workpath dist/.pyinstaller-work tools/eeg2bids-backend.spec",
     "dist:linux": "npm run build && npm run freeze:backend && electron-builder --linux deb --publish never",
-    "dist:windows": "npm run build && npm run freeze:backend && electron-builder --win nsis --x64 --publish never"
+    "dist:windows": "npm run build && npm run freeze:backend && electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "npm run build && npm run freeze:backend && electron-builder --mac dmg --arm64 --publish never"
   },
   "main": "electron/main/index.js",
   "homepage": "https://github.com/aces/eeg2bids",
@@ -75,6 +76,13 @@
       "allowElevation": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "category": "public.app-category.education",
+      "icon": "public/logo512.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "EEG2BIDS-${version}-macos-${arch}.${ext}"
     }
   },
   "engines": {
