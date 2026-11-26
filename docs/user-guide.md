@@ -76,7 +76,9 @@ templates list the fields understood by the application:
 Parameter files contain two top-level objects: `bids` holds BIDS sidecar
 metadata, while `prepopulation` holds Project, Subproject, Visit, Site,
 LineFrequency, Reference, and RecordingType values used to initialize the
-Configuration form. Users can review and change imported values; re-reading
+Configuration form. `prepopulation` may also hold a `Tasks` list of the
+study's task names, which the Task Name field then offers as a dropdown
+alongside an "Enter manually" option. Users can review and change imported values; re-reading
 metadata for a modality change does not overwrite those edits. Flat parameter
 files are not supported.
 

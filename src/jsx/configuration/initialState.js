@@ -26,6 +26,8 @@ export const initialState = {
   bidsMetadata: null,
   lineFreq: 'n/a',
   taskName: '',
+  taskOptions: [],
+  taskNameUseAPI: false,
   reference: 'n/a',
   recordingType: 'continuous',
   participantEntryMode: 'manual',

@@ -162,15 +162,26 @@ const ConfigurationForm = ({form, onUserInput, reset, isAuthenticated,
     <div className='container'>
       <div className='info half'>
         <div className='small-pad'>
-          <TextInput id='taskName'
-            required={true}
-            label='Task Name'
-            value={form.taskName}
-            onUserInput={onUserInput}
-            bannedCharacters={['-', '_', ' ', '/']}
+          <FieldLabel id='taskName' label='Task Name' required
             help='Task, stimulus, state or experimental context.
-            See BIDS specification for more information.'
-          />
+            See BIDS specification for more information.'/>
+          <div className='comboField'>
+            {form.taskOptions.length > 0 &&
+              <SelectInput id='taskName_API'
+                value={form.taskName}
+                emptyOption='Enter manually'
+                options={arrayToObject(form.taskOptions)}
+                onUserInput={onUserInput}
+              />
+            }
+            {!form.taskNameUseAPI &&
+              <TextInput id='taskName'
+                value={form.taskName}
+                onUserInput={onUserInput}
+                bannedCharacters={['-', '_', ' ', '/']}
+              />
+            }
+          </div>
         </div>
         {form.LORIScompliant && [
           ['siteID', 'Site', 'Study Centre',

@@ -2,6 +2,7 @@ const FIELD_MAP = {
   Project: 'projectID',
   Subproject: 'subprojectID',
   Visit: 'session',
+  Tasks: 'taskOptions',
   Site: 'siteID',
   LineFrequency: 'lineFreq',
   Reference: 'reference',

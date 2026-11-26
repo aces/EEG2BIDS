@@ -332,7 +332,7 @@ const Configuration = (props) => {
     }
 
     const combo = name.match(
-        /^(siteID|projectID|subprojectID|session)_(API|Manual)$/,
+        /^(siteID|projectID|subprojectID|session|taskName)_(API|Manual)$/,
     );
     if (combo) {
       const [, field, source] = combo;

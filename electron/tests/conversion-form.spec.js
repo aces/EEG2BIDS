@@ -30,7 +30,7 @@ test('parameter file prepopulation follows the selected file',
       const parameterFile = path.join(directory, 'parameters.json');
       fs.writeFileSync(parameterFile, JSON.stringify({
         bids: {InstitutionName: 'Example lab'},
-        prepopulation: {Project: 'Study A'},
+        prepopulation: {Project: 'Study A', Tasks: ['rest', 'oddball']},
       }));
       try {
         await expect(mainWindow.getByTestId('backend-status'))
@@ -40,6 +40,12 @@ test('parameter file prepopulation follows the selected file',
             .setInputFiles(parameterFile);
         await expect(mainWindow.locator('#projectID_Manual'))
             .toHaveValue('Study A');
+        await mainWindow.locator('#taskName_API').selectOption('oddball');
+        await expect(mainWindow.locator('#taskName')).toBeHidden();
+        await mainWindow.locator('#taskName_API')
+            .selectOption('Enter manually');
+        await mainWindow.locator('#taskName').fill('custom');
+        await expect(mainWindow.locator('#taskName')).toHaveValue('custom');
 
         await mainWindow.getByRole('button', {
           name: 'Clear all fields below',
