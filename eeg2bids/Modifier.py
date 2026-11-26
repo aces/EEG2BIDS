@@ -7,26 +7,32 @@ import re
 def apply(data, written_runs):
     """Apply dataset metadata and event edits after recording files exist."""
     bids_root = os.path.join(data['bids_directory'], data['output_time'])
+    session = ['ses-' + data['session']] if data['session'] else []
     eeg_path = os.path.join(bids_root, 'sub-' + data['participantID'],
-                            'ses-' + data['session'], data['modality'])
+                            *session, data['modality'])
 
     _modify_dataset_description_json(data, bids_root)
     _modify_participants_tsv(data, bids_root)
     _modify_participants_json(bids_root)
-    _clean_dataset_files(bids_root, eeg_path)
+    _clean_dataset_files(bids_root, eeg_path, written_runs)
     _copy_event_files(written_runs, eeg_path)
-    _modify_eeg_json(data, eeg_path)
+    _modify_eeg_json(data, eeg_path, written_runs)
 
 
-def _clean_dataset_files(bids_root, eeg_path):
-    # for multiple run recording, clean the duplicate _channels.tsv
-    channels_files = [f for f in os.listdir(eeg_path) if f.endswith('_channels.tsv')]
-    for name in channels_files[1:]:
-        os.remove(os.path.join(eeg_path, name))
-
-    # remove the run suffix in the file names
-    os.rename(os.path.join(eeg_path, channels_files[0]),
-              os.path.join(eeg_path, re.sub(r"_run-[0-9]+", '', channels_files[0])))
+def _clean_dataset_files(bids_root, eeg_path, written_runs):
+    # A multi-run recording shares one _channels.tsv: keep the first, drop the
+    # run suffix. Only this request's runs are touched, so other recordings
+    # already in a shared dataset keep their own.
+    if len(written_runs) > 1:
+        channels_files = sorted(
+            f for f in os.listdir(eeg_path) if f.endswith('_channels.tsv')
+            and any(f.startswith(run['recordingBIDSBasename'])
+                    for run in written_runs))
+        for name in channels_files[1:]:
+            os.remove(os.path.join(eeg_path, name))
+        os.rename(os.path.join(eeg_path, channels_files[0]),
+                  os.path.join(eeg_path,
+                               re.sub(r"_run-[0-9]+", '', channels_files[0])))
 
     # remove the mne citations README
     try:
@@ -42,7 +48,9 @@ def _modify_dataset_description_json(data, bids_root):
             file_data = json.load(fp)
         file_data['PreparedBy'] = data['preparedBy']
         file_data['Eeg2bidsVersion'] = os.environ.get('EEG2BIDS_VERSION', 'unknown')
-        file_data['Name'] = data['participantID'] + '_' + data['session']
+        # A batch builds one shared dataset; don't name it after one person.
+        if not data.get('into_root'):
+            file_data['Name'] = data['participantID'] + '_' + data['session']
 
         with open(file_path, "w") as fp:
             json.dump(file_data, fp, indent=4)
@@ -57,16 +65,22 @@ def _modify_participants_tsv(data, bids_root):
     # Read participant_id by name: mne-bids' column layout varies by version (#145).
     with open(file_path, mode='r', newline='') as tsv_file:
         reader = csv.DictReader(tsv_file, delimiter='\t')
-        participant_ids = [row['participant_id'] for row in reader]
+        existing = {row['participant_id']: row for row in reader}
 
+    # Fill this participant's row; keep any other participant's values, so
+    # converting into a shared dataset never overwrites someone else.
+    columns = ['age', 'sex', 'hand', 'site', 'subproject', 'project']
     d = data
+    mine = dict(zip(columns, [d['age'], d['sex'], d['hand'], d['site_id'],
+                              d['sub_project_id'], d['project_id']]))
     output = [
-        [pid, d['age'], d['sex'], d['hand'], d['site_id'], d['sub_project_id'], d['project_id']]
-        for pid in participant_ids
+        [pid] + [(mine if pid == 'sub-' + d['participantID'] else
+                  existing[pid]).get(column) or 'n/a' for column in columns]
+        for pid in existing
     ]
 
     with open(file_path, mode='w', newline='') as tsv_file:
-        headers = ['participant_id', 'age', 'sex', 'hand', 'site', 'subproject', 'project']
+        headers = ['participant_id'] + columns
         writer = csv.writer(tsv_file, delimiter='\t')
         writer.writerow(headers)
         writer.writerows(output)
@@ -153,11 +167,13 @@ def _copy_event_files(written_runs, eeg_path):
             json.dump(metadata, json_file, indent=4)
 
 
-def _modify_eeg_json(data, eeg_path):
+def _modify_eeg_json(data, eeg_path, written_runs):
     reference_field = 'iEEGReference' if data['modality'] == 'ieeg' else 'EEGReference'
     meta = data.get('bidsMetadata') or {}
 
-    for eeg_json in [f for f in os.listdir(eeg_path) if f.endswith('eeg.json')]:
+    basenames = tuple(run['recordingBIDSBasename'] for run in written_runs)
+    for eeg_json in [f for f in os.listdir(eeg_path)
+                     if f.endswith('eeg.json') and f.startswith(basenames)]:
         file_path = os.path.join(eeg_path, eeg_json)
         try:
             with open(file_path, "r") as fp:

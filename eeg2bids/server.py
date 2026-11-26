@@ -130,6 +130,13 @@ def recording_to_bids(sid, data):
 
 
 @sio.event
+def batch_recording_to_bids(sid, data):
+    # Answered by acknowledgement, so the single-recording 'bids' listener
+    # never sees batch results.
+    return conversion.convert_recording(data, into_root=True)
+
+
+@sio.event
 def validate_bids(sid, bids_directory):
     sio.emit('response', BIDS.validate(bids_directory))
 
